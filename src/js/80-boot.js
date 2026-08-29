@@ -29,11 +29,12 @@
     document.addEventListener('pointerdown', eveil);
     document.addEventListener('keydown', eveil);
 
-    /* Un lien porte un nom : on ouvre alors le registre à cette page-là. */
-    const m = /[#&?]g=([^&]+)/.exec(location.hash + location.search);
-    let graine = null;
-    if (m) { try { graine = decodeURIComponent(m[1]); } catch (e) { graine = m[1]; } }
-    if (graine && graine.trim()) JJK.ecrans.consultation(graine.trim().slice(0, 40));
+    /* Un lien porte un numéro de dossier : le service ressort la fiche. */
+    const m = /[#&?]d=([^&]+)/.exec(location.hash + location.search);
+    let code = null;
+    if (m) { try { code = decodeURIComponent(m[1]); } catch (e) { code = m[1]; } }
+    const lu = code ? JJK.taxo.lireDossierCode(code.trim()) : null;
+    if (lu) JJK.ecrans.consultation(lu);
     else JJK.ecrans.seuil();
 
     /* raccourcis */

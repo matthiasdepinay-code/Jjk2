@@ -136,7 +136,7 @@
   }
   function majBarre(o) {
     barre();
-    if (o.graine != null) document.getElementById('be-graine').textContent = o.graine ? ('GRAINE : ' + o.graine.toUpperCase()) : '—';
+    if (o.graine != null) document.getElementById('be-graine').textContent = o.graine ? ('DOSSIER : ' + o.graine.toUpperCase()) : '—';
     if (o.grade != null) document.getElementById('be-grade').textContent = o.grade ? ('GRADE ' + String(o.grade).toUpperCase()) : '';
     if (o.registre != null) document.getElementById('be-registre').textContent = o.registre;
   }

@@ -521,6 +521,38 @@
     document.body.classList.remove('in-domain');
   }
 
+  /* ---- le Voile (帳) --------------------------------------------------
+     Avant d'intervenir, on abaisse un rideau sur le secteur. Personne, au
+     dehors, ne verra rien. C'est le seul geste que tous les exorcistes
+     partagent, et c'est aussi une transition d'écran.                    */
+  function voile(opts) {
+    const o = opts || {};
+    let n = document.getElementById('fx-voile');
+    if (!n) {
+      n = document.createElement('div');
+      n.id = 'fx-voile';
+      n.innerHTML = '<i class="couture"></i><div class="dit"></div><div class="kanji">帳</div>';
+      document.body.appendChild(n);
+    }
+    const dit = n.querySelector('.dit');
+    dit.textContent = o.texte || '';
+    n.classList.remove('leve');
+    n.classList.add('tombe');
+    if (JJK.audio) { JJK.audio.slash(); setTimeout(() => JJK.audio.hit(0.9), 260); }
+    shake(0.4);
+    return new Promise(res => {
+      setTimeout(() => {
+        if (o.pendant) { try { o.pendant(); } catch (e) {} }
+        setTimeout(() => {
+          n.classList.remove('tombe');
+          n.classList.add('leve');
+          if (JJK.audio) JJK.audio.tick(220, 0.14, 0.06);
+          setTimeout(res, 620);
+        }, o.tenue == null ? 900 : o.tenue);
+      }, 760);
+    });
+  }
+
   /* ---- machine à écrire ---------------------------------------------- */
   function type(node, text, opts) {
     const o = opts || {};
@@ -559,7 +591,7 @@
 
   JJK.fx = {
     mount, resize, shake, pulse, slash, ink, inkFade, inkClear, invert, flash,
-    sigil, domainOpen, domainClose, type, mutilate, setIntensity, setHue, setDead, reduit,
+    sigil, domainOpen, domainClose, type, mutilate, voile, setIntensity, setHue, setDead, reduit,
     hexA, state,
     get size() { return { W, H }; },
   };

@@ -182,8 +182,8 @@ hr.trait.fort { border-top: var(--hair-fort); }
 
 .question-bloc { margin-top: 40px; }
 .question-texte {
-  font-size: clamp(1.35rem, 3.6vw, 2.1rem); font-weight: 300; text-wrap: balance;
-  line-height: 1.25; margin: 0 0 28px; max-width: 34ch;
+  font-size: clamp(1.25rem, 3vw, 1.85rem); font-weight: 300; text-wrap: pretty;
+  line-height: 1.3; margin: 0 0 22px; max-width: 46ch;
 }
 .reponses { display: grid; gap: 10px; max-width: 780px; }
 .reponse {
@@ -477,3 +477,151 @@ body.domaine-calme .fiche { border-color: rgba(233, 226, 212, .3); }
 }
 /* les murmures ne doivent jamais recouvrir une action */
 @media (max-width: 860px) { .murmure-flottant { display: none; } }
+
+/* ---- le Voile (帳) ----------------------------------------------------
+   Un rideau qu'on abaisse sur le secteur. Dehors, personne ne verra rien. */
+#fx-voile {
+  position: fixed; inset: 0; z-index: 88; pointer-events: none;
+  background: #040406;
+  transform: translateY(-101%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  will-change: transform;
+}
+#fx-voile.tombe {
+  transform: translateY(0);
+  transition: transform .78s cubic-bezier(.7,.02,.3,1);
+}
+#fx-voile.leve {
+  transform: translateY(101%);
+  transition: transform .62s cubic-bezier(.6,.02,.3,1);
+}
+#fx-voile .couture {
+  position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--sang-vif), var(--sang), var(--sang-vif), transparent);
+  box-shadow: 0 0 26px rgba(255, 45, 26, .85);
+}
+#fx-voile .kanji {
+  font-family: var(--jp); font-size: clamp(6rem, 26vw, 18rem);
+  color: rgba(233, 226, 212, .045); line-height: 1;
+  position: absolute; user-select: none;
+}
+#fx-voile .dit {
+  position: relative; z-index: 2; max-width: 34ch; text-align: center;
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: clamp(1.05rem, 3vw, 1.6rem); color: var(--os-faible);
+  padding: 0 24px; text-wrap: balance;
+}
+@media (prefers-reduced-motion: reduce) {
+  #fx-voile.tombe, #fx-voile.leve { transition-duration: .2s !important; }
+}
+
+/* ---- le formulaire de déclaration -------------------------------------
+   À gauche on interroge, à droite le dossier se remplit tout seul. */
+.formulaire {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: clamp(20px, 4vw, 52px); align-items: start; margin-top: 26px;
+}
+@media (max-width: 900px) { .formulaire { grid-template-columns: 1fr; } }
+
+.feuille {
+  border: var(--hair); padding: 20px 22px;
+  background: linear-gradient(180deg, rgba(233,226,212,.025), transparent 60%);
+  position: sticky; top: 24px;
+}
+@media (max-width: 900px) { .feuille { position: static; order: -1; } }
+
+.lignes-dossier { margin-top: 14px; display: flex; flex-direction: column; gap: 9px; }
+.ligne-dossier { display: flex; flex-direction: column; gap: 2px; padding-bottom: 8px; border-bottom: 1px dotted rgba(233,226,212,.12); }
+.ligne-dossier b {
+  font-family: var(--mono); font-size: 9px; font-weight: 400;
+  letter-spacing: .24em; text-transform: uppercase; color: var(--os-mort);
+}
+.ligne-dossier .valeur { font-weight: 300; font-size: .98rem; color: rgba(233,226,212,.2); font-style: italic; }
+.ligne-dossier .valeur.inscrite {
+  color: var(--os); font-style: normal;
+  animation: inscrire .5s var(--ease) both;
+}
+@keyframes inscrire {
+  from { opacity: 0; transform: translateX(-6px); filter: blur(2px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.code-dossier {
+  margin-top: 18px; font-family: var(--mono); font-size: 1.05rem;
+  letter-spacing: .3em; color: var(--or); text-align: center;
+  border-top: var(--hair); padding-top: 14px;
+}
+
+.precision {
+  font-style: italic; font-weight: 300; color: var(--os-mort);
+  max-width: 52ch; margin: -14px 0 22px; font-size: 1rem;
+}
+.consequence-inscrite {
+  margin-top: 20px; font-family: var(--mono); font-size: 11px;
+  letter-spacing: .1em; color: var(--sang-vif); max-width: 60ch; line-height: 1.7;
+}
+
+/* ---- conséquences de la déclaration, affichées sans euphémisme -------- */
+.notes-formulaire { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.note-formulaire {
+  display: grid; grid-template-columns: 106px 1fr; gap: 14px; align-items: baseline;
+  padding-bottom: 8px; border-bottom: 1px dotted rgba(233,226,212,.1);
+}
+.note-formulaire b {
+  font-family: var(--mono); font-size: 9px; font-weight: 400;
+  letter-spacing: .2em; text-transform: uppercase; color: var(--os-mort);
+}
+.note-formulaire span { font-weight: 300; font-size: .98rem; color: var(--os-faible); }
+@media (max-width: 560px) { .note-formulaire { grid-template-columns: 1fr; gap: 2px; } }
+
+/* ---- ordre de mission -------------------------------------------------- */
+.ordre-mission {
+  border-left: 2px solid var(--sang); padding: 4px 0 4px 20px; margin: 22px 0 26px;
+  max-width: 68ch;
+}
+.lieu-mission { font-size: 1.45rem; font-weight: 300; margin: 6px 0 8px; }
+.signalement { font-weight: 300; color: var(--os-faible); margin: 0 0 10px; }
+.consigne { font-style: italic; color: var(--sang-vif); margin: 0; font-weight: 300; }
+
+.journal p.troue { color: var(--os-mort); letter-spacing: .5em; }
+
+/* une réponse cochée ferme la rubrique : le reste s'efface, le choix reste */
+.reponse.retenue {
+  border-left-color: var(--sang); color: var(--os);
+  background: linear-gradient(90deg, rgba(179,18,23,.14), transparent 70%);
+  padding-left: 30px; opacity: 1;
+}
+.reponse.retenue .murmure { opacity: 1; color: var(--sang); transform: none; }
+.reponse.ecartee { opacity: .14; }
+/* la note d'une option écartée ne doit plus réserver sa place */
+.reponse.ecartee .murmure { display: none; }
+.reponse:disabled { cursor: default; }
+.reponse.ecartee:hover { border-left-color: rgba(233,226,212,.14); background: none; padding-left: 20px; color: var(--os-faible); }
+
+/* ---- ce dont le fléau était fait ------------------------------------- */
+.exorcisme {
+  border-left: 2px solid var(--or); padding: 6px 0 6px 20px;
+  margin: 24px 0 26px; max-width: 66ch;
+}
+.ligne-exorcisme {
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: clamp(1.05rem, 2.4vw, 1.35rem); color: var(--or); margin: 8px 0 0;
+}
+.ligne-exorcisme.faible { color: var(--os-faible); font-size: 1rem; }
+
+/* Sur téléphone, la feuille passe SOUS la question et ne montre que ce qui
+   est déjà inscrit : dix rubriques vides repoussaient la question hors de
+   l'écran, et c'est la question qu'on est venu lire. */
+@media (max-width: 900px) {
+  .feuille { position: static; order: 1; padding: 16px 18px; }
+  .formulaire > div:first-child { order: 0; }
+  .ligne-dossier:not(.remplie) { display: none; }
+  .feuille .lignes-dossier:empty + .code-dossier { margin-top: 10px; }
+  .code-dossier { margin-top: 14px; padding-top: 12px; font-size: .95rem; }
+}
+
+/* Sans souris, il n'y a pas de survol : la conséquence d'une réponse doit
+   être lisible d'emblée, sinon elle réserve sa place sans jamais s'afficher. */
+@media (hover: none) {
+  .reponse .murmure { opacity: .75; transform: none; color: var(--sang); }
+  .reponse { padding: 12px 16px; }
+}

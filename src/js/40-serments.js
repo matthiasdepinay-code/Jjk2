@@ -157,19 +157,36 @@
     return R.shuffle(out);
   }
 
-  /* Agrège les effets des serments signés en un modificateur unique. */
-  function agreger(signes) {
+  /* Agrège la déclaration ET les serments en un modificateur unique.
+     La déclaration est la base : elle est déjà signée, elle aussi. */
+  function agreger(signes, base) {
     const m = {
       degatsMult: 1, degatsRecusMult: 1, pvMaxMult: 1, soinMult: 1,
       critBonus: 0, critMult: 1, energieBonus: 0, energieDepart: 0, enMaxBonus: 0,
-      remise: 0, frappeMult: 1, domaineMult: 1, domaineTours: 0, rancune: 0, raffinementBonus: 0,
+      remise: 0, coutDelta: 0, frappeMult: 1, domaineMult: 1, domaineTours: 0, domaineCout: 0,
+      rancune: 0, raffinementBonus: 0, enMaxDelta: 0,
       interdit: {}, masqueVieEnnemi: false, masqueJournal: false, coupeSon: false,
       pasDeRepetition: false, domaineUnique: false, effaceToutALaMort: false,
       limiteTours: 0,
+      coutChair: 0, journalTrouble: false, differe: false, saigneeSystematique: false,
+      elanParTour: 0, statutDouble: false, bonusMarque: 0, rate: 0, epuisement: 0,
+      retour: 0, lisible: 0,
     };
     /* chaque serment signé affine le territoire : c'est ce qui décide
        d'un affrontement d'extensions, et c'est ce qu'on a payé pour */
     m.raffinementBonus = (signes || []).length * 22;
+    /* on part de ce que le formulaire a déclaré */
+    if (base) {
+      for (const k in base) {
+        const v = base[k];
+        if (typeof v === 'number') {
+          if (/Mult$/.test(k)) m[k] = (m[k] == null ? 1 : m[k]) * v;
+          else m[k] = (m[k] || 0) + v;
+        } else if (typeof v === 'boolean') { if (v) m[k] = true; }
+        else m[k] = v;
+      }
+      if (base.enMaxDelta) m.enMaxBonus = (m.enMaxBonus || 0) + base.enMaxDelta;
+    }
     (signes || []).forEach(s => {
       const e = s.eff || {};
       if (e.degatsMult) m.degatsMult *= e.degatsMult;

@@ -53,7 +53,8 @@
   function inhumer(fiche) {
     const r = lire();
     r.epitaphes.unshift({
-      graine: fiche.graine, nom: fiche.nom, technique: fiche.technique, nomJp: fiche.nomJp,
+      graine: fiche.graine, dossier: fiche.dossier, declaration: fiche.declaration, poids: fiche.poids,
+      nom: fiche.nom, technique: fiche.technique, nomJp: fiche.nomJp,
       tueur: fiche.tueur, tour: fiche.tour, grade: fiche.grade,
       serments: fiche.serments || [], date: Date.now(),
       derniersMots: fiche.derniersMots || '',
@@ -72,7 +73,7 @@
     const e = r.epitaphes[0];
     if (!e) return null;
     return {
-      id: 'revenant:' + e.graine + ':' + e.date,
+      id: 'revenant:' + (e.dossier || e.graine) + ':' + e.date,
       nom: e.nom ? ('Ce qui reste de ' + e.nom) : 'Ce qui reste de toi',
       grade: r.morts >= 4 ? 'spécial' : (r.morts >= 2 ? 'semi-spécial' : '1'),
       origine: "La peur, très ordinaire, de retrouver sa propre écriture dans une lettre qu'on n'a pas écrite.",

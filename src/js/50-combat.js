@@ -18,6 +18,7 @@
     corrosion: { nom: 'Corrosion', type: 'mauvais', desc: 'Perd 1 énergie par tour.' },
     scelle:    { nom: 'Scellé', type: 'mauvais', desc: 'Territoire impossible.' },
     echo:      { nom: 'Écho', type: 'mauvais', desc: 'Le dernier coup se répète.' },
+    differe:   { nom: 'Différé', type: 'mauvais', desc: 'Une loi déjà énoncée tombera au battement suivant.' },
     lecture:   { nom: 'Lecture', type: 'bon', desc: 'Coup critique quasi assuré.' },
     elan:      { nom: 'Élan', type: 'bon', desc: 'Dégâts augmentés.' },
     sursis:    { nom: 'Sursis', type: 'bon', desc: 'Survit une fois à un coup fatal.' },
@@ -63,12 +64,41 @@
       raison: 'Ta technique est liée.',
       exec(D, a, d, R) {
         const ev = [];
-        D.degats(ev, a, d, 2.30, { verbe: 'impose', technique: true });
+        const m = a.mods;
+        /* faille déclarée « condition stricte » : la loi refuse, parfois */
+        if (m.rate && R.chance(m.rate)) {
+          ev.push({ t: 'rate', qui: a.cle });
+          return ev;
+        }
+        if (m.differe) {
+          /* cadence différée : la loi s'applique au battement suivant,
+             majorée de moitié. On l'inscrit, on ne la porte pas encore. */
+          const pose = poser(d, 'differe', 2, 0);
+          pose.val = (pose.val || 0) + Math.round(a.attaque * 2.30 * 1.5 * (m.degatsMult || 1));
+          pose.par = a.cle;
+          ev.push({ t: 'differe', qui: d.cle, tours: 1 });
+        } else {
+          D.degats(ev, a, d, 2.30, { verbe: 'impose', technique: true });
+        }
         const par = { soustraction: 'fracture', 'échange': 'corrosion', 'répétition': 'echo', mesure: 'marque',
                       lien: 'lie', seuil: 'scelle', 'témoignage': 'marque', 'métamorphose': 'saignee' };
         const id = par[a.archetype] || 'marque';
         poser(d, id, 3, Math.round(a.attaque * 0.20));
         ev.push({ t: 'statut', qui: d.cle, id });
+        /* cadence continue : la saignée est systématique */
+        if (m.saigneeSystematique) {
+          poser(d, 'saignee', 3, Math.max(2, Math.round(a.attaque * 0.20)));
+          ev.push({ t: 'statut', qui: d.cle, id: 'saignee' });
+        }
+        /* cible étendue : un second statut, tiré parmi les autres */
+        if (m.statutDouble) {
+          const autres = ['fracture', 'corrosion', 'marque', 'saignee', 'lie'].filter(x => x !== id);
+          const id2 = R.pick(autres);
+          poser(d, id2, 2, Math.round(a.attaque * 0.14));
+          ev.push({ t: 'statut', qui: d.cle, id: id2 });
+        }
+        /* faille déclarée « épuisement » : le battement suivant sera creux */
+        if (m.epuisement) a.dette = (a.dette || 0) + m.epuisement;
         return ev;
       },
     },
@@ -200,7 +230,7 @@
     return {
       cle: 'joueur', nom: nomJoueur || 'Toi', sousTitre: tech.nom,
       pv: pvMax, pvMax,
-      enMax: Math.max(3, corps.enMax + mods.enMaxBonus), en: 0,
+      enMax: Math.max(4, corps.enMax + (mods.enMaxBonus || 0)), en: 0,
       attaque: corps.attaque, crit: corps.crit + mods.critBonus, soin: corps.soin,
       archetype: tech.archetype, domaine: tech.domaine, technique: tech,
       statuts: [], tension: 0, domaineTours: 0, domaineUtilise: false,
@@ -224,7 +254,12 @@
      l'attaque, mais elle pose « Marqué » (+30 %) et les critiques ajoutent
      encore. Mesuré en simulation, pas supposé — c'est 3,4, pas 1,9.       */
   const REGLAGE = {
-    rendementJoueur: 3.4,   /* dégâts moyens d'un tour de joueur, en multiples d'attaque */
+    /* Dégâts moyens d'un tour de joueur, en multiples d'attaque. Mesuré,
+       pas supposé : 3,4 pour la mécanique de base, multiplié par le gain
+       moyen d'une déclaration (×1,56 relevé sur 3000 formulaires tirés).
+       On calibre sur la déclaration MOYENNE : un bon formulaire doit payer,
+       un mauvais doit se sentir.                                         */
+    rendementJoueur: 5.0,
     rendementFleau: 1.9,    /* idem côté fléau */
     expoAttaque: 0.40,      /* la courbe pèse à plein sur les PV du fléau, à peine sur sa frappe :
                                une descente doit s'allonger, pas se raccourcir brutalement */
@@ -270,9 +305,15 @@
 
   function MODS_NEUTRES() {
     return { degatsMult: 1, degatsRecusMult: 1, pvMaxMult: 1, soinMult: 1, critBonus: 0, critMult: 1,
-      energieBonus: 0, energieDepart: 0, enMaxBonus: 0, remise: 0, frappeMult: 1, domaineMult: 1,
-      domaineTours: 0, rancune: 0, interdit: {}, masqueVieEnnemi: false, masqueJournal: false,
-      coupeSon: false, pasDeRepetition: false, domaineUnique: false, effaceToutALaMort: false, limiteTours: 0 };
+      energieBonus: 0, energieDepart: 0, enMaxBonus: 0, enMaxDelta: 0, remise: 0, coutDelta: 0,
+      frappeMult: 1, domaineMult: 1, domaineTours: 0, domaineCout: 0, rancune: 0, raffinementBonus: 0,
+      interdit: {}, masqueVieEnnemi: false, masqueJournal: false,
+      coupeSon: false, pasDeRepetition: false, domaineUnique: false, effaceToutALaMort: false, limiteTours: 0,
+      /* déclarés au formulaire, pas signés : ce sont les conséquences des
+         dix rubriques, et elles pèsent autant que les serments */
+      coutChair: 0, journalTrouble: false, differe: false, saigneeSystematique: false,
+      elanParTour: 0, statutDouble: false, bonusMarque: 0, rate: 0, epuisement: 0,
+      retour: 0, lisible: 0 };
   }
 
   /* ------------------------------------------------------------------
@@ -339,7 +380,7 @@
 
       const lec = statut(a, 'lecture');
       const lisait = !!lec;
-      const chanceCrit = clamp((a.crit || 0.1) + (lec ? 0.55 : 0), 0, 0.95);
+      const chanceCrit = clamp((a.crit || 0.1) + (lec ? 0.55 : 0) + (d.mods.lisible || 0), 0, 0.95);
       const crit = R.chance(chanceCrit);
       if (crit) base *= 1.85 * (a.mods.critMult || 1);
       if (lec) { retirer(a, 'lecture'); }
@@ -352,7 +393,7 @@
          à l'aveugle. Le fixer — Lire l'adversaire — le rend solide, et
          c'est exactement ce que sa fiche annonce. */
       if (d.temperament && d.temperament.fuyant && !lisait && !statut(d, 'marque') && !o.surAuBut) base *= 0.68;
-      if (statut(d, 'marque')) base *= 1.30;
+      if (statut(d, 'marque')) base *= 1.30 + (a.mods.bonusMarque || 0);
       base *= d.mods.degatsRecusMult || 1;
       if (d.domaineTours > 0 && !o.surAuBut) base *= 0.70;
 
@@ -369,6 +410,12 @@
 
       const ec = statut(d, 'echo');
       ev.push({ t: 'degats', par: a.cle, cible: d.cle, montant: q, crit, verbe: o.verbe || 'frappe', gros: !!o.gros, surAuBut: !!o.surAuBut });
+      /* faille déclarée « retour » : la loi ne distingue pas son porteur */
+      if (o.technique && a.mods.retour) {
+        const r = Math.max(1, Math.round(q * a.mods.retour));
+        a.pv -= r;
+        ev.push({ t: 'retour', qui: a.cle, montant: r });
+      }
       if (ec) {
         const q2 = Math.max(1, Math.round(q * 0.45));
         d.pv -= q2; ec.tours -= 1;
@@ -397,9 +444,13 @@
       });
     };
 
+    const TECHNIQUES = { technique: 1, maximum: 1 };
     function coutReel(act, a) {
       if (!act.cout) return 0;
-      return Math.max(1, act.cout - (a.mods.remise || 0));
+      let c = act.cout - (a.mods.remise || 0);
+      if (TECHNIQUES[act.id]) c += (a.mods.coutDelta || 0);
+      if (act.id === 'domaine') c += (a.mods.domaineCout || 0);
+      return Math.max(1, Math.round(c));
     }
 
     /* ---- un tour complet ----------------------------------------------- */
@@ -415,6 +466,13 @@
       a.en -= cout;
       a.derniereAction = id;
       ev.push({ t: 'acte', qui: 'joueur', nom: id === 'technique' && a.technique ? a.technique.nom : act.nom, id });
+      /* prélèvement déclaré sur la chair : il se paie à l'énoncé, pas après */
+      if (TECHNIQUES[id] && a.mods.coutChair) {
+        const prix = Math.max(1, Math.round(a.pvMax * a.mods.coutChair));
+        a.pv -= prix;
+        ev.push({ t: 'chair', qui: a.cle, montant: prix });
+        if (a.pv <= 0) { finir(ev, 'ennemi'); return ev; }
+      }
       Array.prototype.push.apply(ev, act.exec(D, a, d, R) || []);
 
       if (d.pv <= 0) { finir(ev, 'joueur'); return ev; }
@@ -448,6 +506,14 @@
     function finDeTour(D) {
       const ev = [];
       [D.joueur, D.ennemi].forEach(c => {
+        /* la loi différée tombe maintenant */
+        const df = statut(c, 'differe');
+        if (df && df.val) {
+          const q = Math.max(1, Math.round(df.val * (c.mods.degatsRecusMult || 1)));
+          c.pv -= q;
+          ev.push({ t: 'degats', par: df.par || 'differe', cible: c.cle, montant: q, verbe: 'rattrape', gros: true });
+          retirer(c, 'differe');
+        }
         const sg = statut(c, 'saignee');
         if (sg) {
           const q = Math.max(1, sg.val || 3);
@@ -456,8 +522,18 @@
         }
         if (statut(c, 'corrosion')) c.en = Math.max(0, c.en - 1);
         /* +3 par tour : une technique innée (3) est ainsi soutenable,
-           et mettre de côté les 8 d'une extension reste un vrai choix. */
-        c.en = Math.min(c.enMax, c.en + 3 + (c.mods.energieBonus || 0));
+           et mettre de côté les 6 d'une extension reste un vrai choix. */
+        let gain = 3 + (c.mods.energieBonus || 0);
+        if (c.dette) { gain -= c.dette; c.dette = 0; }
+        c.en = Math.max(0, Math.min(c.enMax, c.en + gain));
+        /* cadence cumulative : l'élan monte tant qu'on ne se protège pas */
+        if (c.mods.elanParTour) {
+          if (c.derniereAction === 'garde') { retirer(c, 'elan'); }
+          else {
+            const el = poser(c, 'elan', 99, 0);
+            el.val = Math.min(0.75, (el.val || 0) + c.mods.elanParTour);
+          }
+        }
         c.tension = Math.min(200, c.tension + 6);
         if (c.domaineTours > 0) {
           c.domaineTours--;

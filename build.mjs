@@ -10,7 +10,7 @@ const ROOT = path.dirname(new URL(import.meta.url).pathname);
 const SRC = path.join(ROOT, 'src');
 
 const ORDRE = [
-  '00-core.js', '10-audio.js', '20-fx.js', '30-forge.js', '40-serments.js',
+  '00-core.js', '10-audio.js', '20-fx.js', '25-taxonomie.js', '30-forge.js', '40-serments.js',
   '50-combat.js', '60-memoire.js', '70-ui.js', '75-ecrans.js', '78-duel.js', '80-boot.js',
 ];
 
@@ -38,11 +38,17 @@ const DESC = "Générateur déterministe de techniques maudites et duel occulte 
 
 /* Les polices viennent de Google Fonts, seul hôte de feuilles admis côté
    Artifact. La page reste correcte sans elles : chaque pile a un repli réel. */
-const POLICES = '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
-  '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?' +
+const URL_POLICES = 'https://fonts.googleapis.com/css2?' +
   'family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400' +
   '&family=IBM+Plex+Mono:wght@300;400;500' +
-  '&family=Noto+Serif+JP:wght@400;700&display=swap">';
+  '&family=Noto+Serif+JP:wght@400;700&display=swap';
+/* Chargées SANS bloquer le rendu : une feuille de style distante bloque le
+   premier paint, et si l'hôte ne répond pas le jeu reste noir le temps du
+   délai réseau. Ici la page s'affiche tout de suite dans ses polices de
+   repli, et les vraies prennent la place quand elles arrivent. */
+const POLICES = '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
+  '<link rel="stylesheet" href="' + URL_POLICES + '" media="print" onload="this.media=\'all\';this.onload=null">\n' +
+  '<noscript><link rel="stylesheet" href="' + URL_POLICES + '"></noscript>';
 
 const corps = `<title>${TITRE}</title>
 <meta name="description" content="${DESC}">

@@ -19,9 +19,9 @@
     const g = G();
     const o = opts || {};
     g.corps = JJK.ecrans.appliquerMaturation(g.ref, g.maturation);
-    if (!g.mods) g.mods = JJK.serments.agreger(g.serments);
+    if (!g.mods) JJK.ecrans.assembler();
 
-    const joueur = JJK.combat.combattantJoueur(g.tech, g.corps, g.mods, g.graine);
+    const joueur = JJK.combat.combattantJoueur(g.tech, g.corps, g.mods, g.porteur);
     const R = new JJK.core.Rng('fleau:' + (fleau.id || fleau.nom) + ':' + g.descente);
     const ennemi = JJK.combat.combattantFleau(fleau, g.ref, R, o.courbe || 1);
     if (o.revenant) {
@@ -31,7 +31,7 @@
       ennemi.profil = JJK.combat.profilDe(fleau.grade);
       ennemi.attaque = Math.round(ennemi.attaque * 1.10);
     }
-    D = JJK.combat.creer({ seed: g.tech.seed, joueur, ennemi, numero: g.descente });
+    D = JJK.combat.creer({ seed: g.tech.code, joueur, ennemi, numero: g.descente });
     N.decor = null;
     JJK.fx.domainClose();
     document.body.classList.remove('domaine-calme');
@@ -183,7 +183,16 @@
 
   function journal(texte, cls) {
     if (!N.journal) return;
-    if (G().mods && G().mods.masqueJournal) return;
+    const m = G().mods || {};
+    if (m.masqueJournal) return;
+    /* prélèvement déclaré sur la mémoire : le compte rendu se troue */
+    if (m.journalTrouble && Math.random() < 0.45) {
+      const p0 = el('p', 'troue');
+      p0.textContent = '……';
+      N.journal.appendChild(p0);
+      N.journal.scrollTop = N.journal.scrollHeight;
+      return;
+    }
     const p = el('p', cls || '');
     p.innerHTML = texte;
     N.journal.appendChild(p);
@@ -262,13 +271,19 @@
         break;
       }
 
-      case 'soin':
+      case 'soin': {
         JJK.audio.heal();
         JJK.fx.inkFade(0.22);
         journal(NOM(e.qui) + ' recoud <span class="n">+' + e.montant + '</span>', 'bien');
+        /* cercle inverse : la même énergie, prise à l'envers */
+        if (e.qui === 'joueur') {
+          const l = U.pioche(((C().ambiance || {}).inverse) || [], '');
+          if (l && Math.random() < 0.55) journal(esc(l), '');
+        }
         majTout();
         await wait(280);
         break;
+      }
 
       case 'statut': {
         const s = JJK.combat.STATUTS[e.id] || { nom: e.id };
@@ -293,6 +308,36 @@
         M().ecrire({ sermentsPretes: M().lire().sermentsPretes + 1 });
         journal('Serment improvisé. Tu abandonnes <span class="n">' + e.prix + '</span> points de vie ici, sur place.', 'mal');
         await wait(600);
+        break;
+
+      case 'chair':
+        JJK.audio.slash();
+        JJK.fx.ink(null, null, 0.6, '#b31217');
+        JJK.fx.shake(0.2);
+        journal("Le prélèvement se fait sur la chair : <span class=\"n\">−" + e.montant + '</span>.', 'mal');
+        majTout();
+        await wait(240);
+        break;
+
+      case 'retour':
+        JJK.fx.shake(0.16);
+        journal('La loi ne distingue pas son porteur : <span class="n">−' + e.montant + '</span> en retour.', 'mal');
+        majTout();
+        await wait(200);
+        break;
+
+      case 'rate':
+        JJK.audio.tick(180, 0.09, 0.07);
+        JJK.fx.shake(0.12);
+        journal('<span class="mono sang">LA LOI REFUSE.</span> Elle ne s\'applique pas ce battement-ci.', 'mal');
+        await wait(420);
+        break;
+
+      case 'differe':
+        JJK.audio.tick(300, 0.07, 0.05);
+        journal('La loi est énoncée. Elle tombera au battement suivant.', 'important');
+        majTout();
+        await wait(280);
         break;
 
       case 'second':
@@ -431,7 +476,7 @@
     const sceau = el('canvas');
     sceau.style.cssText = 'width:min(62vmin,420px);height:auto;opacity:0;transition:opacity 1.2s ease,transform 1.6s cubic-bezier(.2,.7,.2,1);transform:scale(.6) rotate(-25deg)';
     t.appendChild(sceau);
-    const graineSceau = joueur ? g.tech.seed : ('fleau:' + (D.fleau.id || D.fleau.nom));
+    const graineSceau = joueur ? g.tech.code : ('fleau:' + (D.fleau.id || D.fleau.nom));
     JJK.fx.sigil(sceau, graineSceau, { size: 460, accent: joueur ? (g.tech.couleur || '#b31217') : '#b31217' });
     requestAnimationFrame(() => { sceau.style.opacity = '1'; sceau.style.transform = 'scale(1) rotate(0deg)'; });
 
@@ -574,12 +619,32 @@
     }
   }
 
-  function ecranApres(gagne) {
+  async function ecranApres(gagne) {
     const n = U.montrer('ecran-apres');
     n.innerHTML = '';
     const g = G();
     n.appendChild(el('span', 'etiquette rouge', gagne ? 'Fléau exorcisé' : 'Contact rompu'));
-    n.appendChild(el('h1', 'titre-rituel', gagne ? 'Il ne reste <em>rien</em> à ramasser' : 'Tu es <em>sorti</em>'));
+    n.appendChild(el('h1', 'titre-rituel', gagne ? 'Il ne reste <em>rien</em> à ramasser' : 'Vous êtes <em>sorti</em>'));
+
+    /* Un fléau exorcisé laisse voir de quoi il était fait : une peur
+       humaine, datée, ordinaire. C'est le moment où tout devient
+       rétrospectivement évident, et misérable.                          */
+    if (gagne) {
+      const bloc = el('div', 'exorcisme');
+      bloc.appendChild(el('div', 'etiquette', "Origine constatée du fléau"));
+      const p0 = el('p', 'ligne-exorcisme');
+      bloc.appendChild(p0);
+      const orig = (D.fleau && D.fleau.origine) ? D.fleau.origine : '';
+      const date = U.pioche(((C().ambiance || {}).exorcisme) || [], '');
+      n.appendChild(bloc);
+      await JJK.fx.type(p0, date || orig, { speed: 15, sound: false });
+      if (date && orig) {
+        const p1 = el('p', 'ligne-exorcisme faible');
+        bloc.appendChild(p1);
+        await JJK.fx.type(p1, orig, { speed: 12, sound: false });
+      }
+      JJK.fx.pulse(null, null, null, '#f2c14e', 0.8);
+    }
     const p = el('p');
     p.style.cssText = 'max-width:60ch;color:var(--os-faible);font-weight:300';
     p.textContent = gagne
@@ -620,12 +685,14 @@
     JJK.fx.shake(1.4);
     JJK.audio.hit(1.6);
     JJK.audio.stopDrone(2.5);
-    U.titreFurtif('— ' + (g.graine || '') + ' —', 9000);
+    U.titreFurtif('— ' + (g.porteur || '') + ' —', 9000);
     await wait(1500);
 
     const derniersMots = U.voix('mort', "Ce n'était pas assez.");
     const fiche = {
-      graine: g.tech.seed, nom: g.graine, technique: g.tech.nom, nomJp: g.tech.nomJp,
+      graine: JJK.core.normalizeSeed(g.porteur || ''), dossier: g.code,
+      nom: g.porteur, technique: g.tech.nom, nomJp: g.tech.nomJp,
+      declaration: g.declaration, poids: g.poids,
       tueur: D.ennemi.nom, tour: D.tour, grade: (g.grade || {}).grade || '?',
       serments: g.serments.map(s => s.nom), derniersMots, archetype: g.tech.archetype,
     };
@@ -639,7 +706,7 @@
     const flux = el('div');
     n.appendChild(flux);
     await U.dire(flux, derniersMots, { forte: true, apres: 700 });
-    await U.dire(flux, g.graine + ', porteur de « ' + g.tech.nom + ' », est tombé au tour ' + D.tour + ' devant ' + D.ennemi.nom + '.', { apres: 500 });
+    await U.dire(flux, (g.porteur || 'Le réceptacle') + ', porteur de « ' + g.tech.nom + ' », est tombé au tour ' + D.tour + ' devant ' + D.ennemi.nom + '. Dossier ' + g.code + ', clos.', { apres: 500 });
 
     if (efface) {
       await U.dire(flux, 'Tu avais signé le Serment de la Trace Effacée.', { forte: true, apres: 600 });

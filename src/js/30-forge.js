@@ -46,9 +46,19 @@
     if (pluriel) return plurielDe(m);
     return m;
   }
-  /* Mot-outil : soit le mot entier, soit une forme élidée (d', l', jusqu').
-     Sans l'ancre finale, « labyrinthe » passerait pour « la ».           */
-  const INVARIABLE = /^(?:de|du|des|la|le|les|un|une|à|au|aux|en|sans|sous|sur|par|et|contre|dans|pour|avant|après|depuis|entre|chez|vers|selon)$|^(?:d|l|qu|jusqu|puisqu|lorsqu)['\u2019]/i;
+  /* Deux prédicats, et ils ne se confondent pas.
+
+     DEBUT_COMPLEMENT repère où commence un complément : « d'un cachet »,
+     « l'oreille interne » en font partie, donc l'élision suffit à marquer
+     la frontière. Sert à couper une phrase et à borner un accord.
+
+     MOT_OUTIL repère un mot-outil ISOLÉ, pour ne jamais terminer un nom
+     sur une préposition en l'air. L'élision doit alors être le mot entier :
+     sans cela, « l'Écho » passerait pour une préposition et « Laine
+     Mouillée de l'Écho » se réduirait à « Laine Mouillée ».              */
+  const DEBUT_COMPLEMENT = /^(?:de|du|des|la|le|les|un|une|à|au|aux|en|sans|sous|sur|par|et|contre|dans|pour|avant|après|depuis|entre|chez|vers|selon)$|^(?:d|l|qu|jusqu|puisqu|lorsqu)['\u2019]/i;
+  const MOT_OUTIL = /^(?:de|du|des|la|le|les|un|une|à|au|aux|en|sans|sous|sur|par|et|contre|dans|pour|avant|après|depuis|entre|chez|vers|selon)$|^(?:d|l|qu|jusqu|puisqu|lorsqu)['\u2019]$|^(?:jusqu|qu)['\u2019](?:\u00e0|au|aux)$/i;
+  const INVARIABLE = DEBUT_COMPLEMENT;
 
   /* Le corpus écrit de belles phrases : « Os hyoïde, seul os qui ne touche
      aucun autre ». Un nom de technique veut un syntagme, pas une notice.
@@ -74,7 +84,7 @@
       const m = /\s+\S+$/.exec(s2);
       if (!m) break;
       const dernier = m[0].trim();
-      if (INVARIABLE.test(dernier) || /['\u2019]$/.test(dernier)) s2 = s2.slice(0, m.index).trim();
+      if (MOT_OUTIL.test(dernier)) s2 = s2.slice(0, m.index).trim();
       else break;
     }
     return s2 || String(t || '').trim();
@@ -114,6 +124,20 @@
     const art = pluriel ? 'les' : (genre === 'f' ? 'la' : (genre === 'e' ? "l'" : 'le'));
     return { nu, genre, art, pluriel };
   }
+  /* « L'Attente » ne dit pas son genre. Le registre le sait : sans cette
+     table, on écrirait « Attente Confidentiel ».                        */
+  const GENRE_ESSENCE = {
+    echo: 'm', attente: 'f', inventaire: 'm', anesthesie: 'f',
+    'eau-dormante': 'f', ankylose: 'f', anonymat: 'm',
+  };
+  function genreEssence(essence, decoupee) {
+    const g = GENRE_ESSENCE[essence && essence.id];
+    if (g) return g;
+    if (decoupee.pluriel) return 'p';
+    if (decoupee.genre === 'e') return /(tion|sion|ance|ence|ure|ité|esse|ie|ée|elle)$/i.test(decoupee.nu) ? 'f' : 'm';
+    return decoupee.genre;
+  }
+
   function avecArticle(nom) {
     const d = decoupe(nom);
     return fr(d.art + (d.art === "l'" ? '' : ' ') + d.nu);
@@ -177,108 +201,174 @@
   ].reduce((acc, [n, f]) => { for (let i = 0; i < n; i++) acc.push(f); return acc; }, []);
 
   /* ---- la forge --------------------------------------------------------
-     Tout ce qui suit ne dépend que de la graine. Rien d'autre.           */
-  function forgeTechnique(rawSeed) {
-    const seed = normalizeSeed(rawSeed) || 'sans nom';
-    const R = new Rng('technique:' + seed);
+     Une technique n'est plus lue dans un nom : elle est DÉCLARÉE. Les dix
+     rubriques du formulaire restreignent le corpus et fixent la mécanique ;
+     ce qui reste de latitude est tiré du code de dossier, donc reproductible.
+     Deux porteurs qui déclarent la même chose portent la même loi. C'est
+     le principe même d'un registre.                                      */
+
+  function T() { return JJK.taxo; }
+
+  function parFamille(entrees, ids) {
+    const set = {};
+    (ids || []).forEach(i => { set[i] = 1; });
+    const gardes = entrees.filter(e => set[e.id]);
+    return gardes.length ? gardes : entrees;
+  }
+
+  /* classement stable : la famille d'abord, l'affinité ensuite */
+  function choisir(pool, ref, R, top) {
+    if (!pool.length) return null;
+    const notes = pool.map(o => ({ o, n: affinite(ref, o.id || o.nom || '') }));
+    notes.sort((a, b) => b.n - a.n);
+    return R.pick(notes.slice(0, Math.max(1, Math.min(top || 3, notes.length)))).o;
+  }
+
+  function forgeDepuisDeclaration(decl) {
+    const tx = T();
+    const code = tx.codeDeclaration(decl);
+    const R = new Rng('technique:' + code);
 
     const essences = liste('essences'), vecteurs = liste('vecteurs'), lois = liste('lois');
     const domaines = liste('domaines'), matieres = (C().matieres || {});
     const nomen = C().nomenclature || {};
 
-    const essence = R.pick(essences) || { id: 'x', nom: 'La Cendre', kanji: '灰', romaji: 'hai', concept: '', sensoriel: '', couleur: '#b31217', emotion_source: '' };
-    const loi = meilleur(lois, essence.id || essence.nom, R.fork('loi'), 5) || { id: 'y', nom: 'Loi muette', enonce: '', archetype: 'seuil' };
-    const vecteur = meilleur(vecteurs, (loi.id || '') + (essence.id || ''), R.fork('vecteur'), 5) || { id: 'z', nom: 'Par le contact', condition: '', portee: 'contact' };
-    const domaine = meilleur(domaines, (loi.id || '') + ':' + (essence.id || ''), R.fork('domaine'), 4) || null;
+    /* 1. le substrat choisit la famille d'essences */
+    const essence = choisir(parFamille(essences, tx.ESSENCES[decl.substrat]), 'e:' + code, R.fork('essence'), 3)
+      || { id: 'x', nom: 'La Cendre', kanji: '灰', romaji: 'hai', concept: '', sensoriel: '', couleur: '#b31217', emotion_source: '' };
+
+    /* 2. l'opérateur restreint les archétypes de loi */
+    const archs = tx.ARCHETYPES[decl.operateur] || [];
+    const loisOk = lois.filter(l => archs.indexOf(l.archetype) >= 0);
+    const loi = choisir(loisOk.length ? loisOk : lois, essence.id + ':' + code, R.fork('loi'), 3)
+      || { id: 'y', nom: 'Loi muette', enonce: '', archetype: 'seuil' };
+
+    /* 3. la condition et la portée notent les vecteurs ; on ne filtre pas
+          durement, sinon certaines combinaisons ne trouveraient rien */
+    const idsCond = tx.CONDITIONS[decl.condition] || [];
+    const porteesOk = tx.PORTEES[decl.portee] || [];
+    const notesVec = vecteurs.map(v => ({
+      v, n: (idsCond.indexOf(v.id) >= 0 ? 1000 : 0)
+         + (porteesOk.indexOf(v.portee) >= 0 ? 600 : 0)
+         + affinite(loi.id + code, v.id),
+    })).sort((a, b) => b.n - a.n);
+    const vecteur = (R.fork('vecteur').pick(notesVec.slice(0, 3)) || { v: null }).v
+      || { id: 'z', nom: 'Par le contact', condition: '', portee: 'contact' };
+    /* Le Bureau ne relève une incompatibilité que si l'écart est réel :
+       le corpus n'offre pas un vecteur pour chaque croisement, et une
+       rubrique voisine (courte au lieu de moyenne) reste tenue.          */
+    const ECHELLE = { 'contact': 0, 'courte': 1, 'moyenne': 2, 'longue': 3, 'illimitée conditionnelle': 3 };
+    const DECLAREE = { contact: 0, courte: 1, moyenne: 2, lointaine: 3 };
+    const ecart = Math.abs((ECHELLE[vecteur.portee] == null ? 2 : ECHELLE[vecteur.portee]) - (DECLAREE[decl.portee] == null ? 2 : DECLAREE[decl.portee]));
+    const tenu = {
+      condition: idsCond.indexOf(vecteur.id) >= 0,
+      portee: porteesOk.indexOf(vecteur.portee) >= 0 || ecart <= 1,
+      ecart,
+    };
+
+    /* 4. le territoire déclaré choisit la famille d'extensions */
+    const domaine = choisir(parFamille(domaines, tx.TERRITOIRES[decl.territoire]), loi.id + ':' + code, R.fork('domaine'), 3) || null;
+
+    /* 5. le siège choisit l'organe */
+    const re = tx.SIEGES[decl.siege];
+    const organesOk = (matieres.organes || []).filter(o => re && re.test(o));
+    const organeBrut = R.fork('organe').pick(organesOk.length ? organesOk : (matieres.organes || ['la moelle']));
 
     const matiere = raccourcir(R.pick(matieres.matieres || ['cendre']), 3);
-    /* « Un Demi Cendres » n'existe pas ; « Zéro Cendre » si. */
     const nombres = (matieres.nombres || ['Neuf'])
       .filter(x => !/^(un|une|un demi|une demie|zéro)$/i.test(String(x).trim()));
     const nombre = R.pick(nombres.length ? nombres : ['Neuf']);
     const lieu = R.pick(matieres.lieux || ['une salle sans porte']);
-    /* on retire l'article AVANT de raccourcir, sinon « le labyrinthe de
-       l'oreille interne » se réduit à « le », ce qui ne nomme rien.      */
-    const organe = raccourcir(String(R.pick(matieres.organes || ['la moelle']))
-      .replace(/^(les|le|la|l['\u2019]|des|du|de\s+l['\u2019]|de\s+la|de)\s*/i, ''), 3);
+    const organe = raccourcir(String(organeBrut)
+      .replace(/^(les|le|la|l[\u2019\']|des|du|de\s+l[\u2019\']|de\s+la|de)\s*/i, ''), 3);
     const prefixe = R.pick(nomen.prefixes || ['Rite']);
     const suffixe = R.pick(nomen.suffixes || ['Perpétuel']);
 
     const d = decoupe(essence.nom);
-    /* « Neuf Lait Tourné » est une faute ; « Neuf Laits Tournés » n'en est pas une.
-       On a par ailleurs écarté « Un » : le genre d'une matière est incertain. */
     const matiereN = titre(plurielDe(matiere));
     const jetons = {
       ESSENCE: essence.nom, ESSENCE_NU: d.nu, ESSENCE_ART: avecArticle(essence.nom),
-      GENRE: d.pluriel ? 'p' : d.genre,
+      GENRE: genreEssence(essence, d),
       LOI: loi.nom, VECTEUR: vecteur.nom, NOMBRE: nombre,
       MATIERE: titre(matiere), NOMBRE_MATIERE: nombre + ' ' + matiereN,
       PREFIXE: prefixe, SUFFIXE: suffixe, ORGANE: titre(organe),
     };
-    let nom = titre(sansJointFinal(PATRONS[R.int(PATRONS.length)](jetons)));
-    /* deux techniques de même nom, c'est une insulte au registre */
-    nom = nom.replace(/\s+/g, ' ').trim();
+    const nom = titre(sansJointFinal(PATRONS[R.int(PATRONS.length)](jetons))).replace(/\s+/g, ' ').trim();
 
     const kp = R.pick(KANJI_PRE), ks = R.pick(KANJI_SUF);
     const nomJp = (kp.k || '') + (essence.kanji || '呪') + ks.k;
     const romaji = ((kp.r ? kp.r + '-' : '') + (essence.romaji || 'ju') + '-' + ks.r).replace(/--+/g, '-');
-
     const couleur = essence.couleur && /^#[0-9a-f]{3,8}$/i.test(essence.couleur) ? essence.couleur : '#b31217';
 
     return {
-      seed, graineBrute: String(rawSeed || ''),
+      declaration: decl, code,
       nom, nomJp, romaji, couleur,
       essence, vecteur, loi, domaine,
       matiere, nombre, lieu, organe,
-      sigil: 'sceau:' + seed,
+      sigil: 'sceau:' + code,
       archetype: loi.archetype || 'seuil',
       revers: loi.inversion || '',
       maximum: loi.maximum || '',
+      tenu,
     };
   }
 
-  /* ---- le réceptacle : ce que le corps fait de la technique ------------
-     Les réponses au rituel ne changent PAS la technique.
-     Elles changent seulement la manière dont le corps la supporte.      */
-  const AXES = ['vigueur', 'flux', 'tranchant', 'lucidite', 'inversion'];
-  const POIDS_ARCHETYPE = {
-    soustraction: { tranchant: 2.0, lucidite: 1.2, vigueur: 0.6, flux: 1.0, inversion: 0.7 },
-    'échange':    { flux: 2.0, inversion: 1.5, lucidite: 1.0, vigueur: 0.8, tranchant: 0.8 },
-    'répétition': { flux: 1.7, vigueur: 1.4, tranchant: 1.1, lucidite: 0.8, inversion: 1.0 },
-    mesure:       { lucidite: 2.1, tranchant: 1.2, flux: 1.0, vigueur: 0.8, inversion: 0.9 },
-    lien:         { inversion: 1.9, vigueur: 1.5, flux: 1.1, lucidite: 1.0, tranchant: 0.6 },
-    seuil:        { vigueur: 2.0, tranchant: 1.3, inversion: 1.0, flux: 0.9, lucidite: 0.8 },
-    'témoignage': { lucidite: 1.8, flux: 1.4, inversion: 1.2, tranchant: 0.8, vigueur: 0.9 },
-    'métamorphose': { tranchant: 1.6, flux: 1.4, vigueur: 1.2, inversion: 1.1, lucidite: 0.8 },
-  };
-
-  function forgeReceptacle(rawSeed, reponses) {
-    const seed = normalizeSeed(rawSeed) || 'sans nom';
-    const R = new Rng('corps:' + seed + ':' + (reponses || []).join(','));
-    const poids = { vigueur: 1, flux: 1, tranchant: 1, lucidite: 1, inversion: 1 };
-    (reponses || []).forEach(a => {
-      const p = POIDS_ARCHETYPE[a];
-      if (!p) return;
-      AXES.forEach(k => { poids[k] += (p[k] || 1) * 0.55; });
+  /* ---- ce que la déclaration fait à la mécanique ----------------------- */
+  function profilDeclaration(decl) {
+    const tx = T();
+    const lean = { vigueur: 1, flux: 1, tranchant: 1, lucidite: 1, inversion: 1 };
+    const mod = {};
+    const notes = [];
+    tx.AXES.forEach(a => {
+      const e = tx.effet(a.id, decl[a.id]);
+      AXES.forEach(k => { if (e.lean[k]) lean[k] *= e.lean[k]; });
+      for (const k in e.mod) {
+        const v = e.mod[k];
+        if (typeof v === 'number') {
+          /* les multiplicatifs se multiplient, les additifs s'additionnent */
+          if (/Mult$/.test(k)) mod[k] = (mod[k] == null ? 1 : mod[k]) * v;
+          else mod[k] = (mod[k] || 0) + v;
+        } else mod[k] = v;
+      }
+      if (e.note) notes.push({ axe: a.id, tag: decl[a.id], note: e.note });
     });
-    /* répartition à budget fixe : on ne peut pas être bon partout */
+    return { lean, mod, notes };
+  }
+
+  /* ---- le réceptacle ---------------------------------------------------
+     La déclaration incline le corps ; l'examen le décide. Les deux comptent,
+     et le budget reste fixe : on ne peut pas être bon partout.           */
+  const AXES = ['vigueur', 'flux', 'tranchant', 'lucidite', 'inversion'];
+
+  function forgeReceptacle(decl, poidsExamen) {
+    const tx = T();
+    const prof = profilDeclaration(decl);
+    const poids = poidsExamen || {};
+    const code = tx.codeDeclaration(decl);
+    const R = new Rng('corps:' + code + ':' + AXES.map(k => poids[k] || 0).join(''));
+
     const brut = {};
     let somme = 0;
-    AXES.forEach(k => { brut[k] = Math.max(0.15, poids[k] * R.range(0.72, 1.34)); somme += brut[k]; });
+    AXES.forEach(k => {
+      /* La racine comprime les extrêmes : une déclaration et un examen qui
+         poussent tous deux dans le même sens doivent spécialiser, pas
+         produire un corps à un seul membre.                              */
+      const b = Math.pow(prof.lean[k] * (1 + 0.38 * (poids[k] || 0)), 0.68);
+      brut[k] = Math.max(0.2, b * R.range(0.93, 1.07));
+      somme += brut[k];
+    });
     const BUDGET = 100;
     const stats = {};
     AXES.forEach(k => { stats[k] = Math.max(6, Math.round((brut[k] / somme) * BUDGET)); });
 
     const dominante = AXES.slice().sort((a, b) => stats[b] - stats[a])[0];
-    const pvMax = 90 + stats.vigueur * 3.4 | 0;
-    /* la réserve doit pouvoir contenir une extension du territoire (8),
-       sinon la moitié du jeu reste hors d'atteinte quel que soit le talent */
-    const enMax = 8 + Math.round(stats.flux / 9);
-    const enTour = 2 + (stats.flux >= 26 ? 1 : 0) + (stats.flux >= 40 ? 1 : 0);
+    const m = prof.mod;
+    const pvMax = 90 + (stats.vigueur * 3.4 | 0);
+    const enMax = 8 + Math.round(stats.flux / 9) + (m.enMaxDelta || 0);
 
     return {
-      stats, dominante,
-      pvMax, enMax, enTour,
+      stats, dominante, profil: prof,
+      pvMax, enMax: Math.max(5, enMax),
       attaque: 13 + Math.round(stats.tranchant * 0.80),
       crit: clamp(0.05 + stats.lucidite * 0.006, 0.05, 0.42),
       soin: 0.35 + stats.inversion * 0.022,
@@ -307,5 +397,9 @@
   }
   function minuscule(s) { const t = String(s || ''); return t.charAt(0).toLowerCase() + t.slice(1); }
 
-  JJK.forge = { forgeTechnique, forgeReceptacle, grade, dossier, fr, decoupe, avecArticle, accorder, plurielDe, raccourcir, AXES, affinite, liste };
+  JJK.forge = {
+    forgeDepuisDeclaration, profilDeclaration, forgeReceptacle, grade, dossier,
+    fr, decoupe, avecArticle, genreEssence, accorder, plurielDe, raccourcir, sansJointFinal,
+    AXES, affinite, liste,
+  };
 })(window);
