@@ -240,6 +240,182 @@
     "sensoriel": "Les étiquettes se vident une à une, et la personne en face vous appelle deux fois sans parvenir à dire quoi.",
     "couleur": "#A8A29B",
     "emotion_source": "la honte de son propre nom, chez qui a passé sa vie à ne pas vouloir être appelé"
+   },
+   {
+    "id": "delavage",
+    "nom": "Le Délavage",
+    "kanji": "褪色",
+    "romaji": "taishoku",
+    "concept": "La couleur d'une chose est la quantité d'attention qu'on lui porte encore ; le porteur retire l'attention et le pigment part avec elle. L'objet garde sa forme exacte et perd son nom.",
+    "sensoriel": "Les tissus rendent une eau claire, sans mousse et sans odeur. Les encres remontent en surface comme du sel, les photographies blanchissent d'abord aux visages, et le regard glisse sur ce qui a pâli sans trouver où s'accrocher.",
+    "couleur": "#8FA3AE",
+    "emotion_source": "L'indifférence installée dans un foyer, l'affection qui s'éteint sans dispute ni rupture.",
+    "famille": "usure"
+   },
+   {
+    "id": "tassement",
+    "nom": "Le Tassement",
+    "kanji": "沈下",
+    "romaji": "chinka",
+    "concept": "Toute charge supportée trop longtemps finit par descendre ; le porteur ne fait qu'accorder au sol la permission de céder maintenant. Rien n'est frappé, tout s'enfonce.",
+    "sensoriel": "Un craquement sourd sous les semelles, à hauteur de cheville. Des fissures en escalier montent dans le crépi, les portes ne ferment plus, et une bulle de niveau posée au sol dérive d'un demi-degré par minute.",
+    "couleur": "#6B6257",
+    "emotion_source": "La résignation d'une vie passée à porter ce qu'on n'a jamais accepté de porter.",
+    "famille": "usure"
+   },
+   {
+    "id": "rancissement",
+    "nom": "Le Rancissement",
+    "kanji": "酸敗",
+    "romaji": "sanpai",
+    "concept": "Ce qui a nourri se retourne toujours contre celui qu'il a nourri. Le porteur accélère cette bascule dans toute matière grasse, et par extension dans tout lien qui a servi à entretenir quelqu'un.",
+    "sensoriel": "Une odeur de beurre oublié derrière un radiateur, tenace, qui s'attrape aux vêtements pour la journée. Goût savonneux au fond de la gorge, gouttelettes jaunes qui perlent sur les surfaces froides.",
+    "couleur": "#C2A85C",
+    "emotion_source": "La rancune domestique, entretenue à table pendant des années sans jamais être nommée.",
+    "famille": "usure"
+   },
+   {
+    "id": "effilochage",
+    "nom": "L'Effilochage",
+    "kanji": "綻び",
+    "romaji": "hokorobi",
+    "concept": "Tout assemblage ne tient que par un fil, et ce fil se souvient de sa longueur d'origine. Le porteur trouve le point de couture — d'un vêtement, d'un cordage, d'un tendon, d'une chaîne de commandement — et lui rend sa liberté.",
+    "sensoriel": "Un chuintement continu, comme une couture qui lâche derrière l'épaule. Les bords se hérissent, un seul fil court trois mètres tout seul sur le sol, et ce qui était un ensemble se met à pendre.",
+    "couleur": "#A89078",
+    "emotion_source": "La négligence : savoir qu'une chose se défait et remettre la réparation à plus tard, chaque jour.",
+    "famille": "usure"
+   },
+   {
+    "id": "filigrane",
+    "nom": "Le Filigrane",
+    "kanji": "透かし",
+    "romaji": "sukashi",
+    "concept": "Une marque logée dans l'épaisseur ne s'efface pas, parce qu'elle ne se trouve nulle part en surface. Le porteur inscrit une provenance dans la matière même : le papier, le verre, la chair.",
+    "sensoriel": "Rien sous le doigt, rien sous la lampe. Levée à contre-jour, la paume laisse lire un numéro et une date en caractères clairs, plus pâles que la peau, orientés pour être lus par quelqu'un d'autre.",
+    "couleur": "#DCE0DA",
+    "emotion_source": "La honte d'une origine qu'on n'a pas choisie et qu'aucune réussite ne rature.",
+    "famille": "compte"
+   },
+   {
+    "id": "bareme",
+    "nom": "Le Barème",
+    "kanji": "査定",
+    "romaji": "satei",
+    "concept": "Toute chose reçoit une note, selon des critères que le porteur seul détient et n'expose jamais. Ce qui est mal noté perd réellement la valeur qu'on lui refuse : masse, dureté, prix, crédit.",
+    "sensoriel": "Un crissement de crayon gras dans le dos. Un chiffre à deux décimales apparaît dans l'angle inférieur droit des objets, comme au dos des meubles en salle des ventes, et la chose notée devient plus légère et plus froide à mesure.",
+    "couleur": "#8C3B3B",
+    "emotion_source": "L'humiliation d'être évalué par quelqu'un qui ne dira jamais sur quoi il vous évalue.",
+    "famille": "compte"
+   },
+   {
+    "id": "obliteration",
+    "nom": "L'Oblitération",
+    "kanji": "消印",
+    "romaji": "keshiin",
+    "concept": "Valider, c'est dépenser. Ce que le porteur marque a servi une fois et ne servira plus : un mot, un itinéraire, un geste, une autorisation. La chose reste entière, elle est simplement usagée.",
+    "sensoriel": "Un coup sec de tampon entendu à l'intérieur du crâne, un dixième de seconde avant la marque. Une encre violette et grasse, qui porte la date et l'heure à la minute, et une odeur d'encrier de guichet.",
+    "couleur": "#2E2A33",
+    "emotion_source": "Le regret des choses envoyées, dites ou signées, qu'on ne peut plus rappeler.",
+    "famille": "compte"
+   },
+   {
+    "id": "main-courante",
+    "nom": "La Main Courante",
+    "kanji": "日誌",
+    "romaji": "nisshi",
+    "concept": "Consigné, jamais instruit. Tout fait déclaré au porteur est noté avec exactitude et n'obtient aucune suite ; l'inscription elle-même retire à l'événement sa capacité d'avoir des conséquences.",
+    "sensoriel": "Un stylo bille qui gratte le papier quadrillé, un néon de guichet qui bat à deux mètres. Sous chaque ligne, la même mention à l'encre bleue : « Déclarant entendu. Aucune suite donnée. »",
+    "couleur": "#4C5A63",
+    "emotion_source": "Le désespoir tranquille d'avoir été écouté avec attention par quelqu'un qui n'interviendra pas.",
+    "famille": "compte"
+   },
+   {
+    "id": "point-aveugle",
+    "nom": "Le Point Aveugle",
+    "kanji": "盲点",
+    "romaji": "mōten",
+    "concept": "À l'endroit où le nerf entre dans l'œil, il n'y a rien à voir, et l'esprit rebouche le trou sans prévenir personne. Le porteur déplace ce trou et le pose où il veut.",
+    "sensoriel": "Aucun noir, aucun flou, aucune gêne. Le mur continue, la conversation continue, le décompte des personnes présentes tombe juste — et il manque quelqu'un dans la pièce depuis onze minutes.",
+    "couleur": "#101014",
+    "emotion_source": "Le refus de voir : ce qu'une famille, un service ou un conseil décide de ne pas constater.",
+    "famille": "absence"
+   },
+   {
+    "id": "membre-fantome",
+    "nom": "Le Membre Fantôme",
+    "kanji": "幻肢",
+    "romaji": "genshi",
+    "concept": "Ce qui a été retranché continue d'occuper sa place et de faire mal, plus précisément que de son vivant. Le porteur donne à une absence la consistance, l'encombrement et la douleur d'un membre.",
+    "sensoriel": "Une démangeaison à un endroit qu'aucune main n'atteint. On sent des doigts se refermer là où il n'y a plus d'avant-bras, et la douleur arrive toujours avec deux secondes de retard sur ce qui l'a causée.",
+    "couleur": "#A9899B",
+    "emotion_source": "Le déni du deuil : continuer à mettre le couvert pour quelqu'un qu'on a enterré.",
+    "famille": "absence"
+   },
+   {
+    "id": "manque",
+    "nom": "Le Manque",
+    "kanji": "禁断",
+    "romaji": "kindan",
+    "concept": "Le vide qui réclame. Le porteur ouvre dans un organisme un besoin sans objet : le corps exige, avec toute la violence du sevrage, une chose qu'il n'a jamais connue et qu'aucun geste ne peut lui fournir.",
+    "sensoriel": "Bâillements en rafale, sueur froide à la nuque, tremblement des mains à 6 hertz. Goût de pièce de monnaie sous la langue, et une certitude d'une netteté absolue : ça va s'arrêter si l'on obtient — quoi, on ne sait pas.",
+    "couleur": "#4B3A5A",
+    "emotion_source": "L'avidité inassouvie de ceux qui ont tout obtenu et n'ont jamais su ce qu'ils voulaient.",
+    "famille": "absence"
+   },
+   {
+    "id": "aphonie",
+    "nom": "L'Aphonie",
+    "kanji": "失声",
+    "romaji": "shissei",
+    "concept": "Le souffle passe, la voix ne suit pas. Le porteur ne supprime pas le son : il retire au corps la capacité de faire porter un nom au-dehors, y compris son propre nom.",
+    "sensoriel": "Un long chuintement d'air tiède, la gorge qui chauffe et se serre. On entend distinctement la langue claquer et la salive descendre ; l'appel radio ne rapporte qu'un frottement, et le nom prononcé n'atteint personne.",
+    "couleur": "#93989B",
+    "emotion_source": "Ce qui n'a pas été dit à temps, et la peur de découvrir qu'on n'aurait pas été cru.",
+    "famille": "absence"
+   },
+   {
+    "id": "adherence",
+    "nom": "L'Adhérence",
+    "kanji": "癒着",
+    "romaji": "yuchaku",
+    "concept": "Après une plaie, les tissus qui devaient rester distincts se soudent entre eux et gênent tout mouvement. Le porteur rend définitif tout contact maintenu : au-delà de quatre secondes, deux choses ne se séparent plus sans arracher.",
+    "sensoriel": "Une chaleur ponctuelle au point de contact, puis un tiraillement à chaque tentative de retrait. La peau blanchit sur le pourtour, et le bruit du décollement, quand il a lieu, est celui d'une bande adhésive tirée lentement.",
+    "couleur": "#9E5B52",
+    "emotion_source": "La promiscuité subie : les liens qu'on n'a pas choisis et qu'on ne peut plus défaire sans se blesser.",
+    "famille": "contact"
+   },
+   {
+    "id": "escarre",
+    "nom": "L'Escarre",
+    "kanji": "褥瘡",
+    "romaji": "jokusō",
+    "concept": "Ce n'est pas le coup qui tue, c'est l'appui qu'on ne déplace jamais. Là où un poids reste immobile sur un corps, la chair meurt de l'intérieur vers la surface, et la surface est prévenue en dernier.",
+    "sensoriel": "Un point brûlant au sacrum et aux talons, sous une peau restée blanche. Douze minutes plus tard, la marque tourne au rouge sombre puis au noir, et il monte une odeur douce, presque sucrée, de linge propre.",
+    "couleur": "#6E2F33",
+    "emotion_source": "L'abandon des corps immobiles : la négligence patiente de ceux qui étaient chargés de les retourner.",
+    "famille": "contact"
+   },
+   {
+    "id": "tiedeur",
+    "nom": "La Tiédeur",
+    "kanji": "残温",
+    "romaji": "zan'on",
+    "concept": "La chaleur qu'un corps laisse sur une chaise après s'être levé est encore ce corps, pour un moment. Le porteur récolte ces restes, les lit, les rend — ou y maintient quelqu'un qui a déjà quitté la place.",
+    "sensoriel": "34,2 °C sur l'assise, sur le drap, sur la poignée. La trace tient onze minutes et décroît régulièrement ; posée dessus, la paume perçoit le poids, la posture et le pouls de celui qui vient de partir.",
+    "couleur": "#C9926F",
+    "emotion_source": "Le chagrin des départs récents, celui qui tient dans l'intervalle entre la porte et le bruit de la porte.",
+    "famille": "contact"
+   },
+   {
+    "id": "decalque",
+    "nom": "Le Décalque",
+    "kanji": "転写",
+    "romaji": "tensha",
+    "concept": "Toute pression laisse son image sur ce qu'elle presse. Le porteur relève cette image et la reporte sur un autre support, où elle reste solidaire de l'original tant que l'encre n'a pas séché.",
+    "sensoriel": "Un papier humide, tiède, qui sent le solvant. Les lignes d'une paume apparaissent à l'envers sur le bois de la table, en bleu de stylo, et chaque appui du doigt sur ce dessin provoque un picotement à trente mètres de là.",
+    "couleur": "#3F5B8C",
+    "emotion_source": "La possessivité : le besoin de garder une trace de quelqu'un qui n'a rien accepté de donner.",
+    "famille": "contact"
    }
   ]
  },
@@ -720,6 +896,186 @@
     "inversion": "Je sépare les airs : plus personne ne respire ce que je respire. J'extrais un homme d'une fumée ou d'une eau, et il respire au fond du fleuve l'air d'une chambre que j'ai quittée le matin.",
     "maximum": "J'ouvre la chambre commune à tout ce qui respire à portée d'oreille, puis j'inspire une seule fois, lentement, de la poussière d'os.",
     "archetype": "lien"
+   },
+   {
+    "id": "retrait-d-unite",
+    "nom": "Le Retrait d'Unité",
+    "enonce": "D'un ensemble que j'ai compté en entier, je peux ôter une unité.",
+    "consequence": "J'ai compté les vingt-six vertèbres d'un examinateur pendant qu'il me dictait mon numéro de dossier ; la septième est partie sans bruit, sa tête est tombée de trois centimètres en avant et n'est jamais remontée. Poussée sur un ensemble plus large — les quatre cavités d'un cœur, les onze hommes d'une escouade — la loi ne laisse ni corps ni vide : l'ensemble se referme sur son nouveau compte comme s'il n'avait jamais eu que celui-là, et les registres s'accordent tout seuls.",
+    "limite": "Il faut que je compte l'ensemble entier, sans en manquer un, et qu'il ne change pas pendant que je compte. Un adversaire qui remue les doigts, qui avale, qui saigne, se présente comme un ensemble instable : le compte casse, et un compte cassé ne se reprend pas avant l'aube suivante.",
+    "inversion": "J'ajoute l'unité au lieu de l'ôter : le doigt manquant depuis dix ans repousse à la bonne longueur et au bon ongle, l'escouade retrouve son onzième homme — qui se souvient d'être resté dehors, et de rien d'autre.",
+    "maximum": "Je me compte moi-même, entier, os par os et heures par heures, puis je m'ôte du compte des vivants présents dans la salle. Plus rien ne m'atteint, car je ne suis plus l'un des termes ; je ne touche plus rien non plus, et il faudrait que quelqu'un me recompte pour me rendre au monde.",
+    "archetype": "soustraction"
+   },
+   {
+    "id": "dime-des-gestes",
+    "nom": "La Dîme des Gestes",
+    "enonce": "Un geste sur dix accompli devant moi n'a pas lieu.",
+    "consequence": "Je compte à voix basse ; au dixième, la main s'arrête sans s'arrêter — la lame est déjà repartie, la plaie n'existe pas, la douleur non plus, seule la sueur reste. Sur six hommes qui s'entraînent une minute devant moi, cela fait quarante gestes retirés du monde : ils sortent épuisés d'un travail qu'ils n'ont pas fait, et le sol n'a pas de traces.",
+    "limite": "Le compte est public : il suffit de compter avec moi. Qui place son geste décisif en première ou en neuvième position ne perd rien, et un geste continu — une prise qu'on ne lâche pas, un étranglement — ne compte que pour un tant qu'il dure.",
+    "inversion": "Je rends le dixième au lieu de le prendre : l'homme qui a manqué neuf fois réussit à la dixième, la main qui avait lâché se referme, le pas qui n'avait pas porté porte.",
+    "maximum": "Je fais entrer mes propres battements de cœur dans le compte. Un sur dix n'a pas lieu, et rien de ce qui vit à cette cadence ne peut m'atteindre — sauf pendant ce battement-là, où je suis absolument disponible, et où n'importe qui peut me tuer d'une chiquenaude.",
+    "archetype": "soustraction"
+   },
+   {
+    "id": "prix-affiche",
+    "nom": "Le Prix Affiché",
+    "enonce": "Toute chose que je désigne a un prix, et qui la touche le paie.",
+    "consequence": "J'annonce le tarif avant, dans une monnaie que l'autre possède : onze mois, quatre litres, le prénom de sa mère. La poignée de la porte du couloir C valait deux ans ; le 補助監督 hojo-kantoku qui l'a ouverte est ressorti avec le même visage et la mâchoire d'un homme de soixante ans, et il a fallu refaire sa photo d'accréditation.",
+    "limite": "Le prix doit être prononcé avant le contact et dans une unité que le payeur détient réellement. Un 呪霊 jurei n'a ni années ni sang : il traverse tous mes tarifs sans rien devoir. Et un homme qui accepte de payer paie — je ne suis pas un obstacle, je suis une caisse.",
+    "inversion": "Je rembourse : je désigne une chose et lui fais rendre ce qu'elle a coûté, dans l'ordre inverse des paiements. Les années reviennent au dernier payeur d'abord, et le sang remonte dans les corps qui sont encore là pour le recevoir.",
+    "maximum": "Je m'affiche moi-même. Me toucher coûte tout ce qu'on possède dans l'unité dont on est le plus pauvre ; mais un prix engage aussi le vendeur, et je dois livrer : celui qui a payé le plein tarif obtient ce qu'il a acheté, et ce qu'il a acheté, c'est moi.",
+    "archetype": "échange"
+   },
+   {
+    "id": "chose-qui-sert",
+    "nom": "La Chose qui Sert",
+    "enonce": "Ce qui m'a servi peut souffrir à ma place, une fois.",
+    "consequence": "Le manteau que je porte depuis quatre ans reçoit le coup entier : la clavicule cède dans le tissu, l'étoffe se plie comme un os et ne sert plus jamais à rien. Un 呪具 jugu qui m'a servi encaisse une décapitation ; il tombe en deux morceaux au sol, et mon cou reste à la température du dehors.",
+    "limite": "L'objet doit m'avoir réellement servi, se trouver sur moi ou à portée de voix, et ne vaut que pour un seul événement. On me désarme en détruisant mes affaires d'abord : un adversaire méthodique passe cinq minutes sur un sac, une montre, une paire de chaussures, et ce qu'il a devant lui ensuite est un homme nu.",
+    "inversion": "Je fais servir la chose en sens inverse : ce qu'elle a subi se retire d'elle et la remet en état. Le manteau se recoud fil par fil, l'outil se ressoude à la ligne de rupture, et il redevient utilisable — une fois.",
+    "maximum": "Je déclare que ce qui m'a le plus servi est mon propre corps. Il souffre à ma place et je reste debout à côté, entier, sans une marque ; mais un corps ne sert qu'une fois de cette manière-là, et ce qui reste debout devra faire sans.",
+    "archetype": "échange"
+   },
+   {
+    "id": "echange-de-vitesse",
+    "nom": "L'Échange de Vitesse",
+    "enonce": "Deux choses en mouvement devant moi peuvent échanger leur vitesse.",
+    "consequence": "La pierre qui tombe prend celle de la balle ; la balle prend celle de la pierre et se pose dans ma main, tiède. Un homme qui court reçoit la vitesse d'une porte qui claque : il s'arrête en cinq centimètres, et l'intérieur continue tout seul jusqu'au bout de la course.",
+    "limite": "Les deux termes doivent être en mouvement, visibles en même temps, et la vitesse échangée garde sa direction propre : je ne vise rien, je redistribue. Un adversaire parfaitement immobile n'a rien à échanger, et il le comprend dès la première fois qu'il m'a vu faire.",
+    "inversion": "Je rends à chacun la vitesse qu'il avait avant : la chute cesse d'avoir accumulé, et le corps arrive au sol à l'allure d'un homme qui descend un escalier, sans une fracture.",
+    "maximum": "J'échange les termes de l'échange lui-même : ce ne sont plus les vitesses qui passent d'un corps à l'autre, ce sont les corps qui passent d'une vitesse à l'autre. Tout ce qui bouge dans le secteur prend la place de ce qui bougeait à cette allure — moi compris, et je ne choisis pas où j'arrive.",
+    "archetype": "échange"
+   },
+   {
+    "id": "refrain",
+    "nom": "Le Refrain",
+    "enonce": "Un geste que j'ai fait une fois et que je répète ensuite à voix basse se refait sans moi.",
+    "consequence": "J'ai frappé une fois le mur de la salle B, puis j'ai murmuré le coup ; le mur a été frappé toutes les quatre secondes pendant onze heures, jusqu'à ce que je me taise, et la poussière de plâtre est montée jusqu'aux luminaires. Sur une gorge, la cadence est la même, et le murmure la tient depuis l'autre bout du 帳 tobari.",
+    "limite": "Le murmure doit rester audible pour moi et ma bouche doit continuer : un bâillon, une main plaquée, un poumon percé arrêtent tout dans la seconde. Et je ne tiens qu'un refrain à la fois — le suivant efface le précédent, sans exception ni recours.",
+    "inversion": "Je murmure un geste de soin fait une fois : le point de suture se refait tout seul, à la même cadence, jusqu'à ce que la plaie n'ait plus rien à coudre et que l'aiguille ne trouve plus de bord.",
+    "maximum": "Je murmure le murmure lui-même. Le refrain se recopie sans que j'aie besoin de parler, et il ne s'arrêtera plus : ce que j'ai fait une fois continuera après moi, toutes les quatre secondes, dans une salle que personne ne rouvrira.",
+    "archetype": "répétition"
+   },
+   {
+    "id": "echo-de-blessure",
+    "nom": "L'Écho de Blessure",
+    "enonce": "Une blessure portée deux fois au même point se refait ensuite toute seule.",
+    "consequence": "L'intervalle qui sépare mes deux coups devient la cadence : deux entailles à trois secondes d'écart, et la peau se rouvre toutes les trois secondes, à la même profondeur, jusqu'à ce qu'il n'y ait plus de quoi. Le sang ne coagule jamais ; dans une pièce fermée, l'odeur au bout d'un quart d'heure est celle du fer chaud.",
+    "limite": "Il faut le même point au millimètre et rien d'autre entre les deux coups. La profondeur du second fixe celle de toutes les suivantes : un adversaire qui se déplace d'un doigt me fait recommencer, et une 反転術式 hanten-jutsushiki appliquée une seule fois efface le point et annule la série entière.",
+    "inversion": "Je referme deux fois le même point : il se referme ensuite tout seul, à la même cadence, et l'homme guérit à intervalles réguliers de tout ce qu'on lui fait à cet endroit-là.",
+    "maximum": "Je me blesse deux fois au même point, à l'intervalle exact de mon propre pouls. Ma blessure suit mon cœur ; tant que je reste calme elle est supportable, et je mourrai de la première fois où j'aurai peur.",
+    "archetype": "répétition"
+   },
+   {
+    "id": "nombre-de-pas",
+    "nom": "Le Nombre de Pas",
+    "enonce": "Je lis le nombre de pas qui reste à chaque chose, et je peux le dépenser.",
+    "consequence": "Trois mille deux cent quatre pour l'examinateur assis en face de moi ; j'en dépense huit cents pour ouvrir une porte au bout du couloir, et il prend d'un coup la fatigue de huit cents pas sans avoir quitté sa chaise, avec la sueur et l'essoufflement. À zéro on ne meurt pas : on ne se relève plus, jamais, et il faut ensuite quelqu'un pour porter.",
+    "limite": "Je ne lis que ce qui se compte en pas. Un homme porté, un homme en fauteuil, un 呪霊 jurei qui glisse au ras du sol n'ont aucun compte ouvert chez moi ; et le mien, je ne peux pas le lire.",
+    "inversion": "Je verse des pas au lieu d'en prendre : je rends à un vieillard les onze mille pas qu'il a laissés à la terre, et il se lève sans aide, sans bruit, en s'excusant.",
+    "maximum": "Je dépense d'un seul coup tout ce qui reste à tous ceux que je vois, le mien compris. Il n'y a plus un pas disponible dans le secteur ; ce qui doit s'y décider se décidera à genoux, entre gens qui ne peuvent plus partir.",
+    "archetype": "mesure"
+   },
+   {
+    "id": "point-milieu",
+    "nom": "Le Point Milieu",
+    "enonce": "Entre deux choses, le milieu exact m'appartient.",
+    "consequence": "Ce qui occupe le milieu reçoit ce qui arrive aux deux extrémités : je prends pour termes la lame et la nuque, et le milieu — l'air, une chaise, un homme qui passait — encaisse la coupe pour de bon. Entre deux corps qui se font face à six mètres, le sang des deux paraît au centre, en suspension, avant qu'aucun ne soit blessé.",
+    "limite": "Il me faut deux termes que je puisse tenir pour fixes une seconde entière, et la géométrie ne pardonne pas : un demi-centimètre d'erreur et le milieu tombe dans le vide. Deux choses qui se touchent n'ont pas de milieu — un adversaire au corps à corps me retire ma loi rien qu'en avançant.",
+    "inversion": "Le milieu rend au lieu de recevoir : ce que les deux extrémités ont perdu revient par le centre, et deux blessés qui se placent correctement guérissent l'un de l'autre, à parts égales.",
+    "maximum": "Je me prends moi-même pour mes deux termes. Mon milieu exact devient l'unique endroit où quelque chose peut m'arriver : tout ce qui atteint mes extrémités s'y rassemble, et je suis invulnérable partout sauf en un point de la taille d'une pièce de monnaie, quatre centimètres derrière le sternum.",
+    "archetype": "mesure"
+   },
+   {
+    "id": "fil-de-poursuite",
+    "nom": "Le Fil de Poursuite",
+    "enonce": "Celui qui m'a suivi ne peut plus s'arrêter avant moi.",
+    "consequence": "Deux pas faits dans ma direction parce que je m'éloignais suffisent : à partir de là, il marche tant que je marche, et son cœur n'a plus le droit au repos qu'après le mien. J'ai fait monter un 呪詛師 jusoshi douze étages sans me retourner, je me suis arrêté au bord du toit ; il s'est arrêté un pas après moi.",
+    "limite": "Il faut qu'il ait choisi de me suivre : un homme qui traverse le même couloir sans savoir que j'y suis n'est lié à rien. Et le fil casse dès que je m'arrête plus longtemps qu'un souffle — c'est-à-dire dès qu'on m'oblige à tenir une position, ce que sait faire n'importe quelle équipe de trois.",
+    "inversion": "Je me lie à celui que je suis : je ne peux plus m'arrêter avant lui, et je remonte son trajet à l'envers. Ce qu'il a semé en chemin — sang, chaleur, distance — je le lui rends dans l'ordre exact où il l'a perdu.",
+    "maximum": "Je me suis moi-même : je marche derrière mes propres pas et je ne peux plus m'arrêter avant moi. Rien ne m'atteint tant que j'avance, et je n'ai plus aucun moyen de m'arrêter.",
+    "archetype": "lien"
+   },
+   {
+    "id": "prise-commune",
+    "nom": "La Prise Commune",
+    "enonce": "Ce que deux mains ont tenu ensemble ne cesse jamais de les tenir.",
+    "consequence": "Une civière portée à deux en 1997, une corde, une poignée de main de quatre secondes : le lien tient, et je passe dedans. J'ai fait mourir de froid, à onze kilomètres, un homme dont le seul tort était d'avoir tenu l'autre bout d'un brancard ; il est mort en intérieur, à vingt et un degrés, la peau bleue.",
+    "limite": "Il faut un contact simultané et une prise réelle — se frôler ne suffit pas, et un objet tenu chacun son tour ne vaut rien. Le fil n'a pas de sens : ce que j'y fais passer peut revenir, et qui a compris la loi n'a plus qu'à me faire tenir sa main.",
+    "inversion": "Je fais passer la réparation par la prise : celui qui tenait l'autre bout reçoit de quoi refermer, et deux hommes qui ont porté ensemble se relèvent ensemble, dans le même ordre qu'ils étaient tombés.",
+    "maximum": "Je prends à deux mains une chose que tout le monde a tenue : la rampe de l'escalier nord du 呪術高専 Jujutsu Kōsen. Tous ceux qui l'ont tenue depuis qu'elle existe sont dans ma main en même temps, morts compris — et je n'ai aucun moyen de les compter, ni de lâcher.",
+    "archetype": "lien"
+   },
+   {
+    "id": "ligne-de-craie",
+    "nom": "La Ligne de Craie",
+    "enonce": "Toute ligne que je trace d'un seul trait sépare réellement.",
+    "consequence": "Rien ne passe : ni le sang, ni le son, ni la chaleur, ni un corps. Ce qui traverse quand même arrive de l'autre côté séparé de ce qui est resté — j'ai tracé au sol d'un couloir de service, et l'homme qui a franchi a laissé derrière lui tout ce qui, en lui, circulait ; il a fait encore quatre pas.",
+    "limite": "Le trait doit être continu, fait de ma main, d'un seul geste, et il ne vaut que tant qu'il est intact : une semelle, trois gouttes, un souffle de poussière l'ouvrent. Et il sépare des deux côtés — ce qui est derrière la ligne m'est fermé exactement autant qu'à eux.",
+    "inversion": "Je trace pour réunir : ce que la ligne touche cesse d'être séparé. Deux bords de plaie posés de part et d'autre se rejoignent sans couture, et un membre reposé au bon endroit reprend sa circulation en quelques secondes.",
+    "maximum": "Je trace la ligne autour de moi, d'un seul trait, sans lever la main. Rien n'entre. Rien ne sort. Rien ne circule non plus à l'intérieur : la loi ne fait pas d'exception pour mon sang.",
+    "archetype": "seuil"
+   },
+   {
+    "id": "seuil-de-douleur",
+    "nom": "Le Seuil de Douleur",
+    "enonce": "Rien ne m'atteint qui ne fasse plus mal que la dernière chose qui m'a fait mal.",
+    "consequence": "Je me casse le petit doigt dans l'escalier avant d'entrer ; pendant les minutes qui suivent, tout ce qui vaut moins que ça traverse sans rien laisser — la lame entre et ressort, il n'y a pas de plaie, seulement du tissu déplacé et un peu de froid. Contre un adversaire régulier, la barre monte à chaque échange qu'il gagne : je deviens plus difficile à mesure qu'on me touche.",
+    "limite": "La barre est faite de douleur et de rien d'autre. Le froid qui endort, le poison sans morsure, l'étouffement, la coupe nette qui ne fait mal qu'après : tout cela ne se présente pas au seuil et entre à sa guise. Et la barre redescend seule — une heure sans souffrir, et je vaux ce que vaut n'importe qui.",
+    "inversion": "J'abaisse le seuil au lieu de le tenir : ce qui a fait moins mal que ma dernière douleur cesse d'avoir été fait, et les petites blessures de la journée se retirent de mon corps dans l'ordre inverse de leur arrivée.",
+    "maximum": "Je prends pour dernière douleur la plus grande que j'aie eue : celle du jour où ma loi s'est déclarée en moi. Plus rien de ce que peut faire un homme ne monte à cette hauteur ; mais il faut que je m'en souvienne exactement pendant tout le temps où je m'en sers, et un souvenir tenu à ce niveau ne laisse aucune place pour surveiller la salle.",
+    "archetype": "seuil"
+   },
+   {
+    "id": "second-mensonge",
+    "nom": "Le Second Mensonge",
+    "enonce": "À ma question, le premier mensonge est permis ; le second devient vrai.",
+    "consequence": "« As-tu une arme ? » — il a dit non deux fois ; la lame n'a jamais existé, et sa main gauche s'est refermée sur l'habitude d'un objet absent. « Est-ce que tu saignes ? » — deux fois non, et il n'a plus de sang du tout : il est resté debout onze secondes, sans une goutte au sol.",
+    "limite": "Il faut une vraie question de ma part, entendue et comprise, et un mensonge su comme tel : une erreur sincère ne vaut rien, le silence non plus. Surtout, je ne choisis pas ce qui devient vrai — un adversaire averti ment deux fois sur son état et se retrouve intact, à mes frais.",
+    "inversion": "J'inverse le sens : c'est la vérité qui cède et le mensonge qui répare. À l'homme qui prétend deux fois n'avoir jamais été blessé, je rends une peau qui n'a jamais été ouverte ; il reste ce qu'il a vu, que la 反転術式 hanten-jutsushiki ne touche pas.",
+    "maximum": "Je me pose la question à moi-même et je me réponds deux fois faux. Ce que je nie de moi cesse d'être vrai : mon nom, ma peur, ma mort en cours. On ne ment pas deux fois sur soi sans que quelque chose parte avec le mensonge, et je ne saurai jamais quoi, puisque c'est parti.",
+    "archetype": "témoignage"
+   },
+   {
+    "id": "compte-rendu",
+    "nom": "Le Compte Rendu",
+    "enonce": "Ce que je consigne d'un mort devient ce qu'il a été.",
+    "consequence": "Je déclare que l'homme au sol portait dans la bouche une capsule de verre ; on l'ouvre, elle y est, et elle y était depuis mardi. Un déclarant patient réécrit ainsi une lignée entière : trois morts bien consignés, et un 呪術師 jujutsushi vivant se découvre l'héritier d'une loi qu'il n'a jamais eue, avec les douleurs qui vont avec.",
+    "limite": "Un seul compte rendu par mort, et jamais contre un témoin vivant : si quelqu'un a vu autrement, sa mémoire tient et la mienne s'efface. On me neutralise donc en restant deux — le survivant d'un binôme est un homme que je ne peux pas écrire.",
+    "inversion": "Je consigne ce que le mort n'a pas été : ce qui lui a été fait se retire de son corps dans l'ordre inverse, jusqu'à la dernière minute où il était intact. Il ne se relève pas — la 反転術式 hanten-jutsushiki ne rend pas l'âme — mais il est présentable, et il est prouvé.",
+    "maximum": "Je rédige mon propre compte rendu par avance et je le fais contresigner par un 補助監督 hojo-kantoku. À la seconde où je meurs, j'ai été ce que j'ai écrit : c'est la seule manière que j'aie trouvée de gagner après.",
+    "archetype": "témoignage"
+   },
+   {
+    "id": "convocation",
+    "nom": "La Convocation",
+    "enonce": "Celui dont je lis le nom dans un registre doit répondre.",
+    "consequence": "Il répond où qu'il soit, dans les quatre secondes, à voix haute, et pendant qu'il répond il ne fait rien d'autre — pas un pas, pas une garde. Lu dans un registre mortuaire, le nom obtient aussi sa réponse ; elle arrive avec l'odeur de la pièce réfrigérée où le corps a été gardé.",
+    "limite": "Le registre doit avoir été écrit d'une autre main que la mienne, et je dois entendre la réponse pour qu'elle compte : dans le bruit, je n'obtiens rien. La convocation n'oblige qu'à répondre — elle ne déplace personne, elle n'ouvre rien. Et les homonymes répondent tous ensemble : dans un registre de collège, un nom courant me remplit la bouche de quatorze voix.",
+    "inversion": "C'est moi qui réponds à leur place : je prends la convocation adressée à un autre et je m'y présente. Ce qui l'attendait m'attend, et lui n'aura jamais été appelé.",
+    "maximum": "Je lis mon propre nom dans le registre du 上層部 jōsōbu, à la ligne où il est déjà rayé. Je dois répondre. Tant que je réponds je ne fais rien d'autre, et personne ne peut radier un homme qui est en train de parler dans le registre.",
+    "archetype": "témoignage"
+   },
+   {
+    "id": "retour-a-la-matiere",
+    "nom": "Le Retour à la Matière",
+    "enonce": "Ce qu'une main a fabriqué peut redevenir ce dont il est fait.",
+    "consequence": "La lame redevient trente kilos de sable ferrugineux et deux poignées de charbon, dans le même volume et à la même hauteur : ce qui la tenait reçoit tout, d'un coup. Les points de suture d'un blessé redeviennent du fil sur une bobine posée à côté de lui, et sa cage thoracique s'ouvre comme un livre qu'on n'a pas relié.",
+    "limite": "Seul ce qu'une main a assemblé m'obéit. Ce qui a poussé — un corps, un os, une pierre non taillée, un 呪霊 jurei né tout seul d'une peur — reste ce qu'il est. Un adversaire qui vient nu, sans arme, sans prothèse et sans vêtements, se présente devant moi comme un mur.",
+    "inversion": "Je remonte la fabrication : la matière reprend la forme la plus achevée qu'elle ait eue. Le sable redevient lame, la maison brûlée redevient la maison, et le fil rentre dans la peau exactement où il était, dans le même ordre de nœuds.",
+    "maximum": "Je traite ma propre loi comme un ouvrage — elle a bien été faite, à un moment, par quelqu'un — et je la rends à ce dont elle est faite : la peur d'un homme mort avant ma naissance. Pendant les quelques secondes où elle est de nouveau cette peur, tout ce que des mains ont fabriqué dans le secteur se défait en même temps ; ensuite je n'ai plus de loi.",
+    "archetype": "métamorphose"
+   },
+   {
+    "id": "forme-suivante",
+    "nom": "La Forme Suivante",
+    "enonce": "Ce qui est en train de changer change jusqu'au bout.",
+    "consequence": "La rouille d'une grille finit en huit secondes et la grille tombe en poudre orange ; l'eau qui frémit passe à sec et la casserole rougit ; une plaie qui s'infecte arrive à la fièvre terminale pendant que l'homme lève encore le bras pour parer. Rien ne commence par moi : je ne fais que refuser l'arrêt.",
+    "limite": "Une chose parfaitement stable n'offre rien à pousser, et je ne choisis jamais la direction — je ne fais qu'aller au bout de celle qui est déjà prise. Un adversaire que l'on vient de soigner en 反転術式 hanten-jutsushiki est en train de guérir : le pousser le guérit complètement, et il le sait avant moi.",
+    "inversion": "Je pousse le changement vers son autre extrémité : ce qui pourrissait retourne à l'état où il ne pourrissait pas encore, et le fer revient au poli de l'atelier, avec les marques du fabricant.",
+    "maximum": "Je me pousse moi-même. Un corps humain ne change jamais que dans un seul sens ; le mien arrive au bout de ce sens-là en quelques secondes. Ce qui reste est fini, définitif, et n'a plus besoin de rien : c'est la seule forme de ma loi qui ne s'use pas.",
+    "archetype": "métamorphose"
    }
   ]
  },
@@ -1574,37 +1930,37 @@
   "grades": [
    {
     "grade": "4",
-    "nom": "Quatrième grade · 四級",
+    "nom": "Exorciste de quatrième grade · 四級呪術師",
     "description": "On te confie des couloirs après fermeture, des cages d'escalier, des choses qui n'ont jamais eu de nom. Le Bureau ne prévient personne : il n'y a rien à annoncer.",
     "seuil": 0
    },
    {
     "grade": "3",
-    "nom": "Troisième grade · 三級",
+    "nom": "Exorciste de troisième grade · 三級呪術師",
     "description": "Un étage entier, un fléau qui a déjà mangé au moins une fois, un rapport à rendre avant six heures. Les frais de nettoyage sont retenus sur ta solde.",
     "seuil": 104
    },
    {
     "grade": "2",
-    "nom": "Deuxième grade · 二級",
+    "nom": "Exorciste de deuxième grade · 二級呪術師",
     "description": "On te confie des vivants. À partir d'ici, l'erreur a un nom, une adresse et un âge, et c'est toi qui écris les trois de ta main.",
     "seuil": 122
    },
    {
     "grade": "1",
-    "nom": "Premier grade · 一級",
+    "nom": "Exorciste de premier grade · 一級呪術師",
     "description": "On ne te confie plus rien : on te prévient. Ta fiche est recopiée en double, et le second exemplaire part au service chargé d'exorciser les porteurs.",
     "seuil": 142
    },
    {
     "grade": "semi-spécial",
-    "nom": "Semi-spécial · 準特級",
+    "nom": "Exorciste semi-premier grade · 準一級呪術師",
     "description": "Ton nom circule avant ton corps. L'évacuation du quartier commence quand tu montes dans le train, et personne ne te l'a jamais dit en face.",
     "seuil": 168
    },
    {
     "grade": "spécial",
-    "nom": "Grade spécial · 特級",
+    "nom": "Exorciste de grade spécial · 特級呪術師",
     "description": "Le barème s'arrête un cran plus bas que toi. On ne t'envoie pas : on te lâche, on note l'heure, et on attend que le bruit cesse.",
     "seuil": 196
    }
@@ -2697,5 +3053,930 @@
    "Recommencez. Deux fois, pas trois : au-delà, on répare ce qui n'a pas été blessé.",
    "Vous vous relevez avec le même dossier, le même nom, et la même chose derrière les yeux."
   ]
+ },
+ "jubaku": {
+  "restrictions": [
+   {
+    "id": "cecite-monde-visible",
+    "nom": "Cécité au monde visible",
+    "kanji": "陽盲",
+    "romaji": "yōmō",
+    "privation": "Ses yeux ne rendent rien de ce qui n'est pas chargé : le mobilier, le pain, les visages, sa propre main n'existent pour lui qu'au toucher. Il n'a jamais vu une couleur ; il décrit une pièce comme un noir dans lequel flottent des densités.",
+    "contrepartie": "Il lit le 呪力 juryoku à quatre cents mètres, à travers le béton, et donne le grade d'un 呪霊 jurei avant que celui-ci ne se manifeste ; il distingue à l'œil nu un 術式 jutsushiki armé d'un 術式 au repos.",
+    "constat": "Ne peut pas décrire le visage de sa mère. La décrit comme « une lampe basse, très régulière, éteinte en mars ».",
+    "rarete": 4
+   },
+   {
+    "id": "surdite-voix-vivantes",
+    "nom": "Surdité aux voix vivantes",
+    "kanji": "声聾",
+    "romaji": "seirō",
+    "privation": "Il entend la pluie, le métal, le vent dans une cage d'escalier. Aucune voix humaine ne lui parvient : les cordes vocales d'un vivant produisent, pour lui, un silence exact. Il lit sur les lèvres depuis l'âge de trois ans et se trompe encore d'un mot sur onze.",
+    "contrepartie": "Il entend en revanche le 術式 jutsushiki lui-même : chaque technique innée possède un son propre, tenu, perceptible dès que l'opérateur la charge, soit environ une seconde et demie avant l'effet. Quatorze 呪詛師 jusoshi identifiés à l'oreille, aucun jamais vu.",
+    "constat": "Fiable en repérage, inutilisable en coordination. Ne pas l'affecter à une mission reposant sur un ordre oral : trois morts en 2019 sont imputables à cette omission.",
+    "rarete": 3
+   },
+   {
+    "id": "douleur-sans-relache",
+    "nom": "Douleur sans relâche",
+    "kanji": "常痛",
+    "romaji": "jōtsū",
+    "privation": "Ses terminaisons ne se taisent jamais. Au repos, allongé, sans blessure, il évalue lui-même sa douleur à quatre sur dix ; un drap posé sur la jambe la porte à six. Aucune minute indolore depuis la naissance. Les analgésiques n'ont pas de prise, la 反転術式 hanten-jutsushiki non plus, puisqu'il n'y a rien à réparer.",
+    "contrepartie": "Le 呪力 juryoku naît des émotions négatives : la sienne est produite en continu, sans effort et sans tarissement. Réserve mesurée au niveau 特級 tokkyū depuis ses onze ans. Il n'a jamais eu besoin d'apprendre à se mettre en colère.",
+    "constat": "Sujet remarquablement calme. Ne s'assoit jamais tout à fait. Rendement inchangé après quarante heures de combat continu.",
+    "rarete": 5
+   },
+   {
+    "id": "veille-sans-fin",
+    "nom": "Veille sans fin",
+    "kanji": "無眠",
+    "romaji": "mumin",
+    "privation": "Il n'a jamais dormi. Pas d'endormissement, pas de sommeil paradoxal, pas un rêve : trente et un ans de veille continue. La fatigue, elle, s'accumule normalement et ne se retire jamais ; il la nomme « un poids sur la nuque, constant depuis l'enfance ».",
+    "contrepartie": "Son corps a compensé en apprenant seul la 反転術式 hanten-jutsushiki avant qu'il ne sache parler : il se répare en permanence, muscle, foie, cornée. À l'examen, ses tissus ont l'âge d'un homme de dix-neuf ans.",
+    "constat": "Chair intacte. La 反転術式 ne répare pas l'âme : c'est la seule ligne de ce dossier qui compte. Réévaluation psychiatrique à échéance de dix ans.",
+    "rarete": 4
+   },
+   {
+    "id": "gorge-sans-parole",
+    "nom": "Gorge sans parole",
+    "kanji": "無声",
+    "romaji": "musei",
+    "privation": "Larynx présent, parfaitement formé, muet. Rien n'en sort : ni mot, ni cri, ni toux. Il n'a jamais entendu sa propre voix et n'a jamais pu prévenir personne de rien à distance.",
+    "contrepartie": "Rien de ce qui passe par la voix ne le lie : ordre, incantation, technique fondée sur la parole glissent sur lui. Ses 縛り shibari, tracés à la main, se scellent sans témoin et rendent le double d'un serment ordinaire, comme si le réel tenait pour acquis qu'un homme qui n'a jamais pu mentir ne mente pas.",
+    "constat": "Signe ses engagements en trois traits. N'en a rompu aucun. On ignore ce qu'il pense de la 呪術高専 Jujutsu Kōsen et on ne le saura pas.",
+    "rarete": 4
+   },
+   {
+    "id": "croissance-arretee",
+    "nom": "Croissance arrêtée",
+    "kanji": "停育",
+    "romaji": "teiiku",
+    "privation": "Cartilages soudés à sept ans. Il mesure cent dix-neuf centimètres et n'en prendra pas un de plus ; les organes, eux, ont poursuivi leur programme et vieillissent dans un volume qui ne leur suffit plus. Trente-quatre ans, une voix d'enfant, des douleurs de vieil homme.",
+    "contrepartie": "Sa masse de 呪力 juryoku est celle d'un adulte accompli, comprimée dans un tiers du volume prévu. La densité obtenue autorise une sortie que des corps deux fois plus grands ne soutiennent pas : à contact égal, il déplace davantage.",
+    "constat": "Écarter de toute infiltration en milieu scolaire. Le sujet a demandé par écrit à ne plus être confondu avec ce qu'il n'est pas.",
+    "rarete": 3
+   },
+   {
+    "id": "sans-inscription",
+    "nom": "Sans inscription",
+    "kanji": "無憶",
+    "romaji": "muoku",
+    "privation": "Rien ne se fixe au-delà de quarante-six minutes. Il relit chaque matin une fiche de sa propre main pour savoir son nom, son grade et qui est mort. Il a appris quatre fois qu'il était veuf.",
+    "contrepartie": "Son 生得領域 seitoku-ryōiki est vide : pas un décor, pas un souvenir à parasiter. Les techniques qui lisent, rejouent ou fabriquent du passé n'ont aucune prise sur lui, et il exécute son 術式 jutsushiki comme au premier jour, sans usure et sans le moindre réflexe de recul.",
+    "constat": "Sujet inépuisablement courageux. Ce n'est pas du courage.",
+    "rarete": 5
+   },
+   {
+    "id": "absence-de-faim",
+    "nom": "Absence de faim",
+    "kanji": "不飢",
+    "romaji": "fuki",
+    "privation": "Ni faim, ni satiété, ni envie. Il mange à la montre, sept fois par jour, pesé au gramme ; il a manqué mourir à neuf ans, puis à seize, deux fois pour la même raison. Le plaisir de manger lui a été décrit et il en accepte la description.",
+    "contrepartie": "À défaut d'appétit, son corps prélève le 呪力 juryoku ambiant en place de calories. En zone saturée, sous 帳 tobari, il ne décline pas : là où une équipe s'épuise en quarante minutes, il tient la nuit entière et ressort plus lourd qu'il n'est entré.",
+    "constat": "Affectation recommandée : sites résiduels de haute densité. Ne pas l'y laisser seul au-delà de soixante-douze heures. La chose finit par lui plaire.",
+    "rarete": 4
+   },
+   {
+    "id": "corps-temperature-ambiante",
+    "nom": "Corps à température ambiante",
+    "kanji": "常温体",
+    "romaji": "jōontai",
+    "privation": "Aucune thermorégulation, aucune perception du chaud ni du froid. Sa température interne suit celle de la pièce : 34,1 °C au bureau, 22 °C dehors en février, ce qui devrait le tuer et ne le tue pas. Il ne sait qu'il brûle qu'à l'odeur.",
+    "contrepartie": "Ce qu'un corps dépense à se tenir à 37 °C lui reste intégralement disponible en 呪力 juryoku. Il ne laisse par ailleurs aucune signature thermique : les 呪霊 jurei qui chassent à la chaleur passent contre lui sans le trouver.",
+    "constat": "Prévoir couverture chauffante en intervention hivernale. Le sujet note que personne ne le prend deux fois dans les bras.",
+    "rarete": 3
+   },
+   {
+    "id": "vieillesse-en-avance",
+    "nom": "Vieillesse en avance",
+    "kanji": "早老",
+    "romaji": "sōrō",
+    "privation": "Il vieillit quatre fois trop vite. À seize ans : cataracte débutante, arthrose des mains, artères d'un homme de soixante-quatre. Il perd deux centimètres par an et le sait au millimètre.",
+    "contrepartie": "Sa maîtrise mûrit à la vitesse de sa chair. 領域展開 ryōiki-tenkai stabilisée à quatorze ans, ce dont trois exorcistes vivants sont capables ; ce que les autres mettent quarante ans à comprendre lui est venu en dix.",
+    "constat": "Espérance résiduelle estimée à six ans. Le sujet demande à être employé à plein régime et n'a formulé aucune autre demande.",
+    "rarete": 5
+   },
+   {
+    "id": "cecite-aux-visages",
+    "nom": "Cécité aux visages",
+    "kanji": "相貌盲",
+    "romaji": "sōbōmō",
+    "privation": "Aucun visage ne se compose. Il voit un front, une bouche, un grain de peau, jamais un ensemble ; il ne s'est jamais reconnu dans une glace et se repère à une cicatrice sur son propre poignet.",
+    "contrepartie": "Il perçoit à la place la forme du 呪力 juryoku de chacun : une signature individuelle, stable de la naissance à la mort, qu'aucune transformation, aucune substitution, aucun corps d'emprunt ne modifie. Onze 呪詛師 jusoshi démasqués sous onze visages différents.",
+    "constat": "Témoin d'identification irremplaçable. Sa mère figure dans ses notes sous la mention « motif 3, tresse, tiède ».",
+    "rarete": 4
+   },
+   {
+    "id": "perte-de-la-verticale",
+    "nom": "Perte de la verticale",
+    "kanji": "失衡",
+    "romaji": "shikkō",
+    "privation": "Aucun appareil vestibulaire. Il tient debout par calcul visuel, image par image ; dans l'obscurité complète, il ignore s'il est debout, couché ou en train de tomber, et attend qu'on le lui dise. Nausée permanente, cotée 2 sur 10, jamais absente.",
+    "contrepartie": "N'ayant jamais eu de haut ni de bas, il ne peut être désorienté : les 領域 ryōiki qui imposent une orientation, les techniques qui retournent l'espace ou la pesanteur glissent, et il poursuit son geste dans l'axe qu'il s'est donné.",
+    "constat": "Ne jamais l'engager de nuit sans éclairage propre. Trois interventions en sous-sol, trois échecs, aucun blessé hormis lui.",
+    "rarete": 3
+   },
+   {
+    "id": "peau-sans-retour",
+    "nom": "Peau sans retour",
+    "kanji": "無触",
+    "romaji": "mushoku",
+    "privation": "La peau ne renvoie rien : ni pression, ni texture, ni contact. Il ne sait qu'il tient un objet qu'en le regardant, et il brise ce qu'il serre. Vingt-deux ans, pas une main jamais sentie.",
+    "contrepartie": "Le 呪力 juryoku, lui, se dépose sur lui comme de l'eau. Il cartographie une pièce les yeux fermés, sent un 帳 tobari s'abaisser à trois cents mètres au changement de pression sur les avant-bras, et suit un 呪霊 jurei à la traîne qu'il laisse contre sa nuque.",
+    "constat": "Excellent en repérage. Gants renforcés obligatoires, contrôle radiologique des mains après chaque mission : le sujet ne signale pas ses fractures parce qu'il les ignore.",
+    "rarete": 3
+   },
+   {
+    "id": "souffle-decide",
+    "nom": "Souffle décidé",
+    "kanji": "随意呼吸",
+    "romaji": "zui'i-kokyū",
+    "privation": "Aucune respiration automatique. Chaque inspiration, de jour comme de nuit, est une décision : environ vingt mille décisions quotidiennes. S'il cesse d'y penser, il s'arrête.",
+    "contrepartie": "Il tient donc son souffle, son pouls et sa sortie de 呪力 juryoku sur une même horloge, au millième. Le registre de la 呪術高専 Jujutsu Kōsen lui compte onze 黒閃 kokusen, second total connu chez un vivant ; interrogé, il n'explique aucun des onze. On ne provoque pas l'Éclair Noir, on le reçoit.",
+    "constat": "Ne jamais l'interrompre lorsqu'il compte. Dort sous assistance ventilatoire et n'a pas dormi seul depuis vingt-neuf ans.",
+    "rarete": 5
+   }
+  ]
+ },
+ "kakucho": {
+  "extensions": [
+   {
+    "id": "EXT-SOU-01",
+    "nom": "Soustraction au quart",
+    "kanji": "四半退",
+    "romaji": "shihan-tai",
+    "principe": "La loi qui retire la totalité d'une chose retire, en droit, n'importe quelle part de cette chose : le tout n'est qu'une fraction parmi d'autres. Il faut seulement énoncer la fraction avant le contact, car une loi ne peut pas retirer ce qui n'a pas été nommé.",
+    "usage": "Le porteur annonce la part — un quart, un tiers, trois cinquièmes — puis touche. On retire le quart d'un mur porteur pour le faire tomber sans bruit, le tiers de la masse d'une lame pour qu'elle ne porte plus, la moitié d'un cri de 呪霊 jurei pour qu'il n'atteigne pas le secteur voisin.",
+    "cout": "La part non retirée reste attachée au porteur tant qu'il ne l'a pas reprise : chaque fraction en suspens ampute sa réserve d'autant. Il n'en tient pas plus de quatre à la fois ; à la cinquième, la loi se sert seule, et elle se sert sur lui.",
+    "archetype": "soustraction"
+   },
+   {
+    "id": "EXT-SOU-02",
+    "nom": "Restitution froide",
+    "kanji": "冷返",
+    "romaji": "reihen",
+    "principe": "Ce qui est retiré n'est pas détruit : il est mis hors du réel, donc il est quelque part. Une loi capable de sortir une chose sait, par le même geste tenu à l'envers, la faire rentrer.",
+    "usage": "Rendre un avant-bras soustrait quarante secondes plus tôt. Rendre une porte au milieu d'un couloir pour couper une poursuite. Rendre à l'adversaire l'organe qu'on lui a pris, au moment choisi, pour qu'il ait de nouveau à le porter.",
+    "cout": "Ce qui revient revient froid : neuf degrés, insensible une minute pour chaque seconde d'absence. La 反転術式 hanten-jutsushiki répare cette chair mais ne la réchauffe pas — elle ne touche pas à ce qui est revenu de travers. Un membre rendu trois fois ne se plie plus.",
+    "archetype": "soustraction"
+   },
+   {
+    "id": "EXT-SOU-03",
+    "nom": "Retrait de soi",
+    "kanji": "自削",
+    "romaji": "jisaku",
+    "principe": "La loi ne demande pas qui elle retire. Le porteur peut se désigner lui-même et soustraire non pas son corps, mais ce que son corps produit : le bruit, la chaleur, l'odeur, la trace de 呪力 juryoku.",
+    "usage": "Il ne devient pas invisible, il devient inintéressant. Les 呪霊 jurei de grade 4級 et 3級 cessent de s'orienter sur lui, les chiens perdent la piste, un adversaire le voit et remet à plus tard de le regarder. Les caméras, elles, continuent de l'enregistrer.",
+    "cout": "Ce qui ne laisse pas de trace ne s'enregistre pas non plus pour lui : pendant le retrait il ne sent ni ses plaies ni le froid, et découvre à la sortie des blessures vieilles de dix minutes. Deux 補助監督 hojo-kantoku ont pour consigne de le compter à voix haute toutes les trente secondes.",
+    "archetype": "soustraction"
+   },
+   {
+    "id": "EXT-ECH-04",
+    "nom": "Échange à terme",
+    "kanji": "後払交換",
+    "romaji": "atobarai-kōkan",
+    "principe": "Un échange est une égalité, non une simultanéité. Si la loi admet que deux choses se valent, elle admet que l'une passe maintenant et l'autre plus tard : la dette tient lieu de contrepartie tant qu'elle est reconnue.",
+    "usage": "Prendre l'avantage d'abord — la vitesse, la solidité, la vue — et régler après la levée du 帳 tobari. Le paiement se fait en général sur le trajet du retour, dans la voiture du 補助監督 hojo-kantoku, avant la troisième sortie d'autoroute.",
+    "cout": "La dette porte intérêt : un dixième de sa valeur par minute non réglée. Elle ne se négocie pas, ne s'annule pas, ne se transfère pas. Passé quarante minutes, elle se prélève seule, sur ce qu'elle trouve, sans respecter la nature de ce qui avait été pris.",
+    "archetype": "échange"
+   },
+   {
+    "id": "EXT-ECH-05",
+    "nom": "Échange par tiers",
+    "kanji": "三者取引",
+    "romaji": "sansha-torihiki",
+    "principe": "La loi exige deux termes, pas deux personnes. Rien n'interdit que ce qui est donné vienne du porteur et que ce qui est pris soit prélevé sur un tiers présent, dès lors que les valeurs restent égales de part et d'autre.",
+    "usage": "Le porteur maintient le tiers dans le rayon de contact — sept mètres, une pièce fermée suffit — et fait transiter par lui la part qu'il ne veut pas porter : la brûlure, la fracture, l'épuisement.",
+    "cout": "Le tiers doit être conscient ; un homme évanoui ne vaut rien dans un échange. La part transférée ne quitte pas le porteur, elle se divise : il en garde toujours la moitié. Employée sur un civil, cette extension est classée par le 上層部 jōsōbu dans la même colonne que le meurtre, et c'est la ligne exacte où commencent les 呪詛師 jusoshi.",
+    "archetype": "échange"
+   },
+   {
+    "id": "EXT-ECH-06",
+    "nom": "Échange contre le vide",
+    "kanji": "空取引",
+    "romaji": "kara-torihiki",
+    "principe": "Si l'échange est une loi, elle vaut encore quand l'un des termes est nul. Donner une chose contre rien reste un échange régulier : simplement, rien ne revient, et ce qui est parti n'a plus de contrepartie par où revenir.",
+    "usage": "On l'emploie sur ce que l'on veut rendre définitif : la régénération d'un 呪霊 jurei, la trempe d'un 呪具 jugu, la douleur d'un blessé que l'on ne peut pas transporter. Rien de ce qui a été cédé de cette façon n'a jamais été retrouvé.",
+    "cout": "Le vide se paie : chaque échange nul rétrécit la capacité du porteur d'environ un pour cent, mesuré et définitif. La 反転術式 hanten-jutsushiki ne le rend pas. Ceux qui en ont abusé finissent par ne plus rien pouvoir échanger, ce qui, dans leur cas, revient à ne plus rien pouvoir.",
+    "archetype": "échange"
+   },
+   {
+    "id": "EXT-REP-07",
+    "nom": "Second prononcé",
+    "kanji": "二度目",
+    "romaji": "nidome",
+    "principe": "La loi s'applique à un état du réel. Le résultat qu'elle produit est un état du réel comme un autre : rien n'empêche de le lui soumettre à son tour.",
+    "usage": "La deuxième application doit tomber dans la seconde qui suit la première, avant que le résultat n'ait refroidi et ne soit redevenu un fait ordinaire. Un effet appliqué à lui-même ne double pas : il se referme, il devient une chose dont on ne sort plus.",
+    "cout": "Le coût double à chaque tour, le résultat non. Une troisième application est possible et ne s'interrompt plus : elle parcourt toute la chaîne jusqu'au bout, cible comprise, porteur compris s'il est encore en contact au moment où elle passe.",
+    "archetype": "répétition"
+   },
+   {
+    "id": "EXT-REP-08",
+    "nom": "Répétition à vide",
+    "kanji": "空唱",
+    "romaji": "kūshō",
+    "principe": "Une loi qui rejoue peut rejouer sans objet. Le porteur la fait tourner sur rien, non pour obtenir quelque chose, mais pour qu'elle soit déjà en cours lorsqu'elle rencontrera enfin quelque chose.",
+    "usage": "On l'entretient avant l'abaissement du 帳 tobari. La première application sur cible n'a alors plus d'amorce et tombe en six centièmes de seconde. C'est l'extension de ceux qui savent qu'ils ne frapperont pas les premiers.",
+    "cout": "Deux pour cent de réserve par minute, sans aucun résultat visible. Tant que la boucle tourne, la 反転術式 hanten-jutsushiki reste inaccessible : on n'inverse pas un opérateur déjà en train de tourner. Le porteur combat entretenu et non soignable.",
+    "archetype": "répétition"
+   },
+   {
+    "id": "EXT-REP-09",
+    "nom": "Répétition imposée",
+    "kanji": "移し反復",
+    "romaji": "utsushi-hanpuku",
+    "principe": "La loi répète un événement ; elle ne demande pas de qui il vient. Ce qu'un adversaire vient d'achever est un événement, donc un objet recevable.",
+    "usage": "Le geste que l'adversaire termine se rejoue par lui, à l'identique, dans le même intervalle : le coup part deux fois, le pas se refait, la garde se rouvre au même endroit. Contre un 呪霊 jurei qui ne raisonne pas, c'est décisif. Contre un 呪術師 jujutsushi, cela fonctionne une fois.",
+    "cout": "Le porteur est le métronome : il doit refaire lui-même le geste, dans la même mesure, sans se tromper d'un temps. S'il manque la mesure, la répétition se referme sur lui et c'est son propre geste qui se rejoue — y compris s'il était en train de tomber.",
+    "archetype": "répétition"
+   },
+   {
+    "id": "EXT-MES-10",
+    "nom": "Relevé à distance",
+    "kanji": "遠見計測",
+    "romaji": "tōmi-keisoku",
+    "principe": "Mesurer n'exige pas de toucher, seulement de voir assez. La loi qui évalue au contact évalue de loin, avec une marge d'erreur proportionnelle à la distance parcourue par le regard.",
+    "usage": "À douze mètres, le relevé donne le grade réel d'un 呪霊 jurei, la réserve restante d'un adversaire, l'épaisseur d'une cloison, à trois pour cent près par tranche de dix mètres. On l'exécute depuis un toit, avant descente.",
+    "cout": "La mesure s'inscrit sur le mesuré : une ligne froide, un à deux degrés sous la peau, à l'endroit exact du relevé. Tout ce qui est capable de sentir sait qu'il vient d'être compté, et sait par où l'on regardait. On ne relève jamais deux fois depuis la même position.",
+    "archetype": "mesure"
+   },
+   {
+    "id": "EXT-MES-11",
+    "nom": "Désignation de l'étalon",
+    "kanji": "基準体",
+    "romaji": "kijuntai",
+    "principe": "Toute mesure suppose une unité. Si la loi mesure, elle peut choisir ce à quoi elle rapporte le reste : le porteur désigne un corps, un objet, un cadavre, et le monde entier se compte en lui.",
+    "usage": "Une lame vaut deux tiers de l'étalon, un 呪霊 jurei en vaut neuf, un mur en vaut quatre : les décisions se prennent en une demi-seconde parce que tout est déjà dans la même unité. On désigne de préférence une chose morte — un rail, une barre de fer — plutôt qu'un vivant.",
+    "cout": "L'étalon ne se mesure pas lui-même. Le porteur est aveugle à ce qu'il a désigné et à ce qui lui arrive. Changer d'étalon demande onze secondes durant lesquelles rien n'a de valeur, donc rien n'est comparable : ni la portée d'un coup, ni la distance à laquelle il arrive.",
+    "archetype": "mesure"
+   },
+   {
+    "id": "EXT-MES-12",
+    "nom": "Relevé de soi",
+    "kanji": "自量",
+    "romaji": "jiryō",
+    "principe": "Le porteur est un objet mesurable comme un autre. La loi se retourne sur son propre support et rend la quantité exacte de 呪力 juryoku qui lui reste, sans arrondi ni consolation.",
+    "usage": "Il sait au dixième ce qu'il peut encore payer : combien d'applications, combien de secondes de 領域展開 ryōiki-tenkai, si la 反転術式 hanten-jutsushiki ira jusqu'à l'os ou s'arrêtera au muscle. Les décisions de repli cessent d'être des paris.",
+    "cout": "Le nombre ne s'éteint plus pendant vingt-quatre heures et occupe une part fixe de l'attention, comme une horloge dans une pièce vide. Le temps de réaction s'allonge d'un dixième de seconde environ — soit très exactement l'ordre de grandeur où se joue le 黒閃 kokusen. Aucun porteur n'en a jamais produit un pendant un relevé.",
+    "archetype": "mesure"
+   },
+   {
+    "id": "EXT-LIE-13",
+    "nom": "Lien tendu",
+    "kanji": "張り綱",
+    "romaji": "harizuna",
+    "principe": "Un lien a une longueur. Une loi qui relie deux choses en fixe la distance, donc elle peut la réduire : raccourcir le lien, c'est rapprocher ce qu'il tient.",
+    "usage": "Le porteur relie l'adversaire à lui-même, puis retire du mou, trois mètres par seconde. On n'arrache presque jamais : on interdit surtout de partir. Contre ce qui fuit — un 呪霊 jurei de grade 2級 en repli, un 呪詛師 jusoshi qui a une voiture — c'est la seule chose qui compte.",
+    "cout": "Le porteur ne peut pas s'exclure du lien : il en est toujours l'une des deux extrémités. Le mou retiré l'est des deux côtés, et il parcourt la moitié de la distance, qu'il le veuille ou non, dans la ligne exacte du lien. On reconnaît ces praticiens à leurs talons, usés jusqu'au cuir intérieur.",
+    "archetype": "lien"
+   },
+   {
+    "id": "EXT-LIE-14",
+    "nom": "Nœud à trois",
+    "kanji": "三結び",
+    "romaji": "mimusubi",
+    "principe": "Rien dans la loi ne dit deux. Un lien accepte un troisième terme ; mais à trois, il n'a plus de sens de circulation : ce qui arrive à l'un passe aux deux autres, également et sans délai.",
+    "usage": "On noue un allié, un adversaire et soi-même pour répartir ce qu'aucun ne peut encaisser seul. On noue deux adversaires et un mur porteur, pour que le mur reçoive ce qu'ils se font l'un à l'autre.",
+    "cout": "Le partage est aveugle et ne s'interrompt pas : il vaut aussi pour tout ce qui vient du porteur, y compris ses propres coups. Un nœud à trois ne se dénoue que lorsque l'un des trois cesse d'être un terme, c'est-à-dire meurt. Le 上層部 jōsōbu exige un formulaire signé avant tout emploi sur un collègue.",
+    "archetype": "lien"
+   },
+   {
+    "id": "EXT-LIE-15",
+    "nom": "Coupure du lien",
+    "kanji": "断縁",
+    "romaji": "danen",
+    "principe": "Pour nouer, il faut voir les nœuds. Une loi qui relie reconnaît nécessairement les liens qu'elle n'a pas faits ; et ce qu'elle reconnaît, elle peut le défaire.",
+    "usage": "Couper ce qui rattache un 呪霊 jurei au lieu qui l'a produit — un palier d'immeuble, un passage souterrain, une salle d'attente — le prive de ce qui le renouvelle et le rend exorcisable en quelques minutes. On coupe aussi des liens humains : la filiation, la dette, la fidélité. Cela se voit tout de suite sur le visage.",
+    "cout": "Aucune coupure ne se recoud. La 反転術式 hanten-jutsushiki répare la chair, jamais ce qui la rattachait à quelque chose. Le porteur conserve en outre la mémoire exacte de chaque lien défait, sous forme d'absence : il en connaît le compte à tout instant, et il le tient sans le vouloir.",
+    "archetype": "lien"
+   },
+   {
+    "id": "EXT-SEU-16",
+    "nom": "Abaissement du seuil",
+    "kanji": "敷居下げ",
+    "romaji": "shikii-sage",
+    "principe": "Un seuil est un nombre. La loi ne se déclenche qu'au-delà d'une certaine quantité — vitesse, poids, chaleur, intention — et ce nombre est un réglage, pas une nature.",
+    "usage": "Descendu au plus bas, le seuil rend la loi permanente autour du porteur : elle prend tout ce qui passe, un coup, une balle, un souffle, une goutte. On l'emploie encerclé, quand il n'y a plus aucune sélection à faire.",
+    "cout": "La loi cesse de distinguer. Elle prend les alliés, la pluie, la main du porteur. Le coût suit le nombre d'événements et non leur importance : en secteur habité, dix secondes vident un praticien confirmé. Le 帳 tobari doit être posé avant l'abaissement, jamais pendant.",
+    "archetype": "seuil"
+   },
+   {
+    "id": "EXT-SEU-17",
+    "nom": "Seuil déplacé",
+    "kanji": "敷居移し",
+    "romaji": "shikii-utsushi",
+    "principe": "Le seuil est un lieu autant qu'une valeur : la loi agit là où quelque chose passe d'un état à l'autre. Ce lieu peut être choisi ailleurs qu'à sa place habituelle.",
+    "usage": "On le pose sur une porte, une margelle, la ligne blanche d'un quai, la lèvre d'une plaie ouverte. L'adversaire ne rencontre pas le porteur : il rencontre le passage, et il n'a pas d'autre chemin que celui-là.",
+    "cout": "Un seul seuil à la fois. Le déplacer demande quatre secondes pendant lesquelles il n'y en a aucun, ni ici ni là-bas ; le porteur les passe à attaquer à mains nues pour que cela ne se remarque pas. Un seuil posé sur un objet mobile se défait dès que l'objet change de main.",
+    "archetype": "seuil"
+   },
+   {
+    "id": "EXT-SEU-18",
+    "nom": "Seuil intérieur",
+    "kanji": "内敷居",
+    "romaji": "uchi-shikii",
+    "principe": "Si le seuil peut être posé ailleurs, il peut être posé sur le porteur lui-même. Tout ce qui entre en lui franchit alors la limite et tombe sous la loi, à l'intérieur, là où l'on ne se défend pas d'ordinaire.",
+    "usage": "Se laisser mordre, avaler, transpercer : ce qui entre est traité au passage. C'est l'extension que l'on emploie contre les 呪霊 jurei de grade 特級 qui absorbent ; ils s'arrêtent au milieu du geste, et ils ne comprennent pas.",
+    "cout": "Le seuil ne trie pas ce qui entre. L'air, l'eau, la nourriture, une transfusion : tout est traité. Le porteur jeûne douze heures avant, respire selon un rythme appris — quatre secondes, huit secondes — et se voit refuser toute voie veineuse tant que le seuil est en place.",
+    "archetype": "seuil"
+   },
+   {
+    "id": "EXT-TEM-19",
+    "nom": "Témoin emprunté",
+    "kanji": "借り証人",
+    "romaji": "kari-shōnin",
+    "principe": "La loi réclame un témoin, non un vivant. Il suffit qu'un regard ait été présent et que rien ne l'ait encore effacé ; un mort récent voit encore un peu ce qu'on lui met devant les yeux.",
+    "usage": "Le porteur tourne le visage du cadavre vers la scène et applique la loi devant lui. Six minutes après le décès, pas davantage : au-delà, le témoignage est refusé et l'application ne prend pas.",
+    "cout": "Un témoignage emprunté valide sans détailler. La loi s'applique alors à toute la surface vue et non à la cible choisie, ce qui en interdit l'emploi à moins de quinze mètres d'un allié. Le porteur doit fermer lui-même les yeux du témoin après usage ; ceux qui ne l'ont pas fait rapportent des difficultés dont le 呪術高専 Jujutsu Kōsen n'a pas souhaité tenir registre.",
+    "archetype": "témoignage"
+   },
+   {
+    "id": "EXT-TEM-20",
+    "nom": "Déclaration publique",
+    "kanji": "公示",
+    "romaji": "kōji",
+    "principe": "Un témoignage vaut par le nombre de ceux qui l'entendent. La loi qui se satisfait d'un seul témoin se renforce de tous les autres : ce qui est déclaré devant beaucoup engage davantage le réel.",
+    "usage": "Le porteur énonce à voix haute, avant tout contact, ce que la loi va faire et sur qui. Devant douze personnes ou plus — collègues, blessés, civils retenus sous 帳 tobari — l'effet cesse d'être esquivable et devient une formalité administrative.",
+    "cout": "Une déclaration est un 縛り shibari. Ce qui est annoncé doit se produire exactement comme annoncé, sinon la sanction porte sur le porteur, à hauteur de ce qu'il avait promis. Un rapport de 1994 mentionne un praticien qui s'était déclaré incapable de mourir ce jour-là : il a tenu jusqu'à minuit passé de neuf minutes.",
+    "archetype": "témoignage"
+   },
+   {
+    "id": "EXT-MET-21",
+    "nom": "Forme intermédiaire tenue",
+    "kanji": "半変固定",
+    "romaji": "hanpen-kotei",
+    "principe": "Une métamorphose est un trajet, pas un saut. Si la loi conduit une chose d'un état à un autre, elle peut s'arrêter en route et maintenir l'état intermédiaire, qui n'existe nulle part ailleurs dans le monde.",
+    "usage": "Une main arrêtée à mi-chemin de la pierre frappe comme la pierre et se plie comme une main. Un 呪霊 jurei retenu à mi-parcours n'a plus la forme qui le fait fonctionner : il reste debout, entier, et il ne fait plus rien.",
+    "cout": "Un état intermédiaire ne tient pas seul : il se paie à la seconde, au prix d'une course soutenue. Il ne se soigne pas non plus, car la 反転術式 hanten-jutsushiki ramène la chair à sa forme d'origine et défait donc le maintien. Un porteur blessé choisit : guérir, ou tenir.",
+    "archetype": "métamorphose"
+   },
+   {
+    "id": "EXT-MET-22",
+    "nom": "Retour à la forme d'origine",
+    "kanji": "原形帰し",
+    "romaji": "genkei-gaeshi",
+    "principe": "Une loi qui transforme sait lire d'où une chose vient, sans quoi elle ne saurait pas où la mener. Ce qu'elle lit, elle peut le remonter : rendre à une chose la forme qu'elle avait avant d'être ce qu'elle est.",
+    "usage": "Sur un 呪具 jugu, cela restitue l'objet ordinaire qu'il était et le désarme définitivement. Sur un 呪霊 jurei, cela le ramène à ce qui l'a fait : une peur humaine, sans corps, qui n'attaque plus personne.",
+    "cout": "Une peur rendue à l'état de peur reste une peur, et elle est libre. Elle se dépose sur les vivants présents dans le 帳 tobari et recommence son travail ; on compte en moyenne huit mois avant réapparition, un grade au-dessus. Le porteur est tenu de demeurer sur zone jusqu'à dispersion et de porter lui-même la part qui ne trouve personne d'autre.",
+    "archetype": "métamorphose"
+   }
+  ]
+ },
+ "kanri": {
+  "kokusen": [
+   {
+    "aptitude": "Frappe neuf millièmes trop tôt, avec constance",
+    "description": "Sa faute est régulière, donc corrigible : le jour où le retard de son 呪力 juryoku rattrape exactement son poing, la fente noire s'ouvre dans l'axe de l'avant-bras, aussi longue que lui, et se referme sans un bruit. Il ne parle plus ensuite de pousser son énergie, mais d'arriver à l'heure avec elle."
+   },
+   {
+    "aptitude": "Ne corrige jamais deux fois la même erreur",
+    "description": "Elle apprend en un essai, ce qui la rend imprévisible pour elle-même : la coïncidence tombe sur la reprise, jamais sur la répétition, et l'espace se fend en noir juste devant sa clavicule, à trente centimètres de la cible réelle. Après quoi son 呪力 juryoku ne se laisse plus doser : il est entier ou absent."
+   },
+   {
+    "aptitude": "Aucune aptitude notable. L'a reçu deux fois",
+    "description": "Rien dans sa mécanique n'explique la coïncidence à 0,000001 seconde, et les deux fois il frappait mal, en déséquilibre, avec la mauvaise main. La fente noire s'est ouverte sous son talon plutôt que sous son poing, et depuis, son énergie répond avant qu'il n'ait décidé de frapper — ce qui, en évaluation, se lit comme un défaut."
+   },
+   {
+    "aptitude": "Compte à mi-voix pendant tout l'échange",
+    "description": "Le comptage n'est pas un métronome mais une laisse : au chiffre où sa voix se casse, le coup et le 呪力 juryoku tombent ensemble et la fente noire s'ouvre horizontalement, à hauteur de bouche, comme une seconde bouche. Elle a cessé de compter depuis, et frappe désormais sur le silence qui suivait le chiffre."
+   },
+   {
+    "aptitude": "Rendement nul avant la troisième frappe",
+    "description": "Les deux premières servent d'accordage, ce qu'aucun adversaire ne lui accorde ; quand on le lui accorde, la troisième multiplie par 2,5 et fend l'espace en noir sur la longueur exacte de son tibia. Il a depuis pris l'habitude de traiter ses deux premiers coups comme du matériel consommable, ce que les instructeurs jugent sain et l'infirmerie non."
+   },
+   {
+    "aptitude": "Ferme les yeux au moment de l'impact",
+    "description": "Elle ne voit donc jamais sa propre fente noire, seulement le noir des paupières qui, cette fois-là, a duré une demi-seconde de trop et sentait le métal chaud. On lui a montré l'enregistrement ; elle a demandé qu'on le lui remontre onze fois, puis n'a plus jamais réussi à le refaire volontairement, ce qui est la règle."
+   },
+   {
+    "aptitude": "Ne l'obtient qu'après avoir été touchée",
+    "description": "Sa coïncidence est une réponse : elle survient dans les deux secondes qui suivent une côte cassée, jamais avant, et la fente noire s'ouvre alors du côté blessé, épousant la ligne de la fracture. Son rapport au 呪力 juryoku s'est inversé — elle ne le mobilise plus pour se protéger, elle attend qu'on le lui déclenche."
+   },
+   {
+    "aptitude": "Retient son souffle une seconde de trop",
+    "description": "L'apnée décale tout son minutage vers l'arrière, et c'est précisément dans ce décalage, à la limite de l'étourdissement, que le coup et l'énergie se rejoignent : l'espace se fend en noir au-dessus de son épaule, verticalement, comme une porte trop étroite. Il dit avoir entendu, à cet instant, la fente et non l'impact."
+   },
+   {
+    "aptitude": "Frappe juste quand on vient de lui mentir",
+    "description": "L'observation est empirique et gênante à consigner : trois occurrences, trois mensonges vérifiés dans la minute précédente, la fente noire s'ouvrant chaque fois en biais sous le poing droit. Depuis, son 呪力 juryoku a pris une qualité que les examinateurs décrivent comme rancunière : il monte plus vite qu'avant et redescend beaucoup plus lentement."
+   },
+   {
+    "aptitude": "L'a reçu une fois. Ne le cherche plus",
+    "description": "Il a vu la fente noire à dix-neuf ans, longue de quatre-vingts centimètres, et n'a plus jamais tenté de la reproduire, ce qui statistiquement lui donne les meilleures chances de la revoir. Son énergie maudite est depuis d'une régularité clinique : elle n'a plus besoin de viser, elle est simplement toujours là où le poing va finir."
+   }
+  ],
+  "simplifies": [
+   {
+    "id": "kr-01",
+    "nom": "Le Grenier de cendre",
+    "kanji": "灰倉",
+    "romaji": "Haisō",
+    "forme": "La cendre de vingt-deux bâtons d'encens brûlés la veille se soulève du sol et tient en suspension jusqu'à 2,21 mètres, sans un remous ; l'air y descend à 14 °C et sent la résine froide. Chaque grain s'arrête net à la frontière, comme contre une vitre que personne ne voit.",
+    "effet": "À la surface de la sphère, l'inscription du 領域展開 ryōiki-tenkai adverse est défaite : le territoire continue de tenir au-dehors, mais son coup au but n'a plus d'adresse à l'intérieur.",
+    "limite": "Tout ce qui possède une masse. Un poing, une lame, un 呪具 jugu lancé : la cendre s'écarte de deux centimètres et se referme derrière, intacte."
+   },
+   {
+    "id": "kr-02",
+    "nom": "La Roue de givre",
+    "kanji": "霜輪",
+    "romaji": "Sōrin",
+    "forme": "Un anneau de givre se forme à hauteur de hanche et se déploie en sphère en un peu moins d'une seconde ; la température tombe à −3 °C et la glace craque six fois par seconde, régulièrement, comme un compteur. Le givre prend d'abord sur les cils de la porteuse, qui ne cligne plus.",
+    "effet": "Elle gèle à la frontière le 術式拡張 jutsushiki-kakuchō adverse : l'extension arrive au bord, s'immobilise, puis retombe en poudre. Le coup au but est annulé tant que la porteuse garde les yeux ouverts.",
+    "limite": "La voix. Un ordre, un serment prononcé, un nom crié franchissent le givre sans le faire fondre, et tout ce qui agit par la parole agit."
+   },
+   {
+    "id": "kr-03",
+    "nom": "L'Intérieur de la cloche",
+    "kanji": "鐘の内",
+    "romaji": "Kane no Uchi",
+    "forme": "Une note unique de bronze, 92 hertz, tenue sans décroître ; l'air s'épaissit, monte de 2 °C, et toute parole prononcée revient à son auteur avec un quart de seconde de retard. On voit trembler la poussière au bord de la sphère.",
+    "effet": "Le coup au but du territoire adverse perd son oreille : il continue de se prononcer, mais la note le recouvre et il n'atteint plus personne à l'intérieur.",
+    "limite": "Ce qui ne résonne pas. Un poison déjà introduit dans le sang, une hémorragie commencée, une malédiction posée avant le déploiement poursuivent leur travail sans rien entendre."
+   },
+   {
+    "id": "kr-04",
+    "nom": "Le Lit de sel",
+    "kanji": "塩床",
+    "romaji": "Enshō",
+    "forme": "Le sol se couvre de sel sec et craquelé sur 2,21 mètres de rayon, et la sphère assèche l'air jusqu'à ce que les lèvres se fendent en quarante secondes. Aucun bruit, sauf le crissement sous les semelles ; l'odeur est celle d'une plaie propre.",
+    "effet": "Le 呪力 juryoku adverse se dessèche à la frontière et perd sa cohésion : le coup au but arrive privé de véhicule, et le territoire ne parvient pas à s'imposer à l'intérieur.",
+    "limite": "Tout ce qui est liquide et chaud. Le sang, y compris celui du porteur, traverse le sel sans se laisser prendre ; les techniques qui l'emploient sont pleinement opérantes."
+   },
+   {
+    "id": "kr-05",
+    "nom": "L'Été sans cigales",
+    "kanji": "無蝉",
+    "romaji": "Musen",
+    "forme": "Le silence tombe d'un coup : cigales, circulation, respirations d'autrui, tout cesse à la frontière, et les tympans se pressurisent comme à trois cents mètres de fond. La température ne change pas, ce qui rend la chose plus difficile à supporter encore.",
+    "effet": "Le territoire adverse ne peut plus s'annoncer : privé de sa déclaration, le coup au but ne trouve pas de prise, et l'extension s'arrête au bord comme devant un mur qu'elle ne peut pas nommer.",
+    "limite": "La lumière. Tout ce qui passe par le regard, la vue, l'éblouissement ou l'image entre sans être ralenti d'un millième de seconde."
+   },
+   {
+    "id": "kr-06",
+    "nom": "L'Anneau de veilleuses",
+    "kanji": "灯環",
+    "romaji": "Tōkan",
+    "forme": "Trente et une flammes d'un centimètre se tiennent debout à hauteur de poitrine, sans mèche ni combustible, réparties sur la sphère ; elles éclairent sans projeter d'ombre et l'air sent la cire chaude. La chaleur reste locale : à dix centimètres d'une flamme, rien.",
+    "effet": "La frontière révèle et dissout : la couture du 領域展開 ryōiki-tenkai adverse devient visible comme un liseré gris, et le coup au but s'y consume avant d'entrer.",
+    "limite": "Le froid. Une lame refroidie, un corps refroidi, une technique sans chaleur traversent l'anneau sans faire vaciller une seule flamme."
+   },
+   {
+    "id": "kr-07",
+    "nom": "La Salle de boue",
+    "kanji": "泥堂",
+    "romaji": "Deidō",
+    "forme": "Le sol devient boue tiède à 33 °C sur toute la sphère ; on y enfonce de quatre centimètres sans jamais y laisser d'empreinte. L'odeur est celle d'une eau stagnante et du fer, et le bruit de succion se produit toujours une demi-seconde après le pas.",
+    "effet": "Le coup au but est absorbé : il arrive, il porte, mais il porte trois centimètres sous la surface, dans la boue, et non dans ce qui s'y tient debout.",
+    "limite": "Ce qui tombe. Toute attaque strictement verticale traverse la sphère par le haut et frappe avant que la boue ait eu le temps de la recevoir."
+   },
+   {
+    "id": "kr-08",
+    "nom": "Le Siège d'aiguilles",
+    "kanji": "針座",
+    "romaji": "Shinza",
+    "forme": "Deux mille aiguilles à coudre se suspendent pointe vers l'extérieur, immobiles, à une paume les unes des autres ; elles émettent un bourdonnement très fin, autour de 4 000 hertz, qui donne mal aux dents. L'acier reste à la température de la peau.",
+    "effet": "Chaque assaut de technique adverse annule le coup au but et coûte une aiguille, qui tombe et se plante dans le sol : la sphère tient exactement le nombre d'attaques qu'il lui reste d'aiguilles.",
+    "limite": "Ce qui passe entre. Gaz, chaleur, fumée, poussière franchissent les intervalles sans coûter une seule aiguille, et le porteur meurt souvent avec la défense intacte."
+   },
+   {
+    "id": "kr-09",
+    "nom": "La Geôle de papier",
+    "kanji": "紙牢",
+    "romaji": "Shirō",
+    "forme": "Cent quarante et une feuilles de rapport de 補助監督 hojo-kantoku se lèvent et tournent lentement autour du porteur, à plat, sans jamais se toucher ; l'air sent l'encre fraîche et le papier neuf, et la température monte de 1 °C par minute.",
+    "effet": "La frontière consigne : le nom du 術式 jutsushiki adverse s'écrit de lui-même sur une feuille, à la main, et tant qu'il est écrit son coup au but ne s'applique plus à l'intérieur.",
+    "limite": "Ce qui n'a pas de nom. Un 呪霊 jurei de 4級 sans forme fixe, un coup improvisé, une violence sans technique : rien à consigner, donc rien à retenir."
+   },
+   {
+    "id": "kr-10",
+    "nom": "La Retenue du souffle",
+    "kanji": "息止",
+    "romaji": "Sokushi",
+    "forme": "La sphère est faite de l'air que le porteur a cessé d'expirer : à l'intérieur, plus rien ne circule, la poussière reste où elle est, et la température se fige à celle du moment du déploiement, au dixième près. Personne n'y respire, le porteur compris.",
+    "effet": "Sans mouvement d'air, le territoire adverse ne peut plus s'établir : le coup au but reste suspendu à la frontière, littéralement immobile, jusqu'à la dissipation de la sphère.",
+    "limite": "Le temps. Quarante-six secondes en moyenne, moins si le porteur a couru ; ensuite il inspire, et tout ce qui attendait dehors entre en même temps que l'air."
+   },
+   {
+    "id": "kr-11",
+    "nom": "Le Parapluie de rouille",
+    "kanji": "錆傘",
+    "romaji": "Sabigasa",
+    "forme": "Des écailles d'oxyde de fer montent du sol vers le haut, à contresens, et se referment en coupole ; l'air prend un goût de sang et de pièce de monnaie, et l'humidité relative monte brutalement. La rouille grésille faiblement, comme une pluie sur une tôle lointaine.",
+    "effet": "Le 呪力 juryoku adverse s'oxyde au contact de la frontière : il perd sa liaison, se ternit, et le coup au but se défait en particules avant d'avoir pu s'appliquer.",
+    "limite": "Le vivant. Griffes, dents, os, chair, tout ce qui n'est pas métal ni technique traverse la coupole sans rouiller, et beaucoup de 呪霊 jurei ne sont que cela."
+   },
+   {
+    "id": "kr-12",
+    "nom": "La Pluie tiède",
+    "kanji": "温雨",
+    "romaji": "On'u",
+    "forme": "Une pluie sans source tombe à l'intérieur de la sphère, à 37,2 °C, et s'arrête à trois centimètres de la peau de chacun ; elle sent l'iode et le caoutchouc de gant. Le bruit est celui d'une averse entendue depuis une chambre fermée.",
+    "effet": "La frontière lave l'adresse : le territoire adverse conserve son coup au but mais ne sait plus à qui il s'applique, et frappe la pluie.",
+    "limite": "Ce qui est déjà mouillé. Un corps couvert de son propre sang, un vêtement trempé, un être qui vit dans l'eau ne sont pas lavés et restent parfaitement désignés."
+   },
+   {
+    "id": "kr-13",
+    "nom": "Le Voile d'os moulu",
+    "kanji": "骨粉",
+    "romaji": "Koppun",
+    "forme": "Une poudre d'os blanche, moulue fin, se tient en suspension et dessine la sphère par sa seule densité ; elle sent la craie et le lait brûlé, et se dépose sur les épaules en une couche mesurable après vingt secondes. Il y fait exactement deux degrés de moins que dehors.",
+    "effet": "La poudre prend l'empreinte en négatif du 生得領域 seitoku-ryōiki adverse et le tient à distance : son coup au but s'imprime dans le voile, jamais dans le corps.",
+    "limite": "La sphère ne distingue rien. Le 術式 jutsushiki du porteur s'arrête à la même frontière et ne sort pas ; à l'intérieur du voile, il n'a que ses mains."
+   },
+   {
+    "id": "kr-14",
+    "nom": "La Chambre des secondes",
+    "kanji": "秒室",
+    "romaji": "Byōshitsu",
+    "forme": "Un tic-tac de mécanisme d'horloge emplit la sphère à soixante et un battements par minute — un de trop, toujours. L'air est sec, 19 °C, et les montres portées à l'intérieur avancent de trois secondes par déploiement, définitivement.",
+    "effet": "Le coup au but adverse arrive systématiquement sur le battement en trop : il porte dans une seconde qui n'existe pas au calendrier des vivants, et n'atteint donc personne.",
+    "limite": "Ce qui n'a pas besoin de durée. Une pression, une asphyxie, un poison, un effondrement du sol : les phénomènes continus ignorent le battement supplémentaire et travaillent sans interruption."
+   }
+  ]
+ },
+ "affectation": {
+  "affectations": [
+   {
+    "intitule": "Secteur permanent : préfecture de Gunma, sites hospitaliers désaffectés. Recensement des 呪霊 jurei de 4級, sans binôme.",
+    "motif": "Le porteur a demandé par écrit une affectation à la mesure de sa loi. La demande a été lue."
+   },
+   {
+    "intitule": "Détachement au dépôt de 呪具 jugu de Kyoto. Inventaire, graissage, remise en caisse.",
+    "motif": "On sait ce que fait un outil quand on le prend en main. De lui, on ne le sait pas."
+   },
+   {
+    "intitule": "Appui aux 補助監督 hojo-kantoku pour la pose du 帳 tobari. Poste de nuit, 22h00-05h00, hors périmètre.",
+    "motif": "Compétent pour fermer un secteur, inutile à l'intérieur. Maintenir à la frontière."
+   },
+   {
+    "intitule": "Escorte de dépouilles de 呪術師 jujutsushi, trois rotations hebdomadaires, ligne Tōhoku.",
+    "motif": "La loi s'applique proprement là où il ne reste plus personne à ménager."
+   },
+   {
+    "intitule": "Position d'appât. Se tenir à découvert, immobile, jusqu'à manifestation de la cible.",
+    "motif": "Signature de 呪力 juryoku identifiable à trois cents mètres. On ne gaspille pas une odeur pareille."
+   },
+   {
+    "intitule": "Interdiction de 領域展開 ryōiki-tenkai en zone urbaine. Contrôle trimestriel du dossier.",
+    "motif": "La dissimulation du dernier déploiement a été chiffrée à quarante et un millions de yens. Une ligne budgétaire de cette nature se reconduit une fois, pas deux."
+   },
+   {
+    "intitule": "縛り shibari imposé : déclaration orale et intégrale des conditions du 術式 jutsushiki avant tout engagement.",
+    "motif": "Un porteur dont on ignore la loi est un porteur qu'on ne peut pas remplacer au bon moment."
+   },
+   {
+    "intitule": "Mutation à l'annexe de Sendai. Enseignement des premières années, deux heures hebdomadaires.",
+    "motif": "Transmet correctement. N'a été retenu pour rien d'autre."
+   },
+   {
+    "intitule": "Mission conjointe avec un 呪詛師 jusoshi placé sous remise de peine, durée indéterminée.",
+    "motif": "Les deux dossiers portent la même annotation en marge. Autant qu'ils s'usent l'un contre l'autre."
+   },
+   {
+    "intitule": "Retrait de l'autorisation de mission en binôme, effet immédiat.",
+    "motif": "Deux rapports de coéquipiers mentionnent une hésitation d'environ trois secondes. Le troisième rapport n'a pas pu être rédigé."
+   },
+   {
+    "intitule": "Relevés post-incident : photographie du site, décompte des corps, restitution des effets aux familles.",
+    "motif": "La loi du porteur est jugée plus supportable après les faits qu'au moment où ils ont lieu."
+   },
+   {
+    "intitule": "Placement en réserve d'exécution. Convocable sous quarante minutes, non affecté, non rémunéré au titre des missions.",
+    "motif": "On ne laisse pas un tel dossier en activité. On ne s'en débarrasse pas non plus tant qu'il peut servir."
+   },
+   {
+    "intitule": "Fouilles de la fosse de Hakone, treize jours consécutifs, sans relève.",
+    "motif": "Seul porteur dont l'immobilisation prolongée ne prive aucun secteur d'un exorciste."
+   },
+   {
+    "intitule": "Examen mensuel obligatoire : prélèvement de 呪力 juryoku résiduel, relevé de température corporelle, archivage sous scellé.",
+    "motif": "En cas de décès, la loi devra pouvoir être décrite avec exactitude à celui qui viendra après."
+   },
+   {
+    "intitule": "Interdiction de contact avec la famille directe pour la durée de l'affectation. Courrier centralisé, non transmis.",
+    "motif": "Les liens documentés constituent, dans le cas d'espèce, une condition d'application exploitable par un tiers."
+   },
+   {
+    "intitule": "Décision d'exécution différée. Réexamen du dossier dans dix-huit mois.",
+    "motif": "Le vote est acquis. L'application reste suspendue tant que le secteur demeure sous-doté."
+   }
+  ],
+  "contres": [
+   "Ouvrir un 簡易領域 kan'i-ryōiki et ne plus en sortir : la sphère annule le coup au but, il devra venir le chercher à la main, à portée de vos doigts.",
+   "Le laisser déployer son 領域展開 ryōiki-tenkai, encaisser délibérément le premier passage, puis frapper la paroi à l'endroit qu'il regarde le moins : c'est toujours là qu'elle est la plus mince.",
+   "Superposer votre propre territoire au sien. Le plus raffiné des deux impose ses règles, et une loi mal bordée perd la superposition en moins de quatre secondes.",
+   "Attaquer avec ce qui ne porte aucune 呪力 juryoku : une balle, une poutre descellée, une rampe d'escalier. Beaucoup de lois ne voient que ce qui est chargé.",
+   "L'obliger à répéter. Chaque application coûte, une application conditionnelle coûte double : tenez douze échanges et comptez ses respirations, la treizième sera plus courte.",
+   "Identifier la condition et la rendre matériellement impossible : s'il lui faut voir, éteignez ; s'il lui faut nommer, brisez-lui la mâchoire.",
+   "Frapper le corps et jamais la loi : le 術式 jutsushiki ne renforce ni le fémur, ni la trachée, ni le genou d'appui.",
+   "Lui offrir un leurre à consommer : un vêtement laissé trois heures au contact de votre 呪力 juryoku sur une chaise absorbe une application entière.",
+   "Rentrer au contact et y rester. Il recule pour tenir une distance ; cette distance est la moitié de sa loi.",
+   "Proposer un 縛り shibari en plein échange, devant témoin : un avantage réel et immédiat contre l'abandon d'une clause, et tenir parole jusqu'au bout.",
+   "Emmener le combat dans un volume qu'il ne peut pas décrire — eau trouble, chute libre, obscurité complète : une loi qui a besoin d'un référentiel meurt sans référentiel.",
+   "Attendre. Noter l'heure de la première application et celle de la dernière : ces lois ont un plafond horaire, et il le connaît mieux que vous.",
+   "Blesser un tiers qu'il tient à garder vivant : la 反転術式 hanten-jutsushiki lui rendra la chair, pas la concentration qui maintenait la loi ouverte.",
+   "Employer un 呪具 jugu à charge propre : la lame porte l'attaque à votre place et ne donne à sa loi rien à mordre.",
+   "Se laisser toucher une fois, exactement une, pour lire la règle dans ce qu'elle fait à votre bras — puis ne plus jamais reprendre la même posture.",
+   "Lui refuser le 黒閃 kokusen : rompre la cadence à contretemps, frapper sur les demi-mesures, ne jamais laisser deux coups propres se suivre."
+  ],
+  "rapports": [
+   "Arrivée sur zone à 03h12, 帳 tobari posé à 03h20. La loi avait déjà été appliquée ; il restait à déterminer lequel des quatre corps était celui du porteur, ce qui a été fait à 04h05 par la denture.",
+   "Le grade de la cible était porté au dossier comme 2級. La révision post-mission l'a établi à 特級. Le formulaire de réévaluation a été transmis onze jours après l'inhumation.",
+   "Le porteur a sollicité un délai de deux minutes pour appeler sa sœur. Le règlement ne prévoit pas ce délai. Il est entré à l'heure indiquée.",
+   "Aucun praticien de 反転術式 hanten-jutsushiki n'était disponible dans le secteur cette nuit-là. Le porteur est resté conscient jusqu'à 06h40. Les frais de nettoyage du hall figurent en annexe 3.",
+   "Le porteur a produit un 黒閃 kokusen lors de sa quatrième mission, ce qui a été consigné comme un élément favorable au dossier. Il est mort à la cinquième, onze jours plus tard.",
+   "Restitution des effets personnels : un téléphone, une clé de casier, un billet de train non composté pour le 14. La famille a signé le reçu sans le lire.",
+   "Ordre de repli émis à 21h48. Le porteur a répondu qu'il refermait son 領域展開 ryōiki-tenkai et qu'il sortait. Aucune transmission ultérieure n'a été enregistrée.",
+   "Le 帳 tobari a été maintenu quarante minutes au-delà du nécessaire, le temps que le sol refroidisse. L'odeur relevée sur place, vinaigre chaud, est mentionnée au procès-verbal sans explication.",
+   "Deuxième porteur de cette loi recensé en dix-neuf ans. Les deux dossiers sont classés sous la même cote. Le second n'a pas été informé de l'existence du premier.",
+   "Décès constaté à 05h55. Le remplaçant a été affecté au même secteur le jour même à 09h00, la mission n'ayant pas été achevée."
+  ]
+ },
+ "lexique": {
+  "termes": [
+   {
+    "fr": "énergie maudite",
+    "kanji": "呪力",
+    "romaji": "juryoku",
+    "definition": "Résidu produit par les émotions négatives humaines, que le corps d'un exorciste capte, stocke et dépense pour imposer sa loi au réel."
+   },
+   {
+    "fr": "technique innée",
+    "kanji": "生得術式",
+    "romaji": "seitoku-jutsushiki",
+    "definition": "Loi inscrite dans l'individu à la naissance, qui ne s'apprend pas, ne se choisit pas et ne se refuse pas : elle se déclare."
+   },
+   {
+    "fr": "opérateur",
+    "kanji": "術式",
+    "romaji": "jutsushiki",
+    "definition": "Le mécanisme même de la technique, c'est-à-dire l'opération exacte que l'énergie maudite fait subir au réel."
+   },
+   {
+    "fr": "exorciste",
+    "kanji": "呪術師",
+    "romaji": "jujutsushi",
+    "definition": "Porteur d'une technique innée enregistré, gradé et affecté à l'exorcisme des fléaux."
+   },
+   {
+    "fr": "exorciste dévoyé",
+    "kanji": "呪詛師",
+    "romaji": "jusoshi",
+    "definition": "Porteur de technique qui emploie sa loi contre des humains et que le milieu poursuit au même titre qu'un fléau."
+   },
+   {
+    "fr": "fléau",
+    "kanji": "呪霊",
+    "romaji": "jurei",
+    "definition": "Entité née de l'accumulation d'une peur humaine partagée, classée par grade et exorcisable seulement par l'énergie maudite."
+   },
+   {
+    "fr": "collège d'exorcisme",
+    "kanji": "呪術高専",
+    "romaji": "jujutsu kōsen",
+    "definition": "L'établissement qui forme les exorcistes, tient leurs dossiers et distribue les ordres de mission."
+   },
+   {
+    "fr": "instances supérieures",
+    "kanji": "上層部",
+    "romaji": "jōsōbu",
+    "definition": "Corps de décision anonyme du milieu de l'exorcisme, qui attribue les grades, ordonne les missions et prononce les sanctions sans jamais se montrer."
+   },
+   {
+    "fr": "superviseur adjoint",
+    "kanji": "補助監督",
+    "romaji": "hojo-kantoku",
+    "definition": "Agent sans technique qui abaisse le Voile, encadre l'exorciste sur zone, relève les dépouilles et tient l'écriture du dossier."
+   },
+   {
+    "fr": "Voile",
+    "kanji": "帳",
+    "romaji": "tobari",
+    "definition": "Rideau abaissé sur un secteur pour le soustraire aux non-exorcistes et empêcher ce qui s'y trouve d'en sortir."
+   },
+   {
+    "fr": "serment contraignant",
+    "kanji": "縛り",
+    "romaji": "shibari",
+    "definition": "Contrat passé avec soi-même ou avec autrui qui achète de la puissance contre une amputation définie, et se retourne au premier manquement."
+   },
+   {
+    "fr": "restriction céleste",
+    "kanji": "天与呪縛",
+    "romaji": "ten'yo-jubaku",
+    "definition": "Serment porté de naissance et jamais consenti, qui prélève un organe, un sens ou l'énergie maudite entière en échange d'un corps hors échelle."
+   },
+   {
+    "fr": "révélation de technique",
+    "kanji": "術式開示",
+    "romaji": "jutsushiki-kaiji",
+    "definition": "Énoncé de sa propre loi devant témoin : le porteur perd le bénéfice du secret et gagne en retour un surcroît d'efficacité sur l'opérateur déclaré."
+   },
+   {
+    "fr": "application directe",
+    "kanji": "術式順転",
+    "romaji": "jutsushiki-junten",
+    "definition": "Emploi de la technique dans son sens normal, l'énergie maudite étant dépensée telle quelle."
+   },
+   {
+    "fr": "inversion de l'opérateur",
+    "kanji": "術式反転",
+    "romaji": "jutsushiki-hanten",
+    "definition": "Retournement de la loi elle-même, qui produit l'effet contraire du sens normal sans changer d'énergie."
+   },
+   {
+    "fr": "technique inversée",
+    "kanji": "反転術式",
+    "romaji": "hanten-jutsushiki",
+    "definition": "Multiplication de deux énergies négatives qui donne une énergie positive : elle recoud la chair, jamais l'âme, et ne rend rien de ce qui a été juré."
+   },
+   {
+    "fr": "extension de technique",
+    "kanji": "術式拡張",
+    "romaji": "jutsushiki-kakuchō",
+    "definition": "Application dérivée obtenue en poussant la même loi jusqu'à un usage second, sans jamais changer de loi."
+   },
+   {
+    "fr": "sortie maximale",
+    "kanji": "術式最大出力",
+    "romaji": "jutsushiki-saidai-shutsuryoku",
+    "definition": "Emploi de la technique à pleine dépense d'énergie maudite, en un seul énoncé que le corps paie comptant."
+   },
+   {
+    "fr": "extension du territoire",
+    "kanji": "領域展開",
+    "romaji": "ryōiki-tenkai",
+    "definition": "Déploiement du territoire inné en espace clos, où la technique du maître est garantie au but et ne peut être esquivée."
+   },
+   {
+    "fr": "territoire inné",
+    "kanji": "生得領域",
+    "romaji": "seitoku-ryōiki",
+    "definition": "Paysage intérieur du porteur, unique et non modifiable, que l'extension retourne vers l'extérieur."
+   },
+   {
+    "fr": "territoire simplifié",
+    "kanji": "簡易領域",
+    "romaji": "kan'i-ryōiki",
+    "definition": "Sphère défensive de rayon fixe, sans coup au but, qui neutralise la garantie d'un territoire adverse le temps qu'elle tient."
+   },
+   {
+    "fr": "Éclair Noir",
+    "kanji": "黒閃",
+    "romaji": "kokusen",
+    "definition": "Coïncidence du coup et de l'énergie maudite à 0,000001 seconde près : les dégâts sont multipliés par 2,5 et l'espace se fend en noir ; on ne le provoque pas, on le reçoit."
+   },
+   {
+    "fr": "outil maudit",
+    "kanji": "呪具",
+    "romaji": "jugu",
+    "definition": "Arme forgée ou chargée d'énergie maudite, qui permet de blesser un fléau à un porteur qui n'a rien à dépenser."
+   },
+   {
+    "fr": "objet maudit",
+    "kanji": "呪物",
+    "romaji": "jubutsu",
+    "definition": "Reste scellé d'une entité maudite, conservé sous garde parce qu'il continue d'émettre longtemps après la mort."
+   },
+   {
+    "fr": "pantin maudit",
+    "kanji": "呪骸",
+    "romaji": "jugai",
+    "definition": "Corps fabriqué et animé par l'énergie maudite, employé comme auxiliaire, comme leurre ou comme greffier."
+   },
+   {
+    "fr": "résidu maudit",
+    "kanji": "残穢",
+    "romaji": "zan'e",
+    "definition": "Trace laissée par une technique sur les lieux, d'odeur et de température reconnaissables, qui permet de nommer l'auteur après coup."
+   },
+   {
+    "fr": "grade",
+    "kanji": "等級",
+    "romaji": "tōkyū",
+    "definition": "Classement des exorcistes et des fléaux du 4e grade au grade spécial, qui décide de ce qu'on vous envoie affronter."
+   },
+   {
+    "fr": "grade spécial",
+    "kanji": "特級",
+    "romaji": "tokkyū",
+    "definition": "Échelon hors barème, réservé à ce qu'aucun dispositif ordinaire ne traite et dont la seule mention modifie l'ordre de mission."
+   },
+   {
+    "fr": "semi-premier grade",
+    "kanji": "準一級",
+    "romaji": "jun-ikkyū",
+    "definition": "Échelon intermédiaire attribué à qui remplit les conditions du premier grade sans en avoir encore fourni la preuve sur le terrain."
+   },
+   {
+    "fr": "mission",
+    "kanji": "任務",
+    "romaji": "ninmu",
+    "definition": "Ordre d'intervention sur un secteur voilé, gradé comme la chose qu'on y a détectée."
+   },
+   {
+    "fr": "rapport de mission",
+    "kanji": "報告書",
+    "romaji": "hōkokusho",
+    "definition": "Compte rendu rédigé après l'intervention, qui consigne les dégâts, les pertes civiles et le résidu relevé."
+   },
+   {
+    "fr": "règlement de l'exorcisme",
+    "kanji": "呪術規定",
+    "romaji": "jujutsu kitei",
+    "definition": "Corpus de règles internes du milieu, qui prévoit notamment l'exécution des porteurs jugés inassimilables."
+   },
+   {
+    "fr": "réceptacle",
+    "kanji": "器",
+    "romaji": "utsuwa",
+    "definition": "Corps jugé apte à contenir ce qu'on y met, et évalué à ce seul titre."
+   },
+   {
+    "fr": "exorciser",
+    "kanji": "祓う",
+    "romaji": "harau",
+    "definition": "Détruire un fléau par l'énergie maudite, seul procédé qui l'empêche de se reformer."
+   }
+  ],
+  "libelles": {
+   "institution": "Le collège d'exorcisme — 呪術高専 (jujutsu kōsen), greffe des techniques innées",
+   "examinateur": "Le superviseur adjoint — 補助監督 (hojo-kantoku)",
+   "formulaire": "Procès-verbal d'ouverture de technique — 術式開示調書 (jutsushiki-kaiji chōsho)",
+   "grade_verdict": "Les instances supérieures — 上層部 (jōsōbu)",
+   "fiche_titre": "Fiche d'enregistrement de technique innée — 生得術式登録票 (seitoku-jutsushiki tōrokuhyō)",
+   "sections": [
+    {
+     "cle": "loi",
+     "libelle": "La loi innée",
+     "kanji": "生得術式"
+    },
+    {
+     "cle": "constat",
+     "libelle": "Constat d'énergie maudite",
+     "kanji": "呪力所見"
+    },
+    {
+     "cle": "vecteur",
+     "libelle": "Vecteur — condition d'énonciation",
+     "kanji": "発動条件"
+    },
+    {
+     "cle": "faille",
+     "libelle": "Défaut structurel de l'opérateur",
+     "kanji": "術式欠陥"
+    },
+    {
+     "cle": "junten",
+     "libelle": "Application directe",
+     "kanji": "術式順転"
+    },
+    {
+     "cle": "hanten",
+     "libelle": "Technique inversée",
+     "kanji": "反転術式"
+    },
+    {
+     "cle": "maximum",
+     "libelle": "Sortie maximale",
+     "kanji": "術式最大出力"
+    },
+    {
+     "cle": "kakucho",
+     "libelle": "Extension de technique",
+     "kanji": "術式拡張"
+    },
+    {
+     "cle": "kanri",
+     "libelle": "Territoire simplifié",
+     "kanji": "簡易領域"
+    },
+    {
+     "cle": "ryoiki",
+     "libelle": "Extension du territoire — territoire inné",
+     "kanji": "領域展開"
+    },
+    {
+     "cle": "kokusen",
+     "libelle": "Aptitude à l'Éclair Noir",
+     "kanji": "黒閃"
+    },
+    {
+     "cle": "jubaku",
+     "libelle": "Restriction céleste constatée",
+     "kanji": "天与呪縛"
+    },
+    {
+     "cle": "grade",
+     "libelle": "Grade attribué",
+     "kanji": "術師等級"
+    },
+    {
+     "cle": "affectation",
+     "libelle": "Affectation en mission",
+     "kanji": "任務配属"
+    }
+   ]
+  }
  }
 }

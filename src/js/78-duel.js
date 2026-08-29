@@ -361,6 +361,13 @@
         await wait(240);
         break;
 
+      case 'kanri':
+        JJK.audio.tick(340, 0.10, 0.07);
+        JJK.fx.pulse(null, null, 420, '#7fe3ff', 1.2);
+        journal('<span class="mono or">簡易領域</span> — la frontière tient. Le coup au but ne passe pas entier.', 'bien');
+        await wait(320);
+        break;
+
       case 'sursis':
         JJK.fx.flash('#f2c14e', 500);
         journal(NOM(e.qui) + ' aurait dû tomber. <span class="or">Sursis.</span>', 'important');

@@ -14,15 +14,21 @@ Un duel est disponible pour s'en servir, mais c'est la fiche qui compte.
 
 ## Ce que c'est
 
-Vous êtes convoqué par le **Bureau des Exorcistes**, service des enregistrements. Un examinateur
-vous fait remplir le *Formulaire R-9*. Dix rubriques : le substrat sur lequel votre loi a prise,
+Vous êtes convoqué au **呪術高専**, greffe des techniques innées. Un **補助監督** — superviseur
+adjoint, sans technique, celui qui pose le 帳 et relève les corps — vous fait remplir le
+**術式開示調書**, procès-verbal d'ouverture de technique.
+
+Le 術式開示 est canon : énoncer sa technique devant témoin est déjà un 縛り. Vous perdez le
+secret, et le réel vous rend en efficacité ce que vous cédez en surprise. C'est exactement ce que
+font les dix rubriques : le substrat sur lequel votre loi a prise,
 l'opération qu'elle fait au réel, sa portée, sa clause d'application, ce qu'elle vous prélève à
 chaque emploi, son délai d'obéissance, l'assiette de sa cible, son siège dans votre corps, la
 faille par laquelle on pourra vous détruire — que vous choisissez vous-même — et le paysage de
 votre extension du territoire.
 
 Puis huit questions sur **vous**, qui ne changent pas la technique : elles établissent seulement
-de quoi votre corps est capable en la portant.
+de quoi votre corps est capable en la portant. Il n'a pas de technique, lui ; c'est pour cela
+qu'on le laisse écouter.
 
 Ensuite seulement, les 上層部 donnent un nom à ce que vous avez déclaré, et un grade.
 
@@ -117,6 +123,7 @@ d'inversion. La puissance passe alors par la couleur, l'encre et le son.
 | **Calibrage** | Les fléaux visent une durée de duel et partent du réceptacle **nu** — sans serment ni maturation. Le monde ne grandit pas à votre vitesse : c'est ce qui rend la progression sensible. |
 | **Serments** | 14 emplacements mécaniques écrits en dur, habillés par la prose du corpus. On en signe trois, puis quatre, puis cinq à mesure qu'on descend. |
 | **Tempéraments** | Le comportement décrit dans le bestiaire est analysé et appliqué : patient, imitateur, double, horloge, soigneur, vorace, fuyant. Le texte n'est pas décoratif. |
+| **簡易領域** | Le territoire simplifié est la seule parade régulière opposable à un coup au but : sa frontière fait passer la garantie d'un territoire adverse de « inévitable » à −55 %. |
 
 Mesuré en simulation (90 duels par case) :
 
@@ -132,6 +139,22 @@ Mesuré en simulation (90 duels par case) :
 Marteler la frappe renforcée ne passe pas le grade 3, quels que soient les serments. Un grade
 spécial ne tombe que si vous avez tout rendu : la moitié de votre chair, votre garde, vos yeux,
 votre délai, et la trace de votre passage.
+
+## Le corpus
+
+469 entrées à la première écriture, 700 aujourd'hui, toutes écrites pour ce projet :
+
+| | |
+|---|---|
+| 40 essences de 呪力 | dix par famille de substrat |
+| 46 lois maudites | cinq à sept par archétype, chacune avec sa conséquence, sa faille, son 反転術式 et sa sortie maximale |
+| 24 vecteurs · 22 territoires innés | avec paysage, incantation, coup au but et faille |
+| 22 術式拡張 | appariées à l'archétype de votre loi, pour qu'elles en découlent vraiment |
+| 14 簡易領域 · 10 aptitudes au 黒閃 | |
+| 14 天与呪縛 | cinq formes mécaniques, habillées par le corpus |
+| 20 fléaux · 20 縛り · 16 affectations · 16 contres | |
+| 10 rubriques × 4 réponses, 12 questions d'examen | avec leurs conséquences écrites |
+| 34 termes de lexique canon | français, kanji, romaji, définition |
 
 ## Structure
 

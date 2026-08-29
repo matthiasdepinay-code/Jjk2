@@ -477,9 +477,11 @@
   function dossier(tech) {
     const e = tech.essence || {}, v = tech.vecteur || {}, l = tech.loi || {};
     const phrases = [];
+    /* le constat décrit le 呪力 du porteur, pas ce que la loi en fait :
+       la conséquence a désormais sa propre rubrique (術式順転), et la
+       répéter ici faisait lire deux fois la même phrase.                  */
     if (e.concept) phrases.push(e.concept.replace(/\.$/, '') + '.');
     if (e.sensoriel) phrases.push(e.sensoriel.replace(/\.$/, '') + '.');
-    if (l.consequence) phrases.push(l.consequence.replace(/\.$/, '') + '.');
     return phrases.join(' ');
   }
   function minuscule(s) { const t = String(s || ''); return t.charAt(0).toLowerCase() + t.slice(1); }

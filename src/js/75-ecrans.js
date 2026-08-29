@@ -111,7 +111,7 @@
     const retour = M().estUnRetour();
 
     const tete = el('div');
-    tete.appendChild(el('span', 'etiquette rouge', '呪術高専 · bureau du registre des 生得術式'));
+    tete.appendChild(el('span', 'etiquette rouge', '呪術高専 · greffe des 生得術式'));
     tete.appendChild(el('h1', 'titre-rituel', 'RITUEL'));
     tete.appendChild(el('div', 'jp faible', '呪法帳 · じゅほうちょう'));
     n.appendChild(tete);
@@ -252,7 +252,11 @@
     const questions = f.questions.slice().sort((a, b) => (a.numero || 0) - (b.numero || 0)).slice(0, 10);
     G.declaration = {};
 
-    n.appendChild(el('span', 'etiquette rouge', f.titre_formulaire || 'Déclaration de technique innée'));
+    n.appendChild(el('span', 'etiquette rouge', '術式開示調書 · procès-verbal d\'ouverture de technique'));
+    const preface = el('p', 'discret');
+    preface.style.cssText = 'max-width:66ch;margin:10px 0 4px';
+    preface.textContent = "Énoncer sa technique devant témoin est déjà un serment : vous perdez le secret, et le réel vous rend en efficacité ce que vous cédez en surprise. Le superviseur adjoint tient l'écriture. Il n'a pas de technique ; c'est pour cela qu'on le laisse écouter.";
+    n.appendChild(preface);
     const grille = el('div', 'formulaire');
 
     const gauche = el('div');
@@ -614,7 +618,16 @@
   /* =====================================================================
      LA FICHE — c'est le produit. Tout le reste sert à l'obtenir.
      ===================================================================== */
-  const SECTIONS = [
+  /* Les intitulés viennent du lexique du corpus quand il est présent ;
+     la liste ci-dessous reste le repli. */
+  function sectionsCanon() {
+    const l = ((C().lexique || {}).libelles || {}).sections;
+    if (!Array.isArray(l) || !l.length) return null;
+    const m = {};
+    l.forEach(x => { m[x.cle] = x; });
+    return m;
+  }
+  const SECTIONS_REPLI = [
     { cle: 'loi',      libelle: 'Énoncé de la technique', kanji: '生得術式' },
     { cle: 'constat',  libelle: 'Constat', kanji: '所見' },
     { cle: 'junten',   libelle: 'Application directe', kanji: '術式順転' },
@@ -628,6 +641,17 @@
     { cle: 'kokusen',  libelle: 'Aptitude à l\'Éclair Noir', kanji: '黒閃' },
     { cle: 'jubaku',   libelle: 'Restriction céleste', kanji: '天与呪縛' },
   ];
+
+  const SECTIONS = SECTIONS_REPLI;
+  function sec(cle, i, suffixe) {
+    const m = sectionsCanon();
+    const c = m && m[cle];
+    const base = SECTIONS_REPLI[i] || { libelle: cle, kanji: '' };
+    return {
+      libelle: ((c && c.libelle) || base.libelle) + (suffixe || ''),
+      kanji: (c && c.kanji) || base.kanji,
+    };
+  }
 
   function bandeau(libelle, kanji, rouge) {
     const b = el('div', 'bandeau-section');
@@ -659,21 +683,22 @@
     g.appendChild(jl);
     g.appendChild(el('hr', 'trait'));
 
-    g.appendChild(section(SECTIONS[0].libelle, SECTIONS[0].kanji, t.loi.enonce || t.loi.nom, 'loi'));
+    const s0 = sec('loi', 0); g.appendChild(section(s0.libelle, s0.kanji, t.loi.enonce || t.loi.nom, 'loi'));
     const desc = JJK.forge.dossier(t);
-    if (desc) g.appendChild(section(SECTIONS[1].libelle, SECTIONS[1].kanji, desc));
-    if (t.junten) g.appendChild(section(SECTIONS[2].libelle, SECTIONS[2].kanji, t.junten));
+    const s1 = sec('constat', 1); if (desc) g.appendChild(section(s1.libelle, s1.kanji, desc));
+    const s2 = sec('junten', 2); if (t.junten) g.appendChild(section(s2.libelle, s2.kanji, t.junten));
     if (t.vecteur && t.vecteur.condition) {
-      g.appendChild(section(SECTIONS[3].libelle + ' — ' + t.vecteur.nom, SECTIONS[3].kanji, t.vecteur.condition));
+      const s3 = sec('vecteur', 3, ' — ' + t.vecteur.nom);
+      g.appendChild(section(s3.libelle, s3.kanji, t.vecteur.condition));
     }
     if (!t.tenu.portee) {
-      const w = section('Réserve du service', '照合', "La portée déclarée et la clause d'énonciation ne se rencontrent pas dans le réel. Le service a retenu la clause : c'est elle qui décide où la loi s'applique.");
+      const w = section('Observation du superviseur adjoint', '補助監督所見', "La portée déclarée et la clause d'énonciation ne se rencontrent pas dans le réel. J'ai retenu la clause : c'est elle qui décide où la loi s'applique.");
       w.querySelector('p').style.color = 'var(--sang-vif)';
       g.appendChild(w);
     }
-    if (t.loi.limite) g.appendChild(section(SECTIONS[4].libelle, SECTIONS[4].kanji, t.loi.limite));
-    if (t.hanten) g.appendChild(section(SECTIONS[5].libelle, SECTIONS[5].kanji, t.hanten));
-    if (t.maximum) g.appendChild(section(SECTIONS[6].libelle, SECTIONS[6].kanji, t.maximum));
+    const s4 = sec('faille', 4); if (t.loi.limite) g.appendChild(section(s4.libelle, s4.kanji, t.loi.limite));
+    const s5 = sec('hanten', 5); if (t.hanten) g.appendChild(section(s5.libelle, s5.kanji, t.hanten));
+    const s6 = sec('maximum', 6); if (t.maximum) g.appendChild(section(s6.libelle, s6.kanji, t.maximum));
 
     if (t.kakucho) {
       const d = el('div');
@@ -684,7 +709,7 @@
       if (t.kakucho.principe) { const p = el('p'); p.style.marginTop = '10px'; p.textContent = t.kakucho.principe; d.appendChild(p); }
       if (t.kakucho.usage) { const p = el('p', 'discret'); p.textContent = t.kakucho.usage; d.appendChild(p); }
       if (t.kakucho.cout) { const p = el('p', 'cout-ligne'); p.textContent = '↳ ' + t.kakucho.cout; d.appendChild(p); }
-      g.appendChild(section(SECTIONS[7].libelle, SECTIONS[7].kanji, d));
+      const s7 = sec('kakucho', 7); g.appendChild(section(s7.libelle, s7.kanji, d));
     }
 
     if (t.kanri) {
@@ -696,7 +721,7 @@
       if (t.kanri.forme) { const p = el('p'); p.style.marginTop = '10px'; p.textContent = t.kanri.forme; d.appendChild(p); }
       if (t.kanri.effet) { const p = el('p', 'discret'); p.textContent = t.kanri.effet; d.appendChild(p); }
       if (t.kanri.limite) { const p = el('p', 'cout-ligne'); p.textContent = '↳ ' + t.kanri.limite; d.appendChild(p); }
-      g.appendChild(section(SECTIONS[8].libelle, SECTIONS[8].kanji, d));
+      const s8 = sec('kanri', 8); g.appendChild(section(s8.libelle, s8.kanji, d));
     }
 
     if (t.domaine) {
@@ -719,7 +744,7 @@
         d.appendChild(e2);
       }
       if (t.domaine.faille) { const p = el('p', 'cout-ligne'); p.textContent = '↳ ' + t.domaine.faille; d.appendChild(p); }
-      g.appendChild(section(SECTIONS[9].libelle, SECTIONS[9].kanji, d));
+      const s9 = sec('ryoiki', 9); g.appendChild(section(s9.libelle, s9.kanji, d));
     }
 
     if (t.kokusen) {
@@ -728,7 +753,7 @@
       h.textContent = t.kokusen.aptitude;
       d.appendChild(h);
       if (t.kokusen.description) { const p = el('p'); p.style.marginTop = '8px'; p.textContent = t.kokusen.description; d.appendChild(p); }
-      g.appendChild(section(SECTIONS[10].libelle, SECTIONS[10].kanji, d));
+      const s10 = sec('kokusen', 10); g.appendChild(section(s10.libelle, s10.kanji, d));
     }
 
     if (t.jubaku) {
@@ -749,7 +774,7 @@
       mec.appendChild(el('span', 'perte', t.jubaku.perte));
       mec.appendChild(el('span', 'gain', t.jubaku.gain));
       d.appendChild(mec);
-      g.appendChild(section(SECTIONS[11].libelle, SECTIONS[11].kanji, d));
+      const s11 = sec('jubaku', 11); g.appendChild(section(s11.libelle, s11.kanji, d));
     }
 
     if (t.contre) {
@@ -763,7 +788,7 @@
       h.textContent = t.affectation.intitule;
       d.appendChild(h);
       if (t.affectation.motif) { const p = el('p', 'discret'); p.style.marginTop = '6px'; p.textContent = t.affectation.motif; d.appendChild(p); }
-      g.appendChild(section('Affectation — 上層部', '配属', d));
+      g.appendChild(section('Affectation — 上層部', '任務配属', d));
     }
 
     if (o.notes && corps && corps.profil) {

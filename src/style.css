@@ -639,9 +639,12 @@ body.domaine-calme .fiche { border-color: rgba(233, 226, 212, .3); }
 .sous-nom { font-size: 1.3rem; font-weight: 300; margin: 0 0 2px; }
 .sous-nom.grand { font-size: 1.55rem; }
 .sous-nom.or { color: var(--or); }
+/* Le monospace convient à une mention de coût, pas à un paragraphe : ces
+   lignes-là sont parfois longues et devenaient des pavés illisibles. */
 .cout-ligne {
-  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
-  color: var(--sang-vif); margin-top: 10px; line-height: 1.7;
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: 1rem; color: var(--sang-vif); margin-top: 12px;
+  line-height: 1.55; max-width: 62ch;
 }
 .incantation-fiche {
   margin-top: 14px; padding-left: 16px; border-left: 1px solid rgba(179, 18, 23, .4);

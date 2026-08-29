@@ -22,7 +22,7 @@
     lecture:   { nom: 'Lecture', type: 'bon', desc: 'Coup critique quasi assuré.' },
     elan:      { nom: 'Élan', type: 'bon', desc: 'Dégâts augmentés.' },
     sursis:    { nom: 'Sursis', type: 'bon', desc: 'Survit une fois à un coup fatal.' },
-    garde:     { nom: 'Garde', type: 'bon', desc: 'Absorbe une partie du prochain coup.' },
+    garde:     { nom: '簡易領域', type: 'bon', desc: "Absorbe une partie du prochain coup et annule le coup au but d'un territoire adverse." },
   };
 
   function statut(c, id) { return c.statuts.find(s => s.id === id); }
@@ -128,8 +128,8 @@
       },
     },
     {
-      id: 'garde', nom: 'Résorption', cout: 0,
-      desc: "Absorber le choc dans sa propre énergie. Rend 2 énergie.",
+      id: 'garde', nom: 'Territoire simplifié · 簡易領域', cout: 0,
+      desc: "Une sphère de 2,21 mètres. Elle absorbe le choc et neutralise le coup au but d'un territoire adverse. Rend 2 呪力.",
       exec(D, a, d, R) {
         const ev = [];
         poser(a, 'garde', 1, 0.60);
@@ -402,7 +402,13 @@
       base *= R.range(0.90, 1.12);
 
       const g = statut(d, 'garde');
-      if (g && !o.ignoreGarde) { base *= 1 - (g.val || 0.5); retirer(d, 'garde'); }
+      /* 簡易領域 : sa frontière neutralise la garantie d'un territoire adverse.
+         C'est la seule parade régulière opposable à un coup au but, et c'est
+         pour cela qu'elle traverse même ce qui « ne se refuse pas ».       */
+      if (g && o.surAuBut) {
+        base *= 0.45; retirer(d, 'garde');
+        ev.push({ t: 'kanri', qui: d.cle });
+      } else if (g && !o.ignoreGarde) { base *= 1 - (g.val || 0.5); retirer(d, 'garde'); }
       /* Ce qui n'existe que hors du regard encaisse mal les coups portés
          à l'aveugle. Le fixer — Lire l'adversaire — le rend solide, et
          c'est exactement ce que sa fiche annonce. */
