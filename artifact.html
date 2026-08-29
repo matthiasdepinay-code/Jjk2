@@ -1,0 +1,3888 @@
+<title>RITUEL — 呪法帳</title>
+<meta name="description" content="Générateur déterministe de techniques maudites et duel occulte dans l'univers de Jujutsu Kaisen.">
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=Noto+Serif+JP:wght@400;700&display=swap");
+
+/* =========================================================================
+   RITUEL — feuille de style
+   Un dossier d'autopsie qu'on aurait laissé trop longtemps dans le noir.
+   ========================================================================= */
+
+:root {
+  --nuit:      #07070a;
+  --nuit-2:    #0c0c11;
+  --nuit-3:    #131319;
+  --os:        #e9e2d4;
+  --os-faible: #9d968a;
+  --os-mort:   #5d574e;
+  --sang:      #b31217;
+  --sang-vif:  #ff2d1a;
+  --or:        #f2c14e;
+  --inverse:   #7fe3ff;
+  --vert-mal:  #6f8f5a;
+
+  --serif: "Cormorant Garamond", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --jp: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --hair: 1px solid rgba(233, 226, 212, 0.14);
+  --hair-fort: 1px solid rgba(233, 226, 212, 0.32);
+  --ease: cubic-bezier(.16,.84,.28,1);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--nuit);
+  color: var(--os);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.55;
+  min-height: 100%;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body { position: relative; overflow-y: auto; }
+
+html.is-inverted { filter: invert(1) hue-rotate(180deg); }
+html.is-inverted #fx-flash { filter: invert(1); }
+
+::selection { background: var(--sang); color: var(--os); }
+
+/* ---- calques d'effets ---------------------------------------------- */
+.fx-layer {
+  position: fixed; inset: 0; pointer-events: none;
+  width: 100%; height: 100%;
+}
+#fx-ink { z-index: 76; mix-blend-mode: screen; opacity: .62; }
+#fx-dom.is-hidden { display: none; }
+#fx-flash {
+  position: fixed; inset: 0; z-index: 90; pointer-events: none;
+  opacity: 0; background: #fff; mix-blend-mode: screen;
+}
+
+/* grain : un vieux capteur qui chauffe */
+body::after {
+  content: ""; position: fixed; inset: -50%; z-index: 80; pointer-events: none;
+  opacity: .045; will-change: transform;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+  animation: grain 1.1s steps(4) infinite;
+}
+@keyframes grain {
+  0%   { transform: translate(0,0); }
+  25%  { transform: translate(-3%, 2%); }
+  50%  { transform: translate(2%, -3%); }
+  75%  { transform: translate(-2%, -2%); }
+  100% { transform: translate(3%, 1%); }
+}
+/* lignes de balayage */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: 79; pointer-events: none;
+  opacity: .25;
+  background: repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.35) 2px 3px);
+}
+
+/* ---- scène ----------------------------------------------------------- */
+#stage {
+  position: relative; z-index: 10;
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: clamp(18px, 4vw, 56px) clamp(14px, 4vw, 40px) 120px;
+  will-change: transform;
+}
+.ecran { width: 100%; max-width: 1120px; display: none; animation: fadeUp .8s var(--ease) both; }
+.ecran.actif { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* ---- typographie ----------------------------------------------------- */
+.etiquette {
+  font-family: var(--mono); font-size: 10px; font-weight: 400;
+  letter-spacing: .34em; text-transform: uppercase;
+  color: var(--os-mort);
+}
+.etiquette.rouge { color: var(--sang); }
+.titre-rituel {
+  font-family: var(--serif); font-weight: 300;
+  font-size: clamp(2.1rem, 7vw, 4.6rem); line-height: 1.02;
+  letter-spacing: -.02em; margin: .1em 0 .2em;
+}
+.titre-rituel em { font-style: italic; color: var(--sang); }
+.jp { font-family: var(--jp); letter-spacing: .18em; }
+.mono { font-family: var(--mono); }
+.faible { color: var(--os-faible); }
+.mort { color: var(--os-mort); }
+.sang { color: var(--sang); }
+.or { color: var(--or); }
+.serif-italique { font-style: italic; font-weight: 300; }
+
+hr.trait { border: 0; border-top: var(--hair); margin: 28px 0; }
+hr.trait.fort { border-top: var(--hair-fort); }
+
+.typing::after {
+  content: "▌"; margin-left: 2px; color: var(--sang);
+  animation: blink .7s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ---- boutons --------------------------------------------------------- */
+.btn {
+  appearance: none; -webkit-appearance: none;
+  background: transparent; color: var(--os);
+  border: var(--hair-fort); border-radius: 0;
+  padding: 13px 26px; cursor: pointer;
+  font-family: var(--mono); font-size: 11px; font-weight: 400;
+  letter-spacing: .26em; text-transform: uppercase;
+  position: relative; overflow: hidden;
+  transition: color .25s var(--ease), border-color .25s var(--ease), letter-spacing .35s var(--ease);
+}
+.btn::before {
+  content: ""; position: absolute; inset: 0;
+  background: var(--os); transform: scaleY(0); transform-origin: bottom;
+  transition: transform .34s var(--ease); z-index: -1;
+}
+.btn:hover:not(:disabled) { color: var(--nuit); border-color: var(--os); letter-spacing: .32em; }
+.btn:hover:not(:disabled)::before { transform: scaleY(1); }
+.btn:disabled { opacity: .28; cursor: not-allowed; }
+.btn.rouge { border-color: rgba(179,18,23,.6); color: var(--sang-vif); }
+.btn.rouge::before { background: var(--sang); }
+.btn.rouge:hover:not(:disabled) { color: #fff; border-color: var(--sang); }
+.btn.fantome { border-color: transparent; color: var(--os-mort); padding-left: 0; padding-right: 0; margin-right: 24px; }
+.btn.fantome:hover:not(:disabled) { color: var(--os); letter-spacing: .3em; }
+.btn.fantome::before { display: none; }
+.btn.large { display: block; width: 100%; padding: 18px 26px; }
+
+.btn-rangee { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+/* ---- champ de saisie -------------------------------------------------- */
+.champ {
+  width: 100%; background: transparent; border: 0;
+  border-bottom: var(--hair-fort);
+  color: var(--os); font-family: var(--serif); font-weight: 300;
+  font-size: clamp(1.6rem, 5vw, 2.8rem); padding: 10px 2px 12px;
+  outline: none; letter-spacing: .02em;
+  transition: border-color .3s var(--ease);
+}
+.champ::placeholder { color: rgba(233,226,212,.16); font-style: italic; }
+.champ:focus { border-color: var(--sang); }
+
+/* ---- rituel ---------------------------------------------------------- */
+.rituel-ligne {
+  font-size: clamp(1.05rem, 2.6vw, 1.5rem); font-weight: 300;
+  min-height: 1.6em; margin: 0 0 .55em; color: var(--os-faible);
+}
+.rituel-ligne.forte { color: var(--os); font-style: italic; }
+
+.question-bloc { margin-top: 40px; }
+.question-texte {
+  font-size: clamp(1.35rem, 3.6vw, 2.1rem); font-weight: 300;
+  line-height: 1.25; margin: 0 0 28px; max-width: 34ch;
+}
+.reponses { display: grid; gap: 10px; max-width: 780px; }
+.reponse {
+  text-align: left; background: transparent; cursor: pointer;
+  border: 0; border-left: 2px solid rgba(233,226,212,.14);
+  padding: 14px 20px; color: var(--os-faible);
+  font-family: var(--serif); font-size: 1.05rem; font-weight: 300; line-height: 1.4;
+  transition: all .3s var(--ease);
+}
+.reponse:hover {
+  border-left-color: var(--sang); color: var(--os);
+  background: linear-gradient(90deg, rgba(179,18,23,.10), transparent 70%);
+  padding-left: 30px;
+}
+.reponse .murmure {
+  display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--os-mort); margin-top: 8px;
+  opacity: 0; transform: translateY(-4px); transition: all .3s var(--ease);
+}
+.reponse:hover .murmure { opacity: 1; transform: none; color: var(--sang); }
+
+.jauge-rituel { display: flex; gap: 6px; margin: 34px 0 0; }
+.jauge-rituel i {
+  flex: 1; height: 2px; background: rgba(233,226,212,.12);
+  transition: background .5s var(--ease);
+}
+.jauge-rituel i.pleine { background: var(--sang); }
+
+/* ---- dossier de technique ------------------------------------------- */
+.dossier {
+  display: grid; grid-template-columns: minmax(0, 1fr) 340px;
+  gap: clamp(20px, 4vw, 56px); align-items: start;
+}
+@media (max-width: 860px) { .dossier { grid-template-columns: 1fr; } }
+
+.nom-technique {
+  font-size: clamp(2rem, 6.4vw, 4.2rem); font-weight: 300; line-height: 1.03;
+  letter-spacing: -.025em; margin: 6px 0 10px;
+}
+.nom-jp { font-family: var(--jp); font-size: clamp(.95rem, 2.2vw, 1.3rem); color: var(--sang); letter-spacing: .3em; }
+
+.bloc { margin: 26px 0; }
+.bloc > .etiquette { display: block; margin-bottom: 9px; }
+.bloc p { margin: 0; font-weight: 300; font-size: 1.08rem; }
+.bloc .enonce {
+  font-size: clamp(1.15rem, 2.8vw, 1.55rem); font-style: italic; font-weight: 300;
+  border-left: 2px solid var(--sang); padding-left: 18px; margin-left: 0;
+}
+
+.grille-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1px; background: rgba(233,226,212,.12); border: var(--hair); margin: 26px 0;
+}
+.stat { background: var(--nuit); padding: 14px 16px; }
+.stat b { display: block; font-family: var(--mono); font-size: 1.45rem; font-weight: 400; color: var(--os); }
+.stat span { display: block; font-family: var(--mono); font-size: 9px; letter-spacing: .26em; text-transform: uppercase; color: var(--os-mort); margin-top: 4px; }
+
+.sceau-boite { position: relative; }
+.sceau-boite canvas { width: 100%; height: auto; display: block; filter: drop-shadow(0 0 24px rgba(179,18,23,.28)); }
+.sceau-rot { animation: rot 90s linear infinite; }
+@keyframes rot { to { transform: rotate(360deg); } }
+.sceau-legende { text-align: center; margin-top: 14px; }
+
+.tampon {
+  display: inline-block; border: 2px solid var(--sang); color: var(--sang);
+  font-family: var(--mono); font-size: 11px; letter-spacing: .3em; text-transform: uppercase;
+  padding: 7px 14px; transform: rotate(-3.5deg); opacity: .9;
+}
+
+/* ---- serments -------------------------------------------------------- */
+.contrat {
+  border: var(--hair); padding: 22px 24px; margin-bottom: 14px;
+  background: linear-gradient(180deg, rgba(233,226,212,.02), transparent);
+  cursor: pointer; transition: all .3s var(--ease); position: relative;
+}
+.contrat:hover { border-color: rgba(179,18,23,.55); background: linear-gradient(180deg, rgba(179,18,23,.07), transparent); }
+.contrat.signe { border-color: var(--sang); }
+.contrat.signe::after {
+  content: "SIGNÉ"; position: absolute; top: 14px; right: 16px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .3em; color: var(--sang);
+  border: 1px solid var(--sang); padding: 3px 8px; transform: rotate(-6deg);
+}
+.contrat h4 { margin: 0 0 8px; font-size: 1.35rem; font-weight: 400; }
+.contrat .clause { font-style: italic; color: var(--os-faible); font-weight: 300; margin: 0 0 14px; max-width: 62ch; }
+.echange { display: flex; flex-wrap: wrap; gap: 10px 26px; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; }
+.echange .perte { color: var(--sang-vif); }
+.echange .gain { color: var(--or); }
+.echange .perte::before { content: "− "; }
+.echange .gain::before { content: "+ "; }
+.danger { display: inline-flex; gap: 3px; margin-left: auto; }
+.danger i { width: 6px; height: 6px; background: var(--os-mort); border-radius: 50%; }
+.danger i.on { background: var(--sang); }
+
+/* ---- combat ---------------------------------------------------------- */
+.arene { display: grid; gap: 22px; }
+.combattants { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: center; }
+@media (max-width: 720px) { .combattants { grid-template-columns: 1fr; } .versus { display: none; } }
+.versus { font-family: var(--mono); font-size: 11px; letter-spacing: .3em; color: var(--os-mort); }
+
+.fiche { border: var(--hair); padding: 18px 20px; position: relative; overflow: hidden; }
+.fiche.ennemi { border-color: rgba(179,18,23,.35); }
+.fiche .nom { font-size: 1.5rem; font-weight: 300; line-height: 1.1; margin-bottom: 2px; }
+.fiche .sous { font-family: var(--mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--os-mort); }
+.fiche.frappe { animation: frappe .32s var(--ease); }
+@keyframes frappe {
+  0%,100% { transform: none; }
+  25% { transform: translateX(-9px) skewX(3deg); }
+  60% { transform: translateX(6px); }
+}
+
+.barre { height: 8px; background: rgba(233,226,212,.09); margin-top: 14px; position: relative; overflow: hidden; }
+.barre i { display: block; height: 100%; background: var(--os); transition: width .5s var(--ease); }
+.barre.pv i { background: linear-gradient(90deg, var(--sang), var(--sang-vif)); }
+.barre.pv .fantomatique {
+  position: absolute; top: 0; left: 0; height: 100%;
+  background: rgba(255,45,26,.28); transition: width 1.1s .25s var(--ease);
+}
+.barre.energie { height: 4px; }
+.barre.energie i { background: var(--inverse); }
+.chiffres { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--os-mort); margin-top: 6px; }
+
+.statuts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; min-height: 20px; }
+.puce {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+  border: 1px solid rgba(233,226,212,.25); padding: 2px 7px; color: var(--os-faible);
+}
+.puce.mauvais { border-color: rgba(179,18,23,.5); color: var(--sang-vif); }
+.puce.bon { border-color: rgba(242,193,78,.5); color: var(--or); }
+
+.mutilated { position: relative; filter: grayscale(1) brightness(.5); min-height: 42px; }
+.mutilated > * { opacity: .18; }
+.mutilated::before {
+  content: ""; position: absolute; left: -4%; right: -4%; top: 50%; height: 2px;
+  background: var(--sang-vif); transform: rotate(-2.4deg); z-index: 2;
+  box-shadow: 0 0 12px rgba(255,45,26,.8);
+}
+.mutilated::after {
+  content: attr(data-scar); position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .28em; text-transform: uppercase;
+  color: #ff6f5e; background: rgba(30,4,6,.86); z-index: 3; filter: none;
+}
+
+.actions { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.acte {
+  text-align: left; background: transparent; border: var(--hair);
+  padding: 12px 14px; cursor: pointer; color: var(--os-faible);
+  font-family: var(--serif); transition: all .22s var(--ease);
+}
+.acte:hover:not(:disabled) { border-color: var(--os); color: var(--os); transform: translateY(-2px); }
+.acte:disabled { opacity: .26; cursor: not-allowed; }
+.acte b { display: block; font-size: 1.08rem; font-weight: 400; }
+.acte small { font-family: var(--mono); font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--os-mort); }
+.acte .cout { float: right; font-family: var(--mono); font-size: 10px; color: var(--inverse); letter-spacing: .1em; }
+.acte.ultime { border-color: rgba(179,18,23,.55); }
+.acte.ultime b { color: var(--sang-vif); }
+.acte.ultime:hover:not(:disabled) { border-color: var(--sang-vif); box-shadow: inset 0 0 40px rgba(179,18,23,.18); }
+
+.duel-bas { display: grid; grid-template-columns: minmax(0,1fr) minmax(280px, 34%); gap: 22px; align-items: start; }
+@media (max-width: 900px) { .duel-bas { grid-template-columns: 1fr; } }
+.journal {
+  border-top: var(--hair); padding-top: 14px; max-height: 340px; overflow-y: auto;
+  font-size: 1rem; font-weight: 300;
+}
+.journal .etiquette { display: block; margin-bottom: 10px; }
+.fiche .replique { font-style: italic; font-weight: 300; color: var(--os-mort); margin-top: 12px; font-size: .96rem; }
+.journal p { margin: 0 0 7px; color: var(--os-faible); animation: fadeUp .4s var(--ease) both; }
+.journal p.important { color: var(--os); font-style: italic; }
+.journal p.mal { color: var(--sang-vif); }
+.journal p.bien { color: var(--or); }
+.journal p .n { font-family: var(--mono); font-size: .92em; }
+.journal::-webkit-scrollbar { width: 3px; }
+.journal::-webkit-scrollbar-thumb { background: rgba(179,18,23,.5); }
+
+/* ---- territoire ------------------------------------------------------ */
+#territoire {
+  position: fixed; inset: 0; z-index: 65; display: none;
+  align-items: center; justify-content: center; flex-direction: column;
+  text-align: center; padding: 24px; pointer-events: none;
+}
+#territoire.actif { display: flex; }
+#territoire .incantation {
+  font-family: var(--jp); font-size: clamp(.95rem, 2.4vw, 1.35rem);
+  color: var(--sang-vif); letter-spacing: .34em; margin-bottom: 26px; opacity: .9;
+}
+#territoire .nom-dom {
+  font-size: clamp(2.2rem, 9vw, 6.4rem); font-weight: 300; line-height: .98;
+  letter-spacing: -.03em; max-width: 16ch; margin: 0 auto;
+  text-shadow: 0 0 60px rgba(179,18,23,.6);
+}
+#territoire .vers { margin-top: 30px; max-width: 44ch; }
+#territoire .vers p { margin: .18em 0; font-style: italic; font-weight: 300; color: var(--os-faible); }
+#territoire .sur { margin-top: 34px; }
+body.in-domain #stage { filter: blur(3px) brightness(.35); }
+
+/* ---- épitaphe / mémoire ---------------------------------------------- */
+.tombe {
+  border: var(--hair); border-left: 2px solid var(--sang);
+  padding: 16px 20px; margin-bottom: 12px;
+  background: linear-gradient(90deg, rgba(179,18,23,.06), transparent 60%);
+}
+.tombe .nom { font-size: 1.25rem; font-weight: 300; }
+.tombe .det { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--os-mort); }
+
+/* ---- barre d'état ---------------------------------------------------- */
+#barre-etat {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: flex; align-items: center; gap: 18px;
+  padding: 9px clamp(14px, 4vw, 40px);
+  background: linear-gradient(180deg, rgba(7,7,10,0), rgba(7,7,10,.94) 40%);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--os-mort);
+}
+#barre-etat .sep { flex: 1; }
+#barre-etat button {
+  background: none; border: 0; color: var(--os-mort); cursor: pointer;
+  font: inherit; letter-spacing: .2em; padding: 4px 0;
+}
+#barre-etat button:hover { color: var(--sang); }
+
+/* ---- murmures -------------------------------------------------------- */
+.murmure-flottant {
+  position: fixed; z-index: 50; pointer-events: none;
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: clamp(1rem, 2.4vw, 1.5rem); color: rgba(233,226,212,.32);
+  white-space: nowrap;
+  animation: derive 13s linear forwards;
+}
+@keyframes derive {
+  0% { opacity: 0; transform: translateX(0) scale(1); }
+  12% { opacity: 1; }
+  85% { opacity: .5; }
+  100% { opacity: 0; transform: translateX(-16vw) scale(1.06); }
+}
+
+/* ---- divers ---------------------------------------------------------- */
+.deux-colonnes { columns: 2; column-gap: 40px; }
+@media (max-width: 700px) { .deux-colonnes { columns: 1; } }
+.centre { text-align: center; }
+.plein { width: 100%; }
+.pile > * + * { margin-top: 12px; }
+.discret { font-size: .92rem; color: var(--os-mort); }
+
+@media (prefers-reduced-motion: reduce) {
+  body::after, .sceau-rot, .murmure-flottant { animation: none !important; }
+  * { transition-duration: .01ms !important; }
+}
+
+/* ---- lisibilité pendant que le territoire est déployé ---------------- */
+body.domaine-calme #stage { filter: none; }
+body.domaine-calme .fiche,
+body.domaine-calme .acte,
+body.domaine-calme .journal {
+  background: rgba(7, 7, 10, .74);
+  backdrop-filter: blur(2px);
+}
+body.domaine-calme .fiche { border-color: rgba(233, 226, 212, .3); }
+.etiquette.or { color: var(--or); }
+#territoire .etiquette { color: inherit; opacity: .7; }
+
+/* le titre de la page ne doit jamais dépasser sur mobile */
+@media (max-width: 520px) {
+  .btn { padding: 12px 18px; letter-spacing: .18em; }
+  .btn.fantome { margin-right: 14px; }
+  #barre-etat { font-size: 9px; gap: 10px; letter-spacing: .12em; }
+  #stage { padding-bottom: 96px; }
+}
+
+</style>
+
+<div id="stage"></div>
+
+<script>
+window.JJK = window.JJK || {};
+window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille","kanji":"錆","romaji":"sabi","concept":"L'énergie s'attaque d'abord à ce qui tient les choses ensemble.","sensoriel":"Un goût de pièce de monnaie au fond de la gorge.","couleur":"#8a4a22","emotion_source":"la rancune tenue trop longtemps"},{"id":"recensement","nom":"Le Recensement","kanji":"簿","romaji":"bo","concept":"Tout ce qui est compté cesse d'être libre.","sensoriel":"Un bruit de pages tournées derrière la nuque.","couleur":"#6b6f8a","emotion_source":"la peur d'être fiché"},{"id":"attente","nom":"L'Attente","kanji":"待","romaji":"machi","concept":"Le temps non vécu s'accumule quelque part et il faut bien qu'il sorte.","sensoriel":"L'odeur d'un couloir d'hôpital à quatre heures.","couleur":"#4a6b6b","emotion_source":"l'abandon poli"}]},"vecteurs":{"vecteurs":[{"id":"nom","nom":"Par le nom prononcé","condition":"Tu dois avoir dit son nom à voix haute au moins une fois dans la journée.","portee":"longue","verbe":"nommer","faille":"Ne jamais se faire appeler."},{"id":"sol","nom":"Par le sol partagé","condition":"Vous devez toucher la même surface continue.","portee":"moyenne","verbe":"appuyer","faille":"Sauter."},{"id":"regard","nom":"Par le regard soutenu","condition":"Trois secondes sans cligner.","portee":"courte","verbe":"fixer","faille":"Fermer un œil."}]},"lois":{"lois":[{"id":"deuxfois","nom":"Nommer Deux Fois","enonce":"Ce que je nomme deux fois cesse d'avoir eu lieu.","consequence":"Une blessure nommée deux fois n'a jamais été reçue ; un allié nommé deux fois n'a jamais existé.","limite":"Il faut connaître le nom exact, et un nom exact se change.","inversion":"Ce que je nomme deux fois recommence à avoir lieu, y compris ce qui était fini.","maximum":"Je prononce mon propre nom deux fois.","archetype":"soustraction"},{"id":"distance","nom":"Le Trajet Acquis","enonce":"Toute distance que j'ai parcourue à pied m'appartient.","consequence":"Sur un terrain déjà marché, la géométrie obéit à la mémoire des pas.","limite":"Un sol neuf ne t'appartient pas.","inversion":"Je rends une distance et le trajet se défait sous l'autre.","maximum":"Je réclame tout ce que j'ai jamais marché, d'un coup.","archetype":"mesure"},{"id":"dette","nom":"La Créance","enonce":"Tout ce qu'on me prend crée une dette payable en nature.","consequence":"Un coup encaissé devient un coup dû, et les intérêts courent.","limite":"Il faut avoir subi avant de pouvoir réclamer.","inversion":"J'éteins une dette et la blessure se referme.","maximum":"J'exige le solde de toutes mes créances au même instant.","archetype":"échange"}]},"serments":{"serments":[{"id":"oeil","nom":"Le Serment de l'Œil Fermé","clause":"Je renonce à savoir ce qu'il me reste à briser.","restriction":"Tu ne verras plus ses points de vie","gain":"Tes coups portent plus fort","restriction_code":"masque les PV ennemis","gain_code":"+40% dégâts","danger":2}]},"domaines":{"domaines":[{"id":"comptes","nom_fr":"Le Sanctuaire des Comptes Non Soldés","nom_jp":"未払之聖域","romaji":"Miharai no Seiiki","paysage":"Une salle de guichets sans employés, où chaque vitre reflète une somme que tu dois à quelqu'un que tu as oublié.","effet_garanti":"Chaque dette que tu as contractée depuis ta naissance est prélevée sur le corps de celui qui entre.","effet_code":"dégâts garantis 22% PV max par tour","incantation":"Ouvre le registre. Compte à voix haute. Ce que tu dois t'a déjà rattrapé.","faille":"Ne rien devoir à personne."},{"id":"couloir","nom_fr":"Le Couloir Qui Se Souvient","nom_jp":"記憶之廊","romaji":"Kioku no Rō","paysage":"Un couloir d'immeuble aux portes numérotées dans le désordre, chaque porte fermée sur une pièce que tu as quittée fâché.","effet_garanti":"Aucun pas ne peut être fait dans une direction que tu n'as pas déjà empruntée.","effet_code":"annule esquive, +35% dégâts","incantation":"Marche. Le couloir a compté tes pas avant toi.","faille":"Reculer."}]},"bestiaire":{"fleaux":[{"id":"guichet","nom":"Le Guichet","grade":"4","origine":"La peur d'arriver cinq minutes après la fermeture.","apparence":"Un buste d'homme derrière une vitre sale, dont la bouche est une fente à courrier.","comportement":"Il attend son tour, puis frappe deux fois de suite.","pv":70,"attaque":9,"energie":2,"replique":"Vous n'avez pas le bon formulaire.","technique_signature":"Prélèvement"},{"id":"marge","nom":"Ce Qui Vit Dans La Marge","grade":"3","origine":"La peur des annotations qu'on n'a pas écrites.","apparence":"Une écriture penchée qui se déplace sur les murs.","comportement":"Il recopie ta dernière action.","pv":160,"attaque":16,"energie":3,"replique":"J'ai relu ton dossier.","technique_signature":"Annotation"},{"id":"veilleuse","nom":"La Veilleuse","grade":"2","origine":"La peur d'être la seule lumière allumée de l'immeuble.","apparence":"Une femme faite de tissu d'abat-jour, brûlante et calme.","comportement":"Elle se soigne quand elle a peur.","pv":300,"attaque":26,"energie":5,"replique":"Reste. Il est tard.","technique_signature":"Veille"},{"id":"convoi","nom":"Le Convoi","grade":"spécial","origine":"La peur des trains de nuit qui ne s'arrêtent nulle part.","apparence":"Une colonne de dos d'hommes en manteau, marchant en file, sans tête.","comportement":"Il ouvre son territoire au sixième tour.","pv":800,"attaque":70,"energie":10,"replique":"Nous passons. Vous êtes sur la voie.","technique_signature":"Passage"}]},"rituel":{"ouverture":["On ne t'a pas fait venir.","La porte n'était pas fermée à clé, et c'est déjà un renseignement sur toi.","Ici on ne distribue pas de pouvoirs : on constate ce qui est déjà là.","Une technique innée ne s'apprend pas, ne se choisit pas, ne se refuse pas.","Elle attend, dans le nom, comme une dent sous la gencive.","Donne un nom. Pas forcément le tien."],"questions":[{"question":"Quand on t'a fait du tort, qu'as-tu gardé ?","reponses":[{"texte":"La date exacte.","archetype":"mesure","note":"Tu tiens des comptes."},{"texte":"Rien, j'ai rendu le soir même.","archetype":"échange","note":"Tu ne portes pas de dettes."},{"texte":"Le silence de la pièce juste après.","archetype":"témoignage","note":"Tu enregistres."}]},{"question":"Qu'est-ce qui, chez toi, ne guérit pas ?","reponses":[{"texte":"Une phrase que j'ai dite.","archetype":"répétition","note":"Elle se rejoue."},{"texte":"Un nom que je ne prononce plus.","archetype":"soustraction","note":"Tu retranches."},{"texte":"Une porte que j'ai passée.","archetype":"seuil","note":"Tu franchis."}]},{"question":"On te propose de tout recommencer, sans personne.","reponses":[{"texte":"Sans personne, non.","archetype":"lien","note":"Tu attaches."},{"texte":"Immédiatement.","archetype":"métamorphose","note":"Tu mues."},{"texte":"Je demande d'abord le prix.","archetype":"échange","note":"Tu négocies."}]}],"transitions":["Noté.","Le registre te suit.","Continue.","On avance."],"verdicts":["Ta technique était écrite dans ton nom avant que tu ne t'assoies.","Rien de ce que tu as dit ne l'a modifiée d'une lettre."]},"voix":{"mort":["Ce n'était pas assez.","Tu as été lisible."],"victoire":["Ce qui te faisait face a cessé de faire face."],"serment_accepte":["Le contrat prend."],"serment_rompu":["Le contrat te reprend."],"domaine_ouvert":["La pièce n'est plus à personne."],"domaine_brise":["Le décor tombe."],"inversion":["Ça se referme."],"retour":["Tu es déjà venu.","Le registre t'a reconnu avant que tu tapes."],"murmures":["quelqu'un a compté tes pas","la porte était ouverte","tu as déjà dit ça","ce n'est pas ton écriture"]},"nomenclature":{"patrons":["{LOI} de {ESSENCE}"],"prefixes":["Rite","Doctrine","Office","Protocole","Article"],"suffixes":["Perpétuel","Sans Recours","Exécutoire","de Nuit","Second"],"titres_joueur":[{"titre":"Premier Exorcisme","condition":"gagner une fois"},{"titre":"Récidiviste","condition":"cinq victoires"},{"titre":"Trois Fois Lié","condition":"trois serments"},{"titre":"Ouvreur","condition":"un territoire"},{"titre":"Déjà Mort","condition":"mourir"},{"titre":"Mauvais Payeur","condition":"trois serments improvisés"},{"titre":"Mûr","condition":"maturation 8"},{"titre":"Habitué","condition":"dix victoires"}],"grades":[{"grade":"4","nom":"Quatrième grade","description":"On te confie des couloirs.","seuil":0},{"grade":"3","nom":"Troisième grade","description":"On te confie des étages.","seuil":95},{"grade":"2","nom":"Deuxième grade","description":"On te confie des gens.","seuil":115},{"grade":"1","nom":"Premier grade","description":"On ne te confie plus rien : on te prévient.","seuil":140},{"grade":"semi-spécial","nom":"Semi-spécial","description":"Ton nom circule.","seuil":170},{"grade":"spécial","nom":"Grade spécial","description":"On ne t'envoie plus : on te lâche.","seuil":210}]},"matieres":{"matieres":["cendre","ardoise","lait tourné","zinc","cire","papier calque","suie","vitre","plomb","résine"],"nombres":["Neuf","Trois","Trois Cent Soixante","Un","Sept","Douze"],"lieux":["une salle d'attente sans porte","un parking au sixième sous-sol","une salle des pas perdus"],"organes":["la moelle","le larynx","la plèvre","le nerf cubital","l'oreille interne"]}};
+</script>
+<script>
+/* ==== 00-core.js ==== */
+/* =========================================================================
+   RITUEL — noyau
+   Détermnisme absolu : une graine = un destin. Aucun Math.random ici.
+   ========================================================================= */
+(function (root) {
+  'use strict';
+  const JJK = (root.JJK = root.JJK || {});
+
+  /* ---- hachage de chaîne : cyrb128 ---------------------------------- */
+  function cyrb128(str) {
+    let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+    for (let i = 0, k; i < str.length; i++) {
+      k = str.charCodeAt(i);
+      h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
+      h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+      h3 = h4 ^ Math.imul(h3 ^ k, 951274213);
+      h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+    }
+    h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+    h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+    h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
+    h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+    return [(h1 ^ h2 ^ h3 ^ h4) >>> 0, (h2 ^ h1) >>> 0, (h3 ^ h1) >>> 0, (h4 ^ h1) >>> 0];
+  }
+
+  /* ---- normalisation de la graine ------------------------------------
+     « Matthias », « matthias » et « MATTHIAS  » sont la même personne.
+     Le rituel ne se laisse pas berner par une majuscule.                */
+  function normalizeSeed(s) {
+    return String(s == null ? '' : s)
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  }
+
+  /* ---- générateur : mulberry32 --------------------------------------- */
+  function Rng(seed) {
+    let a;
+    if (typeof seed === 'number') a = seed >>> 0;
+    else a = cyrb128(String(seed))[0];
+    this._a = a >>> 0;
+  }
+  Rng.prototype.next = function () {
+    let t = (this._a += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  Rng.prototype.int = function (n) { return Math.floor(this.next() * n); };
+  Rng.prototype.range = function (a, b) { return a + this.next() * (b - a); };
+  Rng.prototype.intRange = function (a, b) { return a + Math.floor(this.next() * (b - a + 1)); };
+  Rng.prototype.chance = function (p) { return this.next() < p; };
+  Rng.prototype.pick = function (arr) {
+    if (!arr || !arr.length) return undefined;
+    return arr[Math.floor(this.next() * arr.length)];
+  };
+  Rng.prototype.shuffle = function (arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(this.next() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  };
+  Rng.prototype.sample = function (arr, n) { return this.shuffle(arr).slice(0, n); };
+  /* loi normale par Box–Muller, bornée : sert aux stats et au tracé des sceaux */
+  Rng.prototype.gauss = function (mu, sigma) {
+    const u = Math.max(1e-9, this.next()), v = this.next();
+    return mu + sigma * Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185307179586 * v);
+  };
+  /* sous-générateur nommé : deux axes indépendants ne se contaminent pas */
+  Rng.prototype.fork = function (tag) { return new Rng(cyrb128(tag + ':' + this._a)[0]); };
+
+  /* ---- aléatoire non déterministe, réservé aux effets visuels -------- */
+  const chaos = {
+    f: function () { return Math.random(); },
+    i: function (n) { return Math.floor(Math.random() * n); },
+    r: function (a, b) { return a + Math.random() * (b - a); },
+    pick: function (a) { return a[Math.floor(Math.random() * a.length)]; },
+  };
+
+  /* ---- utilitaires ---------------------------------------------------- */
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const ease = {
+    out: t => 1 - Math.pow(1 - t, 3),
+    in: t => t * t * t,
+    inOut: t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
+    back: t => 1 + 2.70158 * Math.pow(t - 1, 3) + 1.70158 * Math.pow(t - 1, 2),
+  };
+  const now = () => (root.performance && root.performance.now ? root.performance.now() : Date.now());
+
+  function el(tag, cls, txt) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (txt != null) n.textContent = txt;
+    return n;
+  }
+  const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+  const $$ = (sel, ctx) => Array.prototype.slice.call((ctx || document).querySelectorAll(sel));
+
+  /* remplace {JETON} dans un gabarit */
+  function fill(tpl, map) {
+    return String(tpl || '').replace(/\{([A-Z_]+)\}/g, (m, k) =>
+      (map[k] != null ? map[k] : m));
+  }
+
+  /* premières lettres capitales, en respectant les particules françaises */
+  const PARTICULES = { de: 1, du: 1, des: 1, la: 1, le: 1, les: 1, 'l\'': 1, d: 1, au: 1, aux: 1, et: 1, en: 1, par: 1, sans: 1, sur: 1, a: 1 };
+  function titre(s) {
+    return String(s || '').split(' ').map((w, i) => {
+      const low = w.toLowerCase();
+      if (i > 0 && PARTICULES[low]) return low;
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    }).join(' ');
+  }
+
+  function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  JJK.core = { cyrb128, normalizeSeed, Rng, chaos, clamp, lerp, ease, now, el, $, $$, fill, titre, wait };
+})(window);
+
+
+/* ==== 10-audio.js ==== */
+/* =========================================================================
+   RITUEL — synthèse sonore
+   Aucun fichier audio : tout est fabriqué à la volée. Le jeu respire.
+   ========================================================================= */
+(function (root) {
+  'use strict';
+  const JJK = (root.JJK = root.JJK || {});
+  const { clamp } = JJK.core;
+
+  let ctx = null, master = null, bus = {}, started = false, muted = false;
+  let droneNodes = null, heartTimer = null, tension = 0;
+
+  function ready() { return ctx && ctx.state === 'running' && !muted; }
+
+  function init() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
+    const AC = root.AudioContext || root.webkitAudioContext;
+    if (!AC) return;
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = 0.9;
+
+    /* compresseur : les impacts ne doivent pas saturer le drone */
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -18; comp.knee.value = 12;
+    comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.25;
+    master.connect(comp); comp.connect(ctx.destination);
+
+    /* réverbération par bruit décroissant : une salle en pierre */
+    const rev = ctx.createConvolver();
+    rev.buffer = impulse(2.6, 2.4);
+    const revGain = ctx.createGain(); revGain.gain.value = 0.32;
+    rev.connect(revGain); revGain.connect(master);
+    bus.rev = rev;
+    bus.dry = master;
+  }
+
+  function impulse(seconds, decay) {
+    const len = Math.floor(ctx.sampleRate * seconds);
+    const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < len; i++) {
+        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+      }
+    }
+    return buf;
+  }
+
+  function noiseBuffer(seconds) {
+    const len = Math.floor(ctx.sampleRate * seconds);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    return buf;
+  }
+
+  function env(node, t0, a, d, peak, send) {
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t0 + a);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + d);
+    node.connect(g);
+    g.connect(bus.dry);
+    if (send && bus.rev) { const s = ctx.createGain(); s.gain.value = send; g.connect(s); s.connect(bus.rev); }
+    return g;
+  }
+
+  /* ---- drone : la nappe d'énergie maudite ---------------------------- */
+  function startDrone() {
+    if (!ctx || droneNodes) return;
+    const t = ctx.currentTime;
+    const g = ctx.createGain(); g.gain.value = 0.0001;
+    g.gain.exponentialRampToValueAtTime(0.10, t + 6);
+    const filt = ctx.createBiquadFilter();
+    filt.type = 'lowpass'; filt.frequency.value = 220; filt.Q.value = 4;
+    g.connect(filt); filt.connect(master);
+    const send = ctx.createGain(); send.gain.value = 0.5; filt.connect(send); send.connect(bus.rev);
+
+    const oscs = [];
+    [36.71, 55.0, 73.42, 110.0, 164.81].forEach((f, i) => {
+      const o = ctx.createOscillator();
+      o.type = i < 2 ? 'sine' : 'sawtooth';
+      o.frequency.value = f * (1 + (i - 2) * 0.0009);
+      const og = ctx.createGain(); og.gain.value = [0.5, 0.35, 0.10, 0.07, 0.035][i];
+      o.connect(og); og.connect(g); o.start(t);
+      oscs.push(o);
+    });
+    /* souffle : du bruit très filtré, comme un couloir */
+    const n = ctx.createBufferSource(); n.buffer = noiseBuffer(4); n.loop = true;
+    const nf = ctx.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 340; nf.Q.value = 0.7;
+    const ng = ctx.createGain(); ng.gain.value = 0.05;
+    n.connect(nf); nf.connect(ng); ng.connect(g); n.start(t);
+
+    /* lent battement de filtre : la nappe n'est jamais immobile */
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.043;
+    const lfoG = ctx.createGain(); lfoG.gain.value = 90;
+    lfo.connect(lfoG); lfoG.connect(filt.frequency); lfo.start(t);
+
+    droneNodes = { g, filt, oscs, n, lfo, ng };
+  }
+
+  function stopDrone(fade) {
+    if (!droneNodes) return;
+    const d = droneNodes; droneNodes = null;
+    const t = ctx.currentTime;
+    d.g.gain.cancelScheduledValues(t);
+    d.g.gain.setValueAtTime(Math.max(0.0002, d.g.gain.value), t);
+    d.g.gain.exponentialRampToValueAtTime(0.0001, t + (fade || 1.5));
+    setTimeout(() => {
+      try { d.oscs.forEach(o => o.stop()); d.n.stop(); d.lfo.stop(); } catch (e) {}
+    }, (fade || 1.5) * 1000 + 200);
+  }
+
+  /* la tension monte : le filtre s'ouvre, la nappe devient présente */
+  function setTension(v) {
+    tension = clamp(v, 0, 1);
+    if (!droneNodes || !ctx) return;
+    const t = ctx.currentTime;
+    droneNodes.filt.frequency.cancelScheduledValues(t);
+    droneNodes.filt.frequency.setTargetAtTime(200 + tension * 900, t, 1.2);
+    droneNodes.g.gain.setTargetAtTime(0.09 + tension * 0.09, t, 1.5);
+  }
+
+  /* ---- grains ponctuels ---------------------------------------------- */
+  function tick(freq, dur, vol) {
+    if (!ready()) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    o.type = 'square'; o.frequency.value = freq || 1400;
+    env(o, t, 0.001, dur || 0.02, (vol == null ? 0.05 : vol), 0.05);
+    o.start(t); o.stop(t + (dur || 0.02) + 0.05);
+  }
+
+  function hit(power) {
+    if (!ready()) return;
+    const t = ctx.currentTime, p = clamp(power == null ? 0.5 : power, 0, 1.6);
+    /* corps : un sinus qui plonge */
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(180 + p * 120, t);
+    o.frequency.exponentialRampToValueAtTime(38, t + 0.16 + p * 0.1);
+    env(o, t, 0.004, 0.30 + p * 0.2, 0.55 * p + 0.12, 0.25);
+    o.start(t); o.stop(t + 0.7);
+    /* claque : bruit passe-haut */
+    const n = ctx.createBufferSource(); n.buffer = noiseBuffer(0.35);
+    const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 900 + p * 1800;
+    n.connect(f); env(f, t, 0.002, 0.11 + p * 0.08, 0.20 * p + 0.05, 0.35);
+    n.start(t); n.stop(t + 0.4);
+  }
+
+  function slash() {
+    if (!ready()) return;
+    const t = ctx.currentTime;
+    const n = ctx.createBufferSource(); n.buffer = noiseBuffer(0.5);
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 3.5;
+    f.frequency.setValueAtTime(5200, t);
+    f.frequency.exponentialRampToValueAtTime(420, t + 0.19);
+    n.connect(f); env(f, t, 0.005, 0.22, 0.30, 0.4);
+    n.start(t); n.stop(t + 0.5);
+  }
+
+  function heal() {
+    if (!ready()) return;
+    const t = ctx.currentTime;
+    [392.0, 523.25, 659.25, 783.99].forEach((f, i) => {
+      const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = f;
+      env(o, t + i * 0.055, 0.02, 0.75, 0.075, 0.6);
+      o.start(t + i * 0.055); o.stop(t + i * 0.055 + 0.9);
+    });
+  }
+
+  /* le son du serment : deux notes qui se ferment comme une porte */
+  function oath() {
+    if (!ready()) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(146.83, t);
+    o.frequency.exponentialRampToValueAtTime(97.99, t + 0.9);
+    env(o, t, 0.02, 1.4, 0.30, 0.7);
+    o.start(t); o.stop(t + 1.8);
+    const n = ctx.createBufferSource(); n.buffer = noiseBuffer(1.2);
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 700;
+    n.connect(f); env(f, t + 0.55, 0.01, 0.5, 0.13, 0.5);
+    n.start(t + 0.55); n.stop(t + 1.6);
+  }
+
+  /* ---- l'extension du territoire : le sol se dérobe ------------------ */
+  function domain() {
+    if (!ready()) return;
+    const t = ctx.currentTime;
+    /* montée inversée : un souffle aspiré */
+    const n = ctx.createBufferSource(); n.buffer = noiseBuffer(3);
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2;
+    f.frequency.setValueAtTime(120, t);
+    f.frequency.exponentialRampToValueAtTime(7000, t + 2.1);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22, t + 2.05);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 2.5);
+    n.connect(f); f.connect(g); g.connect(master);
+    if (bus.rev) { const s = ctx.createGain(); s.gain.value = 0.6; g.connect(s); s.connect(bus.rev); }
+    n.start(t); n.stop(t + 3);
+
+    /* chute sub : le coup au but */
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(85, t + 2.05);
+    o.frequency.exponentialRampToValueAtTime(23, t + 4.0);
+    const og = ctx.createGain();
+    og.gain.setValueAtTime(0.0001, t + 2.0);
+    og.gain.exponentialRampToValueAtTime(0.72, t + 2.13);
+    og.gain.exponentialRampToValueAtTime(0.0001, t + 4.6);
+    o.connect(og); og.connect(master);
+    o.start(t + 2.0); o.stop(t + 4.8);
+
+    /* cloche fêlée */
+    [61.74, 92.5, 138.59, 233.08].forEach((fr, i) => {
+      const b = ctx.createOscillator(); b.type = 'triangle';
+      b.frequency.value = fr * (1 + i * 0.0031);
+      env(b, t + 2.06, 0.006, 3.2 - i * 0.5, 0.16 / (i + 1) + 0.03, 0.85);
+      b.start(t + 2.06); b.stop(t + 6);
+    });
+  }
+
+  function whisper(len) {
+    if (!ready()) return;
+    const t = ctx.currentTime, d = len || 0.9;
+    const n = ctx.createBufferSource(); n.buffer = noiseBuffer(d + 0.3);
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 9;
+    f.frequency.setValueAtTime(700, t);
+    /* formants approximatifs : ça ne dit rien, et pourtant ça parle */
+    for (let i = 0; i < 7; i++) {
+      f.frequency.linearRampToValueAtTime(500 + Math.random() * 1500, t + (d * (i + 1)) / 7);
+    }
+    n.connect(f); env(f, t, 0.06, d, 0.075, 0.5);
+    n.start(t); n.stop(t + d + 0.3);
+  }
+
+  function heartbeat(on, bpm) {
+    if (heartTimer) { clearInterval(heartTimer); heartTimer = null; }
+    if (!on || !ctx) return;
+    const period = 60000 / (bpm || 72);
+    const boom = (v) => {
+      if (!ready()) return;
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(72, t);
+      o.frequency.exponentialRampToValueAtTime(31, t + 0.16);
+      env(o, t, 0.006, 0.22, v, 0.12);
+      o.start(t); o.stop(t + 0.45);
+    };
+    heartTimer = setInterval(() => { boom(0.30); setTimeout(() => boom(0.19), period * 0.22); }, period);
+  }
+
+  function toggleMute(force) {
+    muted = (force == null) ? !muted : !!force;
+    if (master) master.gain.setTargetAtTime(muted ? 0.0001 : 0.9, ctx.currentTime, 0.08);
+    return muted;
+  }
+  function isMuted() { return muted; }
+
+  function unlock() {
+    if (started) { if (ctx && ctx.state === 'suspended') ctx.resume(); return; }
+    started = true;
+    init();
+    if (ctx && ctx.state === 'suspended') ctx.resume();
+    startDrone();
+  }
+
+  JJK.audio = {
+    unlock, init, startDrone, stopDrone, setTension, tick, hit, slash, heal,
+    oath, domain, whisper, heartbeat, toggleMute, isMuted,
+    get started() { return started; },
+  };
+})(window);
+
+
+/* ==== 20-fx.js ==== */
+/* =========================================================================
+   RITUEL — effets
+   Cinq calques de toile empilés. Le sang qu'on prend reste à l'écran.
+   ========================================================================= */
+(function (root) {
+  'use strict';
+  const JJK = (root.JJK = root.JJK || {});
+  const { clamp, lerp, ease, now, chaos, Rng } = JJK.core;
+
+  const L = {};           /* calques */
+  let W = 0, H = 0, DPR = 1;
+  let raf = 0, t0 = 0;
+  let mounted = false;
+
+  const state = {
+    intensity: 0.15,      /* densité du champ d'énergie maudite */
+    hue: '#b31217',
+    hue2: '#f2c14e',
+    shake: 0,
+    domain: null,         /* territoire ouvert : { spec, born, sigilSeed, geo } */
+    pulses: [],
+    slashes: [],
+    reduced: false,
+    dead: 0,              /* 0..1 : la vue se dégrade quand on meurt */
+  };
+
+  /* ---- bruit de valeur, haché : pas de dépendance, déterministe ------ */
+  function h2(x, y) {
+    let n = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263);
+    n = Math.imul(n ^ (n >>> 13), 1274126177);
+    return ((n ^ (n >>> 16)) >>> 0) / 4294967296;
+  }
+  function vnoise(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y);
+    const xf = x - xi, yf = y - yi;
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    return lerp(lerp(h2(xi, yi), h2(xi + 1, yi), u),
+                lerp(h2(xi, yi + 1), h2(xi + 1, yi + 1), u), v);
+  }
+  /* champ de vecteurs par gradient tourné : les particules tournoient */
+  function flow(x, y, t) {
+    const s = 0.0016;
+    const a = vnoise(x * s + t * 0.05, y * s) * 6.283185307179586 * 2;
+    return a;
+  }
+
+  /* ---- montage -------------------------------------------------------- */
+  function layer(id, z, cls) {
+    let c = document.getElementById(id);
+    if (!c) {
+      c = document.createElement('canvas');
+      c.id = id;
+      c.className = 'fx-layer ' + (cls || '');
+      c.style.zIndex = String(z);
+      document.body.appendChild(c);
+    }
+    return { c, x: c.getContext('2d') };
+  }
+
+  function resize() {
+    DPR = Math.min(2, root.devicePixelRatio || 1);
+    W = root.innerWidth; H = root.innerHeight;
+    ['veil', 'ink', 'dom', 'over'].forEach(k => {
+      if (!L[k]) return;
+      const keep = (k === 'ink') ? L.ink.c.toDataURL() : null;
+      L[k].c.width = Math.floor(W * DPR);
+      L[k].c.height = Math.floor(H * DPR);
+      L[k].c.style.width = W + 'px';
+      L[k].c.style.height = H + 'px';
+      L[k].x.setTransform(DPR, 0, 0, DPR, 0, 0);
+      if (keep) { const im = new Image(); im.onload = () => L.ink.x.drawImage(im, 0, 0, W, H); im.src = keep; }
+    });
+    seedParticles();
+  }
+
+  let P = [];
+  function seedParticles() {
+    const target = state.reduced ? 60 : clamp(Math.floor((W * H) / 5200), 90, 420);
+    P = [];
+    for (let i = 0; i < target; i++) {
+      P.push({
+        x: chaos.r(0, W), y: chaos.r(0, H),
+        v: chaos.r(0.12, 0.85), life: chaos.r(0, 1),
+        s: chaos.r(0.4, 2.4), a: chaos.r(0.05, 0.5),
+        k: chaos.f() < 0.14 ? 1 : 0,     /* braises dorées */
+      });
+    }
+  }
+
+  function mount() {
+    if (mounted) return;
+    mounted = true;
+    state.reduced = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    L.veil = layer('fx-veil', 0);
+    L.ink = layer('fx-ink', 3);
+    L.dom = layer('fx-dom', 60, 'is-hidden');
+    L.over = layer('fx-over', 70);
+    resize();
+    root.addEventListener('resize', resize);
+    t0 = now();
+    loop();
+  }
+
+  /* ---- boucle --------------------------------------------------------- */
+  function loop() {
+    raf = requestAnimationFrame(loop);
+    const t = (now() - t0) / 1000;
+    drawVeil(t);
+    drawOver(t);
+    if (state.domain) drawDomain(t);
+    applyShake();
+  }
+
+  function drawVeil(t) {
+    const x = L.veil.x;
+    x.clearRect(0, 0, W, H);
+
+    /* halo : une respiration lente au centre */
+    const br = 0.5 + 0.5 * Math.sin(t * 0.42);
+    const g = x.createRadialGradient(W * 0.5, H * 0.52, 0, W * 0.5, H * 0.52, Math.max(W, H) * 0.72);
+    g.addColorStop(0, hexA(state.hue, 0.05 + state.intensity * 0.13 + br * 0.025));
+    g.addColorStop(0.45, hexA(state.hue, 0.018 + state.intensity * 0.04));
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+
+    /* particules d'énergie maudite : elles suivent le champ */
+    const spd = 0.5 + state.intensity * 2.4;
+    for (let i = 0; i < P.length; i++) {
+      const p = P[i];
+      const a = flow(p.x, p.y, t);
+      p.x += Math.cos(a) * p.v * spd;
+      p.y += Math.sin(a) * p.v * spd - 0.16 * spd;
+      p.life -= 0.0022 * (0.5 + state.intensity);
+      if (p.life <= 0 || p.x < -30 || p.x > W + 30 || p.y < -30 || p.y > H + 30) {
+        p.x = chaos.r(0, W); p.y = H + chaos.r(0, 60); p.life = 1;
+      }
+      const al = p.a * p.life * (0.35 + state.intensity * 1.25);
+      x.fillStyle = hexA(p.k ? state.hue2 : state.hue, clamp(al, 0, 0.9));
+      const s = p.s * (0.6 + state.intensity);
+      x.fillRect(p.x, p.y, s, s * (1 + state.intensity * 2.2));
+    }
+
+    /* ondes de choc */
+    for (let i = state.pulses.length - 1; i >= 0; i--) {
+      const pu = state.pulses[i];
+      const k = (t - pu.t) / pu.dur;
+      if (k >= 1) { state.pulses.splice(i, 1); continue; }
+      const r = ease.out(k) * pu.r;
+      x.strokeStyle = hexA(pu.col, (1 - k) * 0.75);
+      x.lineWidth = clamp((1 - k) * 5 * pu.w, 0.4, 14);
+      x.beginPath(); x.arc(pu.x, pu.y, r, 0, 6.283185307179586); x.stroke();
+      if (pu.w > 1) {
+        x.strokeStyle = hexA('#ffffff', (1 - k) * 0.28);
+        x.lineWidth = clamp((1 - k) * 1.6, 0.2, 3);
+        x.beginPath(); x.arc(pu.x, pu.y, r * 0.94, 0, 6.283185307179586); x.stroke();
+      }
+    }
+  }
+
+  function drawOver(t) {
+    const x = L.over.x;
+    x.clearRect(0, 0, W, H);
+
+    /* entailles : traits blancs qui traversent l'écran */
+    for (let i = state.slashes.length - 1; i >= 0; i--) {
+      const s = state.slashes[i];
+      const k = (t - s.t) / s.dur;
+      if (k >= 1) { state.slashes.splice(i, 1); continue; }
+      const grow = ease.out(clamp(k * 2.4, 0, 1));
+      const fade = k < 0.35 ? 1 : 1 - (k - 0.35) / 0.65;
+      const cx = W * 0.5, cy = H * 0.5;
+      const dx = Math.cos(s.a), dy = Math.sin(s.a);
+      const len = Math.max(W, H) * 1.25 * grow;
+      x.save();
+      x.globalCompositeOperation = 'lighter';
+      x.strokeStyle = hexA(s.col, fade * 0.95);
+      x.lineWidth = s.w * (1 - k * 0.6);
+      x.beginPath();
+      x.moveTo(cx - dx * len + s.o * -dy, cy - dy * len + s.o * dx);
+      x.lineTo(cx + dx * len + s.o * -dy, cy + dy * len + s.o * dx);
+      x.stroke();
+      x.restore();
+    }
+
+    /* la mort salit l'objectif */
+    if (state.dead > 0) {
+      const g = x.createRadialGradient(W / 2, H / 2, Math.min(W, H) * (0.42 - state.dead * 0.3),
+                                       W / 2, H / 2, Math.max(W, H) * 0.78);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,0,' + (0.55 + state.dead * 0.45) + ')');
+      x.fillStyle = g; x.fillRect(0, 0, W, H);
+    }
+  }
+
+  function hexA(hex, a) {
+    const h = String(hex || '#b31217').replace('#', '');
+    const v = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+    const n = parseInt(v, 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + clamp(a, 0, 1) + ')';
+  }
+
+  /* ---- secousse ------------------------------------------------------- */
+  function applyShake() {
+    const s = state.shake;
+    const stage = document.getElementById('stage');
+    if (!stage) return;
+    if (s <= 0.01) { stage.style.transform = ''; state.shake = 0; return; }
+    const a = s * 14;
+    stage.style.transform = 'translate(' + chaos.r(-a, a).toFixed(2) + 'px,' + chaos.r(-a, a).toFixed(2) + 'px) rotate(' + chaos.r(-a * 0.09, a * 0.09).toFixed(3) + 'deg)';
+    state.shake *= 0.88;
+  }
+  function shake(p) { state.shake = Math.max(state.shake, clamp(p, 0, 1.6)); }
+
+  function pulse(x, y, r, col, w) {
+    state.pulses.push({ x: x == null ? W / 2 : x, y: y == null ? H / 2 : y,
+      r: r || Math.max(W, H) * 0.5, col: col || state.hue, w: w || 1,
+      t: (now() - t0) / 1000, dur: 0.75 + Math.random() * 0.3 });
+  }
+  function slash(col, n) {
+    const t = (now() - t0) / 1000;
+    for (let i = 0; i < (n || 1); i++) {
+      state.slashes.push({ a: chaos.r(-0.9, 0.9) + (i ? 1.6 : 0), o: chaos.r(-H * 0.22, H * 0.22),
+        w: chaos.r(1.5, 5), col: col || '#fff6ee', t: t + i * 0.045, dur: 0.55 });
+    }
+  }
+
+  /* ---- encre : ce qui coule ne s'efface pas -------------------------- */
+  function ink(px, py, amount, col) {
+    const x = L.ink.x;
+    const cx = px == null ? W * chaos.r(0.2, 0.8) : px;
+    const cy = py == null ? H * chaos.r(0.2, 0.8) : py;
+    const n = Math.floor(4 + amount * 22);
+    for (let i = 0; i < n; i++) {
+      const a = chaos.r(0, 6.2832), d = Math.pow(chaos.f(), 1.7) * (30 + amount * 260);
+      const r = chaos.r(1, 4 + amount * 16) * (1 - d / (40 + amount * 300));
+      if (r <= 0.2) continue;
+      x.fillStyle = hexA(col || state.hue, chaos.r(0.05, 0.30) * (0.4 + amount));
+      x.beginPath();
+      x.ellipse(cx + Math.cos(a) * d, cy + Math.sin(a) * d, r, r * chaos.r(0.6, 1.6), a, 0, 6.2832);
+      x.fill();
+    }
+    /* coulures */
+    for (let i = 0; i < Math.floor(amount * 6); i++) {
+      const sx = cx + chaos.r(-60, 60), sy = cy + chaos.r(-20, 20);
+      const len = chaos.r(20, 60 + amount * 220), w = chaos.r(0.8, 3.2);
+      const g = x.createLinearGradient(sx, sy, sx, sy + len);
+      g.addColorStop(0, hexA(col || state.hue, 0.28));
+      g.addColorStop(1, hexA(col || state.hue, 0));
+      x.fillStyle = g; x.fillRect(sx, sy, w, len);
+    }
+  }
+  function inkFade(a) {
+    const x = L.ink.x;
+    x.save(); x.globalCompositeOperation = 'destination-out';
+    x.fillStyle = 'rgba(0,0,0,' + clamp(a, 0, 1) + ')'; x.fillRect(0, 0, W, H); x.restore();
+  }
+  function inkClear() { L.ink.x.clearRect(0, 0, W, H); }
+
+  /* ---- inversion : le monde se retourne ------------------------------ */
+  function invert(ms) {
+    document.documentElement.classList.add('is-inverted');
+    setTimeout(() => document.documentElement.classList.remove('is-inverted'), ms || 120);
+  }
+  function flash(col, ms) {
+    let f = document.getElementById('fx-flash');
+    if (!f) { f = document.createElement('div'); f.id = 'fx-flash'; document.body.appendChild(f); }
+    f.style.background = col || '#fff';
+    f.style.transition = 'none'; f.style.opacity = '1';
+    requestAnimationFrame(() => {
+      f.style.transition = 'opacity ' + (ms || 400) + 'ms cubic-bezier(.2,.7,.3,1)';
+      f.style.opacity = '0';
+    });
+  }
+
+  /* ---- le sceau : ta géométrie, et celle de personne d'autre ---------- */
+  function sigil(canvas, seed, opts) {
+    const o = opts || {};
+    const dpr = Math.min(2, root.devicePixelRatio || 1);
+    const size = o.size || Math.min(canvas.clientWidth || 320, canvas.clientHeight || 320) || 320;
+    canvas.width = Math.floor(size * dpr); canvas.height = Math.floor(size * dpr);
+    const x = canvas.getContext('2d');
+    x.setTransform(dpr, 0, 0, dpr, 0, 0);
+    x.clearRect(0, 0, size, size);
+    const R = new Rng('sceau:' + seed);
+    const cx = size / 2, cy = size / 2, r = size * 0.44;
+    const ink1 = o.ink || '#e9e2d4', ink2 = o.accent || '#b31217';
+    x.lineCap = 'round'; x.lineJoin = 'round';
+
+    /* un fond : sans lui, les traits fins flottent sans se tenir */
+    const fond = x.createRadialGradient(cx, cy, 0, cx, cy, r * 1.15);
+    fond.addColorStop(0, hexA(ink2, 0.14));
+    fond.addColorStop(0.62, hexA(ink2, 0.05));
+    fond.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = fond; x.beginPath(); x.arc(cx, cy, r * 1.15, 0, 6.2832); x.fill();
+
+    /* trait tremblé : trois passes légèrement décalées, comme un pinceau */
+    function stroke(path, col, w, alpha, passes) {
+      for (let p = 0; p < (passes || 3); p++) {
+        x.save();
+        x.translate(R.range(-0.7, 0.7), R.range(-0.7, 0.7));
+        x.strokeStyle = hexA(col, (alpha || 0.9) / (p + 1.15));
+        x.lineWidth = w * (1 - p * 0.16);
+        x.beginPath(); path(x); x.stroke();
+        x.restore();
+      }
+    }
+
+    /* anneaux */
+    const rings = R.intRange(2, 4);
+    for (let i = 0; i < rings; i++) {
+      const rr = r * (1 - i * R.range(0.09, 0.17));
+      const broken = R.chance(0.45);
+      stroke(c => {
+        if (broken) {
+          const seg = R.intRange(3, 9);
+          for (let s = 0; s < seg; s++) {
+            const a0 = (s / seg) * 6.2832 + R.range(0, 0.3);
+            const a1 = a0 + (6.2832 / seg) * R.range(0.35, 0.85);
+            c.moveTo(cx + Math.cos(a0) * rr, cy + Math.sin(a0) * rr);
+            c.arc(cx, cy, rr, a0, a1);
+          }
+        } else { c.arc(cx, cy, rr, 0, 6.2832); }
+      }, i === 0 ? ink1 : (R.chance(0.5) ? ink2 : ink1), R.range(1.1, 3.0), 0.95);
+    }
+
+    /* graduations : l'instrument de mesure d'une loi */
+    const ticks = R.intRange(18, 72);
+    x.save();
+    for (let i = 0; i < ticks; i++) {
+      const a = (i / ticks) * 6.2832;
+      const long = i % R.intRange(3, 7) === 0;
+      const r0 = r * 1.005, r1 = r * (long ? 1.075 : 1.035);
+      x.strokeStyle = hexA(long ? ink2 : ink1, long ? 0.8 : 0.35);
+      x.lineWidth = long ? 1.6 : 0.8;
+      x.beginPath();
+      x.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+      x.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+      x.stroke();
+    }
+    x.restore();
+
+    /* polygone étoilé : le cœur de la figure */
+    const n = R.intRange(5, 13);
+    const step = R.intRange(2, Math.max(2, Math.floor(n / 2)));
+    const pr = r * R.range(0.62, 0.86);
+    const pts = [];
+    const rot = R.range(0, 6.2832);
+    for (let i = 0; i < n; i++) {
+      const a = rot + (i / n) * 6.2832;
+      pts.push([cx + Math.cos(a) * pr, cy + Math.sin(a) * pr]);
+    }
+    stroke(c => {
+      let i = 0;
+      c.moveTo(pts[0][0], pts[0][1]);
+      for (let k = 0; k < n; k++) { i = (i + step) % n; c.lineTo(pts[i][0], pts[i][1]); }
+      c.closePath();
+    }, ink1, R.range(1.7, 3.4), 1.0);
+
+    /* cordes secondaires */
+    const chords = R.intRange(4, 12);
+    for (let i = 0; i < chords; i++) {
+      const a = R.pick(pts), b = R.pick(pts);
+      stroke(c => { c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); }, ink2, R.range(0.8, 2.0), 0.62, 2);
+    }
+
+    /* nœuds */
+    pts.forEach(p => {
+      if (!R.chance(0.7)) return;
+      x.fillStyle = hexA(R.chance(0.35) ? ink2 : ink1, 0.85);
+      x.beginPath(); x.arc(p[0], p[1], R.range(2.0, 4.8), 0, 6.2832); x.fill();
+    });
+
+    /* glyphe central : traits sur une grille, à la manière d'un caractère */
+    const gs = size * R.range(0.16, 0.26);
+    const gx = cx - gs / 2, gy = cy - gs / 2;
+    const cells = R.intRange(3, 5);
+    const strokes = R.intRange(7, 13);
+    for (let i = 0; i < strokes; i++) {
+      const hz = R.chance(0.55);
+      const a0 = R.int(cells), b0 = R.int(cells), b1 = R.int(cells);
+      const x0 = gx + (hz ? (b0 / (cells - 1)) * gs : (a0 / (cells - 1)) * gs);
+      const y0 = gy + (hz ? (a0 / (cells - 1)) * gs : (b0 / (cells - 1)) * gs);
+      const x1 = gx + (hz ? (b1 / (cells - 1)) * gs : (a0 / (cells - 1)) * gs);
+      const y1 = gy + (hz ? (a0 / (cells - 1)) * gs : (b1 / (cells - 1)) * gs);
+      stroke(c => {
+        c.moveTo(x0, y0);
+        c.quadraticCurveTo((x0 + x1) / 2 + R.range(-4, 4), (y0 + y1) / 2 + R.range(-4, 4), x1, y1);
+      }, i === 0 ? ink2 : ink1, R.range(2.6, 6.4), 1.0, 2);
+    }
+
+    /* arcs isolés en marge */
+    for (let i = 0; i < R.intRange(1, 5); i++) {
+      const rr = r * R.range(0.9, 1.12), a0 = R.range(0, 6.2832), a1 = a0 + R.range(0.2, 1.3);
+      stroke(c => c.arc(cx, cy, rr, a0, a1), ink2, R.range(0.8, 2.6), 0.6, 2);
+    }
+    return canvas;
+  }
+
+  /* ---- extension du territoire --------------------------------------- */
+  function domainGeo(seed) {
+    const R = new Rng('territoire:' + seed);
+    const pillars = [];
+    for (let i = 0; i < R.intRange(7, 16); i++) {
+      pillars.push({ x: R.next(), w: R.range(0.01, 0.06), h: R.range(0.25, 0.95), d: R.range(0.15, 1) });
+    }
+    const rings = [];
+    for (let i = 0; i < R.intRange(3, 8); i++) {
+      rings.push({ x: R.range(0.05, 0.95), y: R.range(0.05, 0.7), r: R.range(0.03, 0.22), s: R.range(-1, 1), t: R.range(0, 6.28) });
+    }
+    return { pillars, rings, horizon: R.range(0.55, 0.78), grid: R.intRange(8, 22), tilt: R.range(-0.06, 0.06) };
+  }
+
+  function drawDomain(t) {
+    const D = state.domain, x = L.dom.x;
+    const age = t - D.born;
+    const open = clamp(age / 1.6, 0, 1);
+    x.clearRect(0, 0, W, H);
+
+    /* fond : le territoire est un intérieur, il n'a pas de ciel */
+    x.fillStyle = D.invert ? '#e9e2d4' : '#050506';
+    x.globalAlpha = open;
+    x.fillRect(0, 0, W, H);
+    x.globalAlpha = 1;
+    if (open < 1) return;
+
+    const line = D.invert ? '#0a0a0c' : '#e9e2d4';
+    const acc = D.accent || '#b31217';
+    const g = D.geo, hy = H * g.horizon;
+
+    /* sol en fuite */
+    x.strokeStyle = hexA(line, 0.42); x.lineWidth = 1;
+    for (let i = 0; i <= g.grid; i++) {
+      const k = i / g.grid;
+      const y = hy + Math.pow(k, 2.1) * (H - hy) * 1.3;
+      x.globalAlpha = 0.85 - k * 0.45;
+      x.beginPath(); x.moveTo(-W * 0.2, y); x.lineTo(W * 1.2, y + g.tilt * W); x.stroke();
+    }
+    for (let i = -6; i <= g.grid + 6; i++) {
+      const k = i / g.grid;
+      x.globalAlpha = 0.5;
+      x.beginPath(); x.moveTo(W * 0.5 + (k - 0.5) * W * 0.35, hy);
+      x.lineTo(W * 0.5 + (k - 0.5) * W * 3.2, H * 1.25); x.stroke();
+    }
+    x.globalAlpha = 1;
+
+    /* l'horizon brûle : c'est la seule source de lumière du lieu */
+    const hg = x.createLinearGradient(0, hy - H * 0.16, 0, hy + H * 0.05);
+    hg.addColorStop(0, 'rgba(0,0,0,0)');
+    hg.addColorStop(1, hexA(acc, D.invert ? 0.14 : 0.24));
+    x.fillStyle = hg; x.fillRect(0, hy - H * 0.16, W, H * 0.21);
+    x.strokeStyle = hexA(line, 0.85); x.lineWidth = 1.6;
+    x.beginPath(); x.moveTo(0, hy); x.lineTo(W, hy + g.tilt * W); x.stroke();
+
+    /* piliers : des colonnes sans toit */
+    g.pillars.forEach((p, i) => {
+      const px = p.x * W, pw = p.w * W * (0.4 + p.d);
+      const ph = p.h * hy * (0.5 + p.d * 0.7);
+      const drift = Math.sin(t * 0.12 + i) * 4 * p.d;
+      x.fillStyle = D.invert ? 'rgba(233,226,212,.55)' : 'rgba(5,5,6,.72)';
+      x.fillRect(px - pw / 2 + drift, hy - ph, pw, ph);
+      x.strokeStyle = hexA(line, 0.22 + p.d * 0.55);
+      x.lineWidth = 1.2;
+      x.strokeRect(px - pw / 2 + drift, hy - ph, pw, ph);
+      x.strokeStyle = hexA(acc, 0.28 * p.d);
+      x.beginPath(); x.moveTo(px + drift, hy - ph); x.lineTo(px + drift, hy); x.stroke();
+    });
+
+    /* anneaux suspendus */
+    g.rings.forEach((rg, i) => {
+      const rr = rg.r * Math.min(W, H);
+      const a = rg.t + t * rg.s * 0.22;
+      x.save();
+      x.translate(rg.x * W, rg.y * H + Math.sin(t * 0.3 + i) * 6);
+      x.rotate(a);
+      x.strokeStyle = hexA(i % 3 === 0 ? acc : line, 0.35);
+      x.lineWidth = 1.2;
+      x.beginPath(); x.ellipse(0, 0, rr, rr * (0.18 + 0.5 * Math.abs(Math.sin(a))), 0, 0, 6.2832); x.stroke();
+      x.restore();
+    });
+
+    /* le sceau, immense, au fond */
+    if (D.sigilCanvas) {
+      const s = Math.min(W, H) * 0.86;
+      x.save();
+      x.globalAlpha = 0.20 + 0.07 * Math.sin(t * 0.5);
+      x.translate(W / 2, hy * 0.72);
+      x.rotate(t * 0.035);
+      x.drawImage(D.sigilCanvas, -s / 2, -s / 2, s, s);
+      x.restore();
+    }
+
+    /* vignettage : on ne sort pas d'ici par les bords */
+    const vg = x.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.28, W / 2, H / 2, Math.max(W, H) * 0.8);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, D.invert ? 'rgba(233,226,212,0.78)' : 'rgba(0,0,0,0.80)');
+    x.fillStyle = vg; x.fillRect(0, 0, W, H);
+  }
+
+  function domainOpen(spec) {
+    const t = (now() - t0) / 1000;
+    state.domain = {
+      born: t, geo: domainGeo(spec.seed || 'x'),
+      accent: spec.accent || state.hue,
+      invert: !!spec.invert,
+      sigilCanvas: spec.sigilCanvas || null,
+    };
+    L.dom.c.classList.remove('is-hidden');
+    document.body.classList.add('in-domain');
+  }
+  function domainClose() {
+    state.domain = null;
+    L.dom.c.classList.add('is-hidden');
+    L.dom.x.clearRect(0, 0, W, H);
+    document.body.classList.remove('in-domain');
+  }
+
+  /* ---- machine à écrire ---------------------------------------------- */
+  function type(node, text, opts) {
+    const o = opts || {};
+    const speed = o.speed || 26;
+    node.textContent = '';
+    node.classList.add('typing');
+    let i = 0, stop = false;
+    const p = new Promise(res => {
+      function step() {
+        if (stop) return res();
+        if (i >= text.length) { node.classList.remove('typing'); return res(); }
+        const ch = text.charAt(i++);
+        node.textContent += ch;
+        if (o.sound !== false && ch !== ' ' && i % 2 === 0 && JJK.audio) JJK.audio.tick(chaos.r(900, 2200), 0.012, 0.018);
+        const pause = /[.,;:!?…—]/.test(ch) ? speed * 9 : (ch === ' ' ? speed * 0.6 : speed);
+        setTimeout(step, pause * chaos.r(0.6, 1.5));
+      }
+      step();
+    });
+    p.skip = () => { stop = true; node.textContent = text; node.classList.remove('typing'); };
+    return p;
+  }
+
+  /* ---- l'interface se mutile ------------------------------------------ */
+  function mutilate(node, label) {
+    if (!node) return;
+    node.classList.add('mutilated');
+    if (label) node.setAttribute('data-scar', label);
+    slash('#b31217', 1);
+    if (JJK.audio) JJK.audio.slash();
+  }
+
+  function setIntensity(v) { state.intensity = clamp(v, 0, 1); }
+  function setHue(a, b) { if (a) state.hue = a; if (b) state.hue2 = b; }
+  function setDead(v) { state.dead = clamp(v, 0, 1); }
+
+  JJK.fx = {
+    mount, resize, shake, pulse, slash, ink, inkFade, inkClear, invert, flash,
+    sigil, domainOpen, domainClose, type, mutilate, setIntensity, setHue, setDead,
+    hexA, state,
+    get size() { return { W, H }; },
+  };
+})(window);
+
+
+/* ==== 30-forge.js ==== */
+/* =========================================================================
+   RITUEL — la forge
+   Une technique innée ne se choisit pas. Elle se constate.
+   Même graine, même destin, sur n'importe quelle machine, pour toujours.
+   ========================================================================= */
+(function (root) {
+  'use strict';
+  const JJK = (root.JJK = root.JJK || {});
+  const { Rng, cyrb128, normalizeSeed, clamp, titre } = JJK.core;
+
+  /* ---- grammaire française : on ne livre pas « de Le Sang » ---------- */
+  const VOY = /[aeiouyàâäéèêëîïôöûüh]/i;
+  function fr(s) {
+    let t = ' ' + String(s || '').replace(/\s+/g, ' ').trim() + ' ';
+    t = t.replace(/\bde Les\b/gi, 'des').replace(/\bde Le\b/gi, 'du')
+         .replace(/\bde La\b/g, 'de la').replace(/\bde L'/gi, "de l'")
+         .replace(/\bà Les\b/gi, 'aux').replace(/\bà Le\b/gi, 'au')
+         .replace(/\bà La\b/g, 'à la').replace(/\bà L'/gi, "à l'")
+         .replace(/\bde ([AEIOUYÉÈÊÎÔÛaeiouyéèêîôû])/g, "d'$1")
+         .replace(/\bDe ([AEIOUYÉÈÊÎÔÛaeiouyéèêîôû])/g, "D'$1")
+         .replace(/\ble ([AEIOUYÉÈÊÎÔÛaeiouyéèêîôû])/g, "l'$1")
+         .replace(/\bla ([AEIOUYÉÈÊÎÔÛaeiouyéèêîôû])/g, "l'$1")
+         .replace(/'\s+/g, "'");
+    return t.trim();
+  }
+  /* « La Rouille » → { nu: 'Rouille', genre: 'f', art: 'la' } */
+  function decoupe(nom) {
+    const s = String(nom || '').trim();
+    let m = /^(Les|Le|La|L['’]|Des|Du|De la|De l['’]|De)\s*/i.exec(s);
+    if (!m) return { nu: s, genre: 'm', art: 'le', pluriel: false };
+    const a = m[1].toLowerCase().replace('’', "'");
+    const nu = s.slice(m[0].length).trim() || s;
+    const pluriel = a === 'les' || a === 'des';
+    const genre = pluriel ? 'p' : (a === 'la' || a === 'de la' ? 'f' : (a === "l'" || a === "de l'" ? (VOY.test(nu[0]) ? 'e' : 'm') : 'm'));
+    const art = pluriel ? 'les' : (genre === 'f' ? 'la' : (genre === 'e' ? "l'" : 'le'));
+    return { nu, genre, art, pluriel };
+  }
+  function avecArticle(nom) {
+    const d = decoupe(nom);
+    return fr(d.art + (d.art === "l'" ? '' : ' ') + d.nu);
+  }
+
+  /* ---- composition japonaise ----------------------------------------- */
+  const KANJI_SUF = [
+    { k: '術', r: 'jutsu' }, { k: '呪法', r: 'juhō' }, { k: '縛', r: 'baku' },
+    { k: '律', r: 'ritsu' }, { k: '蝕', r: 'shoku' }, { k: '帳', r: 'chō' },
+    { k: '環', r: 'kan' }, { k: '秤', r: 'hakari' }, { k: '骸', r: 'mukuro' },
+    { k: '灯', r: 'tō' }, { k: '簿', r: 'bo' }, { k: '轍', r: 'wadachi' },
+  ];
+  const KANJI_PRE = [
+    { k: '', r: '' }, { k: '', r: '' }, { k: '逆', r: 'gyaku' }, { k: '真', r: 'shin' },
+    { k: '黒', r: 'koku' }, { k: '無', r: 'mu' }, { k: '深', r: 'shin' }, { k: '虚', r: 'kyo' },
+  ];
+
+  /* ---- accès tolérant au corpus --------------------------------------- */
+  function C() { return JJK.CORPUS || {}; }
+  function liste(k, fallback) {
+    const c = C();
+    const v = c[k];
+    if (Array.isArray(v) && v.length) return v;
+    if (v && typeof v === 'object') {
+      for (const key in v) if (Array.isArray(v[key]) && v[key].length) return v[key];
+    }
+    return fallback || [];
+  }
+
+  /* affinité stable entre deux entrées : ni hasard, ni arbitraire */
+  function affinite(a, b) { return cyrb128('lien:' + a + '::' + b)[1] % 1000; }
+  function meilleur(pool, ref, R, top) {
+    if (!pool.length) return null;
+    const notes = pool.map(o => ({ o, n: affinite(ref, o.id || o.nom || '') }));
+    notes.sort((x, y) => y.n - x.n);
+    const court = notes.slice(0, Math.max(1, Math.min(top || 4, notes.length)));
+    return R.pick(court).o;
+  }
+
+  /* ---- noms de technique ---------------------------------------------- */
+  const PATRONS = [
+    p => fr(p.LOI),
+    p => fr(p.LOI + ' de ' + p.ESSENCE_ART),
+    p => fr('Technique de ' + p.ESSENCE_ART),
+    p => fr(p.NOMBRE + ' ' + p.MATIERE),
+    p => fr(p.ESSENCE_NU + ' ' + p.SUFFIXE),
+    p => fr(p.PREFIXE + ' ' + p.ESSENCE_NU),
+    p => fr(p.MATIERE + ' de ' + p.ESSENCE_ART),
+    p => fr(p.LOI + ' : ' + p.NOMBRE + ' ' + p.MATIERE),
+    p => fr(p.ESSENCE_ART + ' ' + p.SUFFIXE),
+    p => fr(p.PREFIXE + ' de ' + p.ESSENCE_ART),
+    p => fr(p.ESSENCE_NU + ' ' + p.NOMBRE),
+    p => fr('Doctrine de ' + p.ESSENCE_ART),
+    p => fr(p.ORGANE + ' de ' + p.ESSENCE_ART),
+    p => fr(p.LOI + ' ' + p.SUFFIXE),
+  ];
+
+  /* ---- la forge --------------------------------------------------------
+     Tout ce qui suit ne dépend que de la graine. Rien d'autre.           */
+  function forgeTechnique(rawSeed) {
+    const seed = normalizeSeed(rawSeed) || 'sans nom';
+    const R = new Rng('technique:' + seed);
+
+    const essences = liste('essences'), vecteurs = liste('vecteurs'), lois = liste('lois');
+    const domaines = liste('domaines'), matieres = (C().matieres || {});
+    const nomen = C().nomenclature || {};
+
+    const essence = R.pick(essences) || { id: 'x', nom: 'La Cendre', kanji: '灰', romaji: 'hai', concept: '', sensoriel: '', couleur: '#b31217', emotion_source: '' };
+    const loi = meilleur(lois, essence.id || essence.nom, R.fork('loi'), 5) || { id: 'y', nom: 'Loi muette', enonce: '', archetype: 'seuil' };
+    const vecteur = meilleur(vecteurs, (loi.id || '') + (essence.id || ''), R.fork('vecteur'), 5) || { id: 'z', nom: 'Par le contact', condition: '', portee: 'contact' };
+    const domaine = meilleur(domaines, (loi.id || '') + ':' + (essence.id || ''), R.fork('domaine'), 4) || null;
+
+    const matiere = R.pick(matieres.matieres || ['cendre']);
+    const nombre = R.pick(matieres.nombres || ['Neuf']);
+    const lieu = R.pick(matieres.lieux || ['une salle sans porte']);
+    const organe = R.pick(matieres.organes || ['la moelle']);
+    const prefixe = R.pick(nomen.prefixes || ['Rite']);
+    const suffixe = R.pick(nomen.suffixes || ['Perpétuel']);
+
+    const d = decoupe(essence.nom);
+    const jetons = {
+      ESSENCE: essence.nom, ESSENCE_NU: d.nu, ESSENCE_ART: avecArticle(essence.nom),
+      LOI: loi.nom, VECTEUR: vecteur.nom, NOMBRE: nombre, MATIERE: titre(matiere),
+      PREFIXE: prefixe, SUFFIXE: suffixe, ORGANE: titre(String(organe).replace(/^(la|le|les|l')\s*/i, '')),
+    };
+    let nom = titre(PATRONS[R.int(PATRONS.length)](jetons));
+    /* deux techniques de même nom, c'est une insulte au registre */
+    nom = nom.replace(/\s+/g, ' ').trim();
+
+    const kp = R.pick(KANJI_PRE), ks = R.pick(KANJI_SUF);
+    const nomJp = (kp.k || '') + (essence.kanji || '呪') + ks.k;
+    const romaji = ((kp.r ? kp.r + '-' : '') + (essence.romaji || 'ju') + '-' + ks.r).replace(/--+/g, '-');
+
+    const couleur = essence.couleur && /^#[0-9a-f]{3,8}$/i.test(essence.couleur) ? essence.couleur : '#b31217';
+
+    return {
+      seed, graineBrute: String(rawSeed || ''),
+      nom, nomJp, romaji, couleur,
+      essence, vecteur, loi, domaine,
+      matiere, nombre, lieu, organe,
+      sigil: 'sceau:' + seed,
+      archetype: loi.archetype || 'seuil',
+      revers: loi.inversion || '',
+      maximum: loi.maximum || '',
+    };
+  }
+
+  /* ---- le réceptacle : ce que le corps fait de la technique ------------
+     Les réponses au rituel ne changent PAS la technique.
+     Elles changent seulement la manière dont le corps la supporte.      */
+  const AXES = ['vigueur', 'flux', 'tranchant', 'lucidite', 'inversion'];
+  const POIDS_ARCHETYPE = {
+    soustraction: { tranchant: 2.0, lucidite: 1.2, vigueur: 0.6, flux: 1.0, inversion: 0.7 },
+    'échange':    { flux: 2.0, inversion: 1.5, lucidite: 1.0, vigueur: 0.8, tranchant: 0.8 },
+    'répétition': { flux: 1.7, vigueur: 1.4, tranchant: 1.1, lucidite: 0.8, inversion: 1.0 },
+    mesure:       { lucidite: 2.1, tranchant: 1.2, flux: 1.0, vigueur: 0.8, inversion: 0.9 },
+    lien:         { inversion: 1.9, vigueur: 1.5, flux: 1.1, lucidite: 1.0, tranchant: 0.6 },
+    seuil:        { vigueur: 2.0, tranchant: 1.3, inversion: 1.0, flux: 0.9, lucidite: 0.8 },
+    'témoignage': { lucidite: 1.8, flux: 1.4, inversion: 1.2, tranchant: 0.8, vigueur: 0.9 },
+    'métamorphose': { tranchant: 1.6, flux: 1.4, vigueur: 1.2, inversion: 1.1, lucidite: 0.8 },
+  };
+
+  function forgeReceptacle(rawSeed, reponses) {
+    const seed = normalizeSeed(rawSeed) || 'sans nom';
+    const R = new Rng('corps:' + seed + ':' + (reponses || []).join(','));
+    const poids = { vigueur: 1, flux: 1, tranchant: 1, lucidite: 1, inversion: 1 };
+    (reponses || []).forEach(a => {
+      const p = POIDS_ARCHETYPE[a];
+      if (!p) return;
+      AXES.forEach(k => { poids[k] += (p[k] || 1) * 0.55; });
+    });
+    /* répartition à budget fixe : on ne peut pas être bon partout */
+    const brut = {};
+    let somme = 0;
+    AXES.forEach(k => { brut[k] = Math.max(0.15, poids[k] * R.range(0.72, 1.34)); somme += brut[k]; });
+    const BUDGET = 100;
+    const stats = {};
+    AXES.forEach(k => { stats[k] = Math.max(6, Math.round((brut[k] / somme) * BUDGET)); });
+
+    const dominante = AXES.slice().sort((a, b) => stats[b] - stats[a])[0];
+    const pvMax = 90 + stats.vigueur * 3.4 | 0;
+    const enMax = 5 + Math.round(stats.flux / 14);
+    const enTour = 2 + (stats.flux >= 26 ? 1 : 0) + (stats.flux >= 40 ? 1 : 0);
+
+    return {
+      stats, dominante,
+      pvMax, enMax, enTour,
+      attaque: 13 + Math.round(stats.tranchant * 0.80),
+      crit: clamp(0.05 + stats.lucidite * 0.006, 0.05, 0.42),
+      soin: 0.35 + stats.inversion * 0.022,
+      puissance: Math.round(stats.tranchant * 1.5 + stats.vigueur * 1.1 + stats.flux * 1.2 + stats.lucidite * 1.0 + stats.inversion * 0.9),
+    };
+  }
+
+  /* ---- grade : la hiérarchie n'est pas une opinion --------------------- */
+  function grade(puissance, sermentsSignes) {
+    const grades = liste('grades', []).length ? liste('grades') : (C().nomenclature || {}).grades || [];
+    const p = puissance + (sermentsSignes || 0) * 22;
+    const tri = grades.slice().sort((a, b) => (a.seuil || 0) - (b.seuil || 0));
+    let g = tri[0] || { grade: '4', nom: 'Quatrième grade', description: '' };
+    tri.forEach(x => { if (p >= (x.seuil || 0)) g = x; });
+    return g;
+  }
+
+  /* ---- prose du dossier ------------------------------------------------ */
+  function dossier(tech) {
+    const e = tech.essence || {}, v = tech.vecteur || {}, l = tech.loi || {};
+    const phrases = [];
+    if (e.concept) phrases.push(e.concept.replace(/\.$/, '') + '.');
+    if (e.sensoriel) phrases.push(e.sensoriel.replace(/\.$/, '') + '.');
+    if (l.consequence) phrases.push(l.consequence.replace(/\.$/, '') + '.');
+    return phrases.join(' ');
+  }
+  function minuscule(s) { const t = String(s || ''); return t.charAt(0).toLowerCase() + t.slice(1); }
+
+  JJK.forge = { forgeTechnique, forgeReceptacle, grade, dossier, fr, decoupe, avecArticle, AXES, affinite, liste };
+})(window);
+
+
+/* ==== 40-serments.js ==== */
+/* =========================================================================
+   RITUEL — serments contraignants
+   Un serment n'est pas un bonus. C'est une amputation payée d'avance.
+   La mécanique est écrite ici, en dur : le jeu doit VRAIMENT te retirer
+   ce qu'il prétend te retirer.
+   ========================================================================= */
+(function (root) {
+  'use strict';
+  const JJK = (root.JJK = root.JJK || {});
+  const { Rng, cyrb128 } = JJK.core;
+
+  /* Chaque emplacement retire une capacité réelle du jeu ou de l'interface. */
+  const EMPLACEMENTS = [
+    {
+      id: 'aveugle', mots: /masqu|cach|invisibl|ne verra|sans voir|à l['’ ]aveugle|information|affich/i,
+      nom: 'Le Serment de l\'Œil Fermé',
+      clause: "Je renonce à savoir ce qu'il me reste à briser. Je frapperai dans le noir jusqu'à ce que le noir cède.",
+      perte: "Les points de vie de l'adversaire ne te seront plus jamais montrés.",
+      gain: "+40 % de dégâts sur toutes tes techniques.",
+      eff: { masqueVieEnnemi: true, degatsMult: 1.40 }, danger: 2,
+    },
+    {
+      id: 'sansGarde', mots: /garde|défen|bloqu|esquiv|parade|protég/i,
+      nom: 'Le Serment du Corps Offert',
+      clause: "Je ne me protégerai pas. Ce qui vient vers moi arrivera entier.",
+      perte: "L'action Garde t'est retirée. Elle sera barrée de l'écran.",
+      gain: "+2 énergie maudite à chaque tour.",
+      eff: { interdit: ['garde'], energieBonus: 2 }, danger: 3,
+    },
+    {
+      id: 'sansFuite', mots: /fuir|fuite|retraite|partir|sortir|abandonn/i,
+      nom: 'Le Serment de la Porte Murée',
+      clause: "Je ne quitterai pas cette pièce autrement que porté.",
+      perte: "Tu ne peux plus fuir un combat. Jamais.",
+      gain: "+25 % de dégâts et +15 % de points de vie maximum.",
+      eff: { interdit: ['fuite'], degatsMult: 1.25, pvMaxMult: 1.15 }, danger: 2,
+    },
+    {
+      id: 'chair', mots: /chair|points de vie|vitalit|pv max|corps|maigr|amput/i,
+      nom: 'Le Serment de la Chair Comptée',
+      clause: "Je rends la moitié de ce qui me tient debout. Je n'en avais pas l'usage.",
+      perte: "−45 % de points de vie maximum, définitivement, pour cette vie.",
+      gain: "×2,1 sur tous tes dégâts.",
+      eff: { pvMaxMult: 0.55, degatsMult: 2.10 }, danger: 5,
+    },
+    {
+      id: 'sansSoin', mots: /soin|guér|inversé|réparer|recoudre|rétabli/i,
+      nom: 'Le Serment de la Plaie Ouverte',
+      clause: "Ce qui s'ouvre en moi restera ouvert. Je n'ai pas de temps pour cicatriser.",
+      perte: "La technique inversée t'est retirée. Tu ne pourras plus te soigner.",
+      gain: "+3 énergie au premier tour et +30 % de dégâts critiques.",
+      eff: { interdit: ['inverse'], energieDepart: 3, critMult: 1.30 }, danger: 4,
+    },
+    {
+      id: 'silence', mots: /silence|son|entendre|bruit|musique|sourd/i,
+      nom: 'Le Serment de l\'Oreille Coupée',
+      clause: "Je n'écouterai plus rien. Ni lui, ni moi, ni ce qui gratte derrière.",
+      perte: "Le son du jeu est coupé, définitivement. Tu ne pourras plus le rallumer.",
+      gain: "+18 % de chances de coup critique.",
+      eff: { coupeSon: true, critBonus: 0.18 }, danger: 2,
+    },
+    {
+      id: 'sansJournal', mots: /journal|texte|lire|récit|compte rendu|log/i,
+      nom: 'Le Serment de la Page Blanche',
+      clause: "Je ne demanderai pas ce qui vient de se produire. Cela s'est produit, c'est assez.",
+      perte: "Le journal de combat est effacé : tu ne sauras plus ce que tu subis.",
+      gain: "+1 énergie par tour et +20 % de dégâts.",
+      eff: { masqueJournal: true, energieBonus: 1, degatsMult: 1.20 }, danger: 3,
+    },
+    {
+      id: 'sablier', mots: /tour|temps|délai|limite|compte|sablier|minute/i,
+      nom: 'Le Serment du Sablier Retourné',
+      clause: "J'aurai fini avant le huitième battement. Au neuvième, je m'écroule de moi-même.",
+      perte: "Si un combat dépasse 8 tours, tu meurs sur place. Sans exception.",
+      gain: "×1,55 sur tes dégâts et +2 énergie par tour.",
+      eff: { limiteTours: 8, degatsMult: 1.55, energieBonus: 2 }, danger: 5,
+    },
+    {
+      id: 'disette', mots: /énergie|réserve|flux|coût|jeûne|maigre/i,
+      nom: 'Le Serment du Puits Sec',
+      clause: "Je ne puiserai qu'au fond. Le fond suffit à qui n'a plus soif.",
+      perte: "−3 sur ta réserve maximale d'énergie maudite.",
+      gain: "Tes techniques coûtent 1 énergie de moins (minimum 1).",
+      eff: { enMaxBonus: -3, remise: 1 }, danger: 3,
+    },
+    {
+      id: 'sansTechnique', mots: /technique innée|sans technique|renonce à ma technique|poings|mains nues/i,
+      nom: 'Le Serment des Mains Nues',
+      clause: "Ma technique restera pliée dans son étui. J'ai encore deux mains.",
+      perte: "Ta technique innée t'est interdite en combat ordinaire.",
+      gain: "Tes frappes renforcées frappent trois fois plus fort et ne coûtent rien.",
+      eff: { interdit: ['technique'], frappeMult: 3.0 }, danger: 4,
+    },
+    {
+      id: 'sansMemoire', mots: /mémoire|sauvegarde|oubli|effac|trace|souvenir/i,
+      nom: 'Le Serment de la Trace Effacée',
+      clause: "Si je tombe, qu'il ne reste rien. Pas même la mention que j'ai existé ici.",
+      perte: "À ta prochaine mort, toute ta progression enregistrée est détruite.",
+      gain: "×1,6 sur les dégâts et +30 % de points de vie maximum.",
+      eff: { effaceToutALaMort: true, degatsMult: 1.60, pvMaxMult: 1.30 }, danger: 5,
+    },
+    {
+      id: 'uniqueAction', mots: /une seule|répéter|deux fois|même action|unique/i,
+      nom: 'Le Serment de la Formule Unique',
+      clause: "Je ne referai jamais deux fois le même geste. Répéter, c'est mendier.",
+      perte: "Tu ne peux pas utiliser deux tours de suite la même action.",
+      gain: "+35 % de dégâts et +10 % de critique.",
+      eff: { pasDeRepetition: true, degatsMult: 1.35, critBonus: 0.10 }, danger: 4,
+    },
+    {
+      id: 'domaineLourd', mots: /territoire|domaine|extension|sanctuaire/i,
+      nom: 'Le Serment du Territoire Interdit',
+      clause: "Je n'ouvrirai mon territoire qu'une seule fois par existence. Il ne se rouvre pas.",
+      perte: "Tu ne peux ouvrir ton extension du territoire qu'une fois par combat, et jamais deux combats de suite.",
+      gain: "Ton extension du territoire inflige le double et dure deux tours de plus.",
+      eff: { domaineUnique: true, domaineMult: 2.0, domaineTours: 2 }, danger: 3,
+    },
+    {
+      id: 'revanche', mots: /vengeance|revanche|riposte|rendre|dette/i,
+      nom: 'Le Serment de la Dette Rendue',
+      clause: "Chaque coup reçu sera rendu avec les intérêts. Je tiens des comptes exacts.",
+      perte: "+45 % de dégâts subis.",
+      gain: "Chaque fois que tu es touché, ta prochaine attaque gagne +30 % cumulatifs.",
+      eff: { degatsRecusMult: 1.45, rancune: 0.30 }, danger: 4,
+    },
+  ];
+
+  /* On accroche la prose du corpus sur les emplacements mécaniques.
+     Le style vient du rituel, les chiffres viennent du code. */
+  function catalogue(seed) {
+    const src = ((JJK.CORPUS || {}).serments || {}).serments || [];
+    const pris = {};
+    const out = EMPLACEMENTS.map(e => {
+      let choisi = null, note = -1;
+      src.forEach(s => {
+        if (pris[s.id]) return;
+        const texte = [s.restriction_code, s.restriction, s.nom, s.clause].join(' ');
+        let n = e.mots.test(texte) ? 100 : 0;
+        n += (cyrb128(e.id + '|' + (s.id || s.nom))[2] % 40) / 100;
+        if (n > note) { note = n; choisi = s; }
+      });
+      if (choisi && note >= 100) pris[choisi.id || choisi.nom] = 1; else choisi = null;
+      return {
+        id: e.id,
+        nom: (choisi && choisi.nom) || e.nom,
+        clause: (choisi && choisi.clause) || e.clause,
+        perte: e.perte,
+        gain: e.gain,
+        pertePoetique: (choisi && choisi.restriction) || e.perte,
+        gainPoetique: (choisi && choisi.gain) || e.gain,
+        danger: (choisi && choisi.danger) || e.danger,
+        eff: e.eff,
+      };
+    });
+    /* le rituel ne propose jamais tout : il propose ce qu'il a jugé bon */
+    const R = new Rng('serments:' + seed);
+    return R.shuffle(out);
+  }
+
+  /* Agrège les effets des serments signés en un modificateur unique. */
+  function agreger(signes) {
+    const m = {
+      degatsMult: 1, degatsRecusMult: 1, pvMaxMult: 1, soinMult: 1,
+      critBonus: 0, critMult: 1, energieBonus: 0, energieDepart: 0, enMaxBonus: 0,
+      remise: 0, frappeMult: 1, domaineMult: 1, domaineTours: 0, rancune: 0,
+      interdit: {}, masqueVieEnnemi: false, masqueJournal: false, coupeSon: false,
+      pasDeRepetition: false, domaineUnique: false, effaceToutALaMort: false,
+      limiteTours: 0,
+    };
+    (signes || []).forEach(s => {
+      const e = s.eff || {};
+      if (e.degatsMult) m.degatsMult *= e.degatsMult;
+      if (e.degatsRecusMult) m.degatsRecusMult *= e.degatsRecusMult;
+      if (e.pvMaxMult) m.pvMaxMult *= e.pvMaxMult;
+      if (e.soinMult) m.soinMult *= e.soinMult;
+      if (e.critBonus) m.critBonus += e.critBonus;
+      if (e.critMult) m.critMult *= e.critMult;
+      if (e.energieBonus) m.energieBonus += e.energieBonus;
+      if (e.energieDepart) m.energieDepart += e.energieDepart;
+      if (e.enMaxBonus) m.enMaxBonus += e.enMaxBonus;
+      if (e.remise) m.remise += e.remise;
+      if (e.frappeMult) m.frappeMult *= e.frappeMult;
+      if (e.domaineMult) m.domaineMult *= e.domaineMult;
+      if (e.domaineTours) m.domaineTours += e.domaineTours;
+      if (e.rancune) m.rancune += e.rancune;
+      if (e.limiteTours) m.limiteTours = m.limiteTours ? Math.min(m.limiteTours, e.limiteTours) : e.limiteTours;
+      (e.interdit || []).forEach(k => { m.interdit[k] = true; });
+      ['masqueVieEnnemi', 'masqueJournal', 'coupeSon', 'pasDeRepetition', 'domaineUnique', 'effaceToutALaMort']
+        .forEach(k => { if (e[k]) m[k] = true; });
+    });
+    /* Plafond souple : au-delà d'un certain point, empiler des serments
+       cesse de payer. Le réel se lasse d'être négocié.                   */
+    if (m.degatsMult > 3.0) m.degatsMult = 3.0 + (m.degatsMult - 3.0) * 0.40;
+    if (m.pvMaxMult < 0.30) m.pvMaxMult = 0.30;
+    return m;
+  }
+
+  JJK.serments = { EMPLACEMENTS, catalogue, agreger };
+})(window);
+
+
+/* ==== 50-combat.js ==== */
+/* =========================================================================
+   RITUEL — le duel
+   Moteur pur : il ne touche jamais au DOM. Il émet des événements,
+   l'interface les met en scène. Un même duel rejoué à l'identique donne
+   exactement les mêmes chiffres : ici, le hasard aussi a signé un serment.
+   ========================================================================= */
+(function (root) {
+  'use strict';
+  const JJK = (root.JJK = root.JJK || {});
+  const { Rng, clamp } = JJK.core;
+
+  /* ---- statuts ---------------------------------------------------------- */
+  const STATUTS = {
+    saignee:   { nom: 'Saignée', type: 'mauvais', desc: 'Perd des points de vie à chaque tour.' },
+    fracture:  { nom: 'Fracture', type: 'mauvais', desc: 'Dégâts réduits de 30 %.' },
+    lie:       { nom: 'Lié', type: 'mauvais', desc: 'Technique innée impossible.' },
+    marque:    { nom: 'Marqué', type: 'mauvais', desc: 'Subit 30 % de dégâts en plus.' },
+    corrosion: { nom: 'Corrosion', type: 'mauvais', desc: 'Perd 1 énergie par tour.' },
+    scelle:    { nom: 'Scellé', type: 'mauvais', desc: 'Territoire impossible.' },
+    echo:      { nom: 'Écho', type: 'mauvais', desc: 'Le dernier coup se répète.' },
+    lecture:   { nom: 'Lecture', type: 'bon', desc: 'Coup critique quasi assuré.' },
+    elan:      { nom: 'Élan', type: 'bon', desc: 'Dégâts augmentés.' },
+    sursis:    { nom: 'Sursis', type: 'bon', desc: 'Survit une fois à un coup fatal.' },
+    garde:     { nom: 'Garde', type: 'bon', desc: 'Absorbe une partie du prochain coup.' },
+  };
+
+  function statut(c, id) { return c.statuts.find(s => s.id === id); }
+  function poser(c, id, tours, val) {
+    const ex = statut(c, id);
+    if (ex) { ex.tours = Math.max(ex.tours, tours); ex.val = Math.max(ex.val || 0, val || 0); return ex; }
+    const s = { id, tours, val: val || 0, nom: (STATUTS[id] || {}).nom || id, type: (STATUTS[id] || {}).type || 'mauvais' };
+    c.statuts.push(s);
+    return s;
+  }
+  function retirer(c, id) { const i = c.statuts.findIndex(s => s.id === id); if (i >= 0) c.statuts.splice(i, 1); }
+
+  /* ---- actions : les chiffres sont ici, et nulle part ailleurs --------- */
+  const ACTIONS = [
+    {
+      id: 'frappe', nom: 'Frappe renforcée', cout: 0,
+      desc: "Le corps, enveloppé d'énergie maudite. Rend 1 énergie.",
+      exec(D, a, d, R) {
+        const ev = [];
+        D.degats(ev, a, d, 1.0 * a.mods.frappeMult, { verbe: 'écrase' });
+        a.en = Math.min(a.enMax, a.en + 1);
+        return ev;
+      },
+    },
+    {
+      id: 'decharge', nom: "Décharge d'énergie maudite", cout: 2,
+      desc: 'Une gerbe projetée. Rapide, malpropre, efficace.',
+      exec(D, a, d, R) {
+        const ev = [];
+        D.degats(ev, a, d, 1.75, { verbe: 'traverse' });
+        if (R.chance(0.30)) { poser(d, 'saignee', 3, Math.round(a.attaque * 0.22)); ev.push({ t: 'statut', qui: d.cle, id: 'saignee' }); }
+        return ev;
+      },
+    },
+    {
+      id: 'technique', nom: 'Technique innée', cout: 3,
+      desc: 'Ta loi, appliquée à quelqu\'un qui ne l\'a pas demandée.',
+      req: (D, a) => !statut(a, 'lie'),
+      raison: 'Ta technique est liée.',
+      exec(D, a, d, R) {
+        const ev = [];
+        D.degats(ev, a, d, 2.30, { verbe: 'impose', technique: true });
+        const par = { soustraction: 'fracture', 'échange': 'corrosion', 'répétition': 'echo', mesure: 'marque',
+                      lien: 'lie', seuil: 'scelle', 'témoignage': 'marque', 'métamorphose': 'saignee' };
+        const id = par[a.archetype] || 'marque';
+        poser(d, id, 3, Math.round(a.attaque * 0.20));
+        ev.push({ t: 'statut', qui: d.cle, id });
+        return ev;
+      },
+    },
+    {
+      id: 'inverse', nom: 'Technique inversée', cout: 3,
+      desc: "Recoudre. L'énergie négative multipliée par elle-même devient positive.",
+      exec(D, a, d, R) {
+        const ev = [];
+        const q = Math.round(a.pvMax * a.soin * 0.30 * a.mods.soinMult);
+        a.pv = Math.min(a.pvMax, a.pv + q);
+        retirer(a, 'saignee');
+        ev.push({ t: 'soin', qui: a.cle, montant: q });
+        if (R.chance(0.25)) { poser(a, 'sursis', 3, 0); ev.push({ t: 'statut', qui: a.cle, id: 'sursis' }); }
+        return ev;
+      },
+    },
+    {
+      id: 'lecture', nom: "Lire l'adversaire", cout: 1,
+      desc: 'Observer le flux plutôt que le corps. Le prochain coup portera.',
+      exec(D, a, d, R) {
+        const ev = [];
+        poser(a, 'lecture', 2, 0);
+        ev.push({ t: 'statut', qui: a.cle, id: 'lecture' });
+        ev.push({ t: 'revele', qui: d.cle, intention: d.intention });
+        a.en = Math.min(a.enMax, a.en + 1);
+        return ev;
+      },
+    },
+    {
+      id: 'garde', nom: 'Résorption', cout: 0,
+      desc: "Absorber le choc dans sa propre énergie. Rend 2 énergie.",
+      exec(D, a, d, R) {
+        const ev = [];
+        poser(a, 'garde', 1, 0.60);
+        a.en = Math.min(a.enMax, a.en + 2);
+        ev.push({ t: 'statut', qui: a.cle, id: 'garde' });
+        return ev;
+      },
+    },
+    {
+      id: 'maximum', nom: 'Technique maximale', cout: 6,
+      ultime: true,
+      desc: 'La loi appliquée à sa propre limite. Exige 60 de tension.',
+      req: (D, a) => a.tension >= 60 && !statut(a, 'lie'),
+      raison: 'Tension insuffisante (60 requise).',
+      exec(D, a, d, R) {
+        const ev = [];
+        a.tension -= 60;
+        D.degats(ev, a, d, 4.20, { verbe: 'anéantit', ignoreGarde: true, technique: true, gros: true });
+        poser(d, 'fracture', 3, 0);
+        ev.push({ t: 'statut', qui: d.cle, id: 'fracture' });
+        return ev;
+      },
+    },
+    {
+      id: 'serment', nom: 'Serment improvisé', cout: 0,
+      desc: "Offrir un quart de ta chair, ici, maintenant, contre 70 % de dégâts. Une fois par duel.",
+      req: (D, a) => !a.sermentPris && a.pv > a.pvMax * 0.28,
+      raison: 'Déjà prêté, ou il ne te reste pas assez à donner.',
+      exec(D, a, d, R) {
+        const ev = [];
+        const prix = Math.round(a.pvMax * 0.25);
+        a.pv -= prix; a.sermentPris = true;
+        a.mods = Object.assign({}, a.mods, { degatsMult: a.mods.degatsMult * 1.70 });
+        ev.push({ t: 'serment', qui: a.cle, prix });
+        poser(a, 'elan', 99, 0.0);
+        return ev;
+      },
+    },
+    {
+      id: 'domaine', nom: 'Extension du Territoire', cout: 8,
+      ultime: true,
+      desc: 'Déployer un espace clos où ta loi est la seule physique. Exige 100 de tension.',
+      req: (D, a) => a.tension >= 100 && !statut(a, 'scelle') && !(a.mods.domaineUnique && a.domaineUtilise),
+      raison: 'Tension insuffisante (100 requise) — ou ton territoire est scellé.',
+      exec(D, a, d, R) {
+        const ev = [];
+        a.tension -= 100;
+        a.domaineUtilise = true;
+        const tours = 3 + (a.mods.domaineTours || 0);
+        /* affrontement de territoires : deux lois ne tiennent pas dans la même pièce */
+        if (d.domaineTours > 0) {
+          const ra = a.raffinement + R.intRange(0, 40);
+          const rb = d.raffinement + R.intRange(0, 40);
+          ev.push({ t: 'clash', a: a.cle, b: d.cle, ra, rb });
+          if (Math.abs(ra - rb) <= 8) {
+            a.domaineTours = 0; d.domaineTours = 0;
+            const q1 = Math.round(a.pvMax * 0.18), q2 = Math.round(d.pvMax * 0.18);
+            a.pv -= q1; d.pv -= q2;
+            ev.push({ t: 'brise', qui: 'les deux', a: q1, b: q2 });
+            return ev;
+          }
+          if (ra > rb) {
+            d.domaineTours = 0; poser(d, 'scelle', 4, 0);
+            const q = Math.round(d.pvMax * 0.22); d.pv -= q;
+            ev.push({ t: 'domaineBrise', perdant: d.cle, degats: q });
+          } else {
+            a.domaineTours = 0; poser(a, 'scelle', 4, 0);
+            const q = Math.round(a.pvMax * 0.22); a.pv -= q;
+            ev.push({ t: 'domaineBrise', perdant: a.cle, degats: q });
+            return ev;
+          }
+        }
+        a.domaineTours = tours;
+        ev.push({ t: 'domaine', qui: a.cle, tours, spec: a.domaine });
+        /* le coup au but : il ne se refuse pas */
+        D.degats(ev, a, d, 1.9 * (a.mods.domaineMult || 1), { verbe: 'atteint', surAuBut: true, ignoreGarde: true, gros: true });
+        return ev;
+      },
+    },
+    {
+      id: 'fuite', nom: 'Rompre le contact', cout: 0,
+      desc: "Partir. Le fléau se souviendra que tu es partie chose vivante.",
+      exec(D, a, d, R) {
+        const ev = [];
+        if (R.chance(0.55 + a.crit)) { ev.push({ t: 'fuite', qui: a.cle, reussie: true }); D.fini = true; D.vainqueur = 'fuite'; }
+        else { ev.push({ t: 'fuite', qui: a.cle, reussie: false }); }
+        return ev;
+      },
+    },
+  ];
+
+  const parId = {};
+  ACTIONS.forEach(a => { parId[a.id] = a; });
+
+  /* ---- construction d'un combattant ------------------------------------ */
+  function combattantJoueur(tech, corps, mods, nomJoueur) {
+    const pvMax = Math.max(24, Math.round(corps.pvMax * mods.pvMaxMult));
+    return {
+      cle: 'joueur', nom: nomJoueur || 'Toi', sousTitre: tech.nom,
+      pv: pvMax, pvMax,
+      enMax: Math.max(3, corps.enMax + mods.enMaxBonus), en: 0,
+      attaque: corps.attaque, crit: corps.crit + mods.critBonus, soin: corps.soin,
+      archetype: tech.archetype, domaine: tech.domaine, technique: tech,
+      statuts: [], tension: 0, domaineTours: 0, domaineUtilise: false,
+      sermentPris: false, rancune: 0, derniereAction: null, mods,
+      raffinement: corps.puissance, intention: null, humain: true,
+    };
+  }
+
+  /* Calibrage : le contenu écrit la couleur, le code écrit la difficulté.
+     On vise une durée de duel, pas des chiffres arbitraires. Ainsi un fléau
+     reste dangereux quel que soit le réceptacle qui lui fait face.        */
+  const CADENCE = {
+    '4':             { tours: 3.0, survie: 10.0 },
+    '3':             { tours: 4.2, survie: 8.5 },
+    '2':             { tours: 5.6, survie: 7.2 },
+    '1':             { tours: 7.2, survie: 6.4 },
+    'semi-spécial':  { tours: 9.0, survie: 5.8 },
+    'spécial':       { tours: 11.5, survie: 5.0 },
+  };
+
+  function combattantFleau(f, ref, R, courbe) {
+    const g = String(f.grade || '4');
+    const c = CADENCE[g] || CADENCE['2'];
+    const rng = R || new Rng('fleau:' + (f.id || f.nom));
+    const k = courbe || 1;
+
+    /* IMPORTANT : on calibre sur le RÉCEPTACLE NU — sans serment, sans
+       maturation. Sinon progresser ne servirait à rien : le monde grandirait
+       exactement à la vitesse du joueur, et le joueur ne sentirait rien.
+       Ici, le fléau ignore ce que tu as signé. C'est à toi d'en profiter.  */
+    const dpsRef = Math.max(6, ref.attaque * 1.9);
+    /* variance de caractère : deux fléaux de même grade ne se ressemblent pas */
+    const vPv = rng.range(0.86, 1.16), vAtt = rng.range(0.86, 1.16);
+
+    const pvMax = Math.max(40, Math.round(dpsRef * c.tours * vPv * k));
+    const attaque = Math.max(6, Math.round((ref.pvMax / c.survie / 1.45) * vAtt * k));
+
+    return {
+      cle: 'ennemi', nom: f.nom, sousTitre: 'Fléau de grade ' + g,
+      pv: pvMax, pvMax,
+      enMax: 10, en: 2,
+      attaque, crit: 0.08 + (g === 'spécial' ? 0.10 : g === 'semi-spécial' ? 0.06 : 0), soin: 0.5,
+      archetype: f.archetype || 'seuil', domaine: f.domaine || null, fleau: f,
+      statuts: [], tension: 0, domaineTours: 0, domaineUtilise: false,
+      sermentPris: false, rancune: 0, derniereAction: null,
+      mods: MODS_NEUTRES(),
+      raffinement: Math.round(pvMax / 5 + attaque * 2.2),
+      intention: null, humain: false,
+      profil: profilDe(g),
+      grade: g,
+    };
+  }
+
+  function MODS_NEUTRES() {
+    return { degatsMult: 1, degatsRecusMult: 1, pvMaxMult: 1, soinMult: 1, critBonus: 0, critMult: 1,
+      energieBonus: 0, energieDepart: 0, enMaxBonus: 0, remise: 0, frappeMult: 1, domaineMult: 1,
+      domaineTours: 0, rancune: 0, interdit: {}, masqueVieEnnemi: false, masqueJournal: false,
+      coupeSon: false, pasDeRepetition: false, domaineUnique: false, effaceToutALaMort: false, limiteTours: 0 };
+  }
+
+  function profilDe(grade) {
+    switch (String(grade)) {
+      case '4': return { agressif: 0.75, technique: 0.10, garde: 0.15, soin: 0, domaine: false, seuilTension: 999 };
+      case '3': return { agressif: 0.65, technique: 0.20, garde: 0.15, soin: 0.05, domaine: false, seuilTension: 999 };
+      case '2': return { agressif: 0.52, technique: 0.30, garde: 0.12, soin: 0.10, domaine: false, seuilTension: 999 };
+      case '1': return { agressif: 0.45, technique: 0.35, garde: 0.10, soin: 0.14, domaine: false, seuilTension: 999 };
+      case 'semi-spécial': return { agressif: 0.40, technique: 0.38, garde: 0.10, soin: 0.16, domaine: true, seuilTension: 130 };
+      default: return { agressif: 0.36, technique: 0.42, garde: 0.08, soin: 0.18, domaine: true, seuilTension: 100 };
+    }
+  }
+
+  /* ---- le duel ---------------------------------------------------------- */
+  function creer(opts) {
+    const R = new Rng('duel:' + opts.seed + ':' + (opts.ennemi.id || 'x') + ':' + (opts.numero || 0));
+    const D = {
+      R, tour: 1, fini: false, vainqueur: null, journal: [],
+      joueur: opts.joueur, ennemi: opts.ennemi,
+      mods: opts.joueur.mods,
+      numero: opts.numero || 0,
+    };
+    D.joueur.en = Math.min(D.joueur.enMax, 3 + (D.mods.energieDepart || 0));
+    D.ennemi.intention = choisirIntention(D, D.ennemi, D.joueur);
+
+    /* ---- calcul des dégâts : une seule porte d'entrée ---------------- */
+    D.degats = function (ev, a, d, mult, o) {
+      o = o || {};
+      let base = a.attaque * mult;
+      if (statut(a, 'fracture')) base *= 0.70;
+      const el = statut(a, 'elan'); if (el) base *= 1 + (el.val || 0);
+      base *= a.mods.degatsMult || 1;
+      base *= 1 + (a.rancune || 0);
+      if (a.domaineTours > 0) base *= 1.35;
+
+      const lec = statut(a, 'lecture');
+      const chanceCrit = clamp((a.crit || 0.1) + (lec ? 0.55 : 0), 0, 0.95);
+      const crit = R.chance(chanceCrit);
+      if (crit) base *= 1.85 * (a.mods.critMult || 1);
+      if (lec) { retirer(a, 'lecture'); }
+
+      base *= R.range(0.90, 1.12);
+
+      const g = statut(d, 'garde');
+      if (g && !o.ignoreGarde) { base *= 1 - (g.val || 0.5); retirer(d, 'garde'); }
+      if (statut(d, 'marque')) base *= 1.30;
+      base *= d.mods.degatsRecusMult || 1;
+      if (d.domaineTours > 0 && !o.surAuBut) base *= 0.70;
+
+      let q = Math.max(1, Math.round(base));
+      if (d.pv - q <= 0 && statut(d, 'sursis')) {
+        retirer(d, 'sursis'); q = Math.max(0, d.pv - 1);
+        ev.push({ t: 'sursis', qui: d.cle });
+      }
+      d.pv -= q;
+      a.rancune = 0;
+      a.tension = Math.min(200, a.tension + Math.round(q * 0.30) + 6);
+      d.tension = Math.min(200, d.tension + Math.round(q * 0.55) + 4);
+      d.rancune = Math.min(1.5, (d.rancune || 0) + (d.mods.rancune || 0));
+
+      const ec = statut(d, 'echo');
+      ev.push({ t: 'degats', par: a.cle, cible: d.cle, montant: q, crit, verbe: o.verbe || 'frappe', gros: !!o.gros, surAuBut: !!o.surAuBut });
+      if (ec) {
+        const q2 = Math.max(1, Math.round(q * 0.45));
+        d.pv -= q2; ec.tours -= 1;
+        ev.push({ t: 'degats', par: a.cle, cible: d.cle, montant: q2, echo: true, verbe: 'se répète' });
+        if (ec.tours <= 0) retirer(d, 'echo');
+      }
+      return q;
+    };
+
+    /* ---- actions disponibles ------------------------------------------ */
+    D.actions = function () {
+      const a = D.joueur;
+      return ACTIONS.map(act => {
+        const cout = coutReel(act, a);
+        let ok = true, raison = '';
+        if (a.mods.interdit[act.id]) { ok = false; raison = 'Interdit par un serment.'; }
+        else if (a.en < cout) { ok = false; raison = 'Énergie insuffisante.'; }
+        else if (act.req && !act.req(D, a, D.ennemi)) { ok = false; raison = act.raison || 'Impossible.'; }
+        else if (a.mods.pasDeRepetition && a.derniereAction === act.id) { ok = false; raison = 'Serment : jamais deux fois le même geste.'; }
+        return {
+          id: act.id, nom: act.id === 'technique' ? (a.technique ? a.technique.nom : act.nom) : act.nom,
+          sous: act.id === 'technique' ? 'Technique innée' : (act.id === 'maximum' && a.technique && a.technique.maximum ? 'Technique maximale' : ''),
+          desc: act.desc, cout, ok, raison, ultime: !!act.ultime,
+          interdit: !!a.mods.interdit[act.id],
+        };
+      });
+    };
+
+    function coutReel(act, a) {
+      if (!act.cout) return 0;
+      return Math.max(1, act.cout - (a.mods.remise || 0));
+    }
+
+    /* ---- un tour complet ----------------------------------------------- */
+    D.jouer = function (id) {
+      if (D.fini) return [];
+      const act = parId[id];
+      const a = D.joueur, d = D.ennemi;
+      if (!act) return [];
+      const cout = coutReel(act, a);
+      if (a.en < cout || a.mods.interdit[id] || (act.req && !act.req(D, a, d))) return [];
+
+      const ev = [];
+      a.en -= cout;
+      a.derniereAction = id;
+      ev.push({ t: 'acte', qui: 'joueur', nom: id === 'technique' && a.technique ? a.technique.nom : act.nom, id });
+      Array.prototype.push.apply(ev, act.exec(D, a, d, R) || []);
+
+      if (d.pv <= 0) { finir(ev, 'joueur'); return ev; }
+      if (D.fini) return ev;
+
+      /* riposte */
+      Array.prototype.push.apply(ev, tourEnnemi(D, ev));
+      if (a.pv <= 0) { finir(ev, 'ennemi'); return ev; }
+      if (d.pv <= 0) { finir(ev, 'joueur'); return ev; }
+
+      /* fin de tour */
+      Array.prototype.push.apply(ev, finDeTour(D));
+      if (a.pv <= 0) { finir(ev, 'ennemi'); return ev; }
+      if (d.pv <= 0) { finir(ev, 'joueur'); return ev; }
+
+      D.tour++;
+      if (a.mods.limiteTours && D.tour > a.mods.limiteTours) {
+        ev.push({ t: 'sablier', limite: a.mods.limiteTours });
+        a.pv = 0; finir(ev, 'ennemi'); return ev;
+      }
+      d.intention = choisirIntention(D, d, a);
+      ev.push({ t: 'tour', n: D.tour });
+      return ev;
+    };
+
+    function finir(ev, qui) {
+      D.fini = true; D.vainqueur = qui;
+      ev.push({ t: 'fin', vainqueur: qui });
+    }
+
+    function finDeTour(D) {
+      const ev = [];
+      [D.joueur, D.ennemi].forEach(c => {
+        const sg = statut(c, 'saignee');
+        if (sg) {
+          const q = Math.max(1, sg.val || 3);
+          c.pv -= q;
+          ev.push({ t: 'degats', par: 'saignee', cible: c.cle, montant: q, verbe: 'saigne', dot: true });
+        }
+        if (statut(c, 'corrosion')) c.en = Math.max(0, c.en - 1);
+        c.en = Math.min(c.enMax, c.en + 2 + (c.mods.energieBonus || 0) + (c.humain ? 0 : 1));
+        c.tension = Math.min(200, c.tension + 8);
+        if (c.domaineTours > 0) {
+          c.domaineTours--;
+          const cible = c === D.joueur ? D.ennemi : D.joueur;
+          const q = Math.max(2, Math.round(cible.pvMax * 0.06 * (c.mods.domaineMult || 1)));
+          cible.pv -= q;
+          ev.push({ t: 'degats', par: c.cle, cible: cible.cle, montant: q, verbe: 'ronge', domaine: true });
+          if (c.domaineTours === 0) ev.push({ t: 'domaineFerme', qui: c.cle });
+        }
+        for (let i = c.statuts.length - 1; i >= 0; i--) {
+          const s = c.statuts[i];
+          if (s.id === 'garde' || s.id === 'elan') continue;
+          s.tours--;
+          if (s.tours <= 0) { c.statuts.splice(i, 1); ev.push({ t: 'statutFin', qui: c.cle, id: s.id }); }
+        }
+      });
+      return ev;
+    }
+
+    /* ---- l'adversaire n'improvise pas : il a un tempérament ------------ */
+    function choisirIntention(D, e, cible) {
+      if (!e.profil) e.profil = profilDe((e.fleau || {}).grade || '2');
+      const p = e.profil;
+      const bas = e.pv / e.pvMax < 0.35;
+      if (p.domaine && e.tension >= p.seuilTension && e.en >= 6 && !statut(e, 'scelle') && e.domaineTours === 0) return 'domaine';
+      if (e.tension >= 70 && e.en >= 5 && R.chance(0.55)) return 'maximum';
+      if (bas && p.soin > 0 && e.en >= 3 && R.chance(0.55)) return 'inverse';
+      const r = R.next();
+      if (r < p.agressif) return e.en >= 2 && R.chance(0.6) ? 'decharge' : 'frappe';
+      if (r < p.agressif + p.technique) return e.en >= 3 ? 'technique' : 'frappe';
+      if (r < p.agressif + p.technique + p.garde) return 'garde';
+      return 'frappe';
+    }
+
+    function tourEnnemi(D) {
+      const e = D.ennemi, j = D.joueur;
+      let id = e.intention || 'frappe';
+      const act = parId[id];
+      const cout = act ? (act.cout || 0) : 0;
+      if (!act || e.en < cout || (act.req && !act.req(D, e, j))) { id = 'frappe'; }
+      const a2 = parId[id];
+      e.en -= (a2.cout || 0);
+      e.derniereAction = id;
+      const ev = [{ t: 'acte', qui: 'ennemi', nom: id === 'technique' && e.fleau ? (e.fleau.technique_signature || a2.nom) : a2.nom, id }];
+      Array.prototype.push.apply(ev, a2.exec(D, e, j, R) || []);
+      return ev;
+    }
+
+    return D;
+  }
+
+  JJK.combat = { creer, combattantJoueur, combattantFleau, ACTIONS, STATUTS, MODS_NEUTRES, statut, profilDe };
+})(window);
+
+
+/* ==== 60-memoire.js ==== */
+/* =========================================================================
+   RITUEL — mémoire
+   Le jeu tient un registre. Il n'oublie ni les noms, ni les manières de
+   mourir. Un serment peut détruire ce registre ; rien ne peut le corriger.
+   ========================================================================= */
+(function (root) {
+  'use strict';
+  const JJK = (root.JJK = root.JJK || {});
+
+  const CLE = 'rituel.registre.v1';
+  const VIDE = {
+    version: 1,
+    graine: null, reponses: [], maturation: 0,
+    descentes: 0, victoires: 0, fuites: 0, morts: 0,
+    serments: [], sonCoupe: false,
+    epitaphes: [],           /* ceux qui sont tombés ici, sous n'importe quel nom */
+    titres: [], vus: [],
+    premiereVisite: null, derniereVisite: null,
+    domainesOuverts: 0, sermentsPretes: 0, degatsSubis: 0, degatsInfliges: 0,
+  };
+
+  function dispo() {
+    try { const k = '__t'; localStorage.setItem(k, '1'); localStorage.removeItem(k); return true; }
+    catch (e) { return false; }
+  }
+  const OK = dispo();
+  let cache = null;
+
+  function lire() {
+    if (cache) return cache;
+    if (!OK) return (cache = JSON.parse(JSON.stringify(VIDE)));
+    try {
+      const brut = localStorage.getItem(CLE);
+      cache = brut ? Object.assign(JSON.parse(JSON.stringify(VIDE)), JSON.parse(brut)) : JSON.parse(JSON.stringify(VIDE));
+    } catch (e) { cache = JSON.parse(JSON.stringify(VIDE)); }
+    return cache;
+  }
+  function ecrire(patch) {
+    const r = lire();
+    if (patch) Object.assign(r, patch);
+    r.derniereVisite = Date.now();
+    if (!r.premiereVisite) r.premiereVisite = r.derniereVisite;
+    if (OK) { try { localStorage.setItem(CLE, JSON.stringify(r)); } catch (e) {} }
+    return r;
+  }
+  function effacer() {
+    cache = null;
+    if (OK) { try { localStorage.removeItem(CLE); } catch (e) {} }
+    return lire();
+  }
+
+  /* ---- épitaphes : ce que le registre garde d'un mort ------------------ */
+  function inhumer(fiche) {
+    const r = lire();
+    r.epitaphes.unshift({
+      graine: fiche.graine, nom: fiche.nom, technique: fiche.technique, nomJp: fiche.nomJp,
+      tueur: fiche.tueur, tour: fiche.tour, grade: fiche.grade,
+      serments: fiche.serments || [], date: Date.now(),
+      derniersMots: fiche.derniersMots || '',
+      archetype: fiche.archetype || 'seuil',
+    });
+    r.epitaphes = r.epitaphes.slice(0, 12);
+    r.morts++;
+    ecrire();
+    return r.epitaphes[0];
+  }
+
+  /* Le revenant : ton cadavre revient te chercher, avec ta propre loi.
+     C'est la seule créature du jeu que tu as toi-même fabriquée.        */
+  function revenant() {
+    const r = lire();
+    const e = r.epitaphes[0];
+    if (!e) return null;
+    return {
+      id: 'revenant:' + e.graine + ':' + e.date,
+      nom: e.nom ? ('Ce qui reste de ' + e.nom) : 'Ce qui reste de toi',
+      grade: r.morts >= 4 ? 'spécial' : (r.morts >= 2 ? 'semi-spécial' : '1'),
+      origine: "La peur, très ordinaire, de retrouver sa propre écriture dans une lettre qu'on n'a pas écrite.",
+      apparence: "Ta silhouette, à la hauteur exacte de tes yeux, portant ton visage comme on porte un vêtement mal boutonné.",
+      comportement: "Il connaît ta loi. Il l'a portée. Il sait à quel tour tu ouvres ton territoire.",
+      replique: e.derniersMots || "Tu as recommencé. Moi, je n'ai pas pu.",
+      technique_signature: e.technique || 'Ta technique',
+      revenant: true, epitaphe: e, archetype: e.archetype || 'seuil',
+    };
+  }
+
+  function marquerVu(id) {
+    const r = lire();
+    if (r.vus.indexOf(id) < 0) { r.vus.push(id); ecrire(); }
+  }
+  function aVu(id) { return lire().vus.indexOf(id) >= 0; }
+
+  function accorderTitre(t) {
+    const r = lire();
+    if (r.titres.indexOf(t) < 0) { r.titres.push(t); ecrire(); return true; }
+    return false;
+  }
+
+  function estUnRetour() {
+    const r = lire();
+    return !!(r.premiereVisite && (r.morts > 0 || r.descentes > 0));
+  }
+
+  /* Le registre reconnaît un revenant qui change de nom. */
+  function connaitAutreNom(graineActuelle) {
+    const r = lire();
+    const noms = {};
+    r.epitaphes.forEach(e => { if (e.graine && e.graine !== graineActuelle) noms[e.graine] = 1; });
+    if (r.graine && r.graine !== graineActuelle) noms[r.graine] = 1;
+    return Object.keys(noms);
+  }
+
+  JJK.memoire = {
+    lire, ecrire, effacer, inhumer, revenant, marquerVu, aVu,
+    accorderTitre, estUnRetour, connaitAutreNom, disponible: OK, CLE,
+  };
+})(window);
+
+
+/* ==== 70-ui.js ==== */
+/* =========================================================================
+   RITUEL — interface, socle
+   ========================================================================= */
+(function (root) {
+  'use strict';
+  const JJK = (root.JJK = root.JJK || {});
+  const { el, $, $$, chaos, clamp, wait } = JJK.core;
+
+  const UI = {};
+  UI.etat = null;              /* l'état de partie, posé par le boot */
+  let ecranActif = null;
+  let murmureTimer = null;
+
+  /* ---- écrans ---------------------------------------------------------- */
+  function scene() { return document.getElementById('stage'); }
+
+  function ecran(id) {
+    let n = document.getElementById(id);
+    if (!n) { n = el('section', 'ecran'); n.id = id; scene().appendChild(n); }
+    return n;
+  }
+
+  function montrer(id) {
+    $$('.ecran').forEach(e => e.classList.remove('actif'));
+    const n = ecran(id);
+    n.classList.add('actif');
+    ecranActif = id;
+    root.scrollTo({ top: 0, behavior: 'smooth' });
+    return n;
+  }
+  function actif() { return ecranActif; }
+
+  /* ---- boutons --------------------------------------------------------- */
+  function bouton(texte, cls, fn) {
+    const b = el('button', 'btn ' + (cls || ''), texte);
+    b.addEventListener('click', e => { if (JJK.audio) JJK.audio.tick(1500, 0.02, 0.05); fn(e); });
+    return b;
+  }
+  function rangee() { return el('div', 'btn-rangee'); }
+
+  /* ---- lignes de rituel ------------------------------------------------ */
+  async function dire(parent, texte, opts) {
+    const o = opts || {};
+    const p = el('p', 'rituel-ligne' + (o.forte ? ' forte' : ''));
+    parent.appendChild(p);
+    const t = JJK.fx.type(p, texte, { speed: o.speed || 24, sound: o.sound !== false });
+    UI._enCours = t;
+    await t;
+    UI._enCours = null;
+    if (o.apres) await wait(o.apres);
+    return p;
+  }
+
+  /* Cliquer accélère : personne n'a envie qu'on lui impose un rythme. */
+  document.addEventListener('click', () => { if (UI._enCours && UI._enCours.skip) UI._enCours.skip(); }, true);
+  document.addEventListener('keydown', e => {
+    if ((e.key === ' ' || e.key === 'Enter') && UI._enCours && UI._enCours.skip) UI._enCours.skip();
+  }, true);
+
+  /* ---- murmures : le décor n'est jamais tout à fait muet --------------- */
+  function murmures(on) {
+    if (murmureTimer) { clearInterval(murmureTimer); murmureTimer = null; }
+    if (!on) return;
+    murmureTimer = setInterval(() => {
+      if (document.hidden) return;
+      const v = ((JJK.CORPUS || {}).voix || {}).murmures || [];
+      if (!v.length || Math.random() > 0.55) return;
+      const n = el('div', 'murmure-flottant', v[Math.floor(Math.random() * v.length)]);
+      n.style.top = chaos.r(12, 82) + 'vh';
+      n.style.left = chaos.r(45, 92) + 'vw';
+      document.body.appendChild(n);
+      if (JJK.audio && Math.random() < 0.35) JJK.audio.whisper(chaos.r(0.5, 1.1));
+      setTimeout(() => n.remove(), 13500);
+    }, 9000);
+  }
+
+  /* ---- le titre de l'onglet parle aussi -------------------------------- */
+  const TITRE_BASE = 'RITUEL — 呪法帳';
+  function titreOnglet(t) { document.title = t || TITRE_BASE; }
+  function titreFurtif(t, ms) {
+    titreOnglet(t);
+    setTimeout(() => titreOnglet(), ms || 4000);
+  }
+
+  /* ---- barre d'état ---------------------------------------------------- */
+  function barre() {
+    let b = document.getElementById('barre-etat');
+    if (b) return b;
+    b = el('div'); b.id = 'barre-etat';
+    b.innerHTML = '<span id="be-graine">—</span><span id="be-grade"></span><span class="sep"></span>' +
+      '<span id="be-registre"></span>';
+    const son = el('button', '', 'SON : ON');
+    son.id = 'be-son';
+    son.addEventListener('click', () => {
+      if (UI.etat && UI.etat.mods && UI.etat.mods.coupeSon) return;
+      JJK.audio.unlock();
+      const m = JJK.audio.toggleMute();
+      son.textContent = 'SON : ' + (m ? 'OFF' : 'ON');
+    });
+    const reg = bouton('REGISTRE', 'fantome', () => { if (JJK.ecrans) JJK.ecrans.registre(); });
+    reg.style.cssText = 'border:0;padding:4px 0;font-size:10px;letter-spacing:.2em;margin:0;color:inherit';
+    b.appendChild(son); b.appendChild(reg);
+    document.body.appendChild(b);
+    return b;
+  }
+  function majBarre(o) {
+    barre();
+    if (o.graine != null) document.getElementById('be-graine').textContent = o.graine ? ('GRAINE : ' + o.graine.toUpperCase()) : '—';
+    if (o.grade != null) document.getElementById('be-grade').textContent = o.grade ? ('GRADE ' + String(o.grade).toUpperCase()) : '';
+    if (o.registre != null) document.getElementById('be-registre').textContent = o.registre;
+  }
+
+  /* ---- petites fabriques ----------------------------------------------- */
+  function bloc(etiquette, contenu, cls) {
+    const b = el('div', 'bloc ' + (cls || ''));
+    b.appendChild(el('span', 'etiquette', etiquette));
+    if (typeof contenu === 'string') {
+      const p = el('p', cls === 'loi' ? 'enonce' : '');
+      p.textContent = contenu;
+      b.appendChild(p);
+    } else if (contenu) b.appendChild(contenu);
+    return b;
+  }
+
+  function stats(paires) {
+    const g = el('div', 'grille-stats');
+    paires.forEach(([v, k]) => {
+      const s = el('div', 'stat');
+      s.appendChild(el('b', '', String(v)));
+      s.appendChild(el('span', '', k));
+      g.appendChild(s);
+    });
+    return g;
+  }
+
+  function pointsDanger(n) {
+    const d = el('span', 'danger');
+    for (let i = 0; i < 5; i++) d.appendChild(el('i', i < n ? 'on' : ''));
+    return d;
+  }
+
+  function pioche(liste, def) {
+    if (!liste || !liste.length) return def || '';
+    return liste[Math.floor(Math.random() * liste.length)];
+  }
+  function voix(k, def) { return pioche(((JJK.CORPUS || {}).voix || {})[k], def); }
+
+  JJK.ui = {
+    ecran, montrer, actif, bouton, rangee, dire, murmures, titreOnglet, titreFurtif,
+    barre, majBarre, bloc, stats, pointsDanger, pioche, voix, UI, etatRef: UI,
+  };
+})(window);
+
+
+/* ==== 75-ecrans.js ==== */
+/* =========================================================================
+   RITUEL — écrans
+   ========================================================================= */
+(function (root) {
+  'use strict';
+  const JJK = (root.JJK = root.JJK || {});
+  const { el, $, clamp, wait, titre, chaos } = JJK.core;
+  const U = JJK.ui;
+
+  const G = {
+    graine: '', tech: null, ref: null, corps: null, mods: null,
+    serments: [], reponses: [], maturation: 0, descente: 0, grade: null,
+    catalogue: [], sermentsRestants: 3,
+  };
+  JJK.jeu = G;
+
+  function M() { return JJK.memoire; }
+  function C() { return JJK.CORPUS || {}; }
+
+  /* =====================================================================
+     1. LE SEUIL
+     ===================================================================== */
+  async function seuil() {
+    const n = U.montrer('ecran-seuil');
+    n.innerHTML = '';
+    JJK.fx.setIntensity(0.12);
+    JJK.fx.setHue('#b31217', '#f2c14e');
+    U.majBarre({ graine: '', grade: '', registre: '' });
+
+    const reg = M().lire();
+    const retour = M().estUnRetour();
+
+    const tete = el('div');
+    tete.appendChild(el('span', 'etiquette rouge', 'Registre des lois innées'));
+    tete.appendChild(el('h1', 'titre-rituel', 'RITUEL'));
+    const jp = el('div', 'jp faible', '呪法帳 · じゅほうちょう');
+    tete.appendChild(jp);
+    n.appendChild(tete);
+    n.appendChild(el('hr', 'trait'));
+
+    const flux = el('div');
+    n.appendChild(flux);
+
+    const ouverture = (C().rituel || {}).ouverture || [
+      "On ne t'a pas fait venir.",
+      "Tu es entré parce que la porte n'était pas fermée à clé, et c'est déjà un renseignement sur toi.",
+      "Ici, on ne distribue pas de pouvoirs. On constate ce qui est déjà là.",
+      "Une technique innée ne s'apprend pas, ne se choisit pas, ne se refuse pas.",
+      "Elle attend, dans le nom, comme une dent sous la gencive.",
+      "Donne un nom. Pas forcément le tien.",
+    ];
+
+    if (retour) {
+      const mort = reg.epitaphes[0];
+      await U.dire(flux, U.voix('retour', "Tu es déjà venu."), { forte: true, apres: 500 });
+      if (mort) {
+        await U.dire(flux, 'Le registre a gardé ' + (mort.nom || 'quelqu\'un') + ', porteur de « ' + (mort.technique || 'rien') + ' », tombé au tour ' + (mort.tour || '?') + ' devant ' + (mort.tueur || 'quelque chose') + '.', { apres: 400 });
+        await U.dire(flux, U.voix('retour', "Rien ne t'oblige à recommencer. Rien ne t'en empêche non plus."), { apres: 300 });
+      }
+    } else {
+      for (let i = 0; i < ouverture.length; i++) {
+        await U.dire(flux, ouverture[i], { forte: i === ouverture.length - 1, apres: i === 0 ? 500 : 260 });
+      }
+    }
+
+    /* saisie */
+    const boite = el('div');
+    boite.style.marginTop = '34px';
+    boite.appendChild(el('span', 'etiquette', 'Nom porté par le réceptacle'));
+    const champ = el('input', 'champ');
+    champ.type = 'text'; champ.maxLength = 40;
+    champ.placeholder = 'écris-le';
+    champ.autocomplete = 'off'; champ.spellcheck = false;
+    boite.appendChild(champ);
+    const avert = el('p', 'discret');
+    avert.style.marginTop = '14px';
+    avert.textContent = "Le même nom donnera toujours exactement la même technique. Sur cette machine, sur une autre, dans dix ans. Ce n'est pas un tirage : c'est une lecture.";
+    boite.appendChild(avert);
+    n.appendChild(boite);
+
+    const r = U.rangee();
+    const go = U.bouton('Ouvrir le registre', 'rouge', () => valider());
+    go.disabled = true;
+    r.appendChild(go);
+    if (reg.epitaphes.length) r.appendChild(U.bouton('Consulter les morts', 'fantome', registre));
+    n.appendChild(r);
+
+    const alerte = el('p', 'discret sang');
+    alerte.style.cssText = 'margin-top:10px;min-height:1.4em;font-style:italic';
+    boite.appendChild(alerte);
+
+    champ.addEventListener('input', () => {
+      go.disabled = champ.value.trim().length < 1;
+      if (champ.value.length && Math.random() < 0.25 && JJK.audio) JJK.audio.tick(chaos.r(600, 1800), 0.014, 0.02);
+      /* Le registre relit par-dessus ton épaule pendant que tu tapes. */
+      const g2 = JJK.core.normalizeSeed(champ.value);
+      const dejaMort = reg.epitaphes.filter(e => e.graine === g2);
+      if (g2 && dejaMort.length) {
+        alerte.textContent = 'Ce nom est déjà tombé ici' + (dejaMort.length > 1 ? ' ' + dejaMort.length + ' fois' : '') +
+          ' — porteur de « ' + dejaMort[0].technique + ' », au tour ' + dejaMort[0].tour + '.';
+        JJK.fx.shake(0.08);
+      } else alerte.textContent = '';
+    });
+    champ.addEventListener('keydown', e => { if (e.key === 'Enter' && !go.disabled) valider(); });
+    setTimeout(() => champ.focus(), 300);
+
+    async function valider() {
+      const v = champ.value.trim();
+      if (!v) return;
+      JJK.audio.unlock();
+      G.graine = v;
+      G.tech = JJK.forge.forgeTechnique(v);
+      go.disabled = true; champ.disabled = true;
+
+      /* ---- l'image subliminale -------------------------------------
+         Le nom de la technique passe à l'écran pendant 130 ms, une
+         seule fois, sans annonce. Presque personne ne le lit. Presque.  */
+      const sub = el('div');
+      sub.style.cssText = 'position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;' +
+        'font-family:var(--serif);font-weight:300;font-size:clamp(2rem,8vw,6rem);color:#e9e2d4;background:#07070a;' +
+        'text-align:center;padding:20px;letter-spacing:-.02em';
+      sub.textContent = G.tech.nom;
+      document.body.appendChild(sub);
+      JJK.audio.tick(90, 0.05, 0.10);
+      await wait(130);
+      sub.remove();
+      G.subliminalMontre = true;
+
+      JJK.fx.pulse(null, null, null, '#b31217', 1.4);
+      JJK.fx.shake(0.25);
+      await wait(450);
+      M().ecrire({ graine: JJK.core.normalizeSeed(v) });
+      U.majBarre({ graine: JJK.core.normalizeSeed(v) });
+      rituel();
+    }
+  }
+
+  /* =====================================================================
+     2. LE RITUEL
+     ===================================================================== */
+  const QUESTIONS_SECOURS = [
+    { question: "Quand on t'a fait du tort, qu'as-tu gardé ?", reponses: [
+      { texte: "La date exacte.", archetype: 'mesure', note: 'Tu tiens des comptes.' },
+      { texte: "Rien. J'ai rendu le soir même.", archetype: 'échange', note: 'Tu ne portes pas de dettes.' },
+      { texte: "Le silence de la pièce juste après.", archetype: 'témoignage', note: 'Tu enregistres.' }] },
+    { question: "Qu'est-ce qui, chez toi, ne guérit pas ?", reponses: [
+      { texte: "Une phrase que j'ai dite.", archetype: 'répétition', note: 'Elle se rejoue.' },
+      { texte: "Un nom que je ne prononce plus.", archetype: 'soustraction', note: 'Tu retranches.' },
+      { texte: "Une porte que j'ai passée.", archetype: 'seuil', note: 'Tu franchis.' }] },
+    { question: "On te propose de tout recommencer, sans personne. Tu réponds ?", reponses: [
+      { texte: "Sans personne, non.", archetype: 'lien', note: 'Tu attaches.' },
+      { texte: "Immédiatement.", archetype: 'métamorphose', note: 'Tu mues.' },
+      { texte: "Je demande d'abord le prix.", archetype: 'échange', note: 'Tu négocies.' }] },
+  ];
+
+  async function rituel() {
+    const n = U.montrer('ecran-rituel');
+    n.innerHTML = '';
+    JJK.fx.setIntensity(0.28);
+    U.murmures(true);
+
+    const src = ((C().rituel || {}).questions || []).slice();
+    const qs = (src.length >= 3 ? src : QUESTIONS_SECOURS).slice();
+    /* mélange léger : on n'interroge pas deux fois dans le même ordre */
+    for (let i = qs.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = qs[i]; qs[i] = qs[j]; qs[j] = t; }
+    const choisies = qs.slice(0, Math.min(6, qs.length));
+    G.reponses = [];
+
+    const tete = el('div');
+    tete.appendChild(el('span', 'etiquette rouge', 'Examen du réceptacle'));
+    n.appendChild(tete);
+    const zone = el('div', 'question-bloc');
+    n.appendChild(zone);
+    const jauge = el('div', 'jauge-rituel');
+    choisies.forEach(() => jauge.appendChild(el('i')));
+    n.appendChild(jauge);
+
+    const transitions = (C().rituel || {}).transitions || ['Noté.', 'Le registre te suit.', 'Continue.'];
+
+    for (let i = 0; i < choisies.length; i++) {
+      const q = choisies[i];
+      zone.innerHTML = '';
+      const h = el('h2', 'question-texte');
+      zone.appendChild(h);
+      await JJK.fx.type(h, q.question, { speed: 20 });
+      const liste = el('div', 'reponses');
+      zone.appendChild(liste);
+      const choix = await new Promise(res => {
+        (q.reponses || []).forEach(rep => {
+          const b = el('button', 'reponse');
+          b.appendChild(document.createTextNode(rep.texte));
+          if (rep.note) b.appendChild(el('span', 'murmure', rep.note));
+          b.addEventListener('click', () => {
+            JJK.audio.tick(700, 0.03, 0.06);
+            JJK.fx.pulse(chaos.r(0, JJK.fx.size.W), chaos.r(0, JJK.fx.size.H), 160, '#b31217', 0.6);
+            res(rep);
+          });
+          liste.appendChild(b);
+        });
+      });
+      G.reponses.push(choix.archetype || 'seuil');
+      jauge.children[i].classList.add('pleine');
+      JJK.fx.setIntensity(0.28 + (i / choisies.length) * 0.35);
+      if (i < choisies.length - 1) {
+        zone.innerHTML = '';
+        const t = el('p', 'rituel-ligne forte');
+        zone.appendChild(t);
+        await JJK.fx.type(t, transitions[i % transitions.length], { speed: 22 });
+        await wait(420);
+      }
+    }
+
+    G.ref = JJK.forge.forgeReceptacle(G.graine, G.reponses);
+    G.corps = appliquerMaturation(G.ref, G.maturation);
+    revelation();
+  }
+
+  function appliquerMaturation(ref, m) {
+    const c = JSON.parse(JSON.stringify(ref));
+    c.attaque = Math.round(c.attaque * (1 + 0.09 * m));
+    c.pvMax = Math.round(c.pvMax * (1 + 0.07 * m));
+    c.enMax = c.enMax + Math.floor(m / 3);
+    c.puissance = Math.round(c.puissance * (1 + 0.08 * m));
+    c.crit = Math.min(0.45, c.crit + 0.008 * m);
+    return c;
+  }
+
+  /* =====================================================================
+     3. LA RÉVÉLATION
+     ===================================================================== */
+  async function revelation() {
+    const n = U.montrer('ecran-revelation');
+    n.innerHTML = '';
+    const t = G.tech;
+    JJK.fx.setHue(t.couleur, '#f2c14e');
+    JJK.fx.setIntensity(0.45);
+
+    const intro = el('div');
+    n.appendChild(intro);
+    await U.dire(intro, 'Tu as répondu ' + G.reponses.length + ' fois.', { apres: 300 });
+    await U.dire(intro, "Regarde bien ce qui vient. Rien de ce que tu as répondu n'en a changé une seule lettre.", { forte: true, apres: 500 });
+    if (G.subliminalMontre) {
+      await U.dire(intro, "Tu l'as d'ailleurs déjà vue. Elle est passée à l'écran pendant un huitième de seconde, juste après que tu aies donné ton nom.", { apres: 600 });
+    }
+    await U.dire(intro, U.voix('verdicts', "Ta technique était écrite dans ton nom avant que tu ne t'assoies. Tes réponses ont seulement dit comment ton corps la porterait."), { forte: true, apres: 700 });
+
+    JJK.audio.oath();
+    JJK.fx.flash('#b31217', 900);
+    JJK.fx.invert(90);
+    JJK.fx.shake(0.6);
+    JJK.fx.pulse(null, null, null, t.couleur, 1.6);
+    await wait(600);
+    intro.remove();
+
+    const g = JJK.forge.grade(G.corps.puissance, G.serments.length);
+    G.grade = g;
+    U.majBarre({ grade: g.grade });
+    U.titreFurtif(t.nom + ' — 呪法帳', 6000);
+
+    const dossier = el('div', 'dossier');
+
+    /* colonne gauche */
+    const gauche = el('div');
+    gauche.appendChild(el('span', 'etiquette rouge', 'Technique innée · ' + (t.essence.emotion_source || 'origine inconnue')));
+    gauche.appendChild(el('h1', 'nom-technique', t.nom));
+    const jl = el('div', 'nom-jp');
+    jl.textContent = t.nomJp + ' · ' + t.romaji;
+    gauche.appendChild(jl);
+
+    gauche.appendChild(el('hr', 'trait'));
+    gauche.appendChild(U.bloc('La loi', t.loi.enonce || t.loi.nom, 'loi'));
+    const desc = JJK.forge.dossier(t);
+    if (desc) gauche.appendChild(U.bloc('Constat', desc));
+    if (t.vecteur && t.vecteur.condition) gauche.appendChild(U.bloc('Vecteur — ' + t.vecteur.nom, t.vecteur.condition));
+    if (t.loi.limite) gauche.appendChild(U.bloc('Faille structurelle', t.loi.limite));
+    if (t.revers) gauche.appendChild(U.bloc('Technique inversée', t.revers));
+    if (t.maximum) gauche.appendChild(U.bloc('Technique maximale', t.maximum));
+
+    if (t.domaine) {
+      const d = el('div', 'bloc');
+      d.appendChild(el('span', 'etiquette rouge', 'Extension du territoire'));
+      const h = el('p');
+      h.style.cssText = 'font-size:1.5rem;font-weight:300;margin:6px 0 4px';
+      h.textContent = t.domaine.nom_fr;
+      d.appendChild(h);
+      d.appendChild(el('div', 'jp faible', (t.domaine.nom_jp || '') + ' · ' + (t.domaine.romaji || '')));
+      if (t.domaine.paysage) { const p = el('p'); p.style.marginTop = '10px'; p.textContent = t.domaine.paysage; d.appendChild(p); }
+      if (t.domaine.effet_garanti) {
+        const e2 = el('p', 'serif-italique');
+        e2.style.cssText = 'margin-top:10px;color:var(--sang-vif)';
+        e2.textContent = '↯ ' + t.domaine.effet_garanti;
+        d.appendChild(e2);
+      }
+      gauche.appendChild(d);
+    }
+
+    const s = G.corps.stats;
+    gauche.appendChild(U.stats([
+      [s.vigueur, 'Vigueur'], [s.flux, 'Flux'], [s.tranchant, 'Tranchant'],
+      [s.lucidite, 'Lucidité'], [s.inversion, 'Inversion'],
+    ]));
+    gauche.appendChild(U.stats([
+      [G.corps.pvMax, 'Points de vie'], [G.corps.enMax, 'Réserve'],
+      [G.corps.attaque, 'Attaque'], [Math.round(G.corps.crit * 100) + '%', 'Critique'],
+      [G.corps.puissance, 'Puissance'],
+    ]));
+
+    dossier.appendChild(gauche);
+
+    /* colonne droite : le sceau */
+    const droite = el('div', 'sceau-boite');
+    const cvs = el('canvas', 'sceau-rot');
+    cvs.style.width = '100%';
+    droite.appendChild(cvs);
+    const leg = el('div', 'sceau-legende');
+    leg.appendChild(el('div', 'tampon', 'Grade ' + g.grade));
+    const gl = el('p', 'discret');
+    gl.style.marginTop = '14px';
+    gl.textContent = g.nom + (g.description ? ' — ' + g.description : '');
+    leg.appendChild(gl);
+    const gl2 = el('p', 'discret');
+    gl2.style.marginTop = '10px';
+    gl2.innerHTML = 'Sceau tracé depuis la graine <span class="mono sang">' + escape2(t.seed) + '</span>. Aucune autre graine ne trace celui-ci.';
+    leg.appendChild(gl2);
+    droite.appendChild(leg);
+    dossier.appendChild(droite);
+
+    n.appendChild(dossier);
+    requestAnimationFrame(() => JJK.fx.sigil(cvs, t.seed, { size: cvs.clientWidth || 320, accent: t.couleur }));
+
+    /* Le lien : la technique d'un nom est vérifiable par n'importe qui,
+       depuis n'importe quelle machine. C'est tout l'intérêt d'une lecture. */
+    const part = el('div', 'bloc');
+    part.appendChild(el('span', 'etiquette', 'Faire vérifier ce nom par quelqu\'un d\'autre'));
+    const lien = el('p', 'mono discret');
+    lien.style.cssText = 'word-break:break-all;-webkit-user-select:all;user-select:all;color:var(--os-faible)';
+    lien.textContent = lienDe(t.seed);
+    part.appendChild(lien);
+    const cp = U.bouton('Copier le lien', 'fantome', () => {
+      const url = lienDe(t.seed);
+      const fini = () => { cp.textContent = 'Lien copié'; setTimeout(() => { cp.textContent = 'Copier le lien'; }, 2200); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(fini, () => selectionner(lien));
+      else selectionner(lien);
+    });
+    cp.style.marginTop = '10px';
+    part.appendChild(cp);
+    gauche.appendChild(part);
+
+    const r = U.rangee();
+    r.appendChild(U.bouton('Prêter serment', 'rouge', serments));
+    r.appendChild(U.bouton('Descendre sans rien signer', 'fantome', () => { G.serments = []; G.mods = JJK.serments.agreger([]); descente(); }));
+    n.appendChild(r);
+  }
+
+  function lienDe(graine) {
+    const base = location.href.split('#')[0];
+    return base + '#g=' + encodeURIComponent(graine);
+  }
+  function selectionner(node) {
+    try {
+      const r = document.createRange(); r.selectNodeContents(node);
+      const s2 = getSelection(); s2.removeAllRanges(); s2.addRange(r);
+    } catch (e) {}
+  }
+
+  /* =====================================================================
+     CONSULTATION — on arrive par un lien : on ne joue pas, on vérifie.
+     ===================================================================== */
+  async function consultation(graine) {
+    const n = U.montrer('ecran-consultation');
+    n.innerHTML = '';
+    G.graine = graine;
+    G.tech = JJK.forge.forgeTechnique(graine);
+    const t = G.tech;
+    JJK.fx.setHue(t.couleur, '#f2c14e');
+    JJK.fx.setIntensity(0.4);
+    U.majBarre({ graine: t.seed });
+
+    const flux = el('div');
+    n.appendChild(flux);
+    await U.dire(flux, "Quelqu'un t'a envoyé un nom.", { apres: 380 });
+    await U.dire(flux, '« ' + graine + ' ».', { forte: true, apres: 420 });
+    await U.dire(flux, "Le registre ne fabrique rien. Il relit. Voici ce qui était déjà écrit dessous.", { apres: 500 });
+    JJK.audio.oath();
+    JJK.fx.flash('#b31217', 800);
+    JJK.fx.invert(80);
+    await JJK.core.wait(450);
+    flux.remove();
+
+    const d = el('div', 'dossier');
+    const g2 = el('div');
+    g2.appendChild(el('span', 'etiquette rouge', 'Consultation · lecture seule'));
+    g2.appendChild(el('h1', 'nom-technique', t.nom));
+    const jl = el('div', 'nom-jp'); jl.textContent = t.nomJp + ' · ' + t.romaji;
+    g2.appendChild(jl);
+    g2.appendChild(el('hr', 'trait'));
+    g2.appendChild(U.bloc('La loi', t.loi.enonce || t.loi.nom, 'loi'));
+    const pr = JJK.forge.dossier(t);
+    if (pr) g2.appendChild(U.bloc('Constat', pr));
+    if (t.loi.limite) g2.appendChild(U.bloc('Faille structurelle', t.loi.limite));
+    if (t.domaine) g2.appendChild(U.bloc('Extension du territoire', t.domaine.nom_fr + ' — ' + (t.domaine.effet_garanti || '')));
+    d.appendChild(g2);
+
+    const dr = el('div', 'sceau-boite');
+    const cvs = el('canvas', 'sceau-rot');
+    cvs.style.width = '100%';
+    dr.appendChild(cvs);
+    const lg = el('p', 'discret centre');
+    lg.style.marginTop = '14px';
+    lg.textContent = 'Sceau de la graine « ' + t.seed + ' ».';
+    dr.appendChild(lg);
+    d.appendChild(dr);
+    n.appendChild(d);
+    requestAnimationFrame(() => JJK.fx.sigil(cvs, t.seed, { size: cvs.clientWidth || 320, accent: t.couleur }));
+
+    const r = U.rangee();
+    r.appendChild(U.bouton('Porter ce nom et descendre', 'rouge', () => {
+      if (history.replaceState) history.replaceState(null, '', location.href.split('#')[0]);
+      M().ecrire({ graine: t.seed });
+      rituel();
+    }));
+    r.appendChild(U.bouton('Donner un autre nom', 'fantome', () => {
+      if (history.replaceState) history.replaceState(null, '', location.href.split('#')[0]);
+      seuil();
+    }));
+    n.appendChild(r);
+  }
+
+  function escape2(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+
+  /* =====================================================================
+     4. LES SERMENTS
+     ===================================================================== */
+  async function serments() {
+    const n = U.montrer('ecran-serments');
+    n.innerHTML = '';
+    JJK.fx.setIntensity(0.4);
+    G.catalogue = G.catalogue.length ? G.catalogue : JJK.serments.catalogue(G.tech.seed);
+    G.serments = G.serments || [];
+
+    n.appendChild(el('span', 'etiquette rouge', 'Serments contraignants'));
+    n.appendChild(el('h1', 'titre-rituel', 'Ce que tu <em>rends</em>'));
+    const p = el('p');
+    p.style.cssText = 'max-width:62ch;font-weight:300;color:var(--os-faible)';
+    p.textContent = "Un serment n'est pas une amélioration. C'est une amputation payée d'avance : tu perds vraiment ce qui est écrit, dans ce jeu, tout de suite. En échange, le réel te doit quelque chose. Tu peux en signer trois.";
+    n.appendChild(p);
+
+    const compteur = el('p', 'etiquette');
+    compteur.style.marginTop = '18px';
+    n.appendChild(compteur);
+
+    const liste = el('div');
+    liste.style.marginTop = '18px';
+    n.appendChild(liste);
+
+    const r = U.rangee();
+    const suite = U.bouton('Descendre', 'rouge', () => {
+      G.mods = JJK.serments.agreger(G.serments);
+      if (G.mods.coupeSon) JJK.audio.toggleMute(true);
+      M().ecrire({ serments: G.serments.map(s => s.id) });
+      descente();
+    });
+    r.appendChild(suite);
+    n.appendChild(r);
+
+    function maj() {
+      const reste = 3 - G.serments.length;
+      compteur.textContent = reste > 0 ? (reste + ' serment' + (reste > 1 ? 's' : '') + ' encore possible' + (reste > 1 ? 's' : '')) : 'Le contrat est plein.';
+      liste.innerHTML = '';
+      G.catalogue.forEach(s => {
+        const signe = G.serments.indexOf(s) >= 0;
+        const c = el('div', 'contrat' + (signe ? ' signe' : ''));
+        c.appendChild(el('h4', '', s.nom));
+        c.appendChild(el('p', 'clause', '« ' + s.clause + ' »'));
+        const e = el('div', 'echange');
+        e.appendChild(el('span', 'perte', s.perte));
+        e.appendChild(el('span', 'gain', s.gain));
+        e.appendChild(U.pointsDanger(s.danger));
+        c.appendChild(e);
+        c.addEventListener('click', () => {
+          if (signe) {
+            G.serments.splice(G.serments.indexOf(s), 1);
+            JJK.audio.tick(300, 0.08, 0.06);
+            maj();
+            return;
+          }
+          if (G.serments.length >= 3) { JJK.fx.shake(0.15); return; }
+          G.serments.push(s);
+          JJK.audio.oath();
+          JJK.fx.invert(140);
+          JJK.fx.flash('#b31217', 700);
+          JJK.fx.shake(0.5);
+          JJK.fx.slash('#b31217', 1);
+          JJK.fx.ink(null, null, 0.5, '#b31217');
+          U.titreFurtif('SIGNÉ — ' + s.nom, 4500);
+          maj();
+        });
+        liste.appendChild(c);
+      });
+      suite.textContent = G.serments.length ? 'Descendre avec ' + G.serments.length + ' serment' + (G.serments.length > 1 ? 's' : '') : 'Descendre les mains libres';
+    }
+    maj();
+  }
+
+  /* =====================================================================
+     5. LA DESCENTE
+     ===================================================================== */
+  const ORDRE = ['4', '4', '3', '3', '2', '2', '1', '1', 'semi-spécial', 'semi-spécial', 'spécial'];
+
+  function gradeCible(i) { return ORDRE[Math.min(i, ORDRE.length - 1)]; }
+  function courbe(i) { return 1 + i * 0.11; }
+
+  function descente() {
+    const n = U.montrer('ecran-descente');
+    n.innerHTML = '';
+    JJK.fx.setIntensity(0.35);
+    if (!G.mods) G.mods = JJK.serments.agreger(G.serments);
+    G.corps = appliquerMaturation(G.ref, G.maturation);
+    const g = JJK.forge.grade(G.corps.puissance, G.serments.length);
+    G.grade = g;
+    U.majBarre({ grade: g.grade, registre: 'DESCENTE ' + (G.descente + 1) + ' · ' + M().lire().morts + ' MORT(S)' });
+
+    n.appendChild(el('span', 'etiquette rouge', 'Descente ' + (G.descente + 1)));
+    n.appendChild(el('h1', 'titre-rituel', 'Choisis ce qui <em>t\'ouvrira</em>'));
+
+    const info = el('p', 'discret');
+    info.style.maxWidth = '64ch';
+    info.textContent = 'Porteur de « ' + G.tech.nom + ' ». ' + G.corps.pvMax + ' points de vie, ' +
+      G.corps.attaque + ' d\'attaque, ' + G.serments.length + ' serment(s) signé(s). Maturation ' + G.maturation + '.';
+    n.appendChild(info);
+    n.appendChild(el('hr', 'trait'));
+
+    const gr = gradeCible(G.descente);
+    const bes = ((C().bestiaire || {}).fleaux) || [];
+    const pool = bes.filter(f => String(f.grade) === gr);
+    const choix = (pool.length ? pool : bes).slice();
+    for (let i = choix.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = choix[i]; choix[i] = choix[j]; choix[j] = t; }
+    let trois = choix.slice(0, 3);
+    if (!trois.length) trois = [{ id: 'vide', nom: 'Quelque chose qui n\'a pas de nom', grade: gr, apparence: '', origine: '', replique: '…' }];
+
+    const rev = M().revenant();
+    const grille = el('div');
+    grille.style.cssText = 'display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))';
+
+    trois.forEach(f => grille.appendChild(carteFleau(f, false)));
+    if (rev) grille.appendChild(carteFleau(rev, true));
+    n.appendChild(grille);
+
+    const r = U.rangee();
+    r.appendChild(U.bouton('Revoir le dossier', 'fantome', revelation));
+    r.appendChild(U.bouton('Modifier les serments', 'fantome', serments));
+    r.appendChild(U.bouton('Registre', 'fantome', registre));
+    n.appendChild(r);
+
+    function carteFleau(f, estRevenant) {
+      const c = el('div', 'contrat');
+      if (estRevenant) c.style.borderColor = 'rgba(242,193,78,.5)';
+      const h = el('h4', '', f.nom);
+      c.appendChild(h);
+      const sg = el('div', 'etiquette' + (estRevenant ? ' or' : ''));
+      sg.textContent = 'Grade ' + (f.grade || '?') + (estRevenant ? ' · revenant' : '');
+      c.appendChild(sg);
+      if (f.apparence) { const p2 = el('p', 'clause'); p2.style.marginTop = '10px'; p2.textContent = f.apparence; c.appendChild(p2); }
+      if (f.origine) { const p3 = el('p', 'discret'); p3.textContent = 'Né de : ' + f.origine; c.appendChild(p3); }
+      c.addEventListener('click', () => {
+        JJK.audio.tick(400, 0.06, 0.08);
+        JJK.duel.lancer(f, { courbe: courbe(G.descente), revenant: estRevenant });
+      });
+      return c;
+    }
+  }
+
+  /* =====================================================================
+     6. LE REGISTRE
+     ===================================================================== */
+  function registre() {
+    const n = U.montrer('ecran-registre');
+    n.innerHTML = '';
+    const r = M().lire();
+    n.appendChild(el('span', 'etiquette rouge', 'Registre'));
+    n.appendChild(el('h1', 'titre-rituel', 'Ceux qui sont <em>restés</em>'));
+
+    n.appendChild(U.stats([
+      [r.descentes, 'Descentes'], [r.victoires, 'Victoires'], [r.morts, 'Morts'],
+      [r.domainesOuverts, 'Territoires'], [r.sermentsPretes, 'Serments'],
+      [Math.round(r.degatsInfliges), 'Dégâts infligés'],
+    ]));
+
+    if (!r.epitaphes.length) {
+      const p = el('p', 'discret');
+      p.style.marginTop = '20px';
+      p.textContent = "Personne n'est encore tombé ici. Le registre attend, comme une page réglée.";
+      n.appendChild(p);
+    } else {
+      const l = el('div');
+      l.style.marginTop = '24px';
+      r.epitaphes.forEach(e => {
+        const t = el('div', 'tombe');
+        t.appendChild(el('div', 'nom', (e.nom || 'sans nom') + ' — « ' + (e.technique || '?') + ' »'));
+        const d = el('div', 'det');
+        d.textContent = 'Tombé au tour ' + (e.tour || '?') + ' · ' + (e.tueur || 'inconnu') +
+          ' · grade ' + (e.grade || '?') + ' · ' + (e.serments || []).length + ' serment(s)';
+        t.appendChild(d);
+        if (e.derniersMots) { const m = el('p', 'clause'); m.style.marginTop = '8px'; m.textContent = '« ' + e.derniersMots + ' »'; t.appendChild(m); }
+        l.appendChild(t);
+      });
+      n.appendChild(l);
+    }
+
+    if (r.titres && r.titres.length) {
+      n.appendChild(el('hr', 'trait'));
+      n.appendChild(el('span', 'etiquette', 'Titres obtenus'));
+      const ul = el('div', 'pile');
+      ul.style.marginTop = '10px';
+      r.titres.forEach(t => { const s = el('div', 'tampon', t); s.style.marginRight = '8px'; ul.appendChild(s); });
+      n.appendChild(ul);
+    }
+
+    const rr = U.rangee();
+    if (G.tech) rr.appendChild(U.bouton('Reprendre la descente', '', descente));
+    rr.appendChild(U.bouton('Repartir d\'un autre nom', 'fantome', () => { reinit(); seuil(); }));
+    rr.appendChild(U.bouton('Brûler le registre', 'fantome', () => {
+      if (!confirm("Effacer définitivement toutes les morts, tous les titres, toute la mémoire ? Cela ne se défait pas.")) return;
+      M().effacer(); JJK.fx.inkClear(); JJK.fx.flash('#fff', 900); reinit(); seuil();
+    }));
+    n.appendChild(rr);
+  }
+
+  function reinit() {
+    G.tech = null; G.ref = null; G.corps = null; G.mods = null;
+    G.serments = []; G.reponses = []; G.maturation = 0; G.descente = 0;
+    G.catalogue = []; G.subliminalMontre = false;
+    JJK.fx.setDead(0);
+  }
+
+  JJK.ecrans = { seuil, rituel, revelation, serments, descente, registre, consultation, reinit, appliquerMaturation, gradeCible, courbe, lienDe, G };
+})(window);
+
+
+/* ==== 78-duel.js ==== */
+/* =========================================================================
+   RITUEL — mise en scène du duel
+   Le moteur décide. Ici, on ne fait que regarder ce qu'il a décidé,
+   d'assez près pour que ça fasse quelque chose.
+   ========================================================================= */
+(function (root) {
+  'use strict';
+  const JJK = (root.JJK = root.JJK || {});
+  const { el, clamp, wait, chaos } = JJK.core;
+  const U = JJK.ui;
+
+  let D = null, N = {}, verrou = false;
+  function G() { return JJK.jeu; }
+  function M() { return JJK.memoire; }
+  function C() { return JJK.CORPUS || {}; }
+
+  /* ---- lancement -------------------------------------------------------- */
+  function lancer(fleau, opts) {
+    const g = G();
+    const o = opts || {};
+    g.corps = JJK.ecrans.appliquerMaturation(g.ref, g.maturation);
+    if (!g.mods) g.mods = JJK.serments.agreger(g.serments);
+
+    const joueur = JJK.combat.combattantJoueur(g.tech, g.corps, g.mods, g.graine);
+    const R = new JJK.core.Rng('fleau:' + (fleau.id || fleau.nom) + ':' + g.descente);
+    const ennemi = JJK.combat.combattantFleau(fleau, g.ref, R, o.courbe || 1);
+    if (o.revenant) {
+      /* Le revenant hérite de ta loi. Il sait donc s'en servir. */
+      ennemi.archetype = fleau.archetype || 'seuil';
+      ennemi.domaine = g.tech.domaine;
+      ennemi.profil = JJK.combat.profilDe(fleau.grade);
+      ennemi.attaque = Math.round(ennemi.attaque * 1.10);
+    }
+    D = JJK.combat.creer({ seed: g.tech.seed, joueur, ennemi, numero: g.descente });
+    D.revenant = !!o.revenant;
+    D.fleau = fleau;
+    M().ecrire({ descentes: M().lire().descentes + 1 });
+    dessiner();
+    ouverture(fleau);
+  }
+
+  async function ouverture(fleau) {
+    JJK.fx.setIntensity(0.55);
+    JJK.fx.setHue(D.revenant ? '#f2c14e' : (G().tech.couleur || '#b31217'), '#f2c14e');
+    JJK.audio.heartbeat(true, 66);
+    journal(fleau.replique ? '« ' + fleau.replique + ' »' : '…', 'important');
+    if (fleau.comportement) journal(fleau.comportement, '');
+    JJK.fx.shake(0.3);
+    JJK.fx.pulse(null, null, null, '#b31217', 1.1);
+    if (D.revenant) {
+      U.titreFurtif('IL PORTE TON NOM', 5000);
+      JJK.fx.invert(180);
+      JJK.audio.whisper(1.4);
+    }
+  }
+
+  /* ---- rendu ------------------------------------------------------------ */
+  function dessiner() {
+    const n = U.montrer('ecran-duel');
+    n.innerHTML = '';
+    const g = G();
+
+    const arene = el('div', 'arene');
+    const cb = el('div', 'combattants');
+
+    N.joueur = fiche(D.joueur, false);
+    N.tour = el('div', 'versus centre');
+    N.ennemi = fiche(D.ennemi, true);
+    cb.appendChild(N.joueur.boite); cb.appendChild(N.tour); cb.appendChild(N.ennemi.boite);
+    arene.appendChild(cb);
+
+    const bas = el('div', 'duel-bas');
+    N.actions = el('div', 'actions');
+    bas.appendChild(N.actions);
+
+    const colJ = el('div');
+    N.journal = el('div', 'journal');
+    N.journal.appendChild(el('span', 'etiquette', 'Compte rendu'));
+    colJ.appendChild(N.journal);
+    bas.appendChild(colJ);
+    arene.appendChild(bas);
+
+    if (g.mods.masqueJournal) {
+      JJK.fx.mutilate(N.journal, 'page blanche — serment');
+      N.journal.style.minHeight = '54px';
+    }
+
+    n.appendChild(arene);
+    majTout();
+  }
+
+  function fiche(c, ennemi) {
+    const b = el('div', 'fiche' + (ennemi ? ' ennemi' : ''));
+    const nom = el('div', 'nom', c.nom);
+    const sous = el('div', 'sous', c.sousTitre || '');
+    b.appendChild(nom); b.appendChild(sous);
+
+    const pv = el('div', 'barre pv');
+    const fant = el('i', 'fantomatique'); fant.style.position = 'absolute';
+    const rempl = el('i');
+    pv.appendChild(fant); pv.appendChild(rempl);
+    b.appendChild(pv);
+    const ch = el('div', 'chiffres');
+    const gaucheN = el('span'), droiteN = el('span');
+    ch.appendChild(gaucheN); ch.appendChild(droiteN);
+    b.appendChild(ch);
+
+    const en = el('div', 'barre energie');
+    const enR = el('i');
+    en.appendChild(enR);
+    b.appendChild(en);
+    const ch2 = el('div', 'chiffres');
+    const e1 = el('span'), e2 = el('span');
+    ch2.appendChild(e1); ch2.appendChild(e2);
+    b.appendChild(ch2);
+
+    const st = el('div', 'statuts');
+    b.appendChild(st);
+
+    if (ennemi && D.fleau && D.fleau.replique) {
+      b.appendChild(el('p', 'replique', '« ' + D.fleau.replique + ' »'));
+    }
+
+    const o = { boite: b, nom, sous, pv, rempl, fant, gaucheN, droiteN, enR, e1, e2, st };
+    if (ennemi && G().mods.masqueVieEnnemi) {
+      const cache = el('div');
+      cache.appendChild(pv); cache.appendChild(ch);
+      b.insertBefore(cache, en);
+      JJK.fx.mutilate(cache, 'œil fermé — serment');
+      o.cache = cache;
+    }
+    return o;
+  }
+
+  function majFiche(o, c, ennemi) {
+    const p = clamp(c.pv / c.pvMax, 0, 1);
+    o.rempl.style.width = (p * 100) + '%';
+    setTimeout(() => { o.fant.style.width = (p * 100) + '%'; }, 30);
+    o.gaucheN.textContent = ennemi && G().mods.masqueVieEnnemi ? '— / —' : (Math.max(0, c.pv) + ' / ' + c.pvMax);
+    o.droiteN.textContent = 'TENSION ' + Math.round(c.tension) + (c.tension >= 100 ? ' ↯' : '');
+    o.enR.style.width = clamp(c.en / c.enMax, 0, 1) * 100 + '%';
+    o.e1.textContent = 'ÉNERGIE ' + c.en + ' / ' + c.enMax;
+    o.e2.textContent = c.domaineTours > 0 ? 'TERRITOIRE ' + c.domaineTours : '';
+    o.st.innerHTML = '';
+    c.statuts.forEach(s => {
+      const t = el('span', 'puce ' + (s.type === 'bon' ? 'bon' : 'mauvais'),
+        s.nom + (s.tours < 90 ? ' ' + s.tours : ''));
+      t.title = (JJK.combat.STATUTS[s.id] || {}).desc || '';
+      o.st.appendChild(t);
+    });
+  }
+
+  function majTout() {
+    majFiche(N.joueur, D.joueur, false);
+    majFiche(N.ennemi, D.ennemi, true);
+    N.tour.textContent = 'TOUR ' + D.tour;
+    majActions();
+  }
+
+  function majActions() {
+    N.actions.innerHTML = '';
+    D.actions().forEach(a => {
+      const b = el('button', 'acte' + (a.ultime ? ' ultime' : ''));
+      const c = el('span', 'cout', a.cout ? a.cout + ' ÉM' : '—');
+      b.appendChild(c);
+      b.appendChild(el('b', '', a.nom));
+      if (a.sous) b.appendChild(el('small', '', a.sous));
+      const d = el('small');
+      d.style.cssText = 'display:block;margin-top:6px;font-family:var(--serif);font-size:.92rem;letter-spacing:0;text-transform:none;color:var(--os-mort)';
+      d.textContent = a.ok ? a.desc : a.raison;
+      b.appendChild(d);
+      b.disabled = !a.ok || verrou;
+      if (a.interdit) { b.classList.add('mutilated'); b.setAttribute('data-scar', 'retiré par serment'); }
+      b.addEventListener('click', () => jouer(a.id));
+      N.actions.appendChild(b);
+    });
+  }
+
+  function journal(texte, cls) {
+    if (!N.journal) return;
+    if (G().mods && G().mods.masqueJournal) return;
+    const p = el('p', cls || '');
+    p.innerHTML = texte;
+    N.journal.appendChild(p);
+    N.journal.scrollTop = N.journal.scrollHeight;
+    while (N.journal.children.length > 61) N.journal.removeChild(N.journal.children[1]);
+  }
+
+  /* ---- jouer un tour ---------------------------------------------------- */
+  async function jouer(id) {
+    if (verrou || D.fini) return;
+    verrou = true; majActions();
+    const ev = D.jouer(id);
+    for (let i = 0; i < ev.length; i++) {
+      await mettreEnScene(ev[i]);
+    }
+    majTout();
+    verrou = false; majActions();
+  }
+
+  const NOM = c => (c === 'joueur' ? (D.joueur.nom || 'Toi') : D.ennemi.nom);
+
+  async function mettreEnScene(e) {
+    const g = G();
+    switch (e.t) {
+      case 'acte':
+        journal('<span class="mono mort">' + (e.qui === 'joueur' ? '▸' : '◂') + '</span> ' +
+          NOM(e.qui) + ' — <span class="important">' + esc(e.nom) + '</span>',
+          e.qui === 'joueur' ? '' : 'mal');
+        await wait(200);
+        break;
+
+      case 'degats': {
+        const cible = e.cible === 'joueur' ? N.joueur : N.ennemi;
+        const c = e.cible === 'joueur' ? D.joueur : D.ennemi;
+        cible.boite.classList.remove('frappe');
+        void cible.boite.offsetWidth;
+        cible.boite.classList.add('frappe');
+        JJK.audio.hit(e.gros ? 1.4 : (e.crit ? 1.0 : 0.55));
+        if (e.gros) { JJK.fx.slash('#fff6ee', 2); JJK.audio.slash(); }
+        JJK.fx.shake(e.gros ? 0.9 : (e.crit ? 0.45 : 0.22));
+        JJK.fx.pulse(null, null, e.gros ? 900 : 320, e.cible === 'joueur' ? '#b31217' : (g.tech.couleur || '#b31217'), e.gros ? 1.6 : 0.8);
+        if (e.cible === 'joueur') {
+          const grav = clamp(e.montant / D.joueur.pvMax, 0, 1);
+          JJK.fx.ink(chaos.r(0.15, 0.85) * JJK.fx.size.W, chaos.r(0.15, 0.85) * JJK.fx.size.H, 0.25 + grav * 1.4, '#b31217');
+          M().ecrire({ degatsSubis: M().lire().degatsSubis + e.montant });
+        } else {
+          M().ecrire({ degatsInfliges: M().lire().degatsInfliges + e.montant });
+        }
+        const masque = e.cible === 'ennemi' && g.mods.masqueVieEnnemi;
+        const chiffre = masque ? '—' : e.montant;
+        journal((e.dot ? '· ' : '') + NOM(e.cible === 'joueur' ? 'joueur' : 'ennemi') + ' ' + esc(e.verbe || 'encaisse') +
+          ' <span class="n">' + chiffre + '</span>' +
+          (e.crit ? ' <span class="mono sang">CRITIQUE</span>' : '') +
+          (e.surAuBut ? ' <span class="mono or">COUP AU BUT</span>' : '') +
+          (e.echo ? ' <span class="mono">ÉCHO</span>' : ''),
+          e.cible === 'joueur' ? 'mal' : 'bien');
+        majFiche(cible, c, e.cible === 'ennemi');
+        await wait(e.gros ? 420 : 240);
+        break;
+      }
+
+      case 'soin':
+        JJK.audio.heal();
+        JJK.fx.inkFade(0.22);
+        journal(NOM(e.qui) + ' recoud <span class="n">+' + e.montant + '</span>', 'bien');
+        majTout();
+        await wait(280);
+        break;
+
+      case 'statut': {
+        const s = JJK.combat.STATUTS[e.id] || { nom: e.id };
+        journal('<span class="mono">' + s.nom.toUpperCase() + '</span> sur ' + NOM(e.qui), '');
+        JJK.audio.tick(520, 0.05, 0.05);
+        majTout();
+        await wait(150);
+        break;
+      }
+      case 'statutFin': break;
+
+      case 'revele':
+        journal('Tu lis son flux : il prépare <span class="important">' + esc(nomIntention(e.intention)) + '</span>.', 'bien');
+        await wait(260);
+        break;
+
+      case 'serment':
+        JJK.audio.oath();
+        JJK.fx.invert(150); JJK.fx.slash('#b31217', 1);
+        JJK.fx.ink(null, null, 1.1, '#b31217');
+        JJK.fx.shake(0.6);
+        M().ecrire({ sermentsPretes: M().lire().sermentsPretes + 1 });
+        journal('Serment improvisé. Tu abandonnes <span class="n">' + e.prix + '</span> points de vie ici, sur place.', 'mal');
+        await wait(600);
+        break;
+
+      case 'sursis':
+        JJK.fx.flash('#f2c14e', 500);
+        journal(NOM(e.qui) + ' aurait dû tomber. <span class="or">Sursis.</span>', 'important');
+        await wait(400);
+        break;
+
+      case 'domaine':
+        await sequenceDomaine(e);
+        break;
+
+      case 'clash':
+        await sequenceClash(e);
+        break;
+
+      case 'domaineBrise':
+        JJK.fx.flash('#fff', 900);
+        JJK.fx.invert(260);
+        JJK.fx.shake(1.4);
+        JJK.fx.slash('#fff6ee', 4);
+        JJK.audio.hit(1.6);
+        JJK.fx.domainClose();
+        journal('<span class="mono sang">TERRITOIRE BRISÉ</span> — ' + NOM(e.perdant) + ' encaisse <span class="n">' + e.degats + '</span>.', 'important');
+        await wait(900);
+        break;
+
+      case 'brise':
+        JJK.fx.flash('#fff', 1100);
+        JJK.fx.shake(1.6);
+        JJK.fx.domainClose();
+        journal('<span class="mono sang">LES DEUX TERRITOIRES SE FENDENT.</span>', 'important');
+        await wait(900);
+        break;
+
+      case 'domaineFerme':
+        if (e.qui === 'joueur' || e.qui === 'ennemi') {
+          JJK.fx.domainClose();
+          document.body.classList.remove('domaine-calme');
+          journal('Le territoire se referme.', '');
+        }
+        await wait(200);
+        break;
+
+      case 'fuite':
+        if (e.reussie) { journal('Tu romps le contact. ' + U.voix('domaine_brise', 'La chose te regarde partir.'), 'important'); }
+        else journal('Impossible. Il y a quelque chose entre toi et la sortie.', 'mal');
+        await wait(400);
+        break;
+
+      case 'sablier':
+        JJK.fx.invert(600); JJK.fx.flash('#b31217', 1200); JJK.fx.shake(1.5);
+        journal('<span class="mono sang">TOUR ' + (e.limite + 1) + '.</span> Ton serment arrive à échéance. Tu t\'écroules de toi-même.', 'mal');
+        await wait(1100);
+        break;
+
+      case 'tour':
+        journal('<span class="mono mort">— tour ' + e.n + ' —</span>', '');
+        JJK.fx.setIntensity(clamp(0.4 + (1 - D.joueur.pv / D.joueur.pvMax) * 0.55, 0, 1));
+        JJK.audio.setTension(clamp(1 - D.joueur.pv / D.joueur.pvMax, 0, 1));
+        JJK.fx.setDead(clamp((1 - D.joueur.pv / D.joueur.pvMax) * 0.55, 0, 0.55));
+        await wait(120);
+        break;
+
+      case 'fin':
+        await finir(e.vainqueur);
+        break;
+    }
+  }
+
+  function nomIntention(i) {
+    const a = JJK.combat.ACTIONS.find(x => x.id === i);
+    return a ? a.nom : 'quelque chose';
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+
+  /* =====================================================================
+     L'EXTENSION DU TERRITOIRE
+     ===================================================================== */
+  function boiteTerritoire() {
+    let t = document.getElementById('territoire');
+    if (!t) {
+      t = el('div'); t.id = 'territoire';
+      document.body.appendChild(t);
+    }
+    return t;
+  }
+
+  async function sequenceDomaine(e) {
+    const g = G();
+    const joueur = e.qui === 'joueur';
+    const spec = e.spec || (joueur ? g.tech.domaine : D.ennemi.domaine) || {};
+    const t = boiteTerritoire();
+    t.innerHTML = '';
+    t.classList.add('actif');
+
+    M().ecrire({ domainesOuverts: M().lire().domainesOuverts + 1 });
+    JJK.audio.heartbeat(false);
+    JJK.audio.domain();
+    JJK.fx.setIntensity(1);
+
+    /* --- 1. la convergence : l'air se met à peser ------------------- */
+    const sceau = el('canvas');
+    sceau.style.cssText = 'width:min(62vmin,420px);height:auto;opacity:0;transition:opacity 1.2s ease,transform 1.6s cubic-bezier(.2,.7,.2,1);transform:scale(.6) rotate(-25deg)';
+    t.appendChild(sceau);
+    const graineSceau = joueur ? g.tech.seed : ('fleau:' + (D.fleau.id || D.fleau.nom));
+    JJK.fx.sigil(sceau, graineSceau, { size: 460, accent: joueur ? (g.tech.couleur || '#b31217') : '#b31217' });
+    requestAnimationFrame(() => { sceau.style.opacity = '1'; sceau.style.transform = 'scale(1) rotate(0deg)'; });
+
+    const inc = el('div', 'incantation');
+    t.appendChild(inc);
+    const gestes = ['領域展開', 'りょういき てんかい'];
+    await JJK.fx.type(inc, gestes[0], { speed: 120, sound: false });
+
+    for (let i = 0; i < 16; i++) {
+      JJK.fx.shake(0.12 + i * 0.055);
+      JJK.fx.pulse(null, null, 120 + i * 55, joueur ? (g.tech.couleur || '#b31217') : '#b31217', 0.5 + i * 0.07);
+      await wait(105);
+    }
+
+    /* --- 2. la bascule --------------------------------------------- */
+    JJK.fx.flash('#ffffff', 1100);
+    JJK.fx.invert(220);
+    JJK.fx.shake(1.6);
+    JJK.fx.domainOpen({
+      seed: graineSceau,
+      accent: joueur ? (g.tech.couleur || '#b31217') : '#b31217',
+      invert: !joueur,               /* son territoire à lui retourne le monde */
+      sigilCanvas: sceau,
+    });
+    U.titreFurtif('領域展開', 6000);
+    await wait(260);
+
+    t.innerHTML = '';
+    if (!joueur) t.style.color = '#0a0a0c';
+    else t.style.color = '';
+
+    const nomFr = el('div', 'nom-dom');
+    t.appendChild(nomFr);
+    const nomJp = el('div', 'incantation');
+    nomJp.style.marginTop = '18px';
+    t.appendChild(nomJp);
+    await JJK.fx.type(nomFr, spec.nom_fr || 'Territoire sans nom', { speed: 34, sound: false });
+    if (spec.nom_jp) await JJK.fx.type(nomJp, spec.nom_jp + (spec.romaji ? ' · ' + spec.romaji : ''), { speed: 40, sound: false });
+
+    /* --- 3. l'incantation ------------------------------------------- */
+    if (spec.incantation) {
+      const v = el('div', 'vers');
+      t.appendChild(v);
+      const vers = String(spec.incantation).replace(/([.;])\s+/g, '$1\n').split(/\n|\s*\/\s*/).filter(Boolean);
+      for (const ligne of vers) {
+        const p = el('p');
+        v.appendChild(p);
+        await JJK.fx.type(p, ligne.trim(), { speed: 20, sound: false });
+      }
+    }
+
+    /* --- 4. le coup au but ------------------------------------------ */
+    await wait(400);
+    if (spec.effet_garanti) {
+      const s = el('div', 'sur');
+      const lab = el('div', 'etiquette rouge', 'Coup au but — il ne se refuse pas');
+      s.appendChild(lab);
+      const p = el('p', 'serif-italique');
+      p.style.cssText = 'font-size:1.25rem;margin-top:10px;max-width:44ch';
+      s.appendChild(p);
+      t.appendChild(s);
+      await JJK.fx.type(p, spec.effet_garanti, { speed: 18, sound: false });
+    }
+    JJK.fx.slash('#fff6ee', 3);
+    JJK.audio.slash();
+    JJK.fx.ink(null, null, 1.6, joueur ? '#b31217' : '#e9e2d4');
+    await wait(1200);
+
+    t.classList.remove('actif');
+    document.body.classList.add('domaine-calme');
+    journal('<span class="mono ' + (joueur ? 'or' : 'sang') + '">EXTENSION DU TERRITOIRE</span> — ' +
+      esc(spec.nom_fr || '') + ' · ' + e.tours + ' tours.', 'important');
+    if (spec.faille && joueur === false) journal('Une sortie existe : ' + esc(spec.faille), '');
+    JJK.audio.heartbeat(true, 84);
+  }
+
+  async function sequenceClash(e) {
+    const t = boiteTerritoire();
+    t.innerHTML = ''; t.classList.add('actif');
+    const h = el('div', 'nom-dom');
+    h.style.fontSize = 'clamp(1.6rem,6vw,4rem)';
+    t.appendChild(h);
+    await JJK.fx.type(h, 'DEUX LOIS DANS LA MÊME PIÈCE', { speed: 26, sound: false });
+    for (let i = 0; i < 10; i++) {
+      JJK.fx.invert(60); JJK.fx.shake(1.2); JJK.audio.hit(1.2);
+      JJK.fx.slash(i % 2 ? '#b31217' : '#fff6ee', 2);
+      await wait(90);
+    }
+    const r = el('p', 'discret');
+    r.style.marginTop = '20px';
+    r.innerHTML = '<span class="mono">RAFFINEMENT ' + e.ra + ' — ' + e.rb + '</span>';
+    t.appendChild(r);
+    await wait(700);
+    t.classList.remove('actif');
+    journal('<span class="mono sang">AFFRONTEMENT DE TERRITOIRES</span> — ' + e.ra + ' contre ' + e.rb + '.', 'important');
+  }
+
+  /* =====================================================================
+     FIN DE DUEL
+     ===================================================================== */
+  async function finir(vainqueur) {
+    const g = G();
+    JJK.fx.domainClose();
+    document.body.classList.remove('domaine-calme');
+    JJK.audio.heartbeat(false);
+    JJK.audio.setTension(0.2);
+    const t = boiteTerritoire();
+    t.classList.remove('actif');
+
+    if (vainqueur === 'joueur' || vainqueur === 'fuite') {
+      const gagne = vainqueur === 'joueur';
+      JJK.fx.flash(gagne ? '#f2c14e' : '#333', 900);
+      JJK.fx.inkFade(0.45);
+      journal(gagne ? U.voix('victoire', 'Ce qui te faisait face a cessé de faire face.')
+                    : 'Tu sors. Le couloir est plus long qu\'à l\'aller.', 'important');
+      const r = M().lire();
+      M().ecrire(gagne ? { victoires: r.victoires + 1 } : { fuites: r.fuites + 1 });
+      if (gagne) {
+        g.maturation++; g.descente++;
+        titres();
+      }
+      await wait(1400);
+      ecranApres(gagne);
+    } else {
+      await mort();
+    }
+  }
+
+  function ecranApres(gagne) {
+    const n = U.montrer('ecran-apres');
+    n.innerHTML = '';
+    const g = G();
+    n.appendChild(el('span', 'etiquette rouge', gagne ? 'Fléau exorcisé' : 'Contact rompu'));
+    n.appendChild(el('h1', 'titre-rituel', gagne ? 'Il ne reste <em>rien</em> à ramasser' : 'Tu es <em>sorti</em>'));
+    const p = el('p');
+    p.style.cssText = 'max-width:60ch;color:var(--os-faible);font-weight:300';
+    p.textContent = gagne
+      ? 'Ta technique s\'est un peu ouverte. Maturation ' + g.maturation + ' : +' + Math.round(9 * g.maturation) + ' % d\'attaque, +' + Math.round(7 * g.maturation) + ' % de vitalité. Ce qui t\'attend en dessous a grandi aussi.'
+      : 'Fuir ne coûte rien tout de suite. C\'est plus tard que ça se paie : le fléau que tu as laissé derrière toi continue, lui.';
+    n.appendChild(p);
+    const r = U.rangee();
+    r.appendChild(U.bouton('Descendre encore', 'rouge', () => JJK.ecrans.descente()));
+    r.appendChild(U.bouton('Modifier les serments', 'fantome', () => JJK.ecrans.serments()));
+    r.appendChild(U.bouton('Registre', 'fantome', () => JJK.ecrans.registre()));
+    n.appendChild(r);
+  }
+
+  function titres() {
+    const g = G(), r = M().lire();
+    const src = ((C().nomenclature || {}).titres_joueur) || [];
+    const conditions = [
+      [r.victoires >= 1, 0], [r.victoires >= 5, 1], [g.serments.length >= 3, 2],
+      [r.domainesOuverts >= 1, 3], [r.morts >= 1, 4], [r.sermentsPretes >= 3, 5],
+      [g.maturation >= 8, 6], [r.victoires >= 10, 7],
+    ];
+    conditions.forEach(([ok, i]) => {
+      if (!ok || !src[i]) return;
+      if (M().accorderTitre(src[i].titre)) {
+        journal('<span class="mono or">TITRE — ' + esc(src[i].titre) + '</span>', 'important');
+      }
+    });
+  }
+
+  async function mort() {
+    const g = G();
+    JJK.fx.setDead(1);
+    JJK.fx.invert(900);
+    JJK.fx.flash('#b31217', 1600);
+    JJK.fx.ink(null, null, 3, '#b31217');
+    JJK.fx.ink(null, null, 2.4, '#b31217');
+    JJK.fx.shake(1.4);
+    JJK.audio.hit(1.6);
+    JJK.audio.stopDrone(2.5);
+    U.titreFurtif('— ' + (g.graine || '') + ' —', 9000);
+    await wait(1500);
+
+    const derniersMots = U.voix('mort', "Ce n'était pas assez.");
+    const fiche = {
+      graine: g.tech.seed, nom: g.graine, technique: g.tech.nom, nomJp: g.tech.nomJp,
+      tueur: D.ennemi.nom, tour: D.tour, grade: (g.grade || {}).grade || '?',
+      serments: g.serments.map(s => s.nom), derniersMots, archetype: g.tech.archetype,
+    };
+    const efface = g.mods && g.mods.effaceToutALaMort;
+    if (!efface) M().inhumer(fiche);
+
+    const n = U.montrer('ecran-mort');
+    n.innerHTML = '';
+    JJK.fx.setIntensity(0.1);
+
+    const flux = el('div');
+    n.appendChild(flux);
+    await U.dire(flux, derniersMots, { forte: true, apres: 700 });
+    await U.dire(flux, g.graine + ', porteur de « ' + g.tech.nom + ' », est tombé au tour ' + D.tour + ' devant ' + D.ennemi.nom + '.', { apres: 500 });
+
+    if (efface) {
+      await U.dire(flux, 'Tu avais signé le Serment de la Trace Effacée.', { forte: true, apres: 600 });
+      await U.dire(flux, "Le registre n'écrira rien. Il n'y aura pas eu de toi ici.", { apres: 500 });
+      M().effacer();
+      JJK.fx.inkClear();
+      JJK.fx.flash('#fff', 1400);
+      await wait(900);
+      await U.dire(flux, 'Tout est effacé. Y compris les morts d\'avant, qui ne t\'avaient rien demandé.', { forte: true, apres: 400 });
+    } else {
+      await U.dire(flux, "Le registre t'a inscrit. Ce que tu étais reviendra te chercher à la prochaine descente.", { forte: true, apres: 400 });
+    }
+
+    const r = U.rangee();
+    r.appendChild(U.bouton('Reprendre sous le même nom', 'rouge', () => {
+      JJK.fx.setDead(0); JJK.audio.startDrone();
+      const gg = G();
+      gg.maturation = Math.max(0, gg.maturation - 2);
+      gg.descente = Math.max(0, gg.descente - 1);
+      JJK.ecrans.descente();
+    }));
+    r.appendChild(U.bouton('Changer de nom', 'fantome', () => {
+      JJK.fx.setDead(0); JJK.audio.startDrone();
+      JJK.ecrans.reinit(); JJK.ecrans.seuil();
+    }));
+    r.appendChild(U.bouton('Registre', 'fantome', () => { JJK.fx.setDead(0); JJK.ecrans.registre(); }));
+    n.appendChild(r);
+  }
+
+  JJK.duel = { lancer, get D() { return D; } };
+})(window);
+
+
+/* ==== 80-boot.js ==== */
+/* =========================================================================
+   RITUEL — allumage
+   ========================================================================= */
+(function (root) {
+  'use strict';
+  const JJK = (root.JJK = root.JJK || {});
+
+  function demarrer() {
+    if (!document.getElementById('stage')) {
+      const s = document.createElement('div');
+      s.id = 'stage';
+      document.body.appendChild(s);
+    }
+    JJK.fx.mount();
+    JJK.ui.barre();
+    JJK.ui.titreOnglet();
+    JJK.ui.murmures(false);
+
+    /* Le son attend un geste : les navigateurs l'exigent, et le rituel
+       préfère de toute façon qu'on le touche avant de lui parler. */
+    const eveil = () => {
+      JJK.audio.unlock();
+      const r = JJK.memoire.lire();
+      if (r.sonCoupe) JJK.audio.toggleMute(true);
+      document.removeEventListener('pointerdown', eveil);
+      document.removeEventListener('keydown', eveil);
+    };
+    document.addEventListener('pointerdown', eveil);
+    document.addEventListener('keydown', eveil);
+
+    /* Un lien porte un nom : on ouvre alors le registre à cette page-là. */
+    const m = /[#&?]g=([^&]+)/.exec(location.hash + location.search);
+    let graine = null;
+    if (m) { try { graine = decodeURIComponent(m[1]); } catch (e) { graine = m[1]; } }
+    if (graine && graine.trim()) JJK.ecrans.consultation(graine.trim().slice(0, 40));
+    else JJK.ecrans.seuil();
+
+    /* raccourcis */
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && JJK.ui.actif() !== 'ecran-duel') JJK.ecrans.registre();
+      if (e.key >= '1' && e.key <= '9' && JJK.ui.actif() === 'ecran-duel') {
+        const b = document.querySelectorAll('#ecran-duel .acte');
+        const n = b[parseInt(e.key, 10) - 1];
+        if (n && !n.disabled) n.click();
+      }
+    });
+
+    /* L'onglet quitté n'est pas un onglet oublié. */
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        JJK.ui.titreOnglet('… continue sans toi');
+      } else {
+        JJK.ui.titreOnglet();
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer);
+  else demarrer();
+})(window);
+
+</script>

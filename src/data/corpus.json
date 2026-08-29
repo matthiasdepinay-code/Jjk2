@@ -1,0 +1,64 @@
+{
+  "essences": { "essences": [
+    {"id":"rouille","nom":"La Rouille","kanji":"錆","romaji":"sabi","concept":"L'énergie s'attaque d'abord à ce qui tient les choses ensemble.","sensoriel":"Un goût de pièce de monnaie au fond de la gorge.","couleur":"#8a4a22","emotion_source":"la rancune tenue trop longtemps"},
+    {"id":"recensement","nom":"Le Recensement","kanji":"簿","romaji":"bo","concept":"Tout ce qui est compté cesse d'être libre.","sensoriel":"Un bruit de pages tournées derrière la nuque.","couleur":"#6b6f8a","emotion_source":"la peur d'être fiché"},
+    {"id":"attente","nom":"L'Attente","kanji":"待","romaji":"machi","concept":"Le temps non vécu s'accumule quelque part et il faut bien qu'il sorte.","sensoriel":"L'odeur d'un couloir d'hôpital à quatre heures.","couleur":"#4a6b6b","emotion_source":"l'abandon poli"}
+  ]},
+  "vecteurs": { "vecteurs": [
+    {"id":"nom","nom":"Par le nom prononcé","condition":"Tu dois avoir dit son nom à voix haute au moins une fois dans la journée.","portee":"longue","verbe":"nommer","faille":"Ne jamais se faire appeler."},
+    {"id":"sol","nom":"Par le sol partagé","condition":"Vous devez toucher la même surface continue.","portee":"moyenne","verbe":"appuyer","faille":"Sauter."},
+    {"id":"regard","nom":"Par le regard soutenu","condition":"Trois secondes sans cligner.","portee":"courte","verbe":"fixer","faille":"Fermer un œil."}
+  ]},
+  "lois": { "lois": [
+    {"id":"deuxfois","nom":"Nommer Deux Fois","enonce":"Ce que je nomme deux fois cesse d'avoir eu lieu.","consequence":"Une blessure nommée deux fois n'a jamais été reçue ; un allié nommé deux fois n'a jamais existé.","limite":"Il faut connaître le nom exact, et un nom exact se change.","inversion":"Ce que je nomme deux fois recommence à avoir lieu, y compris ce qui était fini.","maximum":"Je prononce mon propre nom deux fois.","archetype":"soustraction"},
+    {"id":"distance","nom":"Le Trajet Acquis","enonce":"Toute distance que j'ai parcourue à pied m'appartient.","consequence":"Sur un terrain déjà marché, la géométrie obéit à la mémoire des pas.","limite":"Un sol neuf ne t'appartient pas.","inversion":"Je rends une distance et le trajet se défait sous l'autre.","maximum":"Je réclame tout ce que j'ai jamais marché, d'un coup.","archetype":"mesure"},
+    {"id":"dette","nom":"La Créance","enonce":"Tout ce qu'on me prend crée une dette payable en nature.","consequence":"Un coup encaissé devient un coup dû, et les intérêts courent.","limite":"Il faut avoir subi avant de pouvoir réclamer.","inversion":"J'éteins une dette et la blessure se referme.","maximum":"J'exige le solde de toutes mes créances au même instant.","archetype":"échange"}
+  ]},
+  "serments": { "serments": [
+    {"id":"oeil","nom":"Le Serment de l'Œil Fermé","clause":"Je renonce à savoir ce qu'il me reste à briser.","restriction":"Tu ne verras plus ses points de vie","gain":"Tes coups portent plus fort","restriction_code":"masque les PV ennemis","gain_code":"+40% dégâts","danger":2}
+  ]},
+  "domaines": { "domaines": [
+    {"id":"comptes","nom_fr":"Le Sanctuaire des Comptes Non Soldés","nom_jp":"未払之聖域","romaji":"Miharai no Seiiki","paysage":"Une salle de guichets sans employés, où chaque vitre reflète une somme que tu dois à quelqu'un que tu as oublié.","effet_garanti":"Chaque dette que tu as contractée depuis ta naissance est prélevée sur le corps de celui qui entre.","effet_code":"dégâts garantis 22% PV max par tour","incantation":"Ouvre le registre. Compte à voix haute. Ce que tu dois t'a déjà rattrapé.","faille":"Ne rien devoir à personne."},
+    {"id":"couloir","nom_fr":"Le Couloir Qui Se Souvient","nom_jp":"記憶之廊","romaji":"Kioku no Rō","paysage":"Un couloir d'immeuble aux portes numérotées dans le désordre, chaque porte fermée sur une pièce que tu as quittée fâché.","effet_garanti":"Aucun pas ne peut être fait dans une direction que tu n'as pas déjà empruntée.","effet_code":"annule esquive, +35% dégâts","incantation":"Marche. Le couloir a compté tes pas avant toi.","faille":"Reculer."}
+  ]},
+  "bestiaire": { "fleaux": [
+    {"id":"guichet","nom":"Le Guichet","grade":"4","origine":"La peur d'arriver cinq minutes après la fermeture.","apparence":"Un buste d'homme derrière une vitre sale, dont la bouche est une fente à courrier.","comportement":"Il attend son tour, puis frappe deux fois de suite.","pv":70,"attaque":9,"energie":2,"replique":"Vous n'avez pas le bon formulaire.","technique_signature":"Prélèvement"},
+    {"id":"marge","nom":"Ce Qui Vit Dans La Marge","grade":"3","origine":"La peur des annotations qu'on n'a pas écrites.","apparence":"Une écriture penchée qui se déplace sur les murs.","comportement":"Il recopie ta dernière action.","pv":160,"attaque":16,"energie":3,"replique":"J'ai relu ton dossier.","technique_signature":"Annotation"},
+    {"id":"veilleuse","nom":"La Veilleuse","grade":"2","origine":"La peur d'être la seule lumière allumée de l'immeuble.","apparence":"Une femme faite de tissu d'abat-jour, brûlante et calme.","comportement":"Elle se soigne quand elle a peur.","pv":300,"attaque":26,"energie":5,"replique":"Reste. Il est tard.","technique_signature":"Veille"},
+    {"id":"convoi","nom":"Le Convoi","grade":"spécial","origine":"La peur des trains de nuit qui ne s'arrêtent nulle part.","apparence":"Une colonne de dos d'hommes en manteau, marchant en file, sans tête.","comportement":"Il ouvre son territoire au sixième tour.","pv":800,"attaque":70,"energie":10,"replique":"Nous passons. Vous êtes sur la voie.","technique_signature":"Passage"}
+  ]},
+  "rituel": {
+    "ouverture":["On ne t'a pas fait venir.","La porte n'était pas fermée à clé, et c'est déjà un renseignement sur toi.","Ici on ne distribue pas de pouvoirs : on constate ce qui est déjà là.","Une technique innée ne s'apprend pas, ne se choisit pas, ne se refuse pas.","Elle attend, dans le nom, comme une dent sous la gencive.","Donne un nom. Pas forcément le tien."],
+    "questions":[
+      {"question":"Quand on t'a fait du tort, qu'as-tu gardé ?","reponses":[{"texte":"La date exacte.","archetype":"mesure","note":"Tu tiens des comptes."},{"texte":"Rien, j'ai rendu le soir même.","archetype":"échange","note":"Tu ne portes pas de dettes."},{"texte":"Le silence de la pièce juste après.","archetype":"témoignage","note":"Tu enregistres."}]},
+      {"question":"Qu'est-ce qui, chez toi, ne guérit pas ?","reponses":[{"texte":"Une phrase que j'ai dite.","archetype":"répétition","note":"Elle se rejoue."},{"texte":"Un nom que je ne prononce plus.","archetype":"soustraction","note":"Tu retranches."},{"texte":"Une porte que j'ai passée.","archetype":"seuil","note":"Tu franchis."}]},
+      {"question":"On te propose de tout recommencer, sans personne.","reponses":[{"texte":"Sans personne, non.","archetype":"lien","note":"Tu attaches."},{"texte":"Immédiatement.","archetype":"métamorphose","note":"Tu mues."},{"texte":"Je demande d'abord le prix.","archetype":"échange","note":"Tu négocies."}]}
+    ],
+    "transitions":["Noté.","Le registre te suit.","Continue.","On avance."],
+    "verdicts":["Ta technique était écrite dans ton nom avant que tu ne t'assoies.","Rien de ce que tu as dit ne l'a modifiée d'une lettre."]
+  },
+  "voix": {
+    "mort":["Ce n'était pas assez.","Tu as été lisible."],
+    "victoire":["Ce qui te faisait face a cessé de faire face."],
+    "serment_accepte":["Le contrat prend."],
+    "serment_rompu":["Le contrat te reprend."],
+    "domaine_ouvert":["La pièce n'est plus à personne."],
+    "domaine_brise":["Le décor tombe."],
+    "inversion":["Ça se referme."],
+    "retour":["Tu es déjà venu.","Le registre t'a reconnu avant que tu tapes."],
+    "murmures":["quelqu'un a compté tes pas","la porte était ouverte","tu as déjà dit ça","ce n'est pas ton écriture"]
+  },
+  "nomenclature": {
+    "patrons":["{LOI} de {ESSENCE}"],
+    "prefixes":["Rite","Doctrine","Office","Protocole","Article"],
+    "suffixes":["Perpétuel","Sans Recours","Exécutoire","de Nuit","Second"],
+    "titres_joueur":[{"titre":"Premier Exorcisme","condition":"gagner une fois"},{"titre":"Récidiviste","condition":"cinq victoires"},{"titre":"Trois Fois Lié","condition":"trois serments"},{"titre":"Ouvreur","condition":"un territoire"},{"titre":"Déjà Mort","condition":"mourir"},{"titre":"Mauvais Payeur","condition":"trois serments improvisés"},{"titre":"Mûr","condition":"maturation 8"},{"titre":"Habitué","condition":"dix victoires"}],
+    "grades":[{"grade":"4","nom":"Quatrième grade","description":"On te confie des couloirs.","seuil":0},{"grade":"3","nom":"Troisième grade","description":"On te confie des étages.","seuil":95},{"grade":"2","nom":"Deuxième grade","description":"On te confie des gens.","seuil":115},{"grade":"1","nom":"Premier grade","description":"On ne te confie plus rien : on te prévient.","seuil":140},{"grade":"semi-spécial","nom":"Semi-spécial","description":"Ton nom circule.","seuil":170},{"grade":"spécial","nom":"Grade spécial","description":"On ne t'envoie plus : on te lâche.","seuil":210}]
+  },
+  "matieres": {
+    "matieres":["cendre","ardoise","lait tourné","zinc","cire","papier calque","suie","vitre","plomb","résine"],
+    "nombres":["Neuf","Trois","Trois Cent Soixante","Un","Sept","Douze"],
+    "lieux":["une salle d'attente sans porte","un parking au sixième sous-sol","une salle des pas perdus"],
+    "organes":["la moelle","le larynx","la plèvre","le nerf cubital","l'oreille interne"]
+  }
+}

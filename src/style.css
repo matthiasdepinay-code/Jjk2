@@ -1,0 +1,444 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=Noto+Serif+JP:wght@400;700&display=swap");
+
+/* =========================================================================
+   RITUEL — feuille de style
+   Un dossier d'autopsie qu'on aurait laissé trop longtemps dans le noir.
+   ========================================================================= */
+
+:root {
+  --nuit:      #07070a;
+  --nuit-2:    #0c0c11;
+  --nuit-3:    #131319;
+  --os:        #e9e2d4;
+  --os-faible: #9d968a;
+  --os-mort:   #5d574e;
+  --sang:      #b31217;
+  --sang-vif:  #ff2d1a;
+  --or:        #f2c14e;
+  --inverse:   #7fe3ff;
+  --vert-mal:  #6f8f5a;
+
+  --serif: "Cormorant Garamond", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --jp: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --hair: 1px solid rgba(233, 226, 212, 0.14);
+  --hair-fort: 1px solid rgba(233, 226, 212, 0.32);
+  --ease: cubic-bezier(.16,.84,.28,1);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--nuit);
+  color: var(--os);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.55;
+  min-height: 100%;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body { position: relative; overflow-y: auto; }
+
+html.is-inverted { filter: invert(1) hue-rotate(180deg); }
+html.is-inverted #fx-flash { filter: invert(1); }
+
+::selection { background: var(--sang); color: var(--os); }
+
+/* ---- calques d'effets ---------------------------------------------- */
+.fx-layer {
+  position: fixed; inset: 0; pointer-events: none;
+  width: 100%; height: 100%;
+}
+#fx-ink { z-index: 76; mix-blend-mode: screen; opacity: .62; }
+#fx-dom.is-hidden { display: none; }
+#fx-flash {
+  position: fixed; inset: 0; z-index: 90; pointer-events: none;
+  opacity: 0; background: #fff; mix-blend-mode: screen;
+}
+
+/* grain : un vieux capteur qui chauffe */
+body::after {
+  content: ""; position: fixed; inset: -50%; z-index: 80; pointer-events: none;
+  opacity: .045; will-change: transform;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+  animation: grain 1.1s steps(4) infinite;
+}
+@keyframes grain {
+  0%   { transform: translate(0,0); }
+  25%  { transform: translate(-3%, 2%); }
+  50%  { transform: translate(2%, -3%); }
+  75%  { transform: translate(-2%, -2%); }
+  100% { transform: translate(3%, 1%); }
+}
+/* lignes de balayage */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: 79; pointer-events: none;
+  opacity: .25;
+  background: repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.35) 2px 3px);
+}
+
+/* ---- scène ----------------------------------------------------------- */
+#stage {
+  position: relative; z-index: 10;
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: clamp(18px, 4vw, 56px) clamp(14px, 4vw, 40px) 120px;
+  will-change: transform;
+}
+.ecran { width: 100%; max-width: 1120px; display: none; animation: fadeUp .8s var(--ease) both; }
+.ecran.actif { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* ---- typographie ----------------------------------------------------- */
+.etiquette {
+  font-family: var(--mono); font-size: 10px; font-weight: 400;
+  letter-spacing: .34em; text-transform: uppercase;
+  color: var(--os-mort);
+}
+.etiquette.rouge { color: var(--sang); }
+.titre-rituel {
+  font-family: var(--serif); font-weight: 300;
+  font-size: clamp(2.1rem, 7vw, 4.6rem); line-height: 1.02;
+  letter-spacing: -.02em; margin: .1em 0 .2em;
+}
+.titre-rituel em { font-style: italic; color: var(--sang); }
+.jp { font-family: var(--jp); letter-spacing: .18em; }
+.mono { font-family: var(--mono); }
+.faible { color: var(--os-faible); }
+.mort { color: var(--os-mort); }
+.sang { color: var(--sang); }
+.or { color: var(--or); }
+.serif-italique { font-style: italic; font-weight: 300; }
+
+hr.trait { border: 0; border-top: var(--hair); margin: 28px 0; }
+hr.trait.fort { border-top: var(--hair-fort); }
+
+.typing::after {
+  content: "▌"; margin-left: 2px; color: var(--sang);
+  animation: blink .7s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ---- boutons --------------------------------------------------------- */
+.btn {
+  appearance: none; -webkit-appearance: none;
+  background: transparent; color: var(--os);
+  border: var(--hair-fort); border-radius: 0;
+  padding: 13px 26px; cursor: pointer;
+  font-family: var(--mono); font-size: 11px; font-weight: 400;
+  letter-spacing: .26em; text-transform: uppercase;
+  position: relative; overflow: hidden;
+  transition: color .25s var(--ease), border-color .25s var(--ease), letter-spacing .35s var(--ease);
+}
+.btn::before {
+  content: ""; position: absolute; inset: 0;
+  background: var(--os); transform: scaleY(0); transform-origin: bottom;
+  transition: transform .34s var(--ease); z-index: -1;
+}
+.btn:hover:not(:disabled) { color: var(--nuit); border-color: var(--os); letter-spacing: .32em; }
+.btn:hover:not(:disabled)::before { transform: scaleY(1); }
+.btn:disabled { opacity: .28; cursor: not-allowed; }
+.btn.rouge { border-color: rgba(179,18,23,.6); color: var(--sang-vif); }
+.btn.rouge::before { background: var(--sang); }
+.btn.rouge:hover:not(:disabled) { color: #fff; border-color: var(--sang); }
+.btn.fantome { border-color: transparent; color: var(--os-mort); padding-left: 0; padding-right: 0; margin-right: 24px; }
+.btn.fantome:hover:not(:disabled) { color: var(--os); letter-spacing: .3em; }
+.btn.fantome::before { display: none; }
+.btn.large { display: block; width: 100%; padding: 18px 26px; }
+
+.btn-rangee { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+/* ---- champ de saisie -------------------------------------------------- */
+.champ {
+  width: 100%; background: transparent; border: 0;
+  border-bottom: var(--hair-fort);
+  color: var(--os); font-family: var(--serif); font-weight: 300;
+  font-size: clamp(1.6rem, 5vw, 2.8rem); padding: 10px 2px 12px;
+  outline: none; letter-spacing: .02em;
+  transition: border-color .3s var(--ease);
+}
+.champ::placeholder { color: rgba(233,226,212,.16); font-style: italic; }
+.champ:focus { border-color: var(--sang); }
+
+/* ---- rituel ---------------------------------------------------------- */
+.rituel-ligne {
+  font-size: clamp(1.05rem, 2.6vw, 1.5rem); font-weight: 300;
+  min-height: 1.6em; margin: 0 0 .55em; color: var(--os-faible);
+}
+.rituel-ligne.forte { color: var(--os); font-style: italic; }
+
+.question-bloc { margin-top: 40px; }
+.question-texte {
+  font-size: clamp(1.35rem, 3.6vw, 2.1rem); font-weight: 300;
+  line-height: 1.25; margin: 0 0 28px; max-width: 34ch;
+}
+.reponses { display: grid; gap: 10px; max-width: 780px; }
+.reponse {
+  text-align: left; background: transparent; cursor: pointer;
+  border: 0; border-left: 2px solid rgba(233,226,212,.14);
+  padding: 14px 20px; color: var(--os-faible);
+  font-family: var(--serif); font-size: 1.05rem; font-weight: 300; line-height: 1.4;
+  transition: all .3s var(--ease);
+}
+.reponse:hover {
+  border-left-color: var(--sang); color: var(--os);
+  background: linear-gradient(90deg, rgba(179,18,23,.10), transparent 70%);
+  padding-left: 30px;
+}
+.reponse .murmure {
+  display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--os-mort); margin-top: 8px;
+  opacity: 0; transform: translateY(-4px); transition: all .3s var(--ease);
+}
+.reponse:hover .murmure { opacity: 1; transform: none; color: var(--sang); }
+
+.jauge-rituel { display: flex; gap: 6px; margin: 34px 0 0; }
+.jauge-rituel i {
+  flex: 1; height: 2px; background: rgba(233,226,212,.12);
+  transition: background .5s var(--ease);
+}
+.jauge-rituel i.pleine { background: var(--sang); }
+
+/* ---- dossier de technique ------------------------------------------- */
+.dossier {
+  display: grid; grid-template-columns: minmax(0, 1fr) 340px;
+  gap: clamp(20px, 4vw, 56px); align-items: start;
+}
+@media (max-width: 860px) { .dossier { grid-template-columns: 1fr; } }
+
+.nom-technique {
+  font-size: clamp(2rem, 6.4vw, 4.2rem); font-weight: 300; line-height: 1.03;
+  letter-spacing: -.025em; margin: 6px 0 10px;
+}
+.nom-jp { font-family: var(--jp); font-size: clamp(.95rem, 2.2vw, 1.3rem); color: var(--sang); letter-spacing: .3em; }
+
+.bloc { margin: 26px 0; }
+.bloc > .etiquette { display: block; margin-bottom: 9px; }
+.bloc p { margin: 0; font-weight: 300; font-size: 1.08rem; }
+.bloc .enonce {
+  font-size: clamp(1.15rem, 2.8vw, 1.55rem); font-style: italic; font-weight: 300;
+  border-left: 2px solid var(--sang); padding-left: 18px; margin-left: 0;
+}
+
+.grille-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1px; background: rgba(233,226,212,.12); border: var(--hair); margin: 26px 0;
+}
+.stat { background: var(--nuit); padding: 14px 16px; }
+.stat b { display: block; font-family: var(--mono); font-size: 1.45rem; font-weight: 400; color: var(--os); }
+.stat span { display: block; font-family: var(--mono); font-size: 9px; letter-spacing: .26em; text-transform: uppercase; color: var(--os-mort); margin-top: 4px; }
+
+.sceau-boite { position: relative; }
+.sceau-boite canvas { width: 100%; height: auto; display: block; filter: drop-shadow(0 0 24px rgba(179,18,23,.28)); }
+.sceau-rot { animation: rot 90s linear infinite; }
+@keyframes rot { to { transform: rotate(360deg); } }
+.sceau-legende { text-align: center; margin-top: 14px; }
+
+.tampon {
+  display: inline-block; border: 2px solid var(--sang); color: var(--sang);
+  font-family: var(--mono); font-size: 11px; letter-spacing: .3em; text-transform: uppercase;
+  padding: 7px 14px; transform: rotate(-3.5deg); opacity: .9;
+}
+
+/* ---- serments -------------------------------------------------------- */
+.contrat {
+  border: var(--hair); padding: 22px 24px; margin-bottom: 14px;
+  background: linear-gradient(180deg, rgba(233,226,212,.02), transparent);
+  cursor: pointer; transition: all .3s var(--ease); position: relative;
+}
+.contrat:hover { border-color: rgba(179,18,23,.55); background: linear-gradient(180deg, rgba(179,18,23,.07), transparent); }
+.contrat.signe { border-color: var(--sang); }
+.contrat.signe::after {
+  content: "SIGNÉ"; position: absolute; top: 14px; right: 16px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .3em; color: var(--sang);
+  border: 1px solid var(--sang); padding: 3px 8px; transform: rotate(-6deg);
+}
+.contrat h4 { margin: 0 0 8px; font-size: 1.35rem; font-weight: 400; }
+.contrat .clause { font-style: italic; color: var(--os-faible); font-weight: 300; margin: 0 0 14px; max-width: 62ch; }
+.echange { display: flex; flex-wrap: wrap; gap: 10px 26px; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; }
+.echange .perte { color: var(--sang-vif); }
+.echange .gain { color: var(--or); }
+.echange .perte::before { content: "− "; }
+.echange .gain::before { content: "+ "; }
+.danger { display: inline-flex; gap: 3px; margin-left: auto; }
+.danger i { width: 6px; height: 6px; background: var(--os-mort); border-radius: 50%; }
+.danger i.on { background: var(--sang); }
+
+/* ---- combat ---------------------------------------------------------- */
+.arene { display: grid; gap: 22px; }
+.combattants { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: center; }
+@media (max-width: 720px) { .combattants { grid-template-columns: 1fr; } .versus { display: none; } }
+.versus { font-family: var(--mono); font-size: 11px; letter-spacing: .3em; color: var(--os-mort); }
+
+.fiche { border: var(--hair); padding: 18px 20px; position: relative; overflow: hidden; }
+.fiche.ennemi { border-color: rgba(179,18,23,.35); }
+.fiche .nom { font-size: 1.5rem; font-weight: 300; line-height: 1.1; margin-bottom: 2px; }
+.fiche .sous { font-family: var(--mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--os-mort); }
+.fiche.frappe { animation: frappe .32s var(--ease); }
+@keyframes frappe {
+  0%,100% { transform: none; }
+  25% { transform: translateX(-9px) skewX(3deg); }
+  60% { transform: translateX(6px); }
+}
+
+.barre { height: 8px; background: rgba(233,226,212,.09); margin-top: 14px; position: relative; overflow: hidden; }
+.barre i { display: block; height: 100%; background: var(--os); transition: width .5s var(--ease); }
+.barre.pv i { background: linear-gradient(90deg, var(--sang), var(--sang-vif)); }
+.barre.pv .fantomatique {
+  position: absolute; top: 0; left: 0; height: 100%;
+  background: rgba(255,45,26,.28); transition: width 1.1s .25s var(--ease);
+}
+.barre.energie { height: 4px; }
+.barre.energie i { background: var(--inverse); }
+.chiffres { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--os-mort); margin-top: 6px; }
+
+.statuts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; min-height: 20px; }
+.puce {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+  border: 1px solid rgba(233,226,212,.25); padding: 2px 7px; color: var(--os-faible);
+}
+.puce.mauvais { border-color: rgba(179,18,23,.5); color: var(--sang-vif); }
+.puce.bon { border-color: rgba(242,193,78,.5); color: var(--or); }
+
+.mutilated { position: relative; filter: grayscale(1) brightness(.5); min-height: 42px; }
+.mutilated > * { opacity: .18; }
+.mutilated::before {
+  content: ""; position: absolute; left: -4%; right: -4%; top: 50%; height: 2px;
+  background: var(--sang-vif); transform: rotate(-2.4deg); z-index: 2;
+  box-shadow: 0 0 12px rgba(255,45,26,.8);
+}
+.mutilated::after {
+  content: attr(data-scar); position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .28em; text-transform: uppercase;
+  color: #ff6f5e; background: rgba(30,4,6,.86); z-index: 3; filter: none;
+}
+
+.actions { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.acte {
+  text-align: left; background: transparent; border: var(--hair);
+  padding: 12px 14px; cursor: pointer; color: var(--os-faible);
+  font-family: var(--serif); transition: all .22s var(--ease);
+}
+.acte:hover:not(:disabled) { border-color: var(--os); color: var(--os); transform: translateY(-2px); }
+.acte:disabled { opacity: .26; cursor: not-allowed; }
+.acte b { display: block; font-size: 1.08rem; font-weight: 400; }
+.acte small { font-family: var(--mono); font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--os-mort); }
+.acte .cout { float: right; font-family: var(--mono); font-size: 10px; color: var(--inverse); letter-spacing: .1em; }
+.acte.ultime { border-color: rgba(179,18,23,.55); }
+.acte.ultime b { color: var(--sang-vif); }
+.acte.ultime:hover:not(:disabled) { border-color: var(--sang-vif); box-shadow: inset 0 0 40px rgba(179,18,23,.18); }
+
+.duel-bas { display: grid; grid-template-columns: minmax(0,1fr) minmax(280px, 34%); gap: 22px; align-items: start; }
+@media (max-width: 900px) { .duel-bas { grid-template-columns: 1fr; } }
+.journal {
+  border-top: var(--hair); padding-top: 14px; max-height: 340px; overflow-y: auto;
+  font-size: 1rem; font-weight: 300;
+}
+.journal .etiquette { display: block; margin-bottom: 10px; }
+.fiche .replique { font-style: italic; font-weight: 300; color: var(--os-mort); margin-top: 12px; font-size: .96rem; }
+.journal p { margin: 0 0 7px; color: var(--os-faible); animation: fadeUp .4s var(--ease) both; }
+.journal p.important { color: var(--os); font-style: italic; }
+.journal p.mal { color: var(--sang-vif); }
+.journal p.bien { color: var(--or); }
+.journal p .n { font-family: var(--mono); font-size: .92em; }
+.journal::-webkit-scrollbar { width: 3px; }
+.journal::-webkit-scrollbar-thumb { background: rgba(179,18,23,.5); }
+
+/* ---- territoire ------------------------------------------------------ */
+#territoire {
+  position: fixed; inset: 0; z-index: 65; display: none;
+  align-items: center; justify-content: center; flex-direction: column;
+  text-align: center; padding: 24px; pointer-events: none;
+}
+#territoire.actif { display: flex; }
+#territoire .incantation {
+  font-family: var(--jp); font-size: clamp(.95rem, 2.4vw, 1.35rem);
+  color: var(--sang-vif); letter-spacing: .34em; margin-bottom: 26px; opacity: .9;
+}
+#territoire .nom-dom {
+  font-size: clamp(2.2rem, 9vw, 6.4rem); font-weight: 300; line-height: .98;
+  letter-spacing: -.03em; max-width: 16ch; margin: 0 auto;
+  text-shadow: 0 0 60px rgba(179,18,23,.6);
+}
+#territoire .vers { margin-top: 30px; max-width: 44ch; }
+#territoire .vers p { margin: .18em 0; font-style: italic; font-weight: 300; color: var(--os-faible); }
+#territoire .sur { margin-top: 34px; }
+body.in-domain #stage { filter: blur(3px) brightness(.35); }
+
+/* ---- épitaphe / mémoire ---------------------------------------------- */
+.tombe {
+  border: var(--hair); border-left: 2px solid var(--sang);
+  padding: 16px 20px; margin-bottom: 12px;
+  background: linear-gradient(90deg, rgba(179,18,23,.06), transparent 60%);
+}
+.tombe .nom { font-size: 1.25rem; font-weight: 300; }
+.tombe .det { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--os-mort); }
+
+/* ---- barre d'état ---------------------------------------------------- */
+#barre-etat {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: flex; align-items: center; gap: 18px;
+  padding: 9px clamp(14px, 4vw, 40px);
+  background: linear-gradient(180deg, rgba(7,7,10,0), rgba(7,7,10,.94) 40%);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--os-mort);
+}
+#barre-etat .sep { flex: 1; }
+#barre-etat button {
+  background: none; border: 0; color: var(--os-mort); cursor: pointer;
+  font: inherit; letter-spacing: .2em; padding: 4px 0;
+}
+#barre-etat button:hover { color: var(--sang); }
+
+/* ---- murmures -------------------------------------------------------- */
+.murmure-flottant {
+  position: fixed; z-index: 50; pointer-events: none;
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: clamp(1rem, 2.4vw, 1.5rem); color: rgba(233,226,212,.32);
+  white-space: nowrap;
+  animation: derive 13s linear forwards;
+}
+@keyframes derive {
+  0% { opacity: 0; transform: translateX(0) scale(1); }
+  12% { opacity: 1; }
+  85% { opacity: .5; }
+  100% { opacity: 0; transform: translateX(-16vw) scale(1.06); }
+}
+
+/* ---- divers ---------------------------------------------------------- */
+.deux-colonnes { columns: 2; column-gap: 40px; }
+@media (max-width: 700px) { .deux-colonnes { columns: 1; } }
+.centre { text-align: center; }
+.plein { width: 100%; }
+.pile > * + * { margin-top: 12px; }
+.discret { font-size: .92rem; color: var(--os-mort); }
+
+@media (prefers-reduced-motion: reduce) {
+  body::after, .sceau-rot, .murmure-flottant { animation: none !important; }
+  * { transition-duration: .01ms !important; }
+}
+
+/* ---- lisibilité pendant que le territoire est déployé ---------------- */
+body.domaine-calme #stage { filter: none; }
+body.domaine-calme .fiche,
+body.domaine-calme .acte,
+body.domaine-calme .journal {
+  background: rgba(7, 7, 10, .74);
+  backdrop-filter: blur(2px);
+}
+body.domaine-calme .fiche { border-color: rgba(233, 226, 212, .3); }
+.etiquette.or { color: var(--or); }
+#territoire .etiquette { color: inherit; opacity: .7; }
+
+/* le titre de la page ne doit jamais dépasser sur mobile */
+@media (max-width: 520px) {
+  .btn { padding: 12px 18px; letter-spacing: .18em; }
+  .btn.fantome { margin-right: 14px; }
+  #barre-etat { font-size: 9px; gap: 10px; letter-spacing: .12em; }
+  #stage { padding-bottom: 96px; }
+}
