@@ -14,6 +14,7 @@
     descentes: 0, victoires: 0, fuites: 0, morts: 0,
     serments: [], sonCoupe: false,
     epitaphes: [],           /* ceux qui sont tombés ici, sous n'importe quel nom */
+    fiches: [],              /* toute 生得術式 consignée, même jamais employée */
     titres: [], vus: [],
     premiereVisite: null, derniereVisite: null,
     domainesOuverts: 0, sermentsPretes: 0, degatsSubis: 0, degatsInfliges: 0,
@@ -47,6 +48,20 @@
     cache = null;
     if (OK) { try { localStorage.removeItem(CLE); } catch (e) {} }
     return lire();
+  }
+
+  /* ---- archive : le registre garde chaque fiche produite ---------------
+     C'est d'abord un registre de techniques. Les morts n'en sont qu'une
+     rubrique parmi d'autres.                                              */
+  function archiver(fiche) {
+    if (!fiche || !fiche.code) return;
+    const r = lire();
+    const i = r.fiches.findIndex(x => x.code === fiche.code);
+    if (i >= 0) r.fiches.splice(i, 1);
+    r.fiches.unshift({ code: fiche.code, nom: fiche.nom, nomJp: fiche.nomJp,
+      grade: fiche.grade, jubaku: !!fiche.jubaku, date: Date.now() });
+    r.fiches = r.fiches.slice(0, 40);
+    ecrire();
   }
 
   /* ---- épitaphes : ce que le registre garde d'un mort ------------------ */
@@ -112,7 +127,7 @@
   }
 
   JJK.memoire = {
-    lire, ecrire, effacer, inhumer, revenant, marquerVu, aVu,
+    lire, ecrire, effacer, archiver, inhumer, revenant, marquerVu, aVu,
     accorderTitre, estUnRetour, connaitAutreNom, disponible: OK, CLE,
   };
 })(window);

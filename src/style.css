@@ -730,3 +730,43 @@ body.en-kokusen #fx-ink {
   color: #fff; background: #000; padding: 1px 7px;
   border: 1px solid var(--os); letter-spacing: .18em;
 }
+
+/* ---- archive des fiches ------------------------------------------------ */
+.liste-fiches { display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
+.fiche-archivee {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px;
+  text-align: left; background: transparent; border: 0;
+  border-bottom: 1px dotted rgba(233, 226, 212, .12);
+  padding: 11px 8px; cursor: pointer; color: var(--os-faible);
+  font-family: var(--serif); transition: all .22s var(--ease);
+}
+.fiche-archivee:hover { background: rgba(179, 18, 23, .07); color: var(--os); padding-left: 16px; }
+.fiche-archivee b { font-size: 1.05rem; font-weight: 400; }
+.fiche-archivee .det {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--os-mort);
+}
+.marque-jubaku {
+  font-family: var(--jp); font-size: 10px; letter-spacing: .2em;
+  color: var(--or); border: 1px solid rgba(242, 193, 78, .4); padding: 1px 6px;
+}
+
+/* ---- impression : la fiche est un document ---------------------------- */
+@media print {
+  body::before, body::after, .fx-layer, #fx-flash, #fx-voile,
+  #barre-etat, .btn-rangee, .outils-generateur, .murmure-flottant { display: none !important; }
+  html, body { background: #fff !important; color: #111 !important; }
+  #stage { padding: 0; display: block; transform: none !important; filter: none !important; }
+  .ecran { display: none !important; }
+  .ecran.actif { display: block !important; }
+  .dossier { grid-template-columns: 1fr; }
+  .sceau-boite canvas { max-width: 210px; filter: none !important; }
+  .etiquette, .etiquette.rouge { color: #666 !important; }
+  .nom-technique, .titre-rituel { color: #111 !important; }
+  .bloc .enonce { border-left-color: #b31217 !important; color: #111 !important; }
+  .bloc p, .note-formulaire span, .discret { color: #222 !important; }
+  .cout-ligne, .jubaku .privation { color: #8a1010 !important; }
+  .jubaku .contrepartie { color: #8a6a10 !important; }
+  .kanji-section, .nom-jp, .jp { color: #444 !important; }
+  a[href]::after { content: ""; }
+}

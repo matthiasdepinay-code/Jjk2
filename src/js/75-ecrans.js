@@ -167,11 +167,14 @@
     n.appendChild(boite);
 
     const r = U.rangee();
-    const go = U.bouton('Ouvrir un dossier', 'rouge', valider);
+    const go = U.bouton('Remplir le formulaire', 'rouge', valider);
     go.disabled = true;
     r.appendChild(go);
-    r.appendChild(U.bouton('Reprendre un dossier existant', 'fantome', reprendre));
-    if (reg.epitaphes.length) r.appendChild(U.bouton('Consulter les morts', 'fantome', registre));
+    /* Le service peut remplir à votre place. C'est plus rapide et c'est pire :
+       vous découvrez ce que vous portez sans avoir rien déclaré.          */
+    r.appendChild(U.bouton("Laisser le service remplir", '', () => tirageOffice(champ.value.trim())));
+    r.appendChild(U.bouton('Reprendre un dossier', 'fantome', reprendre));
+    if (reg.epitaphes.length || (reg.fiches || []).length) r.appendChild(U.bouton('Registre', 'fantome', registre));
     n.appendChild(r);
 
     champ.addEventListener('input', () => {
@@ -198,6 +201,29 @@
       JJK.fx.pulse(null, null, null, '#b31217', 1.2);
       await wait(280);
       declaration();
+    }
+
+    async function tirageOffice(nom) {
+      JJK.audio.unlock();
+      G.porteur = nom || 'sans nom';
+      M().ecrire({ graine: JJK.core.normalizeSeed(G.porteur) });
+      U.majBarre({ graine: JJK.core.normalizeSeed(G.porteur) });
+      const d = {};
+      T().AXES.forEach(a => { d[a.id] = a.tags[Math.floor(Math.random() * a.tags.length)]; });
+      G.declaration = d;
+      G.poids = { vigueur: 0, flux: 0, tranchant: 0, lucidite: 0, inversion: 0 };
+      for (let i = 0; i < 8; i++) {
+        const k = T().AXES_CORPS[Math.floor(Math.random() * 5)];
+        G.poids[k] = Math.min(8, G.poids[k] + 1);
+      }
+      G.archetype = T().ARCH_LISTE[Math.floor(Math.random() * T().ARCH_LISTE.length)];
+      G.variante = Math.floor(Math.random() * T().VARIANTES);
+      assembler();
+      JJK.audio.oath();
+      JJK.fx.flash('#b31217', 700);
+      JJK.fx.shake(0.4);
+      await wait(320);
+      revelation({ rapide: true, office: true });
     }
 
     function reprendre() {
@@ -420,6 +446,8 @@
     G.grade = g;
     U.majBarre({ grade: g.grade });
     U.titreFurtif(t.nom + ' — 呪法帳', 6000);
+    /* toute fiche produite entre au registre : c'est une archive, pas un jeu */
+    M().archiver({ code: G.code, nom: t.nom, nomJp: t.nomJp, grade: g.grade, jubaku: !!t.jubaku });
 
     const dossier = el('div', 'dossier');
     const gauche = corpsDeFiche(t, G.corps, { notes: true });
@@ -1006,7 +1034,29 @@
     n.innerHTML = '';
     const r = M().lire();
     n.appendChild(el('span', 'etiquette rouge', '呪法帳 · registre'));
-    n.appendChild(U.titreRituel('Ceux qui sont <em>restés</em>'));
+    n.appendChild(U.titreRituel('Ce qui a été <em>enregistré</em>'));
+
+    const fiches = r.fiches || [];
+    if (fiches.length) {
+      const bl = el('div', 'bloc');
+      bl.appendChild(bandeau('生得術式 consignées', '登録簿'));
+      const l2 = el('div', 'liste-fiches');
+      fiches.forEach(f => {
+        const c = el('button', 'fiche-archivee');
+        c.appendChild(el('b', '', f.nom));
+        const d2 = el('span', 'det');
+        d2.textContent = (f.nomJp ? f.nomJp + ' · ' : '') + 'grade ' + (f.grade || '?') + ' · ' + f.code;
+        c.appendChild(d2);
+        if (f.jubaku) c.appendChild(el('span', 'marque-jubaku', '天与呪縛'));
+        c.addEventListener('click', () => {
+          const lu = T().lireDossierCode(f.code);
+          if (lu) consultation(lu);
+        });
+        l2.appendChild(c);
+      });
+      bl.appendChild(l2);
+      n.appendChild(bl);
+    }
 
     n.appendChild(U.stats([
       [r.descentes, 'Descentes'], [r.victoires, 'Victoires'], [r.morts, 'Morts'],
