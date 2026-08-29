@@ -80,7 +80,7 @@
 
     const colJ = el('div');
     N.journal = el('div', 'journal');
-    N.journal.appendChild(el('span', 'etiquette', 'Compte rendu'));
+    N.journal.appendChild(el('span', 'etiquette', '報告書 · compte rendu'));
     colJ.appendChild(N.journal);
     bas.appendChild(colJ);
     arene.appendChild(bas);
@@ -144,8 +144,8 @@
     o.gaucheN.textContent = ennemi && G().mods.masqueVieEnnemi ? '— / —' : (Math.max(0, c.pv) + ' / ' + c.pvMax);
     o.droiteN.textContent = 'TENSION ' + Math.round(c.tension) + (c.tension >= 100 ? ' ↯' : '');
     o.enR.style.width = clamp(c.en / c.enMax, 0, 1) * 100 + '%';
-    o.e1.textContent = 'ÉNERGIE ' + c.en + ' / ' + c.enMax;
-    o.e2.textContent = c.domaineTours > 0 ? 'TERRITOIRE ' + c.domaineTours : '';
+    o.e1.textContent = '呪力 ' + c.en + ' / ' + c.enMax;
+    o.e2.textContent = c.domaineTours > 0 ? '領域 ' + c.domaineTours : '';
     o.st.innerHTML = '';
     c.statuts.forEach(s => {
       const t = el('span', 'puce ' + (s.type === 'bon' ? 'bon' : 'mauvais'),
@@ -166,7 +166,7 @@
     N.actions.innerHTML = '';
     D.actions().forEach(a => {
       const b = el('button', 'acte' + (a.ultime ? ' ultime' : ''));
-      const c = el('span', 'cout', a.cout ? a.cout + ' ÉM' : '—');
+      const c = el('span', 'cout', a.cout ? a.cout + ' 呪力' : '—');
       b.appendChild(c);
       b.appendChild(el('b', '', a.nom));
       if (a.sous) b.appendChild(el('small', '', a.sous));
@@ -247,6 +247,14 @@
         cible.boite.classList.remove('frappe');
         void cible.boite.offsetWidth;
         cible.boite.classList.add('frappe');
+        if (e.kokusen) {
+          /* 黒閃 : l'espace se fend. On s'arrête un instant. */
+          JJK.fx.eclair();
+          JJK.audio.hit(1.6); JJK.audio.slash();
+          JJK.fx.pulse(null, null, 1100, '#ffffff', 2);
+          U.titreFurtif('黒閃', 3000);
+          await wait(520);
+        }
         JJK.audio.hit(e.gros ? 1.4 : (e.crit ? 1.0 : 0.55));
         if (e.gros) { JJK.fx.slash('#fff6ee', 2); JJK.audio.slash(); }
         JJK.fx.shake(e.gros ? 0.9 : (e.crit ? 0.45 : 0.22));
@@ -262,7 +270,7 @@
         const chiffre = masque ? '—' : e.montant;
         journal((e.dot ? '· ' : '') + NOM(e.cible === 'joueur' ? 'joueur' : 'ennemi') + ' ' + esc(e.verbe || 'encaisse') +
           ' <span class="n">' + chiffre + '</span>' +
-          (e.crit ? ' <span class="mono sang">CRITIQUE</span>' : '') +
+          (e.kokusen ? ' <span class="mono kokusen">黒閃 ÉCLAIR NOIR ×2,5</span>' : (e.crit ? ' <span class="mono sang">CRITIQUE</span>' : '')) +
           (e.surAuBut ? ' <span class="mono or">COUP AU BUT</span>' : '') +
           (e.echo ? ' <span class="mono">ÉCHO</span>' : ''),
           e.cible === 'joueur' ? 'mal' : 'bien');

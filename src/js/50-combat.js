@@ -48,7 +48,7 @@
       },
     },
     {
-      id: 'decharge', nom: "Décharge d'énergie maudite", cout: 2,
+      id: 'decharge', nom: "Décharge de 呪力", cout: 2,
       desc: 'Une gerbe projetée. Rapide, malpropre, efficace.',
       exec(D, a, d, R) {
         const ev = [];
@@ -58,7 +58,7 @@
       },
     },
     {
-      id: 'technique', nom: 'Technique innée', cout: 3,
+      id: 'technique', nom: 'Technique innée · 生得術式', cout: 3,
       desc: 'Ta loi, appliquée à quelqu\'un qui ne l\'a pas demandée.',
       req: (D, a) => !statut(a, 'lie'),
       raison: 'Ta technique est liée.',
@@ -103,7 +103,7 @@
       },
     },
     {
-      id: 'inverse', nom: 'Technique inversée', cout: 3,
+      id: 'inverse', nom: 'Technique inversée · 反転術式', cout: 3,
       desc: "Recoudre. L'énergie négative multipliée par elle-même devient positive.",
       exec(D, a, d, R) {
         const ev = [];
@@ -139,7 +139,7 @@
       },
     },
     {
-      id: 'maximum', nom: 'Technique maximale', cout: 6,
+      id: 'maximum', nom: 'Technique maximale · 術式最大', cout: 6,
       ultime: true,
       desc: 'La loi appliquée à sa propre limite. Exige 60 de tension.',
       req: (D, a) => a.tension >= 60 && !statut(a, 'lie'),
@@ -154,7 +154,7 @@
       },
     },
     {
-      id: 'serment', nom: 'Serment improvisé', cout: 0,
+      id: 'serment', nom: 'Serment improvisé · 縛り', cout: 0,
       desc: "Offrir un quart de ta chair, ici, maintenant, contre 70 % de dégâts. Une fois par duel.",
       req: (D, a) => !a.sermentPris && a.pv > a.pvMax * 0.28,
       raison: 'Déjà prêté, ou il ne te reste pas assez à donner.',
@@ -169,7 +169,7 @@
       },
     },
     {
-      id: 'domaine', nom: 'Extension du Territoire', cout: 6,
+      id: 'domaine', nom: 'Extension du Territoire · 領域展開', cout: 6,
       ultime: true,
       desc: 'Déployer un espace clos où ta loi est la seule physique. Exige 100 de tension.',
       req: (D, a) => a.tension >= 100 && !statut(a, 'scelle') && !(a.mods.domaineUnique && a.domaineUtilise),
@@ -283,7 +283,7 @@
     const attaque = Math.max(6, Math.round((ref.pvMax / c.survie / REGLAGE.rendementFleau) * vAtt * Math.pow(k, REGLAGE.expoAttaque)));
 
     return {
-      cle: 'ennemi', nom: f.nom, sousTitre: 'Fléau de grade ' + g,
+      cle: 'ennemi', nom: f.nom, sousTitre: '呪霊 · fléau de grade ' + g,
       pv: pvMax, pvMax,
       enMax: 10, en: 2,
       attaque, crit: 0.08 + (g === 'spécial' ? 0.10 : g === 'semi-spécial' ? 0.06 : 0), soin: 0.5,
@@ -382,7 +382,21 @@
       const lisait = !!lec;
       const chanceCrit = clamp((a.crit || 0.1) + (lec ? 0.55 : 0) + (d.mods.lisible || 0), 0, 0.95);
       const crit = R.chance(chanceCrit);
-      if (crit) base *= 1.85 * (a.mods.critMult || 1);
+      /* 黒閃 kokusen : le coup et le 呪力 coïncident à 0,000001 seconde près.
+         On ne le provoque pas. Il faut déjà un critique, de la tension, et
+         de la chance ; l'avoir touché une fois change le rapport du porteur
+         à son énergie maudite pour le reste du duel.                      */
+      let kokusen = false;
+      if (crit && o.technique !== false && a.tension >= 25) {
+        const p = clamp(0.06 + (a.crit || 0) * 0.30 + (a.kokusenVus || 0) * 0.05, 0, 0.34);
+        kokusen = R.chance(p);
+      }
+      if (kokusen) {
+        base *= 2.5 * (a.mods.critMult || 1);
+        a.kokusenVus = (a.kokusenVus || 0) + 1;
+        a.crit = Math.min(0.6, (a.crit || 0.1) + 0.08);
+        a.tension = Math.min(200, a.tension + 25);
+      } else if (crit) base *= 1.85 * (a.mods.critMult || 1);
       if (lec) { retirer(a, 'lecture'); }
 
       base *= R.range(0.90, 1.12);
@@ -409,7 +423,7 @@
       d.rancune = Math.min(1.5, (d.rancune || 0) + (d.mods.rancune || 0));
 
       const ec = statut(d, 'echo');
-      ev.push({ t: 'degats', par: a.cle, cible: d.cle, montant: q, crit, verbe: o.verbe || 'frappe', gros: !!o.gros, surAuBut: !!o.surAuBut });
+      ev.push({ t: 'degats', par: a.cle, cible: d.cle, montant: q, crit, kokusen, verbe: o.verbe || 'frappe', gros: !!o.gros || kokusen, surAuBut: !!o.surAuBut });
       /* faille déclarée « retour » : la loi ne distingue pas son porteur */
       if (o.technique && a.mods.retour) {
         const r = Math.max(1, Math.round(q * a.mods.retour));

@@ -11,7 +11,7 @@
 
   const G = {
     porteur: '', declaration: null, poids: null, archetype: 'seuil',
-    tech: null, ref: null, corps: null, mods: null,
+    tech: null, ref: null, corps: null, mods: null, variante: 0,
     serments: [], maturation: 0, descente: 0, grade: null,
     catalogue: [], reponsesExamen: [],
   };
@@ -111,7 +111,7 @@
     const retour = M().estUnRetour();
 
     const tete = el('div');
-    tete.appendChild(el('span', 'etiquette rouge', 'Bureau des exorcistes · service des enregistrements'));
+    tete.appendChild(el('span', 'etiquette rouge', '呪術高専 · bureau du registre des 生得術式'));
     tete.appendChild(el('h1', 'titre-rituel', 'RITUEL'));
     tete.appendChild(el('div', 'jp faible', '呪法帳 · じゅほうちょう'));
     n.appendChild(tete);
@@ -151,7 +151,7 @@
 
     const boite = el('div');
     boite.style.marginTop = '30px';
-    boite.appendChild(el('span', 'etiquette', 'Nom porté par le réceptacle'));
+    boite.appendChild(el('span', 'etiquette', '受肉体 · nom porté par le réceptacle'));
     const champ = el('input', 'champ');
     champ.type = 'text'; champ.maxLength = 32;
     champ.placeholder = 'à inscrire au dossier';
@@ -321,7 +321,7 @@
     G.reponsesExamen = [];
     const compteArch = {};
 
-    n.appendChild(el('span', 'etiquette rouge', 'Examen du réceptacle · seconde partie'));
+    n.appendChild(el('span', 'etiquette rouge', '受肉体検査 · examen du réceptacle'));
     const intro = el('p', 'discret');
     intro.style.maxWidth = '64ch';
     intro.textContent = "La technique est enregistrée. Ce qui suit ne la modifiera pas : on établit seulement de quoi votre corps est capable en la portant.";
@@ -370,11 +370,11 @@
   }
 
   function assembler() {
-    G.tech = JJK.forge.forgeDepuisDeclaration(G.declaration);
-    G.ref = JJK.forge.forgeReceptacle(G.declaration, G.poids);
+    G.tech = JJK.forge.forgeDepuisDeclaration(G.declaration, G.variante || 0);
+    G.ref = JJK.forge.forgeReceptacle(G.declaration, G.poids, G.tech.jubaku);
     G.corps = appliquerMaturation(G.ref, G.maturation);
     G.mods = JJK.serments.agreger(G.serments, G.ref.profil.mod);
-    G.code = T().dossierCode(G.declaration, G.poids, G.archetype);
+    G.code = T().dossierCode(G.declaration, G.poids, G.archetype, G.variante || 0);
   }
 
   function appliquerMaturation(ref, m) {
@@ -390,7 +390,8 @@
   /* =====================================================================
      4. LA NOMINATION
      ===================================================================== */
-  async function revelation() {
+  async function revelation(opts) {
+    const o = opts || {};
     U.calmer();
     const n = U.montrer('ecran-revelation');
     n.innerHTML = '';
@@ -398,18 +399,22 @@
     JJK.fx.setHue(t.couleur, '#f2c14e');
     JJK.fx.setIntensity(0.45);
 
-    const intro = el('div');
-    n.appendChild(intro);
-    await U.dire(intro, 'Dix rubriques, huit réponses. Le dossier est complet.', { apres: 300 });
-    await U.dire(intro, amb('verdicts_conseil', "Le Haut Conseil des Exorcistes a lu votre déclaration et lui a donné un nom."), { forte: true, apres: 460 });
-
-    JJK.audio.oath();
-    JJK.fx.flash('#b31217', 900);
-    JJK.fx.invert(90);
-    JJK.fx.shake(0.6);
-    JJK.fx.pulse(null, null, null, t.couleur, 1.6);
-    await wait(560);
-    intro.remove();
+    if (!o.rapide) {
+      const intro = el('div');
+      n.appendChild(intro);
+      await U.dire(intro, 'Dix rubriques, huit réponses. Le dossier est complet.', { apres: 280 });
+      await U.dire(intro, amb('verdicts_conseil', "Les instances supérieures ont lu votre déclaration et lui ont donné un nom."), { forte: true, apres: 420 });
+      JJK.audio.oath();
+      JJK.fx.flash('#b31217', 900);
+      JJK.fx.invert(90);
+      JJK.fx.shake(0.6);
+      JJK.fx.pulse(null, null, null, t.couleur, 1.6);
+      await wait(520);
+      intro.remove();
+    } else {
+      JJK.audio.tick(520, 0.05, 0.06);
+      JJK.fx.pulse(null, null, null, t.couleur, 0.9);
+    }
 
     const g = JJK.forge.grade(G.corps.puissance, G.serments.length);
     G.grade = g;
@@ -417,77 +422,16 @@
     U.titreFurtif(t.nom + ' — 呪法帳', 6000);
 
     const dossier = el('div', 'dossier');
-    const gauche = el('div');
-    gauche.appendChild(el('span', 'etiquette rouge', 'Technique innée · ' + (t.essence.emotion_source || 'origine non établie')));
-    gauche.appendChild(el('h1', 'nom-technique', t.nom));
-    const jl = el('div', 'nom-jp');
-    jl.textContent = t.nomJp + ' · ' + t.romaji;
-    gauche.appendChild(jl);
-    gauche.appendChild(el('hr', 'trait'));
+    const gauche = corpsDeFiche(t, G.corps, { notes: true });
 
-    gauche.appendChild(U.bloc('La loi', t.loi.enonce || t.loi.nom, 'loi'));
-    const desc = JJK.forge.dossier(t);
-    if (desc) gauche.appendChild(U.bloc('Constat', desc));
-    if (t.vecteur && t.vecteur.condition) gauche.appendChild(U.bloc('Vecteur — ' + t.vecteur.nom, t.vecteur.condition));
-    if (!t.tenu.portee) {
-      const w = U.bloc('Réserve du Bureau', "La portée déclarée et la condition d'énonciation ne se rencontrent pas dans le réel. Le service a retenu la condition : c'est elle qui décide où la loi s'applique.");
-      w.querySelector('p').style.color = 'var(--sang-vif)';
-      gauche.appendChild(w);
-    }
-    if (t.loi.limite) gauche.appendChild(U.bloc('Faille structurelle', t.loi.limite));
-    if (t.revers) gauche.appendChild(U.bloc('Technique inversée', t.revers));
-    if (t.maximum) gauche.appendChild(U.bloc('Technique maximale', t.maximum));
-
-    if (t.domaine) {
-      const d = el('div', 'bloc');
-      d.appendChild(el('span', 'etiquette rouge', 'Extension du territoire'));
-      const h = el('p');
-      h.style.cssText = 'font-size:1.5rem;font-weight:300;margin:6px 0 4px';
-      h.textContent = t.domaine.nom_fr;
-      d.appendChild(h);
-      d.appendChild(el('div', 'jp faible', (t.domaine.nom_jp || '') + ' · ' + (t.domaine.romaji || '')));
-      if (t.domaine.paysage) { const p = el('p'); p.style.marginTop = '10px'; p.textContent = t.domaine.paysage; d.appendChild(p); }
-      if (t.domaine.effet_garanti) {
-        const e2 = el('p', 'serif-italique');
-        e2.style.cssText = 'margin-top:10px;color:var(--sang-vif)';
-        e2.textContent = '↯ ' + t.domaine.effet_garanti;
-        d.appendChild(e2);
-      }
-      gauche.appendChild(d);
-    }
-
-    /* ce que la déclaration coûte, en clair, sans euphémisme */
-    const conseq = el('div', 'bloc');
-    conseq.appendChild(el('span', 'etiquette rouge', 'Conséquences de votre déclaration'));
-    const ul = el('div', 'notes-formulaire');
-    G.ref.profil.notes.forEach(x => {
-      const li = el('div', 'note-formulaire');
-      li.appendChild(el('b', '', x.axe));
-      li.appendChild(el('span', '', x.note));
-      ul.appendChild(li);
-    });
-    conseq.appendChild(ul);
-    gauche.appendChild(conseq);
-
-    const s = G.corps.stats;
-    gauche.appendChild(U.stats([
-      [s.vigueur, 'Vigueur'], [s.flux, 'Flux'], [s.tranchant, 'Tranchant'],
-      [s.lucidite, 'Lucidité'], [s.inversion, 'Inversion'],
-    ]));
-    gauche.appendChild(U.stats([
-      [G.corps.pvMax, 'Points de vie'], [G.corps.enMax, 'Réserve'],
-      [G.corps.attaque, 'Attaque'], [Math.round(G.corps.crit * 100) + '%', 'Critique'],
-      [G.corps.puissance, 'Puissance'],
-    ]));
-
+    /* le numéro de dossier, et de quoi le faire circuler */
     const part = el('div', 'bloc');
-    part.appendChild(el('span', 'etiquette', 'Numéro de dossier'));
-    const lien = el('p', 'mono');
-    lien.style.cssText = 'font-size:1.3rem;letter-spacing:.16em;color:var(--or);-webkit-user-select:all;user-select:all';
+    part.appendChild(bandeau('Numéro de dossier', '整理番号'));
+    const lien = el('p', 'mono code-fiche');
     lien.textContent = G.code;
     part.appendChild(lien);
     const sous = el('p', 'discret');
-    sous.textContent = "Ce numéro contient la déclaration entière. Donnez-le à quelqu'un : le service lui montrera exactement ce que vous portez.";
+    sous.textContent = "Ce numéro contient la déclaration entière, la variante tirée et les poids du réceptacle. Donnez-le : le service ressortira exactement cette fiche.";
     part.appendChild(sous);
     const cp = U.bouton('Copier le lien', 'fantome', () => {
       const url = lienDe(G.code);
@@ -498,9 +442,9 @@
     cp.style.marginTop = '10px';
     part.appendChild(cp);
     gauche.appendChild(part);
-
     dossier.appendChild(gauche);
 
+    /* colonne de droite : sceau, grade, et les commandes du générateur */
     const droite = el('div', 'sceau-boite');
     const cvs = el('canvas', 'sceau-rot');
     cvs.style.width = '100%';
@@ -512,16 +456,317 @@
     gl.textContent = g.nom + (g.description ? ' — ' + g.description : '');
     leg.appendChild(gl);
     droite.appendChild(leg);
+
+    const outils = el('div', 'outils-generateur');
+    outils.appendChild(el('span', 'etiquette', '抽選 · tirage'));
+    const varLigne = el('p', 'discret');
+    varLigne.innerHTML = 'Variante <b class="mono or">' + (t.variante + 1) + '</b> sur ' + T().VARIANTES +
+      '. La déclaration fixe les familles ; elle ne fixe pas tout.';
+    outils.appendChild(varLigne);
+    outils.appendChild(U.bouton('Retirer au sort', 'rouge large', () => {
+      G.variante = T().codeVariante((G.variante || 0) + 1);
+      assembler();
+      revelation({ rapide: true });
+    }));
+    outils.appendChild(U.bouton('Voir six variantes', 'large', galerie));
+    outils.appendChild(U.bouton('Modifier une rubrique', 'large', rubriques));
+    droite.appendChild(outils);
     dossier.appendChild(droite);
 
     n.appendChild(dossier);
     requestAnimationFrame(() => JJK.fx.sigil(cvs, t.code, { size: cvs.clientWidth || 320, accent: t.couleur }));
 
     const r = U.rangee();
-    r.appendChild(U.bouton('Prêter serment', 'rouge', serments));
+    r.appendChild(U.bouton('Prêter serment et descendre', '', serments));
     r.appendChild(U.bouton('Descendre sans rien signer', 'fantome', () => { G.serments = []; assembler(); descente(); }));
     r.appendChild(U.bouton('Refaire une déclaration', 'fantome', declaration));
     n.appendChild(r);
+  }
+
+  /* =====================================================================
+     GALERIE — six 生得術式 issus de la même déclaration
+     ===================================================================== */
+  function galerie() {
+    const n = U.montrer('ecran-galerie');
+    n.innerHTML = '';
+    n.appendChild(el('span', 'etiquette rouge', '生得術式 · tirages issus de votre déclaration'));
+    n.appendChild(U.titreRituel('Six lois <em>possibles</em>'));
+    const p = el('p', 'discret');
+    p.style.maxWidth = '66ch';
+    p.textContent = "Votre déclaration a fixé les familles : le substrat, l'archétype de la loi, la clause, le territoire, le siège. À l'intérieur de ces limites, le réel a encore le choix. Voici six porteurs qui auraient rempli le même formulaire que vous.";
+    n.appendChild(p);
+
+    const grille = el('div', 'galerie');
+    const base = G.variante || 0;
+    for (let k = 0; k < 6; k++) {
+      const v = T().codeVariante(base + k);
+      const t = JJK.forge.forgeDepuisDeclaration(G.declaration, v);
+      const c = el('div', 'carte-variante' + (v === base ? ' actuelle' : ''));
+      const cv = el('canvas', 'sceau-mini');
+      c.appendChild(cv);
+      const h = el('h4', '', t.nom);
+      c.appendChild(h);
+      c.appendChild(el('div', 'jp faible', t.nomJp + ' · ' + t.romaji));
+      const l = el('p', 'clause');
+      l.textContent = t.loi.enonce || t.loi.nom;
+      c.appendChild(l);
+      const meta = el('div', 'meta-variante');
+      meta.appendChild(el('span', '', t.essence.nom));
+      if (t.jubaku) { const b = el('span', 'or', '天与呪縛'); meta.appendChild(b); }
+      if (v === base) meta.appendChild(el('span', 'sang', 'tirage actuel'));
+      c.appendChild(meta);
+      c.addEventListener('click', () => {
+        G.variante = v; assembler(); JJK.audio.tick(620, 0.04, 0.07);
+        revelation({ rapide: true });
+      });
+      grille.appendChild(c);
+      requestAnimationFrame(() => JJK.fx.sigil(cv, t.code, { size: 150, accent: t.couleur }));
+    }
+    n.appendChild(grille);
+    const r = U.rangee();
+    r.appendChild(U.bouton('Revenir à la fiche', 'fantome', () => revelation({ rapide: true })));
+    r.appendChild(U.bouton('Six tirages de plus', '', () => { G.variante = T().codeVariante((G.variante || 0) + 6); galerie(); }));
+    n.appendChild(r);
+  }
+
+  /* =====================================================================
+     RUBRIQUES — revenir sur une seule ligne du formulaire
+     ===================================================================== */
+  function rubriques() {
+    const n = U.montrer('ecran-rubriques');
+    n.innerHTML = '';
+    n.appendChild(el('span', 'etiquette rouge', '申告 · déclaration enregistrée'));
+    n.appendChild(U.titreRituel('Corriger une <em>rubrique</em>'));
+    const p = el('p', 'discret');
+    p.style.maxWidth = '66ch';
+    p.textContent = "Le service accepte les corrections. Chaque ligne modifiée reforge la technique : c'est la même procédure, pas le même dossier.";
+    n.appendChild(p);
+
+    const f = formulaire();
+    const liste = el('div', 'liste-rubriques');
+    f.questions.slice().sort((a, b) => (a.numero || 0) - (b.numero || 0)).forEach(q => {
+      const tag = G.declaration[q.axe];
+      const rep = (q.reponses || []).find(x => x.tag === tag);
+      const c = el('button', 'rubrique-ligne');
+      c.appendChild(el('b', '', q.intitule || q.axe));
+      c.appendChild(el('span', 'valeur', rep ? rep.texte : String(tag)));
+      const eff = T().effet(q.axe, tag);
+      if (eff && eff.note) c.appendChild(el('span', 'effet', eff.note));
+      c.addEventListener('click', () => corriger(q));
+      liste.appendChild(c);
+    });
+    n.appendChild(liste);
+    const r = U.rangee();
+    r.appendChild(U.bouton('Revenir à la fiche', 'fantome', () => revelation({ rapide: true })));
+    n.appendChild(r);
+  }
+
+  async function corriger(q) {
+    const n = U.montrer('ecran-rubriques');
+    n.innerHTML = '';
+    n.appendChild(el('span', 'etiquette rouge', 'Correction · ' + (q.intitule || q.axe)));
+    const h = el('h2', 'question-texte');
+    n.appendChild(h);
+    await JJK.fx.type(h, q.question, { speed: 14 });
+    if (q.precision) {
+      const p = el('p', 'precision');
+      n.appendChild(p);
+      await JJK.fx.type(p, q.precision, { speed: 10, sound: false });
+    }
+    const liste = el('div', 'reponses');
+    n.appendChild(liste);
+    const choix = await choisirDansListe(liste, q.reponses, 'consequence');
+    const tag = T().tagValide(q.axe, choix.tag) ? choix.tag : T().AXE[q.axe].tags[0];
+    G.declaration[q.axe] = tag;
+    assembler();
+    await wait(420);
+    revelation({ rapide: true });
+  }
+
+  /* =====================================================================
+     LA FICHE — c'est le produit. Tout le reste sert à l'obtenir.
+     ===================================================================== */
+  const SECTIONS = [
+    { cle: 'loi',      libelle: 'Énoncé de la technique', kanji: '生得術式' },
+    { cle: 'constat',  libelle: 'Constat', kanji: '所見' },
+    { cle: 'junten',   libelle: 'Application directe', kanji: '術式順転' },
+    { cle: 'vecteur',  libelle: 'Clause d\'énonciation', kanji: '発動条件' },
+    { cle: 'faille',   libelle: 'Faille structurelle', kanji: '弱点' },
+    { cle: 'hanten',   libelle: 'Technique inversée', kanji: '反転術式' },
+    { cle: 'maximum',  libelle: 'Technique maximale', kanji: '術式最大' },
+    { cle: 'kakucho',  libelle: 'Extension de technique', kanji: '術式拡張' },
+    { cle: 'kanri',    libelle: 'Territoire simplifié', kanji: '簡易領域' },
+    { cle: 'ryoiki',   libelle: 'Extension du territoire', kanji: '領域展開' },
+    { cle: 'kokusen',  libelle: 'Aptitude à l\'Éclair Noir', kanji: '黒閃' },
+    { cle: 'jubaku',   libelle: 'Restriction céleste', kanji: '天与呪縛' },
+  ];
+
+  function bandeau(libelle, kanji, rouge) {
+    const b = el('div', 'bandeau-section');
+    b.appendChild(el('span', 'etiquette' + (rouge ? ' rouge' : ''), libelle));
+    if (kanji) b.appendChild(el('span', 'kanji-section jp', kanji));
+    return b;
+  }
+
+  function section(libelle, kanji, contenu, cls) {
+    const b = el('div', 'bloc ' + (cls || ''));
+    b.appendChild(bandeau(libelle, kanji, cls === 'loi'));
+    if (typeof contenu === 'string') {
+      const p = el('p', cls === 'loi' ? 'enonce' : '');
+      p.textContent = contenu;
+      b.appendChild(p);
+    } else if (contenu) b.appendChild(contenu);
+    return b;
+  }
+
+  /* Construit la colonne de gauche d'une fiche. Utilisée à la nomination
+     comme à la consultation : une fiche est une fiche. */
+  function corpsDeFiche(t, corps, opts) {
+    const o = opts || {};
+    const g = el('div');
+    g.appendChild(el('span', 'etiquette rouge', '生得術式 · ' + (t.essence.emotion_source || 'origine non établie')));
+    g.appendChild(el('h1', 'nom-technique', t.nom));
+    const jl = el('div', 'nom-jp');
+    jl.textContent = t.nomJp + ' · ' + t.romaji;
+    g.appendChild(jl);
+    g.appendChild(el('hr', 'trait'));
+
+    g.appendChild(section(SECTIONS[0].libelle, SECTIONS[0].kanji, t.loi.enonce || t.loi.nom, 'loi'));
+    const desc = JJK.forge.dossier(t);
+    if (desc) g.appendChild(section(SECTIONS[1].libelle, SECTIONS[1].kanji, desc));
+    if (t.junten) g.appendChild(section(SECTIONS[2].libelle, SECTIONS[2].kanji, t.junten));
+    if (t.vecteur && t.vecteur.condition) {
+      g.appendChild(section(SECTIONS[3].libelle + ' — ' + t.vecteur.nom, SECTIONS[3].kanji, t.vecteur.condition));
+    }
+    if (!t.tenu.portee) {
+      const w = section('Réserve du service', '照合', "La portée déclarée et la clause d'énonciation ne se rencontrent pas dans le réel. Le service a retenu la clause : c'est elle qui décide où la loi s'applique.");
+      w.querySelector('p').style.color = 'var(--sang-vif)';
+      g.appendChild(w);
+    }
+    if (t.loi.limite) g.appendChild(section(SECTIONS[4].libelle, SECTIONS[4].kanji, t.loi.limite));
+    if (t.hanten) g.appendChild(section(SECTIONS[5].libelle, SECTIONS[5].kanji, t.hanten));
+    if (t.maximum) g.appendChild(section(SECTIONS[6].libelle, SECTIONS[6].kanji, t.maximum));
+
+    if (t.kakucho) {
+      const d = el('div');
+      const h = el('p', 'sous-nom');
+      h.textContent = t.kakucho.nom;
+      d.appendChild(h);
+      if (t.kakucho.kanji) d.appendChild(el('div', 'jp faible', t.kakucho.kanji + (t.kakucho.romaji ? ' · ' + t.kakucho.romaji : '')));
+      if (t.kakucho.principe) { const p = el('p'); p.style.marginTop = '10px'; p.textContent = t.kakucho.principe; d.appendChild(p); }
+      if (t.kakucho.usage) { const p = el('p', 'discret'); p.textContent = t.kakucho.usage; d.appendChild(p); }
+      if (t.kakucho.cout) { const p = el('p', 'cout-ligne'); p.textContent = '↳ ' + t.kakucho.cout; d.appendChild(p); }
+      g.appendChild(section(SECTIONS[7].libelle, SECTIONS[7].kanji, d));
+    }
+
+    if (t.kanri) {
+      const d = el('div');
+      const h = el('p', 'sous-nom');
+      h.textContent = t.kanri.nom;
+      d.appendChild(h);
+      if (t.kanri.kanji) d.appendChild(el('div', 'jp faible', t.kanri.kanji + (t.kanri.romaji ? ' · ' + t.kanri.romaji : '')));
+      if (t.kanri.forme) { const p = el('p'); p.style.marginTop = '10px'; p.textContent = t.kanri.forme; d.appendChild(p); }
+      if (t.kanri.effet) { const p = el('p', 'discret'); p.textContent = t.kanri.effet; d.appendChild(p); }
+      if (t.kanri.limite) { const p = el('p', 'cout-ligne'); p.textContent = '↳ ' + t.kanri.limite; d.appendChild(p); }
+      g.appendChild(section(SECTIONS[8].libelle, SECTIONS[8].kanji, d));
+    }
+
+    if (t.domaine) {
+      const d = el('div');
+      const h = el('p', 'sous-nom grand');
+      h.textContent = t.domaine.nom_fr;
+      d.appendChild(h);
+      d.appendChild(el('div', 'jp faible', (t.domaine.nom_jp || '') + ' · ' + (t.domaine.romaji || '')));
+      if (t.domaine.paysage) { const p = el('p'); p.style.marginTop = '10px'; p.textContent = t.domaine.paysage; d.appendChild(p); }
+      if (t.domaine.incantation) {
+        const inc = el('div', 'incantation-fiche');
+        String(t.domaine.incantation).replace(/([.;])\s+/g, '$1\n').split(/\n|\s*\/\s*/).filter(Boolean)
+          .forEach(v => inc.appendChild(el('p', '', v.trim())));
+        d.appendChild(inc);
+      }
+      if (t.domaine.effet_garanti) {
+        const e2 = el('p', 'serif-italique');
+        e2.style.cssText = 'margin-top:12px;color:var(--sang-vif)';
+        e2.textContent = '↯ Coup au but — ' + t.domaine.effet_garanti;
+        d.appendChild(e2);
+      }
+      if (t.domaine.faille) { const p = el('p', 'cout-ligne'); p.textContent = '↳ ' + t.domaine.faille; d.appendChild(p); }
+      g.appendChild(section(SECTIONS[9].libelle, SECTIONS[9].kanji, d));
+    }
+
+    if (t.kokusen) {
+      const d = el('div');
+      const h = el('p', 'sous-nom');
+      h.textContent = t.kokusen.aptitude;
+      d.appendChild(h);
+      if (t.kokusen.description) { const p = el('p'); p.style.marginTop = '8px'; p.textContent = t.kokusen.description; d.appendChild(p); }
+      g.appendChild(section(SECTIONS[10].libelle, SECTIONS[10].kanji, d));
+    }
+
+    if (t.jubaku) {
+      const d = el('div', 'jubaku');
+      const h = el('p', 'sous-nom or');
+      h.textContent = t.jubaku.nom;
+      d.appendChild(h);
+      d.appendChild(el('div', 'jp faible', (t.jubaku.kanji || '天与呪縛') + ' · ' + (t.jubaku.romaji || "ten'yo-jubaku")));
+      const pv = el('p', 'privation');
+      pv.textContent = t.jubaku.privation;
+      d.appendChild(pv);
+      const cp = el('p', 'contrepartie');
+      cp.textContent = t.jubaku.contrepartie;
+      d.appendChild(cp);
+      if (t.jubaku.constat) { const p = el('p', 'cout-ligne'); p.textContent = '↳ ' + t.jubaku.constat; d.appendChild(p); }
+      const mec = el('div', 'echange');
+      mec.style.marginTop = '12px';
+      mec.appendChild(el('span', 'perte', t.jubaku.perte));
+      mec.appendChild(el('span', 'gain', t.jubaku.gain));
+      d.appendChild(mec);
+      g.appendChild(section(SECTIONS[11].libelle, SECTIONS[11].kanji, d));
+    }
+
+    if (t.contre) {
+      const w = section('Neutralisation connue', '対策', t.contre);
+      w.querySelector('p').classList.add('discret');
+      g.appendChild(w);
+    }
+    if (t.affectation) {
+      const d = el('div');
+      const h = el('p', 'sous-nom');
+      h.textContent = t.affectation.intitule;
+      d.appendChild(h);
+      if (t.affectation.motif) { const p = el('p', 'discret'); p.style.marginTop = '6px'; p.textContent = t.affectation.motif; d.appendChild(p); }
+      g.appendChild(section('Affectation — 上層部', '配属', d));
+    }
+
+    if (o.notes && corps && corps.profil) {
+      const conseq = el('div', 'bloc');
+      conseq.appendChild(bandeau('Conséquences de votre déclaration', '申告', true));
+      const ul = el('div', 'notes-formulaire');
+      corps.profil.notes.forEach(x => {
+        const li = el('div', 'note-formulaire');
+        li.appendChild(el('b', '', x.axe));
+        li.appendChild(el('span', '', x.note));
+        ul.appendChild(li);
+      });
+      conseq.appendChild(ul);
+      g.appendChild(conseq);
+    }
+
+    if (corps) {
+      const st = corps.stats;
+      g.appendChild(U.stats([
+        [st.vigueur, 'Vigueur'], [st.flux, 'Flux'], [st.tranchant, 'Tranchant'],
+        [st.lucidite, 'Lucidité'], [st.inversion, 'Inversion'],
+      ]));
+      if (o.chiffres !== false) {
+        g.appendChild(U.stats([
+          [corps.pvMax, 'Points de vie'], [corps.enMax, '呪力 max'],
+          [corps.attaque, 'Attaque'], [Math.round(corps.crit * 100) + '%', 'Critique'],
+          [corps.puissance, 'Puissance'],
+        ]));
+      }
+    }
+    return g;
   }
 
   function lienDe(code) { return location.href.split('#')[0] + '#d=' + encodeURIComponent(code); }
@@ -539,47 +784,37 @@
     U.calmer();
     const n = U.montrer('ecran-consultation');
     n.innerHTML = '';
-    const tech = JJK.forge.forgeDepuisDeclaration(lu.declaration);
-    const ref = JJK.forge.forgeReceptacle(lu.declaration, lu.poids);
+    const tech = JJK.forge.forgeDepuisDeclaration(lu.declaration, lu.variante || 0);
+    const ref = JJK.forge.forgeReceptacle(lu.declaration, lu.poids, tech.jubaku);
     JJK.fx.setHue(tech.couleur, '#f2c14e');
     JJK.fx.setIntensity(0.4);
 
     const flux = el('div');
     n.appendChild(flux);
-    await U.dire(flux, "On vous a communiqué un numéro de dossier.", { apres: 320 });
-    await U.dire(flux, "Le service ne fabrique rien. Il ressort la fiche.", { forte: true, apres: 380 });
+    await U.dire(flux, "On vous a communiqué un numéro de dossier.", { apres: 300 });
+    await U.dire(flux, "Le service ne fabrique rien. Il ressort la fiche.", { forte: true, apres: 340 });
     JJK.audio.oath();
     JJK.fx.flash('#b31217', 800);
-    await wait(400);
+    await wait(380);
     flux.remove();
 
     const d = el('div', 'dossier');
-    const g2 = el('div');
-    g2.appendChild(el('span', 'etiquette rouge', 'Consultation · lecture seule'));
-    g2.appendChild(el('h1', 'nom-technique', tech.nom));
-    g2.appendChild(el('div', 'nom-jp', tech.nomJp + ' · ' + tech.romaji));
-    g2.appendChild(el('hr', 'trait'));
-    g2.appendChild(U.bloc('La loi', tech.loi.enonce || tech.loi.nom, 'loi'));
-    const pr = JJK.forge.dossier(tech);
-    if (pr) g2.appendChild(U.bloc('Constat', pr));
-    if (tech.loi.limite) g2.appendChild(U.bloc('Faille structurelle', tech.loi.limite));
-    if (tech.domaine) g2.appendChild(U.bloc('Extension du territoire', tech.domaine.nom_fr + ' — ' + (tech.domaine.effet_garanti || '')));
+    const gauche = corpsDeFiche(tech, ref, { notes: false, chiffres: false });
     const decl = el('div', 'bloc');
-    decl.appendChild(el('span', 'etiquette', 'Déclaration enregistrée'));
+    decl.appendChild(bandeau('Déclaration enregistrée', '申告'));
     const dl = el('div', 'notes-formulaire');
+    const f = formulaire();
     T().AXES.forEach(a => {
+      const q = f.questions.find(x => x.axe === a.id);
+      const rep = q && (q.reponses || []).find(x => x.tag === lu.declaration[a.id]);
       const li = el('div', 'note-formulaire');
-      li.appendChild(el('b', '', a.id));
-      li.appendChild(el('span', '', String(lu.declaration[a.id]).replace(/_/g, ' ')));
+      li.appendChild(el('b', '', (q && q.intitule) || a.id));
+      li.appendChild(el('span', '', rep ? rep.texte : String(lu.declaration[a.id]).replace(/_/g, ' ')));
       dl.appendChild(li);
     });
     decl.appendChild(dl);
-    g2.appendChild(decl);
-    g2.appendChild(U.stats([
-      [ref.stats.vigueur, 'Vigueur'], [ref.stats.flux, 'Flux'], [ref.stats.tranchant, 'Tranchant'],
-      [ref.stats.lucidite, 'Lucidité'], [ref.stats.inversion, 'Inversion'],
-    ]));
-    d.appendChild(g2);
+    gauche.appendChild(decl);
+    d.appendChild(gauche);
 
     const dr = el('div', 'sceau-boite');
     const cvs = el('canvas', 'sceau-rot');
@@ -587,7 +822,7 @@
     dr.appendChild(cvs);
     const lg = el('p', 'discret centre');
     lg.style.marginTop = '14px';
-    lg.textContent = 'Dossier ' + T().dossierCode(lu.declaration, lu.poids, lu.archetype);
+    lg.textContent = 'Dossier ' + T().dossierCode(lu.declaration, lu.poids, lu.archetype, lu.variante || 0);
     dr.appendChild(lg);
     d.appendChild(dr);
     n.appendChild(d);
@@ -597,9 +832,10 @@
     r.appendChild(U.bouton('Reprendre ce dossier', 'rouge', () => {
       if (history.replaceState) history.replaceState(null, '', location.href.split('#')[0]);
       G.declaration = lu.declaration; G.poids = lu.poids; G.archetype = lu.archetype;
+      G.variante = lu.variante || 0;
       if (!G.porteur) G.porteur = 'sans nom';
       assembler();
-      revelation();
+      revelation({ rapide: true });
     }));
     r.appendChild(U.bouton('Ouvrir mon propre dossier', 'fantome', () => {
       if (history.replaceState) history.replaceState(null, '', location.href.split('#')[0]);
@@ -623,8 +859,8 @@
     const cap = capSerments();
     while (G.serments.length > cap) G.serments.pop();
 
-    n.appendChild(el('span', 'etiquette rouge', 'Serments contraignants'));
-    n.appendChild(el('h1', 'titre-rituel', 'Ce que vous <em>rendez</em>'));
+    n.appendChild(el('span', 'etiquette rouge', '縛り · serments contraignants'));
+    n.appendChild(U.titreRituel('Ce que vous <em>rendez</em>'));
     const p = el('p');
     p.style.cssText = 'max-width:62ch;font-weight:300;color:var(--os-faible)';
     p.textContent = "Un serment n'est pas une amélioration : c'est une amputation payée d'avance. Vous perdez réellement ce qui est écrit, dans ce jeu, tout de suite. " +
@@ -700,12 +936,12 @@
     const missions = (C().ambiance || {}).missions || [];
     const mission = missions.length ? missions[(G.descente + Math.floor(Math.random() * missions.length)) % missions.length] : null;
 
-    n.appendChild(el('span', 'etiquette rouge', 'Ordre de mission ' + (G.descente + 1)));
-    n.appendChild(el('h1', 'titre-rituel', 'Ce qui vous <em>ouvrira</em>'));
+    n.appendChild(el('span', 'etiquette rouge', '任務 · ordre de mission ' + (G.descente + 1)));
+    n.appendChild(U.titreRituel('Ce qui vous <em>ouvrira</em>'));
 
     if (mission) {
       const m = el('div', 'ordre-mission');
-      m.appendChild(el('div', 'etiquette', 'Secteur'));
+      m.appendChild(el('div', 'etiquette', '帳 · secteur à voiler'));
       m.appendChild(el('p', 'lieu-mission', mission.lieu));
       m.appendChild(el('p', 'signalement', mission.signalement));
       if (mission.consigne) m.appendChild(el('p', 'consigne', '« ' + mission.consigne + ' »'));
@@ -745,7 +981,7 @@
       if (estRevenant) c.style.borderColor = 'rgba(242,193,78,.5)';
       c.appendChild(el('h4', '', f.nom));
       const sg = el('div', 'etiquette' + (estRevenant ? ' or' : ''));
-      sg.textContent = 'Grade ' + (f.grade || '?') + (estRevenant ? ' · revenant' : '');
+      sg.textContent = '呪霊 · grade ' + (f.grade || '?') + (estRevenant ? ' · revenant' : '');
       c.appendChild(sg);
       if (f.apparence) { const p2 = el('p', 'clause'); p2.style.marginTop = '10px'; p2.textContent = f.apparence; c.appendChild(p2); }
       if (f.origine) { const p3 = el('p', 'discret'); p3.textContent = 'Né de : ' + f.origine; c.appendChild(p3); }
@@ -769,8 +1005,8 @@
     const n = U.montrer('ecran-registre');
     n.innerHTML = '';
     const r = M().lire();
-    n.appendChild(el('span', 'etiquette rouge', 'Registre'));
-    n.appendChild(el('h1', 'titre-rituel', 'Ceux qui sont <em>restés</em>'));
+    n.appendChild(el('span', 'etiquette rouge', '呪法帳 · registre'));
+    n.appendChild(U.titreRituel('Ceux qui sont <em>restés</em>'));
 
     n.appendChild(U.stats([
       [r.descentes, 'Descentes'], [r.victoires, 'Victoires'], [r.morts, 'Morts'],
@@ -822,13 +1058,13 @@
   function reinit() {
     G.tech = null; G.ref = null; G.corps = null; G.mods = null; G.declaration = null;
     G.poids = null; G.archetype = 'seuil'; G.code = null;
-    G.serments = []; G.reponsesExamen = []; G.maturation = 0; G.descente = 0;
+    G.serments = []; G.reponsesExamen = []; G.maturation = 0; G.descente = 0; G.variante = 0;
     G.catalogue = [];
     JJK.fx.setDead(0);
   }
 
   JJK.ecrans = {
-    seuil, declaration, examen, revelation, serments, descente, registre, consultation,
+    seuil, declaration, examen, revelation, galerie, rubriques, serments, descente, registre, consultation,
     reinit, assembler, appliquerMaturation, capSerments, gradeCible, courbe, lienDe, G,
   };
 })(window);

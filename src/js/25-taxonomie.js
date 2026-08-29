@@ -193,23 +193,37 @@
     return { poids, archetype };
   }
 
+  /* La variante : la déclaration fixe les familles, elle ne fixe pas tout.
+     Ce qui reste de latitude — quelle essence dans la famille, quelle loi
+     dans l'archétype, quel territoire, quelle matière — se retire au sort,
+     et ce tirage porte un numéro. Deux porteurs peuvent déclarer la même
+     chose et ne pas porter la même loi : ils n'ont pas le même 生得術式.  */
+  const VARIANTES = 36;
+  function codeVariante(v) { return (((v | 0) % VARIANTES) + VARIANTES) % VARIANTES; }
+
   const VERSION = 'R1';
-  function dossierCode(decl, poids, archetype) {
-    return VERSION + '-' + codeDeclaration(decl) + '-' + codeCorps(poids, archetype);
+  function dossierCode(decl, poids, archetype, variante) {
+    const v = codeVariante(variante || 0);
+    return VERSION + '-' + codeDeclaration(decl) + '-' + codeCorps(poids, archetype) +
+      (v ? '-' + v.toString(36).toUpperCase() : '');
   }
   function lireDossierCode(s) {
-    const m = /^([A-Z0-9]+)-([A-Z0-9]+)-([A-Z0-9]+)$/i.exec(String(s || '').trim());
+    const m = /^([A-Z0-9]+)-([A-Z0-9]+)-([A-Z0-9]+)(?:-([A-Z0-9]))?$/i.exec(String(s || '').trim());
     if (!m) return null;
     const decl = declarationDepuisCode(m[2]);
     const corps = corpsDepuisCode(m[3]);
     if (!decl || !corps) return null;
-    return { version: m[1].toUpperCase(), declaration: decl, poids: corps.poids, archetype: corps.archetype };
+    const v = m[4] ? parseInt(m[4], 36) : 0;
+    return {
+      version: m[1].toUpperCase(), declaration: decl, poids: corps.poids,
+      archetype: corps.archetype, variante: isFinite(v) ? codeVariante(v) : 0,
+    };
   }
 
   JJK.taxo = {
     AXES, AXE, AXES_CORPS, ARCH_LISTE, ESSENCES, ARCHETYPES, PORTEES, CONDITIONS,
     TERRITOIRES, SIEGES, EFFETS, effet, tagValide,
     codeDeclaration, declarationDepuisCode, codeCorps, corpsDepuisCode,
-    dossierCode, lireDossierCode, VERSION,
+    dossierCode, lireDossierCode, codeVariante, VERSION, VARIANTES,
   };
 })(window);

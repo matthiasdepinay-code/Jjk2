@@ -20,6 +20,7 @@
     domain: null,         /* territoire ouvert : { spec, born, sigilSeed, geo } */
     pulses: [],
     slashes: [],
+    eclairs: [],
     reduced: false,
     dead: 0,              /* 0..1 : la vue se dégrade quand on meurt */
   };
@@ -181,6 +182,8 @@
       x.stroke();
       x.restore();
     }
+
+    drawEclairs(x, t);
 
     /* la mort salit l'objectif */
     if (state.dead > 0) {
@@ -521,6 +524,73 @@
     document.body.classList.remove('in-domain');
   }
 
+  /* ---- 黒閃 : l'espace se fend ----------------------------------------
+     Ce n'est pas une lueur, c'est une fracture. Le trait est NOIR, cerné
+     d'un liseré blanc, et il fait un trou dans l'image.                  */
+  function eclair() {
+    const t = (now() - t0) / 1000;
+    const cx = W * chaos.r(0.35, 0.65), cy = H * chaos.r(0.35, 0.65);
+    /* une fracture, pas un éclair : des segments courts, très anguleux,
+       qui repartent dans tous les sens depuis un seul point d'impact */
+    const branches = [];
+    for (let b = 0; b < 5; b++) {
+      const pts = [[cx, cy]];
+      let a = (b / 5) * 6.2832 + chaos.r(-0.5, 0.5), x = cx, y = cy;
+      const seg = 12 + chaos.i(7);
+      for (let i = 0; i < seg; i++) {
+        a += chaos.r(-1.25, 1.25);
+        const l = chaos.r(18, 62);
+        x += Math.cos(a) * l; y += Math.sin(a) * l;
+        pts.push([x, y]);
+        /* éclats latéraux : la fissure essaime */
+        if (chaos.f() < 0.22) {
+          const a2 = a + chaos.r(-2, 2), l2 = chaos.r(14, 44);
+          branches.push([[x, y], [x + Math.cos(a2) * l2, y + Math.sin(a2) * l2]]);
+        }
+      }
+      branches.push(pts);
+    }
+    state.eclairs.push({ branches, t, dur: 0.85, x: cx, y: cy });
+    if (!state.reduced) { state.shake = Math.max(state.shake, 1.5); }
+    /* le filtre porte sur BODY : appliqué à <html>, Chromium ne le peint pas */
+    document.body.classList.add('en-kokusen');
+    setTimeout(() => document.body.classList.remove('en-kokusen'), 560);
+  }
+
+  function drawEclairs(x, t) {
+    for (let i = state.eclairs.length - 1; i >= 0; i--) {
+      const e = state.eclairs[i];
+      const k = (t - e.t) / e.dur;
+      if (k >= 1) { state.eclairs.splice(i, 1); continue; }
+      const ouvre = ease.out(clamp(k * 3, 0, 1));
+      const fade = k < 0.45 ? 1 : 1 - (k - 0.45) / 0.55;
+      /* halo blanc : le bord de la fracture */
+      x.save();
+      x.lineCap = 'round'; x.lineJoin = 'round';
+      e.branches.forEach(pts => {
+        const n2 = Math.max(2, Math.floor(pts.length * ouvre));
+        x.strokeStyle = 'rgba(255,255,255,' + (fade * 0.95) + ')';
+        x.lineWidth = 19;
+        x.beginPath(); x.moveTo(pts[0][0], pts[0][1]);
+        for (let j = 1; j < n2; j++) x.lineTo(pts[j][0], pts[j][1]);
+        x.stroke();
+        x.strokeStyle = 'rgba(0,0,0,' + fade + ')';
+        x.lineWidth = 13;
+        x.beginPath(); x.moveTo(pts[0][0], pts[0][1]);
+        for (let j = 1; j < n2; j++) x.lineTo(pts[j][0], pts[j][1]);
+        x.stroke();
+      });
+      /* le point d'impact : un disque noir cerné de blanc */
+      const r = 34 * ouvre * (1 + k * 0.9);
+      x.strokeStyle = 'rgba(255,255,255,' + (fade * 0.9) + ')';
+      x.lineWidth = 9;
+      x.beginPath(); x.arc(e.x, e.y, r, 0, 6.2832); x.stroke();
+      x.fillStyle = 'rgba(0,0,0,' + (fade * 0.92) + ')';
+      x.beginPath(); x.arc(e.x, e.y, r * 0.82, 0, 6.2832); x.fill();
+      x.restore();
+    }
+  }
+
   /* ---- le Voile (帳) --------------------------------------------------
      Avant d'intervenir, on abaisse un rideau sur le secteur. Personne, au
      dehors, ne verra rien. C'est le seul geste que tous les exorcistes
@@ -591,7 +661,7 @@
 
   JJK.fx = {
     mount, resize, shake, pulse, slash, ink, inkFade, inkClear, invert, flash,
-    sigil, domainOpen, domainClose, type, mutilate, voile, setIntensity, setHue, setDead, reduit,
+    sigil, domainOpen, domainClose, type, mutilate, voile, eclair, setIntensity, setHue, setDead, reduit,
     hexA, state,
     get size() { return { W, H }; },
   };

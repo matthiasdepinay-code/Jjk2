@@ -209,10 +209,13 @@
 
   function T() { return JJK.taxo; }
 
-  function parFamille(entrees, ids) {
+  /* Une entrée appartient à une famille soit parce que la taxonomie le dit,
+     soit parce qu'elle porte elle-même le champ. Ainsi, ajouter une essence
+     au corpus avec sa famille suffit : rien à recâbler ici.              */
+  function parFamille(entrees, ids, famille) {
     const set = {};
     (ids || []).forEach(i => { set[i] = 1; });
-    const gardes = entrees.filter(e => set[e.id]);
+    const gardes = entrees.filter(e => set[e.id] || (famille && e.famille === famille));
     return gardes.length ? gardes : entrees;
   }
 
@@ -224,9 +227,64 @@
     return R.pick(notes.slice(0, Math.max(1, Math.min(top || 3, notes.length)))).o;
   }
 
-  function forgeDepuisDeclaration(decl) {
+  /* accès à une sous-liste nommée du corpus, sans supposer sa présence */
+  function sousListe(cle, sous) {
+    const bloc = (C() || {})[cle];
+    if (!bloc) return [];
+    const v = bloc[sous];
+    return Array.isArray(v) ? v : [];
+  }
+
+  /* ---- 天与呪縛 : cinq formes mécaniques, habillées par le corpus ------
+     Une restriction céleste n'est pas signée : on naît avec. Elle prive
+     réellement, et ce qu'elle rend ne compense jamais tout à fait.       */
+  const FORMES_JUBAKU = [
+    { id: 'sansEnergie', mots: /énergie maudite|呪力|sans 呪力|réserve|aucun flux/i,
+      perte: 'Réserve de 呪力 réduite de moitié.', gain: 'Le corps compense : frappes trois fois plus lourdes.',
+      eff: { enMaxDelta: -5, frappeMult: 3.0, degatsMult: 0.85 } },
+    { id: 'sansVue', mots: /vue|yeux|voir|aveugle|regard|visage/i,
+      perte: 'Les points de vie adverses ne te seront jamais montrés.', gain: 'Tu lis le flux : +30 % de critique.',
+      eff: { masqueVieEnnemi: true, critBonus: 0.30 } },
+    { id: 'sansDouleur', mots: /douleur|souffrance|sentir|nerf|insensib/i,
+      perte: '−25 % de points de vie maximum : rien ne t\'avertit.', gain: 'Fracture et Saignée n\'ont pas de prise sur toi.',
+      eff: { pvMaxMult: 0.75, immunise: ['fracture', 'saignee'] } },
+    { id: 'sansSommeil', mots: /sommeil|dormir|nuit|repos|fatigue/i,
+      perte: '−15 % de points de vie maximum. Le corps ne se répare jamais tout à fait.', gain: '+2 呪力 par battement.',
+      eff: { pvMaxMult: 0.85, energieBonus: 2 } },
+    { id: 'sansAge', mots: /âge|vieilli|croissance|grandir|enfant|temps qui/i,
+      perte: '−20 % de dégâts : rien ne se durcit, jamais.', gain: '+30 % de points de vie maximum.',
+      eff: { degatsMult: 0.80, pvMaxMult: 1.30 } },
+  ];
+
+  function tirerJubaku(code, R) {
+    /* elle est rare : environ un porteur sur cinq en porte une */
+    if ((cyrb128('jubaku:' + code)[3] % 100) >= 22) return null;
+    const src = sousListe('jubaku', 'restrictions');
+    const forme = FORMES_JUBAKU[cyrb128('forme:' + code)[1] % FORMES_JUBAKU.length];
+    let choisi = null;
+    src.forEach(x => {
+      if (choisi) return;
+      const texte = [x.privation, x.nom, x.contrepartie].join(' ');
+      if (forme.mots.test(texte)) choisi = x;
+    });
+    if (!choisi && src.length) choisi = R.pick(src);
+    return {
+      id: forme.id,
+      nom: (choisi && choisi.nom) || 'Restriction céleste',
+      kanji: (choisi && choisi.kanji) || '天与呪縛', romaji: (choisi && choisi.romaji) || "ten'yo-jubaku",
+      privation: (choisi && choisi.privation) || forme.perte,
+      contrepartie: (choisi && choisi.contrepartie) || forme.gain,
+      constat: (choisi && choisi.constat) || '',
+      rarete: (choisi && choisi.rarete) || 3,
+      perte: forme.perte, gain: forme.gain, eff: forme.eff,
+    };
+  }
+
+  function forgeDepuisDeclaration(decl, variante) {
     const tx = T();
-    const code = tx.codeDeclaration(decl);
+    const codeBase = tx.codeDeclaration(decl);
+    const v = tx.codeVariante(variante || 0);
+    const code = codeBase + (v ? '/' + v : '');
     const R = new Rng('technique:' + code);
 
     const essences = liste('essences'), vecteurs = liste('vecteurs'), lois = liste('lois');
@@ -234,7 +292,7 @@
     const nomen = C().nomenclature || {};
 
     /* 1. le substrat choisit la famille d'essences */
-    const essence = choisir(parFamille(essences, tx.ESSENCES[decl.substrat]), 'e:' + code, R.fork('essence'), 3)
+    const essence = choisir(parFamille(essences, tx.ESSENCES[decl.substrat], decl.substrat), 'e:' + code, R.fork('essence'), 4)
       || { id: 'x', nom: 'La Cendre', kanji: '灰', romaji: 'hai', concept: '', sensoriel: '', couleur: '#b31217', emotion_source: '' };
 
     /* 2. l'opérateur restreint les archétypes de loi */
@@ -267,7 +325,7 @@
     };
 
     /* 4. le territoire déclaré choisit la famille d'extensions */
-    const domaine = choisir(parFamille(domaines, tx.TERRITOIRES[decl.territoire]), loi.id + ':' + code, R.fork('domaine'), 3) || null;
+    const domaine = choisir(parFamille(domaines, tx.TERRITOIRES[decl.territoire], decl.territoire), loi.id + ':' + code, R.fork('domaine'), 3) || null;
 
     /* 5. le siège choisit l'organe */
     const re = tx.SIEGES[decl.siege];
@@ -300,15 +358,33 @@
     const romaji = ((kp.r ? kp.r + '-' : '') + (essence.romaji || 'ju') + '-' + ks.r).replace(/--+/g, '-');
     const couleur = essence.couleur && /^#[0-9a-f]{3,8}$/i.test(essence.couleur) ? essence.couleur : '#b31217';
 
+    /* 術式拡張 : la même loi, prise sous un autre angle. On l'apparie par
+       archétype pour qu'elle découle vraiment de la loi du porteur. */
+    const kExt = sousListe('kakucho', 'extensions');
+    const kOk = kExt.filter(x => x.archetype === (loi.archetype || 'seuil'));
+    const kakucho = choisir(kOk.length ? kOk : kExt, 'k:' + code, R.fork('kakucho'), 3) || null;
+
+    /* 簡易領域 : une frontière, pas un paysage. Pas de coup au but. */
+    const kanri = R.fork('kanri').pick(sousListe('kanri', 'simplifies')) || null;
+    /* 黒閃 : on ne le provoque pas, on le reçoit. */
+    const kokusen = R.fork('kokusen').pick(sousListe('kanri', 'kokusen')) || null;
+    /* ce à quoi les 上層部 affectent ce porteur, et comment on le neutralise */
+    const affectation = R.fork('affectation').pick(sousListe('affectation', 'affectations')) || null;
+    const contre = R.fork('contre').pick(sousListe('affectation', 'contres')) || '';
+    const jubaku = tirerJubaku(code, R.fork('jubaku'));
+
     return {
-      declaration: decl, code,
+      declaration: decl, code, codeBase, variante: v,
       nom, nomJp, romaji, couleur,
       essence, vecteur, loi, domaine,
       matiere, nombre, lieu, organe,
       sigil: 'sceau:' + code,
       archetype: loi.archetype || 'seuil',
+      junten: loi.consequence || '',
+      hanten: loi.inversion || '',
       revers: loi.inversion || '',
       maximum: loi.maximum || '',
+      kakucho, kanri, kokusen, affectation, contre, jubaku,
       tenu,
     };
   }
@@ -340,9 +416,20 @@
      et le budget reste fixe : on ne peut pas être bon partout.           */
   const AXES = ['vigueur', 'flux', 'tranchant', 'lucidite', 'inversion'];
 
-  function forgeReceptacle(decl, poidsExamen) {
+  function forgeReceptacle(decl, poidsExamen, jubaku) {
     const tx = T();
     const prof = profilDeclaration(decl);
+    /* la restriction céleste n'a pas été signée : elle s'applique quand même */
+    if (jubaku && jubaku.eff) {
+      for (const k in jubaku.eff) {
+        const val = jubaku.eff[k];
+        if (typeof val === 'number') {
+          if (/Mult$/.test(k)) prof.mod[k] = (prof.mod[k] == null ? 1 : prof.mod[k]) * val;
+          else prof.mod[k] = (prof.mod[k] || 0) + val;
+        } else prof.mod[k] = val;
+      }
+      prof.notes.push({ axe: 'restriction', note: jubaku.perte + ' ' + jubaku.gain });
+    }
     const poids = poidsExamen || {};
     const code = tx.codeDeclaration(decl);
     const R = new Rng('corps:' + code + ':' + AXES.map(k => poids[k] || 0).join(''));
@@ -400,6 +487,7 @@
   JJK.forge = {
     forgeDepuisDeclaration, profilDeclaration, forgeReceptacle, grade, dossier,
     fr, decoupe, avecArticle, genreEssence, accorder, plurielDe, raccourcir, sansJointFinal,
+    sousListe, FORMES_JUBAKU,
     AXES, affinite, liste,
   };
 })(window);

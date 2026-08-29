@@ -638,6 +638,111 @@ body.domaine-calme .fiche { border-color: rgba(233, 226, 212, .3); }
   .reponse { padding: 12px 16px; }
 }
 
+/* ---- la fiche : c'est le produit -------------------------------------- */
+.bandeau-section {
+  display: flex; align-items: baseline; gap: 12px;
+  border-bottom: 1px dotted rgba(233, 226, 212, .14);
+  padding-bottom: 6px; margin-bottom: 10px;
+}
+.kanji-section {
+  margin-left: auto; font-size: 12px; letter-spacing: .3em;
+  color: var(--os-mort); opacity: .8;
+}
+.sous-nom { font-size: 1.3rem; font-weight: 300; margin: 0 0 2px; }
+.sous-nom.grand { font-size: 1.55rem; }
+.sous-nom.or { color: var(--or); }
+.cout-ligne {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+  color: var(--sang-vif); margin-top: 10px; line-height: 1.7;
+}
+.incantation-fiche {
+  margin-top: 14px; padding-left: 16px; border-left: 1px solid rgba(179, 18, 23, .4);
+}
+.incantation-fiche p {
+  margin: .1em 0; font-style: italic; font-weight: 300;
+  color: var(--os-faible); font-size: 1.02rem;
+}
+.jubaku { border-left: 2px solid var(--or); padding-left: 18px; }
+.jubaku .privation { margin-top: 12px; color: var(--sang-vif); font-weight: 300; }
+.jubaku .contrepartie { margin-top: 6px; color: var(--or); font-weight: 300; }
+.code-fiche {
+  font-size: 1.3rem; letter-spacing: .16em; color: var(--or);
+  -webkit-user-select: all; user-select: all; word-break: break-all;
+}
+
+/* ---- commandes du générateur ------------------------------------------ */
+.outils-generateur {
+  margin-top: 30px; border: var(--hair); padding: 18px 18px 20px;
+  background: linear-gradient(180deg, rgba(233, 226, 212, .025), transparent 70%);
+}
+.outils-generateur .btn { margin-top: 10px; }
+.outils-generateur > .discret { margin: 10px 0 4px; }
+
+/* ---- galerie de variantes --------------------------------------------- */
+.galerie {
+  display: grid; gap: 14px; margin-top: 26px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+.carte-variante {
+  border: var(--hair); padding: 18px 18px 16px; cursor: pointer;
+  transition: all .28s var(--ease); display: flex; flex-direction: column;
+}
+.carte-variante:hover { border-color: rgba(179, 18, 23, .6); transform: translateY(-3px); }
+.carte-variante.actuelle { border-color: var(--sang); }
+.carte-variante h4 { margin: 12px 0 3px; font-size: 1.15rem; font-weight: 400; line-height: 1.2; }
+.carte-variante .clause {
+  font-style: italic; font-weight: 300; color: var(--os-faible);
+  margin: 12px 0 0; font-size: .98rem; flex: 1;
+}
+.sceau-mini { width: 100%; max-width: 150px; height: auto; align-self: center; opacity: .9; }
+.meta-variante {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 14px;
+  font-family: var(--mono); font-size: 9px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--os-mort);
+}
+.meta-variante .or { color: var(--or); }
+.meta-variante .sang { color: var(--sang); }
+
+/* ---- correction d'une rubrique ---------------------------------------- */
+.liste-rubriques { margin-top: 24px; display: flex; flex-direction: column; gap: 2px; }
+.rubrique-ligne {
+  display: grid; grid-template-columns: 190px 1fr; gap: 18px; align-items: baseline;
+  text-align: left; background: transparent; border: 0;
+  border-bottom: 1px dotted rgba(233, 226, 212, .12);
+  padding: 14px 8px; cursor: pointer; color: var(--os-faible);
+  font-family: var(--serif); transition: all .24s var(--ease);
+}
+.rubrique-ligne:hover { background: rgba(179, 18, 23, .07); color: var(--os); padding-left: 18px; }
+.rubrique-ligne b {
+  font-family: var(--mono); font-size: 9px; font-weight: 400;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--os-mort);
+}
+.rubrique-ligne .valeur { font-weight: 300; font-size: 1.02rem; }
+.rubrique-ligne .effet {
+  grid-column: 2; font-family: var(--mono); font-size: 10px;
+  letter-spacing: .08em; color: var(--sang); opacity: .75; line-height: 1.6;
+}
+@media (max-width: 700px) {
+  .rubrique-ligne { grid-template-columns: 1fr; gap: 4px; }
+  .rubrique-ligne .effet { grid-column: 1; }
+}
+
+/* 黒閃 — pendant la fracture, l'image perd sa couleur et se durcit.
+   Le filtre porte sur body : sur <html>, Chromium calcule la règle mais
+   ne la peint pas. */
+body.en-kokusen #stage,
+body.en-kokusen #fx-veil,
+body.en-kokusen #fx-ink {
+  filter: grayscale(1) contrast(2.2) brightness(1.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  body.en-kokusen #stage { filter: grayscale(1) contrast(1.3); }
+}
+.journal .kokusen {
+  color: #fff; background: #000; padding: 1px 7px;
+  border: 1px solid var(--os); letter-spacing: .18em;
+}
+
 </style>
 
 </head>
@@ -1078,6 +1183,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     domain: null,         /* territoire ouvert : { spec, born, sigilSeed, geo } */
     pulses: [],
     slashes: [],
+    eclairs: [],
     reduced: false,
     dead: 0,              /* 0..1 : la vue se dégrade quand on meurt */
   };
@@ -1239,6 +1345,8 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       x.stroke();
       x.restore();
     }
+
+    drawEclairs(x, t);
 
     /* la mort salit l'objectif */
     if (state.dead > 0) {
@@ -1579,6 +1687,73 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     document.body.classList.remove('in-domain');
   }
 
+  /* ---- 黒閃 : l'espace se fend ----------------------------------------
+     Ce n'est pas une lueur, c'est une fracture. Le trait est NOIR, cerné
+     d'un liseré blanc, et il fait un trou dans l'image.                  */
+  function eclair() {
+    const t = (now() - t0) / 1000;
+    const cx = W * chaos.r(0.35, 0.65), cy = H * chaos.r(0.35, 0.65);
+    /* une fracture, pas un éclair : des segments courts, très anguleux,
+       qui repartent dans tous les sens depuis un seul point d'impact */
+    const branches = [];
+    for (let b = 0; b < 5; b++) {
+      const pts = [[cx, cy]];
+      let a = (b / 5) * 6.2832 + chaos.r(-0.5, 0.5), x = cx, y = cy;
+      const seg = 12 + chaos.i(7);
+      for (let i = 0; i < seg; i++) {
+        a += chaos.r(-1.25, 1.25);
+        const l = chaos.r(18, 62);
+        x += Math.cos(a) * l; y += Math.sin(a) * l;
+        pts.push([x, y]);
+        /* éclats latéraux : la fissure essaime */
+        if (chaos.f() < 0.22) {
+          const a2 = a + chaos.r(-2, 2), l2 = chaos.r(14, 44);
+          branches.push([[x, y], [x + Math.cos(a2) * l2, y + Math.sin(a2) * l2]]);
+        }
+      }
+      branches.push(pts);
+    }
+    state.eclairs.push({ branches, t, dur: 0.85, x: cx, y: cy });
+    if (!state.reduced) { state.shake = Math.max(state.shake, 1.5); }
+    /* le filtre porte sur BODY : appliqué à <html>, Chromium ne le peint pas */
+    document.body.classList.add('en-kokusen');
+    setTimeout(() => document.body.classList.remove('en-kokusen'), 560);
+  }
+
+  function drawEclairs(x, t) {
+    for (let i = state.eclairs.length - 1; i >= 0; i--) {
+      const e = state.eclairs[i];
+      const k = (t - e.t) / e.dur;
+      if (k >= 1) { state.eclairs.splice(i, 1); continue; }
+      const ouvre = ease.out(clamp(k * 3, 0, 1));
+      const fade = k < 0.45 ? 1 : 1 - (k - 0.45) / 0.55;
+      /* halo blanc : le bord de la fracture */
+      x.save();
+      x.lineCap = 'round'; x.lineJoin = 'round';
+      e.branches.forEach(pts => {
+        const n2 = Math.max(2, Math.floor(pts.length * ouvre));
+        x.strokeStyle = 'rgba(255,255,255,' + (fade * 0.95) + ')';
+        x.lineWidth = 19;
+        x.beginPath(); x.moveTo(pts[0][0], pts[0][1]);
+        for (let j = 1; j < n2; j++) x.lineTo(pts[j][0], pts[j][1]);
+        x.stroke();
+        x.strokeStyle = 'rgba(0,0,0,' + fade + ')';
+        x.lineWidth = 13;
+        x.beginPath(); x.moveTo(pts[0][0], pts[0][1]);
+        for (let j = 1; j < n2; j++) x.lineTo(pts[j][0], pts[j][1]);
+        x.stroke();
+      });
+      /* le point d'impact : un disque noir cerné de blanc */
+      const r = 34 * ouvre * (1 + k * 0.9);
+      x.strokeStyle = 'rgba(255,255,255,' + (fade * 0.9) + ')';
+      x.lineWidth = 9;
+      x.beginPath(); x.arc(e.x, e.y, r, 0, 6.2832); x.stroke();
+      x.fillStyle = 'rgba(0,0,0,' + (fade * 0.92) + ')';
+      x.beginPath(); x.arc(e.x, e.y, r * 0.82, 0, 6.2832); x.fill();
+      x.restore();
+    }
+  }
+
   /* ---- le Voile (帳) --------------------------------------------------
      Avant d'intervenir, on abaisse un rideau sur le secteur. Personne, au
      dehors, ne verra rien. C'est le seul geste que tous les exorcistes
@@ -1649,7 +1824,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
 
   JJK.fx = {
     mount, resize, shake, pulse, slash, ink, inkFade, inkClear, invert, flash,
-    sigil, domainOpen, domainClose, type, mutilate, voile, setIntensity, setHue, setDead, reduit,
+    sigil, domainOpen, domainClose, type, mutilate, voile, eclair, setIntensity, setHue, setDead, reduit,
     hexA, state,
     get size() { return { W, H }; },
   };
@@ -1852,24 +2027,38 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     return { poids, archetype };
   }
 
+  /* La variante : la déclaration fixe les familles, elle ne fixe pas tout.
+     Ce qui reste de latitude — quelle essence dans la famille, quelle loi
+     dans l'archétype, quel territoire, quelle matière — se retire au sort,
+     et ce tirage porte un numéro. Deux porteurs peuvent déclarer la même
+     chose et ne pas porter la même loi : ils n'ont pas le même 生得術式.  */
+  const VARIANTES = 36;
+  function codeVariante(v) { return (((v | 0) % VARIANTES) + VARIANTES) % VARIANTES; }
+
   const VERSION = 'R1';
-  function dossierCode(decl, poids, archetype) {
-    return VERSION + '-' + codeDeclaration(decl) + '-' + codeCorps(poids, archetype);
+  function dossierCode(decl, poids, archetype, variante) {
+    const v = codeVariante(variante || 0);
+    return VERSION + '-' + codeDeclaration(decl) + '-' + codeCorps(poids, archetype) +
+      (v ? '-' + v.toString(36).toUpperCase() : '');
   }
   function lireDossierCode(s) {
-    const m = /^([A-Z0-9]+)-([A-Z0-9]+)-([A-Z0-9]+)$/i.exec(String(s || '').trim());
+    const m = /^([A-Z0-9]+)-([A-Z0-9]+)-([A-Z0-9]+)(?:-([A-Z0-9]))?$/i.exec(String(s || '').trim());
     if (!m) return null;
     const decl = declarationDepuisCode(m[2]);
     const corps = corpsDepuisCode(m[3]);
     if (!decl || !corps) return null;
-    return { version: m[1].toUpperCase(), declaration: decl, poids: corps.poids, archetype: corps.archetype };
+    const v = m[4] ? parseInt(m[4], 36) : 0;
+    return {
+      version: m[1].toUpperCase(), declaration: decl, poids: corps.poids,
+      archetype: corps.archetype, variante: isFinite(v) ? codeVariante(v) : 0,
+    };
   }
 
   JJK.taxo = {
     AXES, AXE, AXES_CORPS, ARCH_LISTE, ESSENCES, ARCHETYPES, PORTEES, CONDITIONS,
     TERRITOIRES, SIEGES, EFFETS, effet, tagValide,
     codeDeclaration, declarationDepuisCode, codeCorps, corpsDepuisCode,
-    dossierCode, lireDossierCode, VERSION,
+    dossierCode, lireDossierCode, codeVariante, VERSION, VARIANTES,
   };
 })(window);
 
@@ -2086,10 +2275,13 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
 
   function T() { return JJK.taxo; }
 
-  function parFamille(entrees, ids) {
+  /* Une entrée appartient à une famille soit parce que la taxonomie le dit,
+     soit parce qu'elle porte elle-même le champ. Ainsi, ajouter une essence
+     au corpus avec sa famille suffit : rien à recâbler ici.              */
+  function parFamille(entrees, ids, famille) {
     const set = {};
     (ids || []).forEach(i => { set[i] = 1; });
-    const gardes = entrees.filter(e => set[e.id]);
+    const gardes = entrees.filter(e => set[e.id] || (famille && e.famille === famille));
     return gardes.length ? gardes : entrees;
   }
 
@@ -2101,9 +2293,64 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     return R.pick(notes.slice(0, Math.max(1, Math.min(top || 3, notes.length)))).o;
   }
 
-  function forgeDepuisDeclaration(decl) {
+  /* accès à une sous-liste nommée du corpus, sans supposer sa présence */
+  function sousListe(cle, sous) {
+    const bloc = (C() || {})[cle];
+    if (!bloc) return [];
+    const v = bloc[sous];
+    return Array.isArray(v) ? v : [];
+  }
+
+  /* ---- 天与呪縛 : cinq formes mécaniques, habillées par le corpus ------
+     Une restriction céleste n'est pas signée : on naît avec. Elle prive
+     réellement, et ce qu'elle rend ne compense jamais tout à fait.       */
+  const FORMES_JUBAKU = [
+    { id: 'sansEnergie', mots: /énergie maudite|呪力|sans 呪力|réserve|aucun flux/i,
+      perte: 'Réserve de 呪力 réduite de moitié.', gain: 'Le corps compense : frappes trois fois plus lourdes.',
+      eff: { enMaxDelta: -5, frappeMult: 3.0, degatsMult: 0.85 } },
+    { id: 'sansVue', mots: /vue|yeux|voir|aveugle|regard|visage/i,
+      perte: 'Les points de vie adverses ne te seront jamais montrés.', gain: 'Tu lis le flux : +30 % de critique.',
+      eff: { masqueVieEnnemi: true, critBonus: 0.30 } },
+    { id: 'sansDouleur', mots: /douleur|souffrance|sentir|nerf|insensib/i,
+      perte: '−25 % de points de vie maximum : rien ne t\'avertit.', gain: 'Fracture et Saignée n\'ont pas de prise sur toi.',
+      eff: { pvMaxMult: 0.75, immunise: ['fracture', 'saignee'] } },
+    { id: 'sansSommeil', mots: /sommeil|dormir|nuit|repos|fatigue/i,
+      perte: '−15 % de points de vie maximum. Le corps ne se répare jamais tout à fait.', gain: '+2 呪力 par battement.',
+      eff: { pvMaxMult: 0.85, energieBonus: 2 } },
+    { id: 'sansAge', mots: /âge|vieilli|croissance|grandir|enfant|temps qui/i,
+      perte: '−20 % de dégâts : rien ne se durcit, jamais.', gain: '+30 % de points de vie maximum.',
+      eff: { degatsMult: 0.80, pvMaxMult: 1.30 } },
+  ];
+
+  function tirerJubaku(code, R) {
+    /* elle est rare : environ un porteur sur cinq en porte une */
+    if ((cyrb128('jubaku:' + code)[3] % 100) >= 22) return null;
+    const src = sousListe('jubaku', 'restrictions');
+    const forme = FORMES_JUBAKU[cyrb128('forme:' + code)[1] % FORMES_JUBAKU.length];
+    let choisi = null;
+    src.forEach(x => {
+      if (choisi) return;
+      const texte = [x.privation, x.nom, x.contrepartie].join(' ');
+      if (forme.mots.test(texte)) choisi = x;
+    });
+    if (!choisi && src.length) choisi = R.pick(src);
+    return {
+      id: forme.id,
+      nom: (choisi && choisi.nom) || 'Restriction céleste',
+      kanji: (choisi && choisi.kanji) || '天与呪縛', romaji: (choisi && choisi.romaji) || "ten'yo-jubaku",
+      privation: (choisi && choisi.privation) || forme.perte,
+      contrepartie: (choisi && choisi.contrepartie) || forme.gain,
+      constat: (choisi && choisi.constat) || '',
+      rarete: (choisi && choisi.rarete) || 3,
+      perte: forme.perte, gain: forme.gain, eff: forme.eff,
+    };
+  }
+
+  function forgeDepuisDeclaration(decl, variante) {
     const tx = T();
-    const code = tx.codeDeclaration(decl);
+    const codeBase = tx.codeDeclaration(decl);
+    const v = tx.codeVariante(variante || 0);
+    const code = codeBase + (v ? '/' + v : '');
     const R = new Rng('technique:' + code);
 
     const essences = liste('essences'), vecteurs = liste('vecteurs'), lois = liste('lois');
@@ -2111,7 +2358,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     const nomen = C().nomenclature || {};
 
     /* 1. le substrat choisit la famille d'essences */
-    const essence = choisir(parFamille(essences, tx.ESSENCES[decl.substrat]), 'e:' + code, R.fork('essence'), 3)
+    const essence = choisir(parFamille(essences, tx.ESSENCES[decl.substrat], decl.substrat), 'e:' + code, R.fork('essence'), 4)
       || { id: 'x', nom: 'La Cendre', kanji: '灰', romaji: 'hai', concept: '', sensoriel: '', couleur: '#b31217', emotion_source: '' };
 
     /* 2. l'opérateur restreint les archétypes de loi */
@@ -2144,7 +2391,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     };
 
     /* 4. le territoire déclaré choisit la famille d'extensions */
-    const domaine = choisir(parFamille(domaines, tx.TERRITOIRES[decl.territoire]), loi.id + ':' + code, R.fork('domaine'), 3) || null;
+    const domaine = choisir(parFamille(domaines, tx.TERRITOIRES[decl.territoire], decl.territoire), loi.id + ':' + code, R.fork('domaine'), 3) || null;
 
     /* 5. le siège choisit l'organe */
     const re = tx.SIEGES[decl.siege];
@@ -2177,15 +2424,33 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     const romaji = ((kp.r ? kp.r + '-' : '') + (essence.romaji || 'ju') + '-' + ks.r).replace(/--+/g, '-');
     const couleur = essence.couleur && /^#[0-9a-f]{3,8}$/i.test(essence.couleur) ? essence.couleur : '#b31217';
 
+    /* 術式拡張 : la même loi, prise sous un autre angle. On l'apparie par
+       archétype pour qu'elle découle vraiment de la loi du porteur. */
+    const kExt = sousListe('kakucho', 'extensions');
+    const kOk = kExt.filter(x => x.archetype === (loi.archetype || 'seuil'));
+    const kakucho = choisir(kOk.length ? kOk : kExt, 'k:' + code, R.fork('kakucho'), 3) || null;
+
+    /* 簡易領域 : une frontière, pas un paysage. Pas de coup au but. */
+    const kanri = R.fork('kanri').pick(sousListe('kanri', 'simplifies')) || null;
+    /* 黒閃 : on ne le provoque pas, on le reçoit. */
+    const kokusen = R.fork('kokusen').pick(sousListe('kanri', 'kokusen')) || null;
+    /* ce à quoi les 上層部 affectent ce porteur, et comment on le neutralise */
+    const affectation = R.fork('affectation').pick(sousListe('affectation', 'affectations')) || null;
+    const contre = R.fork('contre').pick(sousListe('affectation', 'contres')) || '';
+    const jubaku = tirerJubaku(code, R.fork('jubaku'));
+
     return {
-      declaration: decl, code,
+      declaration: decl, code, codeBase, variante: v,
       nom, nomJp, romaji, couleur,
       essence, vecteur, loi, domaine,
       matiere, nombre, lieu, organe,
       sigil: 'sceau:' + code,
       archetype: loi.archetype || 'seuil',
+      junten: loi.consequence || '',
+      hanten: loi.inversion || '',
       revers: loi.inversion || '',
       maximum: loi.maximum || '',
+      kakucho, kanri, kokusen, affectation, contre, jubaku,
       tenu,
     };
   }
@@ -2217,9 +2482,20 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
      et le budget reste fixe : on ne peut pas être bon partout.           */
   const AXES = ['vigueur', 'flux', 'tranchant', 'lucidite', 'inversion'];
 
-  function forgeReceptacle(decl, poidsExamen) {
+  function forgeReceptacle(decl, poidsExamen, jubaku) {
     const tx = T();
     const prof = profilDeclaration(decl);
+    /* la restriction céleste n'a pas été signée : elle s'applique quand même */
+    if (jubaku && jubaku.eff) {
+      for (const k in jubaku.eff) {
+        const val = jubaku.eff[k];
+        if (typeof val === 'number') {
+          if (/Mult$/.test(k)) prof.mod[k] = (prof.mod[k] == null ? 1 : prof.mod[k]) * val;
+          else prof.mod[k] = (prof.mod[k] || 0) + val;
+        } else prof.mod[k] = val;
+      }
+      prof.notes.push({ axe: 'restriction', note: jubaku.perte + ' ' + jubaku.gain });
+    }
     const poids = poidsExamen || {};
     const code = tx.codeDeclaration(decl);
     const R = new Rng('corps:' + code + ':' + AXES.map(k => poids[k] || 0).join(''));
@@ -2277,6 +2553,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
   JJK.forge = {
     forgeDepuisDeclaration, profilDeclaration, forgeReceptacle, grade, dossier,
     fr, decoupe, avecArticle, genreEssence, accorder, plurielDe, raccourcir, sansJointFinal,
+    sousListe, FORMES_JUBAKU,
     AXES, affinite, liste,
   };
 })(window);
@@ -2555,7 +2832,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       },
     },
     {
-      id: 'decharge', nom: "Décharge d'énergie maudite", cout: 2,
+      id: 'decharge', nom: "Décharge de 呪力", cout: 2,
       desc: 'Une gerbe projetée. Rapide, malpropre, efficace.',
       exec(D, a, d, R) {
         const ev = [];
@@ -2565,7 +2842,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       },
     },
     {
-      id: 'technique', nom: 'Technique innée', cout: 3,
+      id: 'technique', nom: 'Technique innée · 生得術式', cout: 3,
       desc: 'Ta loi, appliquée à quelqu\'un qui ne l\'a pas demandée.',
       req: (D, a) => !statut(a, 'lie'),
       raison: 'Ta technique est liée.',
@@ -2610,7 +2887,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       },
     },
     {
-      id: 'inverse', nom: 'Technique inversée', cout: 3,
+      id: 'inverse', nom: 'Technique inversée · 反転術式', cout: 3,
       desc: "Recoudre. L'énergie négative multipliée par elle-même devient positive.",
       exec(D, a, d, R) {
         const ev = [];
@@ -2646,7 +2923,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       },
     },
     {
-      id: 'maximum', nom: 'Technique maximale', cout: 6,
+      id: 'maximum', nom: 'Technique maximale · 術式最大', cout: 6,
       ultime: true,
       desc: 'La loi appliquée à sa propre limite. Exige 60 de tension.',
       req: (D, a) => a.tension >= 60 && !statut(a, 'lie'),
@@ -2661,7 +2938,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       },
     },
     {
-      id: 'serment', nom: 'Serment improvisé', cout: 0,
+      id: 'serment', nom: 'Serment improvisé · 縛り', cout: 0,
       desc: "Offrir un quart de ta chair, ici, maintenant, contre 70 % de dégâts. Une fois par duel.",
       req: (D, a) => !a.sermentPris && a.pv > a.pvMax * 0.28,
       raison: 'Déjà prêté, ou il ne te reste pas assez à donner.',
@@ -2676,7 +2953,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       },
     },
     {
-      id: 'domaine', nom: 'Extension du Territoire', cout: 6,
+      id: 'domaine', nom: 'Extension du Territoire · 領域展開', cout: 6,
       ultime: true,
       desc: 'Déployer un espace clos où ta loi est la seule physique. Exige 100 de tension.',
       req: (D, a) => a.tension >= 100 && !statut(a, 'scelle') && !(a.mods.domaineUnique && a.domaineUtilise),
@@ -2790,7 +3067,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     const attaque = Math.max(6, Math.round((ref.pvMax / c.survie / REGLAGE.rendementFleau) * vAtt * Math.pow(k, REGLAGE.expoAttaque)));
 
     return {
-      cle: 'ennemi', nom: f.nom, sousTitre: 'Fléau de grade ' + g,
+      cle: 'ennemi', nom: f.nom, sousTitre: '呪霊 · fléau de grade ' + g,
       pv: pvMax, pvMax,
       enMax: 10, en: 2,
       attaque, crit: 0.08 + (g === 'spécial' ? 0.10 : g === 'semi-spécial' ? 0.06 : 0), soin: 0.5,
@@ -2889,7 +3166,21 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       const lisait = !!lec;
       const chanceCrit = clamp((a.crit || 0.1) + (lec ? 0.55 : 0) + (d.mods.lisible || 0), 0, 0.95);
       const crit = R.chance(chanceCrit);
-      if (crit) base *= 1.85 * (a.mods.critMult || 1);
+      /* 黒閃 kokusen : le coup et le 呪力 coïncident à 0,000001 seconde près.
+         On ne le provoque pas. Il faut déjà un critique, de la tension, et
+         de la chance ; l'avoir touché une fois change le rapport du porteur
+         à son énergie maudite pour le reste du duel.                      */
+      let kokusen = false;
+      if (crit && o.technique !== false && a.tension >= 25) {
+        const p = clamp(0.06 + (a.crit || 0) * 0.30 + (a.kokusenVus || 0) * 0.05, 0, 0.34);
+        kokusen = R.chance(p);
+      }
+      if (kokusen) {
+        base *= 2.5 * (a.mods.critMult || 1);
+        a.kokusenVus = (a.kokusenVus || 0) + 1;
+        a.crit = Math.min(0.6, (a.crit || 0.1) + 0.08);
+        a.tension = Math.min(200, a.tension + 25);
+      } else if (crit) base *= 1.85 * (a.mods.critMult || 1);
       if (lec) { retirer(a, 'lecture'); }
 
       base *= R.range(0.90, 1.12);
@@ -2916,7 +3207,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       d.rancune = Math.min(1.5, (d.rancune || 0) + (d.mods.rancune || 0));
 
       const ec = statut(d, 'echo');
-      ev.push({ t: 'degats', par: a.cle, cible: d.cle, montant: q, crit, verbe: o.verbe || 'frappe', gros: !!o.gros, surAuBut: !!o.surAuBut });
+      ev.push({ t: 'degats', par: a.cle, cible: d.cle, montant: q, crit, kokusen, verbe: o.verbe || 'frappe', gros: !!o.gros || kokusen, surAuBut: !!o.surAuBut });
       /* faille déclarée « retour » : la loi ne distingue pas son porteur */
       if (o.technique && a.mods.retour) {
         const r = Math.max(1, Math.round(q * a.mods.retour));
@@ -3404,6 +3695,14 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
   }
 
   /* ---- petites fabriques ----------------------------------------------- */
+  /* Un titre porte parfois une emphase. el() écrit du texte, pas du balisage :
+     sans ce raccourci, la page affichait « Six lois <em>possibles</em> ». */
+  function titreRituel(html) {
+    const h = el('h1', 'titre-rituel');
+    h.innerHTML = String(html);
+    return h;
+  }
+
   function bloc(etiquette, contenu, cls) {
     const b = el('div', 'bloc ' + (cls || ''));
     b.appendChild(el('span', 'etiquette', etiquette));
@@ -3440,7 +3739,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
 
   JJK.ui = {
     ecran, montrer, actif, bouton, rangee, dire, presser, calmer, murmures, titreOnglet, titreFurtif,
-    barre, majBarre, majSon, sonScelle, bloc, stats, pointsDanger, pioche, voix, UI,
+    barre, majBarre, majSon, sonScelle, bloc, titreRituel, stats, pointsDanger, pioche, voix, UI,
   };
 })(window);
 
@@ -3459,7 +3758,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
 
   const G = {
     porteur: '', declaration: null, poids: null, archetype: 'seuil',
-    tech: null, ref: null, corps: null, mods: null,
+    tech: null, ref: null, corps: null, mods: null, variante: 0,
     serments: [], maturation: 0, descente: 0, grade: null,
     catalogue: [], reponsesExamen: [],
   };
@@ -3559,7 +3858,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     const retour = M().estUnRetour();
 
     const tete = el('div');
-    tete.appendChild(el('span', 'etiquette rouge', 'Bureau des exorcistes · service des enregistrements'));
+    tete.appendChild(el('span', 'etiquette rouge', '呪術高専 · bureau du registre des 生得術式'));
     tete.appendChild(el('h1', 'titre-rituel', 'RITUEL'));
     tete.appendChild(el('div', 'jp faible', '呪法帳 · じゅほうちょう'));
     n.appendChild(tete);
@@ -3599,7 +3898,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
 
     const boite = el('div');
     boite.style.marginTop = '30px';
-    boite.appendChild(el('span', 'etiquette', 'Nom porté par le réceptacle'));
+    boite.appendChild(el('span', 'etiquette', '受肉体 · nom porté par le réceptacle'));
     const champ = el('input', 'champ');
     champ.type = 'text'; champ.maxLength = 32;
     champ.placeholder = 'à inscrire au dossier';
@@ -3769,7 +4068,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     G.reponsesExamen = [];
     const compteArch = {};
 
-    n.appendChild(el('span', 'etiquette rouge', 'Examen du réceptacle · seconde partie'));
+    n.appendChild(el('span', 'etiquette rouge', '受肉体検査 · examen du réceptacle'));
     const intro = el('p', 'discret');
     intro.style.maxWidth = '64ch';
     intro.textContent = "La technique est enregistrée. Ce qui suit ne la modifiera pas : on établit seulement de quoi votre corps est capable en la portant.";
@@ -3818,11 +4117,11 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
   }
 
   function assembler() {
-    G.tech = JJK.forge.forgeDepuisDeclaration(G.declaration);
-    G.ref = JJK.forge.forgeReceptacle(G.declaration, G.poids);
+    G.tech = JJK.forge.forgeDepuisDeclaration(G.declaration, G.variante || 0);
+    G.ref = JJK.forge.forgeReceptacle(G.declaration, G.poids, G.tech.jubaku);
     G.corps = appliquerMaturation(G.ref, G.maturation);
     G.mods = JJK.serments.agreger(G.serments, G.ref.profil.mod);
-    G.code = T().dossierCode(G.declaration, G.poids, G.archetype);
+    G.code = T().dossierCode(G.declaration, G.poids, G.archetype, G.variante || 0);
   }
 
   function appliquerMaturation(ref, m) {
@@ -3838,7 +4137,8 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
   /* =====================================================================
      4. LA NOMINATION
      ===================================================================== */
-  async function revelation() {
+  async function revelation(opts) {
+    const o = opts || {};
     U.calmer();
     const n = U.montrer('ecran-revelation');
     n.innerHTML = '';
@@ -3846,18 +4146,22 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     JJK.fx.setHue(t.couleur, '#f2c14e');
     JJK.fx.setIntensity(0.45);
 
-    const intro = el('div');
-    n.appendChild(intro);
-    await U.dire(intro, 'Dix rubriques, huit réponses. Le dossier est complet.', { apres: 300 });
-    await U.dire(intro, amb('verdicts_conseil', "Le Haut Conseil des Exorcistes a lu votre déclaration et lui a donné un nom."), { forte: true, apres: 460 });
-
-    JJK.audio.oath();
-    JJK.fx.flash('#b31217', 900);
-    JJK.fx.invert(90);
-    JJK.fx.shake(0.6);
-    JJK.fx.pulse(null, null, null, t.couleur, 1.6);
-    await wait(560);
-    intro.remove();
+    if (!o.rapide) {
+      const intro = el('div');
+      n.appendChild(intro);
+      await U.dire(intro, 'Dix rubriques, huit réponses. Le dossier est complet.', { apres: 280 });
+      await U.dire(intro, amb('verdicts_conseil', "Les instances supérieures ont lu votre déclaration et lui ont donné un nom."), { forte: true, apres: 420 });
+      JJK.audio.oath();
+      JJK.fx.flash('#b31217', 900);
+      JJK.fx.invert(90);
+      JJK.fx.shake(0.6);
+      JJK.fx.pulse(null, null, null, t.couleur, 1.6);
+      await wait(520);
+      intro.remove();
+    } else {
+      JJK.audio.tick(520, 0.05, 0.06);
+      JJK.fx.pulse(null, null, null, t.couleur, 0.9);
+    }
 
     const g = JJK.forge.grade(G.corps.puissance, G.serments.length);
     G.grade = g;
@@ -3865,77 +4169,16 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     U.titreFurtif(t.nom + ' — 呪法帳', 6000);
 
     const dossier = el('div', 'dossier');
-    const gauche = el('div');
-    gauche.appendChild(el('span', 'etiquette rouge', 'Technique innée · ' + (t.essence.emotion_source || 'origine non établie')));
-    gauche.appendChild(el('h1', 'nom-technique', t.nom));
-    const jl = el('div', 'nom-jp');
-    jl.textContent = t.nomJp + ' · ' + t.romaji;
-    gauche.appendChild(jl);
-    gauche.appendChild(el('hr', 'trait'));
+    const gauche = corpsDeFiche(t, G.corps, { notes: true });
 
-    gauche.appendChild(U.bloc('La loi', t.loi.enonce || t.loi.nom, 'loi'));
-    const desc = JJK.forge.dossier(t);
-    if (desc) gauche.appendChild(U.bloc('Constat', desc));
-    if (t.vecteur && t.vecteur.condition) gauche.appendChild(U.bloc('Vecteur — ' + t.vecteur.nom, t.vecteur.condition));
-    if (!t.tenu.portee) {
-      const w = U.bloc('Réserve du Bureau', "La portée déclarée et la condition d'énonciation ne se rencontrent pas dans le réel. Le service a retenu la condition : c'est elle qui décide où la loi s'applique.");
-      w.querySelector('p').style.color = 'var(--sang-vif)';
-      gauche.appendChild(w);
-    }
-    if (t.loi.limite) gauche.appendChild(U.bloc('Faille structurelle', t.loi.limite));
-    if (t.revers) gauche.appendChild(U.bloc('Technique inversée', t.revers));
-    if (t.maximum) gauche.appendChild(U.bloc('Technique maximale', t.maximum));
-
-    if (t.domaine) {
-      const d = el('div', 'bloc');
-      d.appendChild(el('span', 'etiquette rouge', 'Extension du territoire'));
-      const h = el('p');
-      h.style.cssText = 'font-size:1.5rem;font-weight:300;margin:6px 0 4px';
-      h.textContent = t.domaine.nom_fr;
-      d.appendChild(h);
-      d.appendChild(el('div', 'jp faible', (t.domaine.nom_jp || '') + ' · ' + (t.domaine.romaji || '')));
-      if (t.domaine.paysage) { const p = el('p'); p.style.marginTop = '10px'; p.textContent = t.domaine.paysage; d.appendChild(p); }
-      if (t.domaine.effet_garanti) {
-        const e2 = el('p', 'serif-italique');
-        e2.style.cssText = 'margin-top:10px;color:var(--sang-vif)';
-        e2.textContent = '↯ ' + t.domaine.effet_garanti;
-        d.appendChild(e2);
-      }
-      gauche.appendChild(d);
-    }
-
-    /* ce que la déclaration coûte, en clair, sans euphémisme */
-    const conseq = el('div', 'bloc');
-    conseq.appendChild(el('span', 'etiquette rouge', 'Conséquences de votre déclaration'));
-    const ul = el('div', 'notes-formulaire');
-    G.ref.profil.notes.forEach(x => {
-      const li = el('div', 'note-formulaire');
-      li.appendChild(el('b', '', x.axe));
-      li.appendChild(el('span', '', x.note));
-      ul.appendChild(li);
-    });
-    conseq.appendChild(ul);
-    gauche.appendChild(conseq);
-
-    const s = G.corps.stats;
-    gauche.appendChild(U.stats([
-      [s.vigueur, 'Vigueur'], [s.flux, 'Flux'], [s.tranchant, 'Tranchant'],
-      [s.lucidite, 'Lucidité'], [s.inversion, 'Inversion'],
-    ]));
-    gauche.appendChild(U.stats([
-      [G.corps.pvMax, 'Points de vie'], [G.corps.enMax, 'Réserve'],
-      [G.corps.attaque, 'Attaque'], [Math.round(G.corps.crit * 100) + '%', 'Critique'],
-      [G.corps.puissance, 'Puissance'],
-    ]));
-
+    /* le numéro de dossier, et de quoi le faire circuler */
     const part = el('div', 'bloc');
-    part.appendChild(el('span', 'etiquette', 'Numéro de dossier'));
-    const lien = el('p', 'mono');
-    lien.style.cssText = 'font-size:1.3rem;letter-spacing:.16em;color:var(--or);-webkit-user-select:all;user-select:all';
+    part.appendChild(bandeau('Numéro de dossier', '整理番号'));
+    const lien = el('p', 'mono code-fiche');
     lien.textContent = G.code;
     part.appendChild(lien);
     const sous = el('p', 'discret');
-    sous.textContent = "Ce numéro contient la déclaration entière. Donnez-le à quelqu'un : le service lui montrera exactement ce que vous portez.";
+    sous.textContent = "Ce numéro contient la déclaration entière, la variante tirée et les poids du réceptacle. Donnez-le : le service ressortira exactement cette fiche.";
     part.appendChild(sous);
     const cp = U.bouton('Copier le lien', 'fantome', () => {
       const url = lienDe(G.code);
@@ -3946,9 +4189,9 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     cp.style.marginTop = '10px';
     part.appendChild(cp);
     gauche.appendChild(part);
-
     dossier.appendChild(gauche);
 
+    /* colonne de droite : sceau, grade, et les commandes du générateur */
     const droite = el('div', 'sceau-boite');
     const cvs = el('canvas', 'sceau-rot');
     cvs.style.width = '100%';
@@ -3960,16 +4203,317 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     gl.textContent = g.nom + (g.description ? ' — ' + g.description : '');
     leg.appendChild(gl);
     droite.appendChild(leg);
+
+    const outils = el('div', 'outils-generateur');
+    outils.appendChild(el('span', 'etiquette', '抽選 · tirage'));
+    const varLigne = el('p', 'discret');
+    varLigne.innerHTML = 'Variante <b class="mono or">' + (t.variante + 1) + '</b> sur ' + T().VARIANTES +
+      '. La déclaration fixe les familles ; elle ne fixe pas tout.';
+    outils.appendChild(varLigne);
+    outils.appendChild(U.bouton('Retirer au sort', 'rouge large', () => {
+      G.variante = T().codeVariante((G.variante || 0) + 1);
+      assembler();
+      revelation({ rapide: true });
+    }));
+    outils.appendChild(U.bouton('Voir six variantes', 'large', galerie));
+    outils.appendChild(U.bouton('Modifier une rubrique', 'large', rubriques));
+    droite.appendChild(outils);
     dossier.appendChild(droite);
 
     n.appendChild(dossier);
     requestAnimationFrame(() => JJK.fx.sigil(cvs, t.code, { size: cvs.clientWidth || 320, accent: t.couleur }));
 
     const r = U.rangee();
-    r.appendChild(U.bouton('Prêter serment', 'rouge', serments));
+    r.appendChild(U.bouton('Prêter serment et descendre', '', serments));
     r.appendChild(U.bouton('Descendre sans rien signer', 'fantome', () => { G.serments = []; assembler(); descente(); }));
     r.appendChild(U.bouton('Refaire une déclaration', 'fantome', declaration));
     n.appendChild(r);
+  }
+
+  /* =====================================================================
+     GALERIE — six 生得術式 issus de la même déclaration
+     ===================================================================== */
+  function galerie() {
+    const n = U.montrer('ecran-galerie');
+    n.innerHTML = '';
+    n.appendChild(el('span', 'etiquette rouge', '生得術式 · tirages issus de votre déclaration'));
+    n.appendChild(U.titreRituel('Six lois <em>possibles</em>'));
+    const p = el('p', 'discret');
+    p.style.maxWidth = '66ch';
+    p.textContent = "Votre déclaration a fixé les familles : le substrat, l'archétype de la loi, la clause, le territoire, le siège. À l'intérieur de ces limites, le réel a encore le choix. Voici six porteurs qui auraient rempli le même formulaire que vous.";
+    n.appendChild(p);
+
+    const grille = el('div', 'galerie');
+    const base = G.variante || 0;
+    for (let k = 0; k < 6; k++) {
+      const v = T().codeVariante(base + k);
+      const t = JJK.forge.forgeDepuisDeclaration(G.declaration, v);
+      const c = el('div', 'carte-variante' + (v === base ? ' actuelle' : ''));
+      const cv = el('canvas', 'sceau-mini');
+      c.appendChild(cv);
+      const h = el('h4', '', t.nom);
+      c.appendChild(h);
+      c.appendChild(el('div', 'jp faible', t.nomJp + ' · ' + t.romaji));
+      const l = el('p', 'clause');
+      l.textContent = t.loi.enonce || t.loi.nom;
+      c.appendChild(l);
+      const meta = el('div', 'meta-variante');
+      meta.appendChild(el('span', '', t.essence.nom));
+      if (t.jubaku) { const b = el('span', 'or', '天与呪縛'); meta.appendChild(b); }
+      if (v === base) meta.appendChild(el('span', 'sang', 'tirage actuel'));
+      c.appendChild(meta);
+      c.addEventListener('click', () => {
+        G.variante = v; assembler(); JJK.audio.tick(620, 0.04, 0.07);
+        revelation({ rapide: true });
+      });
+      grille.appendChild(c);
+      requestAnimationFrame(() => JJK.fx.sigil(cv, t.code, { size: 150, accent: t.couleur }));
+    }
+    n.appendChild(grille);
+    const r = U.rangee();
+    r.appendChild(U.bouton('Revenir à la fiche', 'fantome', () => revelation({ rapide: true })));
+    r.appendChild(U.bouton('Six tirages de plus', '', () => { G.variante = T().codeVariante((G.variante || 0) + 6); galerie(); }));
+    n.appendChild(r);
+  }
+
+  /* =====================================================================
+     RUBRIQUES — revenir sur une seule ligne du formulaire
+     ===================================================================== */
+  function rubriques() {
+    const n = U.montrer('ecran-rubriques');
+    n.innerHTML = '';
+    n.appendChild(el('span', 'etiquette rouge', '申告 · déclaration enregistrée'));
+    n.appendChild(U.titreRituel('Corriger une <em>rubrique</em>'));
+    const p = el('p', 'discret');
+    p.style.maxWidth = '66ch';
+    p.textContent = "Le service accepte les corrections. Chaque ligne modifiée reforge la technique : c'est la même procédure, pas le même dossier.";
+    n.appendChild(p);
+
+    const f = formulaire();
+    const liste = el('div', 'liste-rubriques');
+    f.questions.slice().sort((a, b) => (a.numero || 0) - (b.numero || 0)).forEach(q => {
+      const tag = G.declaration[q.axe];
+      const rep = (q.reponses || []).find(x => x.tag === tag);
+      const c = el('button', 'rubrique-ligne');
+      c.appendChild(el('b', '', q.intitule || q.axe));
+      c.appendChild(el('span', 'valeur', rep ? rep.texte : String(tag)));
+      const eff = T().effet(q.axe, tag);
+      if (eff && eff.note) c.appendChild(el('span', 'effet', eff.note));
+      c.addEventListener('click', () => corriger(q));
+      liste.appendChild(c);
+    });
+    n.appendChild(liste);
+    const r = U.rangee();
+    r.appendChild(U.bouton('Revenir à la fiche', 'fantome', () => revelation({ rapide: true })));
+    n.appendChild(r);
+  }
+
+  async function corriger(q) {
+    const n = U.montrer('ecran-rubriques');
+    n.innerHTML = '';
+    n.appendChild(el('span', 'etiquette rouge', 'Correction · ' + (q.intitule || q.axe)));
+    const h = el('h2', 'question-texte');
+    n.appendChild(h);
+    await JJK.fx.type(h, q.question, { speed: 14 });
+    if (q.precision) {
+      const p = el('p', 'precision');
+      n.appendChild(p);
+      await JJK.fx.type(p, q.precision, { speed: 10, sound: false });
+    }
+    const liste = el('div', 'reponses');
+    n.appendChild(liste);
+    const choix = await choisirDansListe(liste, q.reponses, 'consequence');
+    const tag = T().tagValide(q.axe, choix.tag) ? choix.tag : T().AXE[q.axe].tags[0];
+    G.declaration[q.axe] = tag;
+    assembler();
+    await wait(420);
+    revelation({ rapide: true });
+  }
+
+  /* =====================================================================
+     LA FICHE — c'est le produit. Tout le reste sert à l'obtenir.
+     ===================================================================== */
+  const SECTIONS = [
+    { cle: 'loi',      libelle: 'Énoncé de la technique', kanji: '生得術式' },
+    { cle: 'constat',  libelle: 'Constat', kanji: '所見' },
+    { cle: 'junten',   libelle: 'Application directe', kanji: '術式順転' },
+    { cle: 'vecteur',  libelle: 'Clause d\'énonciation', kanji: '発動条件' },
+    { cle: 'faille',   libelle: 'Faille structurelle', kanji: '弱点' },
+    { cle: 'hanten',   libelle: 'Technique inversée', kanji: '反転術式' },
+    { cle: 'maximum',  libelle: 'Technique maximale', kanji: '術式最大' },
+    { cle: 'kakucho',  libelle: 'Extension de technique', kanji: '術式拡張' },
+    { cle: 'kanri',    libelle: 'Territoire simplifié', kanji: '簡易領域' },
+    { cle: 'ryoiki',   libelle: 'Extension du territoire', kanji: '領域展開' },
+    { cle: 'kokusen',  libelle: 'Aptitude à l\'Éclair Noir', kanji: '黒閃' },
+    { cle: 'jubaku',   libelle: 'Restriction céleste', kanji: '天与呪縛' },
+  ];
+
+  function bandeau(libelle, kanji, rouge) {
+    const b = el('div', 'bandeau-section');
+    b.appendChild(el('span', 'etiquette' + (rouge ? ' rouge' : ''), libelle));
+    if (kanji) b.appendChild(el('span', 'kanji-section jp', kanji));
+    return b;
+  }
+
+  function section(libelle, kanji, contenu, cls) {
+    const b = el('div', 'bloc ' + (cls || ''));
+    b.appendChild(bandeau(libelle, kanji, cls === 'loi'));
+    if (typeof contenu === 'string') {
+      const p = el('p', cls === 'loi' ? 'enonce' : '');
+      p.textContent = contenu;
+      b.appendChild(p);
+    } else if (contenu) b.appendChild(contenu);
+    return b;
+  }
+
+  /* Construit la colonne de gauche d'une fiche. Utilisée à la nomination
+     comme à la consultation : une fiche est une fiche. */
+  function corpsDeFiche(t, corps, opts) {
+    const o = opts || {};
+    const g = el('div');
+    g.appendChild(el('span', 'etiquette rouge', '生得術式 · ' + (t.essence.emotion_source || 'origine non établie')));
+    g.appendChild(el('h1', 'nom-technique', t.nom));
+    const jl = el('div', 'nom-jp');
+    jl.textContent = t.nomJp + ' · ' + t.romaji;
+    g.appendChild(jl);
+    g.appendChild(el('hr', 'trait'));
+
+    g.appendChild(section(SECTIONS[0].libelle, SECTIONS[0].kanji, t.loi.enonce || t.loi.nom, 'loi'));
+    const desc = JJK.forge.dossier(t);
+    if (desc) g.appendChild(section(SECTIONS[1].libelle, SECTIONS[1].kanji, desc));
+    if (t.junten) g.appendChild(section(SECTIONS[2].libelle, SECTIONS[2].kanji, t.junten));
+    if (t.vecteur && t.vecteur.condition) {
+      g.appendChild(section(SECTIONS[3].libelle + ' — ' + t.vecteur.nom, SECTIONS[3].kanji, t.vecteur.condition));
+    }
+    if (!t.tenu.portee) {
+      const w = section('Réserve du service', '照合', "La portée déclarée et la clause d'énonciation ne se rencontrent pas dans le réel. Le service a retenu la clause : c'est elle qui décide où la loi s'applique.");
+      w.querySelector('p').style.color = 'var(--sang-vif)';
+      g.appendChild(w);
+    }
+    if (t.loi.limite) g.appendChild(section(SECTIONS[4].libelle, SECTIONS[4].kanji, t.loi.limite));
+    if (t.hanten) g.appendChild(section(SECTIONS[5].libelle, SECTIONS[5].kanji, t.hanten));
+    if (t.maximum) g.appendChild(section(SECTIONS[6].libelle, SECTIONS[6].kanji, t.maximum));
+
+    if (t.kakucho) {
+      const d = el('div');
+      const h = el('p', 'sous-nom');
+      h.textContent = t.kakucho.nom;
+      d.appendChild(h);
+      if (t.kakucho.kanji) d.appendChild(el('div', 'jp faible', t.kakucho.kanji + (t.kakucho.romaji ? ' · ' + t.kakucho.romaji : '')));
+      if (t.kakucho.principe) { const p = el('p'); p.style.marginTop = '10px'; p.textContent = t.kakucho.principe; d.appendChild(p); }
+      if (t.kakucho.usage) { const p = el('p', 'discret'); p.textContent = t.kakucho.usage; d.appendChild(p); }
+      if (t.kakucho.cout) { const p = el('p', 'cout-ligne'); p.textContent = '↳ ' + t.kakucho.cout; d.appendChild(p); }
+      g.appendChild(section(SECTIONS[7].libelle, SECTIONS[7].kanji, d));
+    }
+
+    if (t.kanri) {
+      const d = el('div');
+      const h = el('p', 'sous-nom');
+      h.textContent = t.kanri.nom;
+      d.appendChild(h);
+      if (t.kanri.kanji) d.appendChild(el('div', 'jp faible', t.kanri.kanji + (t.kanri.romaji ? ' · ' + t.kanri.romaji : '')));
+      if (t.kanri.forme) { const p = el('p'); p.style.marginTop = '10px'; p.textContent = t.kanri.forme; d.appendChild(p); }
+      if (t.kanri.effet) { const p = el('p', 'discret'); p.textContent = t.kanri.effet; d.appendChild(p); }
+      if (t.kanri.limite) { const p = el('p', 'cout-ligne'); p.textContent = '↳ ' + t.kanri.limite; d.appendChild(p); }
+      g.appendChild(section(SECTIONS[8].libelle, SECTIONS[8].kanji, d));
+    }
+
+    if (t.domaine) {
+      const d = el('div');
+      const h = el('p', 'sous-nom grand');
+      h.textContent = t.domaine.nom_fr;
+      d.appendChild(h);
+      d.appendChild(el('div', 'jp faible', (t.domaine.nom_jp || '') + ' · ' + (t.domaine.romaji || '')));
+      if (t.domaine.paysage) { const p = el('p'); p.style.marginTop = '10px'; p.textContent = t.domaine.paysage; d.appendChild(p); }
+      if (t.domaine.incantation) {
+        const inc = el('div', 'incantation-fiche');
+        String(t.domaine.incantation).replace(/([.;])\s+/g, '$1\n').split(/\n|\s*\/\s*/).filter(Boolean)
+          .forEach(v => inc.appendChild(el('p', '', v.trim())));
+        d.appendChild(inc);
+      }
+      if (t.domaine.effet_garanti) {
+        const e2 = el('p', 'serif-italique');
+        e2.style.cssText = 'margin-top:12px;color:var(--sang-vif)';
+        e2.textContent = '↯ Coup au but — ' + t.domaine.effet_garanti;
+        d.appendChild(e2);
+      }
+      if (t.domaine.faille) { const p = el('p', 'cout-ligne'); p.textContent = '↳ ' + t.domaine.faille; d.appendChild(p); }
+      g.appendChild(section(SECTIONS[9].libelle, SECTIONS[9].kanji, d));
+    }
+
+    if (t.kokusen) {
+      const d = el('div');
+      const h = el('p', 'sous-nom');
+      h.textContent = t.kokusen.aptitude;
+      d.appendChild(h);
+      if (t.kokusen.description) { const p = el('p'); p.style.marginTop = '8px'; p.textContent = t.kokusen.description; d.appendChild(p); }
+      g.appendChild(section(SECTIONS[10].libelle, SECTIONS[10].kanji, d));
+    }
+
+    if (t.jubaku) {
+      const d = el('div', 'jubaku');
+      const h = el('p', 'sous-nom or');
+      h.textContent = t.jubaku.nom;
+      d.appendChild(h);
+      d.appendChild(el('div', 'jp faible', (t.jubaku.kanji || '天与呪縛') + ' · ' + (t.jubaku.romaji || "ten'yo-jubaku")));
+      const pv = el('p', 'privation');
+      pv.textContent = t.jubaku.privation;
+      d.appendChild(pv);
+      const cp = el('p', 'contrepartie');
+      cp.textContent = t.jubaku.contrepartie;
+      d.appendChild(cp);
+      if (t.jubaku.constat) { const p = el('p', 'cout-ligne'); p.textContent = '↳ ' + t.jubaku.constat; d.appendChild(p); }
+      const mec = el('div', 'echange');
+      mec.style.marginTop = '12px';
+      mec.appendChild(el('span', 'perte', t.jubaku.perte));
+      mec.appendChild(el('span', 'gain', t.jubaku.gain));
+      d.appendChild(mec);
+      g.appendChild(section(SECTIONS[11].libelle, SECTIONS[11].kanji, d));
+    }
+
+    if (t.contre) {
+      const w = section('Neutralisation connue', '対策', t.contre);
+      w.querySelector('p').classList.add('discret');
+      g.appendChild(w);
+    }
+    if (t.affectation) {
+      const d = el('div');
+      const h = el('p', 'sous-nom');
+      h.textContent = t.affectation.intitule;
+      d.appendChild(h);
+      if (t.affectation.motif) { const p = el('p', 'discret'); p.style.marginTop = '6px'; p.textContent = t.affectation.motif; d.appendChild(p); }
+      g.appendChild(section('Affectation — 上層部', '配属', d));
+    }
+
+    if (o.notes && corps && corps.profil) {
+      const conseq = el('div', 'bloc');
+      conseq.appendChild(bandeau('Conséquences de votre déclaration', '申告', true));
+      const ul = el('div', 'notes-formulaire');
+      corps.profil.notes.forEach(x => {
+        const li = el('div', 'note-formulaire');
+        li.appendChild(el('b', '', x.axe));
+        li.appendChild(el('span', '', x.note));
+        ul.appendChild(li);
+      });
+      conseq.appendChild(ul);
+      g.appendChild(conseq);
+    }
+
+    if (corps) {
+      const st = corps.stats;
+      g.appendChild(U.stats([
+        [st.vigueur, 'Vigueur'], [st.flux, 'Flux'], [st.tranchant, 'Tranchant'],
+        [st.lucidite, 'Lucidité'], [st.inversion, 'Inversion'],
+      ]));
+      if (o.chiffres !== false) {
+        g.appendChild(U.stats([
+          [corps.pvMax, 'Points de vie'], [corps.enMax, '呪力 max'],
+          [corps.attaque, 'Attaque'], [Math.round(corps.crit * 100) + '%', 'Critique'],
+          [corps.puissance, 'Puissance'],
+        ]));
+      }
+    }
+    return g;
   }
 
   function lienDe(code) { return location.href.split('#')[0] + '#d=' + encodeURIComponent(code); }
@@ -3987,47 +4531,37 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     U.calmer();
     const n = U.montrer('ecran-consultation');
     n.innerHTML = '';
-    const tech = JJK.forge.forgeDepuisDeclaration(lu.declaration);
-    const ref = JJK.forge.forgeReceptacle(lu.declaration, lu.poids);
+    const tech = JJK.forge.forgeDepuisDeclaration(lu.declaration, lu.variante || 0);
+    const ref = JJK.forge.forgeReceptacle(lu.declaration, lu.poids, tech.jubaku);
     JJK.fx.setHue(tech.couleur, '#f2c14e');
     JJK.fx.setIntensity(0.4);
 
     const flux = el('div');
     n.appendChild(flux);
-    await U.dire(flux, "On vous a communiqué un numéro de dossier.", { apres: 320 });
-    await U.dire(flux, "Le service ne fabrique rien. Il ressort la fiche.", { forte: true, apres: 380 });
+    await U.dire(flux, "On vous a communiqué un numéro de dossier.", { apres: 300 });
+    await U.dire(flux, "Le service ne fabrique rien. Il ressort la fiche.", { forte: true, apres: 340 });
     JJK.audio.oath();
     JJK.fx.flash('#b31217', 800);
-    await wait(400);
+    await wait(380);
     flux.remove();
 
     const d = el('div', 'dossier');
-    const g2 = el('div');
-    g2.appendChild(el('span', 'etiquette rouge', 'Consultation · lecture seule'));
-    g2.appendChild(el('h1', 'nom-technique', tech.nom));
-    g2.appendChild(el('div', 'nom-jp', tech.nomJp + ' · ' + tech.romaji));
-    g2.appendChild(el('hr', 'trait'));
-    g2.appendChild(U.bloc('La loi', tech.loi.enonce || tech.loi.nom, 'loi'));
-    const pr = JJK.forge.dossier(tech);
-    if (pr) g2.appendChild(U.bloc('Constat', pr));
-    if (tech.loi.limite) g2.appendChild(U.bloc('Faille structurelle', tech.loi.limite));
-    if (tech.domaine) g2.appendChild(U.bloc('Extension du territoire', tech.domaine.nom_fr + ' — ' + (tech.domaine.effet_garanti || '')));
+    const gauche = corpsDeFiche(tech, ref, { notes: false, chiffres: false });
     const decl = el('div', 'bloc');
-    decl.appendChild(el('span', 'etiquette', 'Déclaration enregistrée'));
+    decl.appendChild(bandeau('Déclaration enregistrée', '申告'));
     const dl = el('div', 'notes-formulaire');
+    const f = formulaire();
     T().AXES.forEach(a => {
+      const q = f.questions.find(x => x.axe === a.id);
+      const rep = q && (q.reponses || []).find(x => x.tag === lu.declaration[a.id]);
       const li = el('div', 'note-formulaire');
-      li.appendChild(el('b', '', a.id));
-      li.appendChild(el('span', '', String(lu.declaration[a.id]).replace(/_/g, ' ')));
+      li.appendChild(el('b', '', (q && q.intitule) || a.id));
+      li.appendChild(el('span', '', rep ? rep.texte : String(lu.declaration[a.id]).replace(/_/g, ' ')));
       dl.appendChild(li);
     });
     decl.appendChild(dl);
-    g2.appendChild(decl);
-    g2.appendChild(U.stats([
-      [ref.stats.vigueur, 'Vigueur'], [ref.stats.flux, 'Flux'], [ref.stats.tranchant, 'Tranchant'],
-      [ref.stats.lucidite, 'Lucidité'], [ref.stats.inversion, 'Inversion'],
-    ]));
-    d.appendChild(g2);
+    gauche.appendChild(decl);
+    d.appendChild(gauche);
 
     const dr = el('div', 'sceau-boite');
     const cvs = el('canvas', 'sceau-rot');
@@ -4035,7 +4569,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     dr.appendChild(cvs);
     const lg = el('p', 'discret centre');
     lg.style.marginTop = '14px';
-    lg.textContent = 'Dossier ' + T().dossierCode(lu.declaration, lu.poids, lu.archetype);
+    lg.textContent = 'Dossier ' + T().dossierCode(lu.declaration, lu.poids, lu.archetype, lu.variante || 0);
     dr.appendChild(lg);
     d.appendChild(dr);
     n.appendChild(d);
@@ -4045,9 +4579,10 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     r.appendChild(U.bouton('Reprendre ce dossier', 'rouge', () => {
       if (history.replaceState) history.replaceState(null, '', location.href.split('#')[0]);
       G.declaration = lu.declaration; G.poids = lu.poids; G.archetype = lu.archetype;
+      G.variante = lu.variante || 0;
       if (!G.porteur) G.porteur = 'sans nom';
       assembler();
-      revelation();
+      revelation({ rapide: true });
     }));
     r.appendChild(U.bouton('Ouvrir mon propre dossier', 'fantome', () => {
       if (history.replaceState) history.replaceState(null, '', location.href.split('#')[0]);
@@ -4071,8 +4606,8 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     const cap = capSerments();
     while (G.serments.length > cap) G.serments.pop();
 
-    n.appendChild(el('span', 'etiquette rouge', 'Serments contraignants'));
-    n.appendChild(el('h1', 'titre-rituel', 'Ce que vous <em>rendez</em>'));
+    n.appendChild(el('span', 'etiquette rouge', '縛り · serments contraignants'));
+    n.appendChild(U.titreRituel('Ce que vous <em>rendez</em>'));
     const p = el('p');
     p.style.cssText = 'max-width:62ch;font-weight:300;color:var(--os-faible)';
     p.textContent = "Un serment n'est pas une amélioration : c'est une amputation payée d'avance. Vous perdez réellement ce qui est écrit, dans ce jeu, tout de suite. " +
@@ -4148,12 +4683,12 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     const missions = (C().ambiance || {}).missions || [];
     const mission = missions.length ? missions[(G.descente + Math.floor(Math.random() * missions.length)) % missions.length] : null;
 
-    n.appendChild(el('span', 'etiquette rouge', 'Ordre de mission ' + (G.descente + 1)));
-    n.appendChild(el('h1', 'titre-rituel', 'Ce qui vous <em>ouvrira</em>'));
+    n.appendChild(el('span', 'etiquette rouge', '任務 · ordre de mission ' + (G.descente + 1)));
+    n.appendChild(U.titreRituel('Ce qui vous <em>ouvrira</em>'));
 
     if (mission) {
       const m = el('div', 'ordre-mission');
-      m.appendChild(el('div', 'etiquette', 'Secteur'));
+      m.appendChild(el('div', 'etiquette', '帳 · secteur à voiler'));
       m.appendChild(el('p', 'lieu-mission', mission.lieu));
       m.appendChild(el('p', 'signalement', mission.signalement));
       if (mission.consigne) m.appendChild(el('p', 'consigne', '« ' + mission.consigne + ' »'));
@@ -4193,7 +4728,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       if (estRevenant) c.style.borderColor = 'rgba(242,193,78,.5)';
       c.appendChild(el('h4', '', f.nom));
       const sg = el('div', 'etiquette' + (estRevenant ? ' or' : ''));
-      sg.textContent = 'Grade ' + (f.grade || '?') + (estRevenant ? ' · revenant' : '');
+      sg.textContent = '呪霊 · grade ' + (f.grade || '?') + (estRevenant ? ' · revenant' : '');
       c.appendChild(sg);
       if (f.apparence) { const p2 = el('p', 'clause'); p2.style.marginTop = '10px'; p2.textContent = f.apparence; c.appendChild(p2); }
       if (f.origine) { const p3 = el('p', 'discret'); p3.textContent = 'Né de : ' + f.origine; c.appendChild(p3); }
@@ -4217,8 +4752,8 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     const n = U.montrer('ecran-registre');
     n.innerHTML = '';
     const r = M().lire();
-    n.appendChild(el('span', 'etiquette rouge', 'Registre'));
-    n.appendChild(el('h1', 'titre-rituel', 'Ceux qui sont <em>restés</em>'));
+    n.appendChild(el('span', 'etiquette rouge', '呪法帳 · registre'));
+    n.appendChild(U.titreRituel('Ceux qui sont <em>restés</em>'));
 
     n.appendChild(U.stats([
       [r.descentes, 'Descentes'], [r.victoires, 'Victoires'], [r.morts, 'Morts'],
@@ -4270,13 +4805,13 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
   function reinit() {
     G.tech = null; G.ref = null; G.corps = null; G.mods = null; G.declaration = null;
     G.poids = null; G.archetype = 'seuil'; G.code = null;
-    G.serments = []; G.reponsesExamen = []; G.maturation = 0; G.descente = 0;
+    G.serments = []; G.reponsesExamen = []; G.maturation = 0; G.descente = 0; G.variante = 0;
     G.catalogue = [];
     JJK.fx.setDead(0);
   }
 
   JJK.ecrans = {
-    seuil, declaration, examen, revelation, serments, descente, registre, consultation,
+    seuil, declaration, examen, revelation, galerie, rubriques, serments, descente, registre, consultation,
     reinit, assembler, appliquerMaturation, capSerments, gradeCible, courbe, lienDe, G,
   };
 })(window);
@@ -4365,7 +4900,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
 
     const colJ = el('div');
     N.journal = el('div', 'journal');
-    N.journal.appendChild(el('span', 'etiquette', 'Compte rendu'));
+    N.journal.appendChild(el('span', 'etiquette', '報告書 · compte rendu'));
     colJ.appendChild(N.journal);
     bas.appendChild(colJ);
     arene.appendChild(bas);
@@ -4429,8 +4964,8 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     o.gaucheN.textContent = ennemi && G().mods.masqueVieEnnemi ? '— / —' : (Math.max(0, c.pv) + ' / ' + c.pvMax);
     o.droiteN.textContent = 'TENSION ' + Math.round(c.tension) + (c.tension >= 100 ? ' ↯' : '');
     o.enR.style.width = clamp(c.en / c.enMax, 0, 1) * 100 + '%';
-    o.e1.textContent = 'ÉNERGIE ' + c.en + ' / ' + c.enMax;
-    o.e2.textContent = c.domaineTours > 0 ? 'TERRITOIRE ' + c.domaineTours : '';
+    o.e1.textContent = '呪力 ' + c.en + ' / ' + c.enMax;
+    o.e2.textContent = c.domaineTours > 0 ? '領域 ' + c.domaineTours : '';
     o.st.innerHTML = '';
     c.statuts.forEach(s => {
       const t = el('span', 'puce ' + (s.type === 'bon' ? 'bon' : 'mauvais'),
@@ -4451,7 +4986,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     N.actions.innerHTML = '';
     D.actions().forEach(a => {
       const b = el('button', 'acte' + (a.ultime ? ' ultime' : ''));
-      const c = el('span', 'cout', a.cout ? a.cout + ' ÉM' : '—');
+      const c = el('span', 'cout', a.cout ? a.cout + ' 呪力' : '—');
       b.appendChild(c);
       b.appendChild(el('b', '', a.nom));
       if (a.sous) b.appendChild(el('small', '', a.sous));
@@ -4532,6 +5067,14 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
         cible.boite.classList.remove('frappe');
         void cible.boite.offsetWidth;
         cible.boite.classList.add('frappe');
+        if (e.kokusen) {
+          /* 黒閃 : l'espace se fend. On s'arrête un instant. */
+          JJK.fx.eclair();
+          JJK.audio.hit(1.6); JJK.audio.slash();
+          JJK.fx.pulse(null, null, 1100, '#ffffff', 2);
+          U.titreFurtif('黒閃', 3000);
+          await wait(520);
+        }
         JJK.audio.hit(e.gros ? 1.4 : (e.crit ? 1.0 : 0.55));
         if (e.gros) { JJK.fx.slash('#fff6ee', 2); JJK.audio.slash(); }
         JJK.fx.shake(e.gros ? 0.9 : (e.crit ? 0.45 : 0.22));
@@ -4547,7 +5090,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
         const chiffre = masque ? '—' : e.montant;
         journal((e.dot ? '· ' : '') + NOM(e.cible === 'joueur' ? 'joueur' : 'ennemi') + ' ' + esc(e.verbe || 'encaisse') +
           ' <span class="n">' + chiffre + '</span>' +
-          (e.crit ? ' <span class="mono sang">CRITIQUE</span>' : '') +
+          (e.kokusen ? ' <span class="mono kokusen">黒閃 ÉCLAIR NOIR ×2,5</span>' : (e.crit ? ' <span class="mono sang">CRITIQUE</span>' : '')) +
           (e.surAuBut ? ' <span class="mono or">COUP AU BUT</span>' : '') +
           (e.echo ? ' <span class="mono">ÉCHO</span>' : ''),
           e.cible === 'joueur' ? 'mal' : 'bien');

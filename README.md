@@ -1,9 +1,14 @@
 # RITUEL — 呪法帳
 
-Un générateur-jeu de **techniques maudites** dans l'univers de *Jujutsu Kaisen*.
+Un **générateur de 生得術式** — techniques innées — dans l'univers de *Jujutsu Kaisen*.
 Pas de dépendance, pas de serveur : une page qui s'ouvre et qui commence à vous interroger.
 
-> Le Bureau n'attribue pas de techniques. Il enregistre celles qui existent déjà.
+> On n'attribue pas de technique. On enregistre celles qui existent déjà.
+
+Le produit fini est une **fiche** : une loi imposée au réel, sa clause d'énonciation, sa faille,
+son 反転術式, son 術式最大, son 術式拡張, son 簡易領域, son 領域展開 avec incantation et coup au
+but, son aptitude au 黒閃, et — pour un porteur sur cinq — une 天与呪縛 qu'il n'a pas choisie.
+Un duel est disponible pour s'en servir, mais c'est la fiche qui compte.
 
 ---
 
@@ -19,7 +24,7 @@ votre extension du territoire.
 Puis huit questions sur **vous**, qui ne changent pas la technique : elles établissent seulement
 de quoi votre corps est capable en la portant.
 
-Ensuite seulement, le Haut Conseil donne un nom à ce que vous avez déclaré, et un grade.
+Ensuite seulement, les 上層部 donnent un nom à ce que vous avez déclaré, et un grade.
 
 Chaque rubrique **restreint réellement** le corpus et **modifie réellement** la mécanique. Le
 substrat choisit la famille d'essences ; l'opérateur restreint les archétypes de loi ; la clause
@@ -32,11 +37,22 @@ la chair rend les techniques moins chères et vous coûte 4,5 % de vos points de
 Un formulaire moyen vaut ×1,56 en dégâts. Les extrêmes vont de ×0,75 à ×3,17. Les fléaux sont
 calibrés sur la **moyenne** : un bon formulaire paie, un mauvais se sent.
 
+## Retirer au sort dans les limites déclarées
+
+La déclaration fixe les **familles**, elle ne fixe pas tout. À l'intérieur — quelle essence de
+呪力 dans la famille, quelle loi dans l'archétype, quel territoire, quel organe — le réel a
+encore le choix, et ce choix porte un numéro : **36 variantes** par déclaration.
+
+- **Retirer au sort** rejoue la latitude sans toucher à vos réponses.
+- **Six variantes** les montre côte à côte, avec leurs sceaux : six porteurs qui auraient rempli
+  le même formulaire que vous.
+- **Corriger une rubrique** revient sur une seule ligne du formulaire et reforge la technique.
+
 ## Le numéro de dossier
 
-Votre déclaration entière tient dans onze caractères — `R1-B824-01E83`. Dix rubriques en base 4,
-cinq poids de corps en base 9, l'archétype dominant. Donnez ce numéro à quelqu'un, ou le lien
-`#d=<code>` : le service lui ressortira exactement la fiche que vous portez, avec le même sceau.
+Votre déclaration entière tient dans onze à treize caractères — `R1-B824-01E83-H`. Dix rubriques
+en base 4, cinq poids de corps en base 9, l'archétype dominant, la variante tirée. Donnez ce
+numéro, ou le lien `#d=<code>` : on ressortira exactement la fiche que vous portez, sceau compris.
 
 Ce n'est pas votre nom qui décide — votre nom ne sert qu'au dossier, aux convocations et, le cas
 échéant, à l'épitaphe.
@@ -65,6 +81,13 @@ Ce n'est pas votre nom qui décide — votre nom ne sert qu'au dossier, aux conv
   n'existe que hors du regard encaisse mal — jusqu'à ce que vous le fixiez.
 - **Le Voile (帳) tombe avant chaque intervention.** Un rideau noir coupe le secteur du reste du
   monde. Dehors, la rue continue sans savoir.
+- **天与呪縛.** Un porteur sur cinq naît avec une restriction céleste : une privation réelle,
+  corporelle ou perceptive, qu'il n'a pas signée, contre une contrepartie qui ne compense jamais
+  tout à fait. Elle s'applique à ses chiffres qu'il le veuille ou non.
+- **黒閃.** Quand le coup et le 呪力 coïncident à 0,000001 seconde près, l'espace se fend en noir,
+  l'image perd sa couleur, et les dégâts sont multipliés par 2,5. On ne le provoque pas : il
+  survient dans environ un duel sur sept, et l'avoir touché une fois améliore définitivement le
+  contrôle du porteur sur son énergie maudite — pour ce duel-là.
 
 ## Jouer
 

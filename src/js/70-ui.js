@@ -142,6 +142,14 @@
   }
 
   /* ---- petites fabriques ----------------------------------------------- */
+  /* Un titre porte parfois une emphase. el() écrit du texte, pas du balisage :
+     sans ce raccourci, la page affichait « Six lois <em>possibles</em> ». */
+  function titreRituel(html) {
+    const h = el('h1', 'titre-rituel');
+    h.innerHTML = String(html);
+    return h;
+  }
+
   function bloc(etiquette, contenu, cls) {
     const b = el('div', 'bloc ' + (cls || ''));
     b.appendChild(el('span', 'etiquette', etiquette));
@@ -178,6 +186,6 @@
 
   JJK.ui = {
     ecran, montrer, actif, bouton, rangee, dire, presser, calmer, murmures, titreOnglet, titreFurtif,
-    barre, majBarre, majSon, sonScelle, bloc, stats, pointsDanger, pioche, voix, UI,
+    barre, majBarre, majSon, sonScelle, bloc, titreRituel, stats, pointsDanger, pioche, voix, UI,
   };
 })(window);
