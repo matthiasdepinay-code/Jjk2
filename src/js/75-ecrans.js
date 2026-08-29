@@ -21,6 +21,7 @@
      1. LE SEUIL
      ===================================================================== */
   async function seuil() {
+    U.calmer();
     const n = U.montrer('ecran-seuil');
     n.innerHTML = '';
     JJK.fx.setIntensity(0.12);
@@ -40,6 +41,12 @@
 
     const flux = el('div');
     n.appendChild(flux);
+    const presse = el('p', 'discret mort');
+    presse.style.cssText = 'position:absolute;right:0;margin-top:-26px;font-family:var(--mono);font-size:9px;letter-spacing:.22em';
+    presse.textContent = 'CLIC — PLUS VITE';
+    n.style.position = 'relative';
+    n.appendChild(presse);
+    setTimeout(() => { presse.remove(); }, 14000);
 
     const ouverture = (C().rituel || {}).ouverture || [
       "On ne t'a pas fait venir.",
@@ -58,8 +65,13 @@
         await U.dire(flux, U.voix('retour', "Rien ne t'oblige à recommencer. Rien ne t'en empêche non plus."), { apres: 300 });
       }
     } else {
-      for (let i = 0; i < ouverture.length; i++) {
-        await U.dire(flux, ouverture[i], { forte: i === ouverture.length - 1, apres: i === 0 ? 500 : 260 });
+      /* On garde les cinq premières et la dernière : la dernière est
+         l'invitation, elle ne se coupe pas. Le reste est du décor. */
+      const lignes = ouverture.length > 6
+        ? ouverture.slice(0, 5).concat([ouverture[ouverture.length - 1]])
+        : ouverture;
+      for (let i = 0; i < lignes.length; i++) {
+        await U.dire(flux, lignes[i], { forte: i === lignes.length - 1, apres: i === 0 ? 420 : 200 });
       }
     }
 
@@ -154,6 +166,7 @@
   ];
 
   async function rituel() {
+    U.calmer();
     const n = U.montrer('ecran-rituel');
     n.innerHTML = '';
     JJK.fx.setIntensity(0.28);
@@ -229,6 +242,7 @@
      3. LA RÉVÉLATION
      ===================================================================== */
   async function revelation() {
+    U.calmer();
     const n = U.montrer('ecran-revelation');
     n.innerHTML = '';
     const t = G.tech;
@@ -367,6 +381,7 @@
      CONSULTATION — on arrive par un lien : on ne joue pas, on vérifie.
      ===================================================================== */
   async function consultation(graine) {
+    U.calmer();
     const n = U.montrer('ecran-consultation');
     n.innerHTML = '';
     G.graine = graine;
@@ -437,12 +452,16 @@
     JJK.fx.setIntensity(0.4);
     G.catalogue = G.catalogue.length ? G.catalogue : JJK.serments.catalogue(G.tech.seed);
     G.serments = G.serments || [];
+    const cap = capSerments();
+    /* si le contrat a rétréci (mort, recul de maturation), on rend le trop-plein */
+    while (G.serments.length > cap) G.serments.pop();
 
     n.appendChild(el('span', 'etiquette rouge', 'Serments contraignants'));
     n.appendChild(el('h1', 'titre-rituel', 'Ce que tu <em>rends</em>'));
     const p = el('p');
     p.style.cssText = 'max-width:62ch;font-weight:300;color:var(--os-faible)';
-    p.textContent = "Un serment n'est pas une amélioration. C'est une amputation payée d'avance : tu perds vraiment ce qui est écrit, dans ce jeu, tout de suite. En échange, le réel te doit quelque chose. Tu peux en signer trois.";
+    p.textContent = "Un serment n'est pas une amélioration. C'est une amputation payée d'avance : tu perds vraiment ce qui est écrit, dans ce jeu, tout de suite. En échange, le réel te doit quelque chose. " +
+      (cap > 3 ? "Tu es descendu assez bas pour qu'on t'en laisse signer " + cap + "." : "Tu peux en signer trois. Plus bas, on t'en laissera davantage.");
     n.appendChild(p);
 
     const compteur = el('p', 'etiquette');
@@ -456,7 +475,10 @@
     const r = U.rangee();
     const suite = U.bouton('Descendre', 'rouge', () => {
       G.mods = JJK.serments.agreger(G.serments);
-      if (G.mods.coupeSon) JJK.audio.toggleMute(true);
+      /* le silence est persisté : il doit survivre au rechargement,
+         sinon le serment ne coûte rien qu'un raccourci clavier */
+      if (G.mods.coupeSon) { JJK.audio.toggleMute(true); M().ecrire({ sonCoupe: true }); }
+      U.majSon();
       M().ecrire({ serments: G.serments.map(s => s.id) });
       descente();
     });
@@ -464,7 +486,7 @@
     n.appendChild(r);
 
     function maj() {
-      const reste = 3 - G.serments.length;
+      const reste = cap - G.serments.length;
       compteur.textContent = reste > 0 ? (reste + ' serment' + (reste > 1 ? 's' : '') + ' encore possible' + (reste > 1 ? 's' : '')) : 'Le contrat est plein.';
       liste.innerHTML = '';
       G.catalogue.forEach(s => {
@@ -484,7 +506,7 @@
             maj();
             return;
           }
-          if (G.serments.length >= 3) { JJK.fx.shake(0.15); return; }
+          if (G.serments.length >= cap) { JJK.fx.shake(0.15); return; }
           G.serments.push(s);
           JJK.audio.oath();
           JJK.fx.invert(140);
@@ -501,6 +523,10 @@
     }
     maj();
   }
+
+  /* Le contrat s'allonge à mesure qu'on descend : à ce niveau-là, plus
+     personne ne s'inquiète de ce qu'on signe. */
+  function capSerments() { return Math.min(5, 3 + Math.floor(G.maturation / 4)); }
 
   /* =====================================================================
      5. LA DESCENTE
@@ -633,5 +659,5 @@
     JJK.fx.setDead(0);
   }
 
-  JJK.ecrans = { seuil, rituel, revelation, serments, descente, registre, consultation, reinit, appliquerMaturation, gradeCible, courbe, lienDe, G };
+  JJK.ecrans = { seuil, rituel, revelation, serments, descente, registre, consultation, reinit, capSerments, appliquerMaturation, gradeCible, courbe, lienDe, G };
 })(window);

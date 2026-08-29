@@ -23,6 +23,85 @@
          .replace(/'\s+/g, "'");
     return t.trim();
   }
+  /* Accord d'un qualificatif. Le français ne pardonne pas « L'Attente Second ». */
+  const PREPO = /^(de |du |des |d'|à |au |aux |en |sans |sous |sur |par |contre |pour |avant |après )/i;
+  function accorder(mot, genre, pluriel) {
+    let m = String(mot || '').trim();
+    if (!m || PREPO.test(m)) return m;              /* « de Nuit » ne s'accorde pas */
+    if (/^[a-z]/.test(m) && / /.test(m)) return m;  /* locution : on n'y touche pas */
+    const fem = (genre === 'f') || (genre === 'e' && false);
+    if (fem) {
+      const regles = [
+        [/eux$/, 'euse'], [/eur$/, 'euse'], [/if$/, 'ive'], [/el$/, 'elle'],
+        [/eil$/, 'eille'], [/et$/, 'ette'], [/ien$/, 'ienne'], [/on$/, 'onne'],
+        [/er$/, 'ère'], [/ier$/, 'ière'], [/eur$/, 'euse'], [/ateur$/, 'atrice'],
+        [/anc$/, 'anche'], [/ec$/, 'èche'], [/ard$/, 'arde'], [/and$/, 'ande'],
+        [/ond$/, 'onde'], [/ain$/, 'aine'], [/ant$/, 'ante'], [/ent$/, 'ente'],
+        [/al$/, 'ale'], [/eux$/, 'euse'], [/ct$/, 'cte'], [/ien$/, 'ienne'],
+      ];
+      for (const [re, rep] of regles) if (re.test(m)) return m.replace(re, rep);
+      if (/[^e]$/.test(m) && !/[sxz]$/.test(m)) return m + 'e';
+      if (/é$/.test(m)) return m + 'e';
+    }
+    if (pluriel) return plurielDe(m);
+    return m;
+  }
+  /* Mot-outil : soit le mot entier, soit une forme élidée (d', l', jusqu').
+     Sans l'ancre finale, « labyrinthe » passerait pour « la ».           */
+  const INVARIABLE = /^(?:de|du|des|la|le|les|un|une|à|au|aux|en|sans|sous|sur|par|et|contre|dans|pour|avant|après|depuis|entre|chez|vers|selon)$|^(?:d|l|qu|jusqu|puisqu|lorsqu)['\u2019]/i;
+
+  /* Le corpus écrit de belles phrases : « Os hyoïde, seul os qui ne touche
+     aucun autre ». Un nom de technique veut un syntagme, pas une notice.
+     On coupe à la première articulation et on plafonne la longueur.       */
+  function raccourcir(phrase, maxMots) {
+    let t = String(phrase || '').trim();
+    t = t.split(/[,;(—–:]/)[0].trim();                       /* la subordonnée saute */
+    t = t.split(/\s+(?:qui|que|dont|où|quand|lorsque)\s+/i)[0].trim();
+    const max = maxMots || 3;
+    let mots = t.split(/\s+/);
+    if (mots.length <= max) return sansJointFinal(t);
+    /* on coupe AVANT le premier joint prépositionnel : « ardoise fendue par
+       le gel » doit donner « ardoise fendue », jamais « ardoise fendue par ». */
+    for (let i = 1; i < mots.length; i++) {
+      if (INVARIABLE.test(mots[i])) return sansJointFinal(mots.slice(0, i).join(' '));
+    }
+    return sansJointFinal(mots.slice(0, max).join(' '));
+  }
+  /* Un nom ne se termine jamais sur une préposition en suspens. */
+  function sansJointFinal(t) {
+    let s2 = String(t || '').trim();
+    for (let i = 0; i < 3; i++) {
+      const m = /\s+\S+$/.exec(s2);
+      if (!m) break;
+      const dernier = m[0].trim();
+      if (INVARIABLE.test(dernier) || /['\u2019]$/.test(dernier)) s2 = s2.slice(0, m.index).trim();
+      else break;
+    }
+    return s2 || String(t || '').trim();
+  }
+  function plurielMot(m) {
+    if (!m || INVARIABLE.test(m)) return m;
+    if (/[sxz]$/.test(m)) return m;
+    if (/(au|eau|eu)$/.test(m)) return m + 'x';
+    if (/al$/.test(m)) return m.replace(/al$/, 'aux');
+    if (/ail$/.test(m)) return m;
+    return m + 's';
+  }
+  /* « lait tourné » → « laits tournés ». Dès qu'une préposition apparaît,
+     la suite est un complément : on n'y touche plus. « peau de tambour »
+     donne « peaux de tambour », jamais « peaux de tambours ».            */
+  function plurielDe(mot) {
+    const m = String(mot || '').trim();
+    if (!m) return m;
+    const mots = m.split(' ');
+    let stop = false;
+    return mots.map(w => {
+      if (stop) return w;
+      if (INVARIABLE.test(w) && !/^(la|le)$/i.test(w)) { stop = true; return w; }
+      return plurielMot(w);
+    }).join(' ');
+  }
+
   /* « La Rouille » → { nu: 'Rouille', genre: 'f', art: 'la' } */
   function decoupe(nom) {
     const s = String(nom || '').trim();
@@ -75,22 +154,27 @@
   }
 
   /* ---- noms de technique ---------------------------------------------- */
+  /* Chaque patron est répété selon le poids qu'on veut lui donner : les
+     tournures pauvres en entropie (la loi seule) doivent rester rares,
+     sinon deux graines sur dix portent le même nom.                      */
   const PATRONS = [
-    p => fr(p.LOI),
-    p => fr(p.LOI + ' de ' + p.ESSENCE_ART),
-    p => fr('Technique de ' + p.ESSENCE_ART),
-    p => fr(p.NOMBRE + ' ' + p.MATIERE),
-    p => fr(p.ESSENCE_NU + ' ' + p.SUFFIXE),
-    p => fr(p.PREFIXE + ' ' + p.ESSENCE_NU),
-    p => fr(p.MATIERE + ' de ' + p.ESSENCE_ART),
-    p => fr(p.LOI + ' : ' + p.NOMBRE + ' ' + p.MATIERE),
-    p => fr(p.ESSENCE_ART + ' ' + p.SUFFIXE),
-    p => fr(p.PREFIXE + ' de ' + p.ESSENCE_ART),
-    p => fr(p.ESSENCE_NU + ' ' + p.NOMBRE),
-    p => fr('Doctrine de ' + p.ESSENCE_ART),
-    p => fr(p.ORGANE + ' de ' + p.ESSENCE_ART),
-    p => fr(p.LOI + ' ' + p.SUFFIXE),
-  ];
+    [1, p => fr(p.LOI)],
+    [3, p => fr(p.LOI + ' de ' + p.ESSENCE_ART)],
+    [2, p => fr('Technique de ' + p.ESSENCE_ART)],
+    [3, p => fr(p.NOMBRE_MATIERE)],
+    [3, p => fr(p.ESSENCE_NU + ' ' + accorder(p.SUFFIXE, p.GENRE))],
+    [3, p => fr(p.PREFIXE + ' de ' + p.ESSENCE_ART)],
+    [3, p => fr(p.MATIERE + ' de ' + p.ESSENCE_ART)],
+    [3, p => fr(p.LOI + ' : ' + p.NOMBRE_MATIERE)],
+    [3, p => fr(p.ESSENCE_ART + ' ' + accorder(p.SUFFIXE, p.GENRE))],
+    [2, p => fr(p.PREFIXE + ' ' + accorder(p.SUFFIXE, 'm'))],
+    [2, p => fr('Doctrine de ' + p.ESSENCE_ART)],
+    [3, p => fr(p.ORGANE + ' de ' + p.ESSENCE_ART)],
+    [3, p => fr(p.ESSENCE_ART + ' de ' + p.MATIERE)],
+    [3, p => fr(p.PREFIXE + ' de ' + p.MATIERE)],
+    [2, p => fr(p.MATIERE + ', ' + accorder(p.SUFFIXE, 'm'))],
+    [2, p => fr(p.ORGANE + ' de ' + p.MATIERE)],
+  ].reduce((acc, [n, f]) => { for (let i = 0; i < n; i++) acc.push(f); return acc; }, []);
 
   /* ---- la forge --------------------------------------------------------
      Tout ce qui suit ne dépend que de la graine. Rien d'autre.           */
@@ -107,20 +191,31 @@
     const vecteur = meilleur(vecteurs, (loi.id || '') + (essence.id || ''), R.fork('vecteur'), 5) || { id: 'z', nom: 'Par le contact', condition: '', portee: 'contact' };
     const domaine = meilleur(domaines, (loi.id || '') + ':' + (essence.id || ''), R.fork('domaine'), 4) || null;
 
-    const matiere = R.pick(matieres.matieres || ['cendre']);
-    const nombre = R.pick(matieres.nombres || ['Neuf']);
+    const matiere = raccourcir(R.pick(matieres.matieres || ['cendre']), 3);
+    /* « Un Demi Cendres » n'existe pas ; « Zéro Cendre » si. */
+    const nombres = (matieres.nombres || ['Neuf'])
+      .filter(x => !/^(un|une|un demi|une demie|zéro)$/i.test(String(x).trim()));
+    const nombre = R.pick(nombres.length ? nombres : ['Neuf']);
     const lieu = R.pick(matieres.lieux || ['une salle sans porte']);
-    const organe = R.pick(matieres.organes || ['la moelle']);
+    /* on retire l'article AVANT de raccourcir, sinon « le labyrinthe de
+       l'oreille interne » se réduit à « le », ce qui ne nomme rien.      */
+    const organe = raccourcir(String(R.pick(matieres.organes || ['la moelle']))
+      .replace(/^(les|le|la|l['\u2019]|des|du|de\s+l['\u2019]|de\s+la|de)\s*/i, ''), 3);
     const prefixe = R.pick(nomen.prefixes || ['Rite']);
     const suffixe = R.pick(nomen.suffixes || ['Perpétuel']);
 
     const d = decoupe(essence.nom);
+    /* « Neuf Lait Tourné » est une faute ; « Neuf Laits Tournés » n'en est pas une.
+       On a par ailleurs écarté « Un » : le genre d'une matière est incertain. */
+    const matiereN = titre(plurielDe(matiere));
     const jetons = {
       ESSENCE: essence.nom, ESSENCE_NU: d.nu, ESSENCE_ART: avecArticle(essence.nom),
-      LOI: loi.nom, VECTEUR: vecteur.nom, NOMBRE: nombre, MATIERE: titre(matiere),
-      PREFIXE: prefixe, SUFFIXE: suffixe, ORGANE: titre(String(organe).replace(/^(la|le|les|l')\s*/i, '')),
+      GENRE: d.pluriel ? 'p' : d.genre,
+      LOI: loi.nom, VECTEUR: vecteur.nom, NOMBRE: nombre,
+      MATIERE: titre(matiere), NOMBRE_MATIERE: nombre + ' ' + matiereN,
+      PREFIXE: prefixe, SUFFIXE: suffixe, ORGANE: titre(organe),
     };
-    let nom = titre(PATRONS[R.int(PATRONS.length)](jetons));
+    let nom = titre(sansJointFinal(PATRONS[R.int(PATRONS.length)](jetons)));
     /* deux techniques de même nom, c'est une insulte au registre */
     nom = nom.replace(/\s+/g, ' ').trim();
 
@@ -176,7 +271,9 @@
 
     const dominante = AXES.slice().sort((a, b) => stats[b] - stats[a])[0];
     const pvMax = 90 + stats.vigueur * 3.4 | 0;
-    const enMax = 5 + Math.round(stats.flux / 14);
+    /* la réserve doit pouvoir contenir une extension du territoire (8),
+       sinon la moitié du jeu reste hors d'atteinte quel que soit le talent */
+    const enMax = 8 + Math.round(stats.flux / 9);
     const enTour = 2 + (stats.flux >= 26 ? 1 : 0) + (stats.flux >= 40 ? 1 : 0);
 
     return {
@@ -210,5 +307,5 @@
   }
   function minuscule(s) { const t = String(s || ''); return t.charAt(0).toLowerCase() + t.slice(1); }
 
-  JJK.forge = { forgeTechnique, forgeReceptacle, grade, dossier, fr, decoupe, avecArticle, AXES, affinite, liste };
+  JJK.forge = { forgeTechnique, forgeReceptacle, grade, dossier, fr, decoupe, avecArticle, accorder, plurielDe, raccourcir, AXES, affinite, liste };
 })(window);

@@ -110,6 +110,12 @@
     return String(s || '').split(' ').map((w, i) => {
       const low = w.toLowerCase();
       if (i > 0 && PARTICULES[low]) return low;
+      /* « l'attente » garde son article en minuscule : « de l'Attente » */
+      const ap = /^([ldjmtnscLDJMTNSC])['\u2019](.+)$/.exec(w);
+      if (ap) {
+        const tete = i > 0 ? ap[1].toLowerCase() : ap[1].toUpperCase();
+        return tete + "'" + ap[2].charAt(0).toUpperCase() + ap[2].slice(1);
+      }
       return w.charAt(0).toUpperCase() + w.slice(1);
     }).join(' ');
   }

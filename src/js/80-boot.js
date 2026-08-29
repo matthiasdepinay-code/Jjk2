@@ -22,6 +22,7 @@
       JJK.audio.unlock();
       const r = JJK.memoire.lire();
       if (r.sonCoupe) JJK.audio.toggleMute(true);
+      JJK.ui.majSon();
       document.removeEventListener('pointerdown', eveil);
       document.removeEventListener('keydown', eveil);
     };

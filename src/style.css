@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=Noto+Serif+JP:wght@400;700&display=swap");
-
 /* =========================================================================
    RITUEL — feuille de style
    Un dossier d'autopsie qu'on aurait laissé trop longtemps dans le noir.
@@ -47,6 +45,17 @@ html.is-inverted { filter: invert(1) hue-rotate(180deg); }
 html.is-inverted #fx-flash { filter: invert(1); }
 
 ::selection { background: var(--sang); color: var(--os); }
+
+/* Le clavier doit voir où il est : personne ne joue à l'aveugle sans
+   l'avoir signé. */
+:focus-visible {
+  outline: 2px solid var(--sang-vif);
+  outline-offset: 3px;
+}
+.reponse:focus-visible, .contrat:focus-visible, .acte:focus-visible {
+  outline-offset: -2px;
+  color: var(--os);
+}
 
 /* ---- calques d'effets ---------------------------------------------- */
 .fx-layer {
@@ -101,7 +110,7 @@ body::before {
 }
 .etiquette.rouge { color: var(--sang); }
 .titre-rituel {
-  font-family: var(--serif); font-weight: 300;
+  font-family: var(--serif); font-weight: 300; text-wrap: balance;
   font-size: clamp(2.1rem, 7vw, 4.6rem); line-height: 1.02;
   letter-spacing: -.02em; margin: .1em 0 .2em;
 }
@@ -173,7 +182,7 @@ hr.trait.fort { border-top: var(--hair-fort); }
 
 .question-bloc { margin-top: 40px; }
 .question-texte {
-  font-size: clamp(1.35rem, 3.6vw, 2.1rem); font-weight: 300;
+  font-size: clamp(1.35rem, 3.6vw, 2.1rem); font-weight: 300; text-wrap: balance;
   line-height: 1.25; margin: 0 0 28px; max-width: 34ch;
 }
 .reponses { display: grid; gap: 10px; max-width: 780px; }
@@ -211,7 +220,7 @@ hr.trait.fort { border-top: var(--hair-fort); }
 @media (max-width: 860px) { .dossier { grid-template-columns: 1fr; } }
 
 .nom-technique {
-  font-size: clamp(2rem, 6.4vw, 4.2rem); font-weight: 300; line-height: 1.03;
+  font-size: clamp(2rem, 6.4vw, 4.2rem); font-weight: 300; line-height: 1.03; text-wrap: balance;
   letter-spacing: -.025em; margin: 6px 0 10px;
 }
 .nom-jp { font-family: var(--jp); font-size: clamp(.95rem, 2.2vw, 1.3rem); color: var(--sang); letter-spacing: .3em; }
@@ -304,8 +313,10 @@ hr.trait.fort { border-top: var(--hair-fort); }
 .puce.mauvais { border-color: rgba(179,18,23,.5); color: var(--sang-vif); }
 .puce.bon { border-color: rgba(242,193,78,.5); color: var(--or); }
 
-.mutilated { position: relative; filter: grayscale(1) brightness(.5); min-height: 42px; }
-.mutilated > * { opacity: .18; }
+/* Le filtre porte sur les enfants, pas sur l'élément : sinon il s'applique
+   aussi aux pseudo-éléments et la cicatrice devient illisible. */
+.mutilated { position: relative; min-height: 42px; }
+.mutilated > * { opacity: .16; filter: grayscale(1) brightness(.5); }
 .mutilated::before {
   content: ""; position: absolute; left: -4%; right: -4%; top: 50%; height: 2px;
   background: var(--sang-vif); transform: rotate(-2.4deg); z-index: 2;
@@ -361,7 +372,7 @@ hr.trait.fort { border-top: var(--hair-fort); }
   color: var(--sang-vif); letter-spacing: .34em; margin-bottom: 26px; opacity: .9;
 }
 #territoire .nom-dom {
-  font-size: clamp(2.2rem, 9vw, 6.4rem); font-weight: 300; line-height: .98;
+  font-size: clamp(2.2rem, 9vw, 6.4rem); font-weight: 300; line-height: .98; text-wrap: balance;
   letter-spacing: -.03em; max-width: 16ch; margin: 0 auto;
   text-shadow: 0 0 60px rgba(179,18,23,.6);
 }
@@ -424,7 +435,9 @@ body.in-domain #stage { filter: blur(3px) brightness(.35); }
 }
 
 /* ---- lisibilité pendant que le territoire est déployé ---------------- */
-body.domaine-calme #stage { filter: none; }
+/* Le territoire déployé recouvre la scène (calque 60). Tant qu'il dure,
+   la scène doit repasser au-dessus, sinon on joue sans voir ses boutons. */
+body.domaine-calme #stage { filter: none; position: relative; z-index: 62; }
 body.domaine-calme .fiche,
 body.domaine-calme .acte,
 body.domaine-calme .journal {
@@ -442,3 +455,25 @@ body.domaine-calme .fiche { border-color: rgba(233, 226, 212, .3); }
   #barre-etat { font-size: 9px; gap: 10px; letter-spacing: .12em; }
   #stage { padding-bottom: 96px; }
 }
+
+/* ---- téléphone : l'écran est petit, le rituel reste lisible ---------- */
+#barre-etat > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 620px) {
+  #be-registre, #be-grade { display: none; }
+  #barre-etat { gap: 12px; padding: 8px 14px; }
+  #stage { padding-bottom: 84px; }
+  .fiche { padding: 12px 14px; }
+  .fiche .nom { font-size: 1.2rem; }
+  .fiche .replique { font-size: .88rem; margin-top: 8px; }
+  .statuts { min-height: 0; }
+  .combattants { gap: 10px; }
+  .acte { padding: 10px 12px; }
+  .acte b { font-size: 1rem; }
+  .titre-rituel { font-size: clamp(1.9rem, 11vw, 3rem); }
+  .contrat { padding: 16px 16px; }
+  .grille-stats { grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); }
+  .stat { padding: 10px 12px; }
+  .stat b { font-size: 1.15rem; }
+}
+/* les murmures ne doivent jamais recouvrir une action */
+@media (max-width: 860px) { .murmure-flottant { display: none; } }

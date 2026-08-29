@@ -94,7 +94,7 @@
     L.veil = layer('fx-veil', 0);
     L.ink = layer('fx-ink', 3);
     L.dom = layer('fx-dom', 60, 'is-hidden');
-    L.over = layer('fx-over', 70);
+    L.over = layer('fx-over', 78);
     resize();
     root.addEventListener('resize', resize);
     t0 = now();
@@ -209,7 +209,13 @@
     stage.style.transform = 'translate(' + chaos.r(-a, a).toFixed(2) + 'px,' + chaos.r(-a, a).toFixed(2) + 'px) rotate(' + chaos.r(-a * 0.09, a * 0.09).toFixed(3) + 'deg)';
     state.shake *= 0.88;
   }
-  function shake(p) { state.shake = Math.max(state.shake, clamp(p, 0, 1.6)); }
+  /* Qui a demandé moins de mouvement ne doit pas se faire secouer l'écran :
+     la puissance passe alors par la couleur, l'encre et le son. */
+  function shake(p) {
+    if (state.reduced) return;
+    state.shake = Math.max(state.shake, clamp(p, 0, 1.6));
+  }
+  function reduit() { return state.reduced; }
 
   function pulse(x, y, r, col, w) {
     state.pulses.push({ x: x == null ? W / 2 : x, y: y == null ? H / 2 : y,
@@ -258,6 +264,7 @@
 
   /* ---- inversion : le monde se retourne ------------------------------ */
   function invert(ms) {
+    if (state.reduced) return;
     document.documentElement.classList.add('is-inverted');
     setTimeout(() => document.documentElement.classList.remove('is-inverted'), ms || 120);
   }
@@ -528,7 +535,7 @@
         const ch = text.charAt(i++);
         node.textContent += ch;
         if (o.sound !== false && ch !== ' ' && i % 2 === 0 && JJK.audio) JJK.audio.tick(chaos.r(900, 2200), 0.012, 0.018);
-        const pause = /[.,;:!?…—]/.test(ch) ? speed * 9 : (ch === ' ' ? speed * 0.6 : speed);
+        const pause = /[.…!?]/.test(ch) ? speed * 5 : (/[,;:—]/.test(ch) ? speed * 2.5 : (ch === ' ' ? speed * 0.6 : speed));
         setTimeout(step, pause * chaos.r(0.6, 1.5));
       }
       step();
@@ -552,7 +559,7 @@
 
   JJK.fx = {
     mount, resize, shake, pulse, slash, ink, inkFade, inkClear, invert, flash,
-    sigil, domainOpen, domainClose, type, mutilate, setIntensity, setHue, setDead,
+    sigil, domainOpen, domainClose, type, mutilate, setIntensity, setHue, setDead, reduit,
     hexA, state,
     get size() { return { W, H }; },
   };

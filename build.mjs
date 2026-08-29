@@ -36,8 +36,17 @@ const corpusJson = JSON.stringify(corpus).replace(/</g, '\\u003c');
 const TITRE = 'RITUEL — 呪法帳';
 const DESC = "Générateur déterministe de techniques maudites et duel occulte dans l'univers de Jujutsu Kaisen.";
 
+/* Les polices viennent de Google Fonts, seul hôte de feuilles admis côté
+   Artifact. La page reste correcte sans elles : chaque pile a un repli réel. */
+const POLICES = '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
+  '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?' +
+  'family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400' +
+  '&family=IBM+Plex+Mono:wght@300;400;500' +
+  '&family=Noto+Serif+JP:wght@400;700&display=swap">';
+
 const corps = `<title>${TITRE}</title>
 <meta name="description" content="${DESC}">
+${POLICES}
 <style>
 ${css}
 </style>

@@ -139,7 +139,7 @@
       },
     },
     {
-      id: 'domaine', nom: 'Extension du Territoire', cout: 8,
+      id: 'domaine', nom: 'Extension du Territoire', cout: 6,
       ultime: true,
       desc: 'Déployer un espace clos où ta loi est la seule physique. Exige 100 de tension.',
       req: (D, a) => a.tension >= 100 && !statut(a, 'scelle') && !(a.mods.domaineUnique && a.domaineUtilise),
@@ -205,7 +205,7 @@
       archetype: tech.archetype, domaine: tech.domaine, technique: tech,
       statuts: [], tension: 0, domaineTours: 0, domaineUtilise: false,
       sermentPris: false, rancune: 0, derniereAction: null, mods,
-      raffinement: corps.puissance, intention: null, humain: true,
+      raffinement: corps.puissance + (mods.raffinementBonus || 0), intention: null, humain: true,
     };
   }
 
@@ -213,12 +213,21 @@
      On vise une durée de duel, pas des chiffres arbitraires. Ainsi un fléau
      reste dangereux quel que soit le réceptacle qui lui fait face.        */
   const CADENCE = {
-    '4':             { tours: 3.0, survie: 10.0 },
-    '3':             { tours: 4.2, survie: 8.5 },
-    '2':             { tours: 5.6, survie: 7.2 },
-    '1':             { tours: 7.2, survie: 6.4 },
-    'semi-spécial':  { tours: 9.0, survie: 5.8 },
-    'spécial':       { tours: 11.5, survie: 5.0 },
+    '4':             { tours: 4.0,  survie: 13.0 },
+    '3':             { tours: 5.5,  survie: 11.0 },
+    '2':             { tours: 7.5,  survie: 10.0 },
+    '1':             { tours: 10.0, survie: 9.5 },
+    'semi-spécial':  { tours: 11.0, survie: 9.5 },
+    'spécial':       { tours: 12.5, survie: 9.5 },
+  };
+  /* Rendement réel d'un tour de joueur : la technique innée vaut 2,3 fois
+     l'attaque, mais elle pose « Marqué » (+30 %) et les critiques ajoutent
+     encore. Mesuré en simulation, pas supposé — c'est 3,4, pas 1,9.       */
+  const REGLAGE = {
+    rendementJoueur: 3.4,   /* dégâts moyens d'un tour de joueur, en multiples d'attaque */
+    rendementFleau: 1.9,    /* idem côté fléau */
+    expoAttaque: 0.40,      /* la courbe pèse à plein sur les PV du fléau, à peine sur sa frappe :
+                               une descente doit s'allonger, pas se raccourcir brutalement */
   };
 
   function combattantFleau(f, ref, R, courbe) {
@@ -231,12 +240,12 @@
        maturation. Sinon progresser ne servirait à rien : le monde grandirait
        exactement à la vitesse du joueur, et le joueur ne sentirait rien.
        Ici, le fléau ignore ce que tu as signé. C'est à toi d'en profiter.  */
-    const dpsRef = Math.max(6, ref.attaque * 1.9);
+    const dpsRef = Math.max(6, ref.attaque * REGLAGE.rendementJoueur);
     /* variance de caractère : deux fléaux de même grade ne se ressemblent pas */
     const vPv = rng.range(0.86, 1.16), vAtt = rng.range(0.86, 1.16);
 
     const pvMax = Math.max(40, Math.round(dpsRef * c.tours * vPv * k));
-    const attaque = Math.max(6, Math.round((ref.pvMax / c.survie / 1.45) * vAtt * k));
+    const attaque = Math.max(6, Math.round((ref.pvMax / c.survie / REGLAGE.rendementFleau) * vAtt * Math.pow(k, REGLAGE.expoAttaque)));
 
     return {
       cle: 'ennemi', nom: f.nom, sousTitre: 'Fléau de grade ' + g,
@@ -247,10 +256,15 @@
       statuts: [], tension: 0, domaineTours: 0, domaineUtilise: false,
       sermentPris: false, rancune: 0, derniereAction: null,
       mods: MODS_NEUTRES(),
-      raffinement: Math.round(pvMax / 5 + attaque * 2.2),
+      /* Le raffinement décide qui l'emporte quand deux territoires se
+         touchent. On le veut comparable à la puissance du joueur, pas
+         indexé sur des PV : sinon un grade spécial gagne toujours. */
+      raffinement: ({ '4': 70, '3': 110, '2': 150, '1': 200, 'semi-spécial': 235, 'spécial': 290 }[g] || 150),
       intention: null, humain: false,
       profil: profilDe(g),
       grade: g,
+      temperament: temperamentsDe(f),
+      patience: 0,
     };
   }
 
@@ -259,6 +273,35 @@
       energieBonus: 0, energieDepart: 0, enMaxBonus: 0, remise: 0, frappeMult: 1, domaineMult: 1,
       domaineTours: 0, rancune: 0, interdit: {}, masqueVieEnnemi: false, masqueJournal: false,
       coupeSon: false, pasDeRepetition: false, domaineUnique: false, effaceToutALaMort: false, limiteTours: 0 };
+  }
+
+  /* ------------------------------------------------------------------
+     Tempéraments. Le bestiaire décrit des comportements précis :
+     « il attend », « il rejoue une de tes actions », « il frappe deux
+     fois de suite ». Sans lecture, ce serait de la littérature posée
+     sur une IA générique. On lit donc le texte, et on le tient.
+     ------------------------------------------------------------------ */
+  const TEMPERAMENTS = [
+    { id: 'patient',    re: /attend|n['’]engage rien|patiente|immobile|sans bouger|ne bouge|reste au fond|laisse venir/i },
+    { id: 'imitateur',  re: /rejoue|recopie|répète|imite|copie|reproduit|renvoie ton|ton propre geste/i },
+    { id: 'double',     re: /deux fois de suite|frappe deux fois|double|coup double|enchaîne deux/i },
+    { id: 'horloge',    re: /\bau (?:cinquième|sixième|septième|huitième|neuvième|dixième|\d+)(?:e|ème)?\b/i },
+    { id: 'soigneur',   re: /se referme|se recoud|se répare|régénère|se soigne|repousse|cicatrise/i },
+    { id: 'vorace',     re: /dévore|absorbe|aspire|se nourrit|draine|vide|siphonne/i },
+    { id: 'fuyant',     re: /disparaît|s['’]efface|n['’]existe que|invisible|ne se laisse pas|hors de portée/i },
+  ];
+  const MOTS_TOUR = { cinquième: 5, sixième: 6, septième: 7, huitième: 8, neuvième: 9, dixième: 10 };
+
+  function temperamentsDe(f) {
+    const texte = [f.comportement, f.apparence, f.technique_signature].join(' ');
+    const t = {};
+    TEMPERAMENTS.forEach(x => { if (x.re.test(texte)) t[x.id] = true; });
+    if (t.horloge) {
+      const m = /\bau (cinquième|sixième|septième|huitième|neuvième|dixième|\d+)/i.exec(texte);
+      const v = m ? (MOTS_TOUR[String(m[1]).toLowerCase()] || parseInt(m[1], 10)) : 7;
+      t.tourCle = Math.max(3, Math.min(12, v || 7));
+    }
+    return t;
   }
 
   function profilDe(grade) {
@@ -295,6 +338,7 @@
       if (a.domaineTours > 0) base *= 1.35;
 
       const lec = statut(a, 'lecture');
+      const lisait = !!lec;
       const chanceCrit = clamp((a.crit || 0.1) + (lec ? 0.55 : 0), 0, 0.95);
       const crit = R.chance(chanceCrit);
       if (crit) base *= 1.85 * (a.mods.critMult || 1);
@@ -304,6 +348,10 @@
 
       const g = statut(d, 'garde');
       if (g && !o.ignoreGarde) { base *= 1 - (g.val || 0.5); retirer(d, 'garde'); }
+      /* Ce qui n'existe que hors du regard encaisse mal les coups portés
+         à l'aveugle. Le fixer — Lire l'adversaire — le rend solide, et
+         c'est exactement ce que sa fiche annonce. */
+      if (d.temperament && d.temperament.fuyant && !lisait && !statut(d, 'marque') && !o.surAuBut) base *= 0.68;
       if (statut(d, 'marque')) base *= 1.30;
       base *= d.mods.degatsRecusMult || 1;
       if (d.domaineTours > 0 && !o.surAuBut) base *= 0.70;
@@ -315,8 +363,8 @@
       }
       d.pv -= q;
       a.rancune = 0;
-      a.tension = Math.min(200, a.tension + Math.round(q * 0.30) + 6);
-      d.tension = Math.min(200, d.tension + Math.round(q * 0.55) + 4);
+      a.tension = Math.min(200, a.tension + Math.round(q * 0.18) + 4);
+      d.tension = Math.min(200, d.tension + Math.round(q * 0.35) + 3);
       d.rancune = Math.min(1.5, (d.rancune || 0) + (d.mods.rancune || 0));
 
       const ec = statut(d, 'echo');
@@ -407,8 +455,10 @@
           ev.push({ t: 'degats', par: 'saignee', cible: c.cle, montant: q, verbe: 'saigne', dot: true });
         }
         if (statut(c, 'corrosion')) c.en = Math.max(0, c.en - 1);
-        c.en = Math.min(c.enMax, c.en + 2 + (c.mods.energieBonus || 0) + (c.humain ? 0 : 1));
-        c.tension = Math.min(200, c.tension + 8);
+        /* +3 par tour : une technique innée (3) est ainsi soutenable,
+           et mettre de côté les 8 d'une extension reste un vrai choix. */
+        c.en = Math.min(c.enMax, c.en + 3 + (c.mods.energieBonus || 0));
+        c.tension = Math.min(200, c.tension + 6);
         if (c.domaineTours > 0) {
           c.domaineTours--;
           const cible = c === D.joueur ? D.ennemi : D.joueur;
@@ -430,11 +480,25 @@
     /* ---- l'adversaire n'improvise pas : il a un tempérament ------------ */
     function choisirIntention(D, e, cible) {
       if (!e.profil) e.profil = profilDe((e.fleau || {}).grade || '2');
-      const p = e.profil;
+      const p = e.profil, t = e.temperament || {};
       const bas = e.pv / e.pvMax < 0.35;
+
+      /* l'heure dite : ce qu'annonce sa fiche arrive au tour annoncé */
+      if (t.tourCle && D.tour === t.tourCle && !statut(e, 'scelle')) {
+        if (p.domaine && e.en >= 6 && e.domaineTours === 0) return 'domaine';
+        if (e.en >= 6) return 'maximum';
+      }
       if (p.domaine && e.tension >= p.seuilTension && e.en >= 6 && !statut(e, 'scelle') && e.domaineTours === 0) return 'domaine';
       if (e.tension >= 70 && e.en >= 5 && R.chance(0.55)) return 'maximum';
-      if (bas && p.soin > 0 && e.en >= 3 && R.chance(0.55)) return 'inverse';
+      if (bas && (p.soin > 0 || t.soigneur) && e.en >= 3 && R.chance(t.soigneur ? 0.75 : 0.55)) return 'inverse';
+
+      /* celui qui attend : il se garde, et chaque attente le charge */
+      if (t.patient && e.patience < 3 && R.chance(0.45)) return 'garde';
+      /* celui qui rejoue : il te renvoie ton dernier geste */
+      if (t.imitateur && cible.derniereAction && R.chance(0.55)) {
+        const a = parId[cible.derniereAction];
+        if (a && a.id !== 'fuite' && a.id !== 'serment' && a.id !== 'domaine' && e.en >= (a.cout || 0)) return a.id;
+      }
       const r = R.next();
       if (r < p.agressif) return e.en >= 2 && R.chance(0.6) ? 'decharge' : 'frappe';
       if (r < p.agressif + p.technique) return e.en >= 3 ? 'technique' : 'frappe';
@@ -442,12 +506,11 @@
       return 'frappe';
     }
 
-    function tourEnnemi(D) {
+    function agirEnnemi(D, id) {
       const e = D.ennemi, j = D.joueur;
-      let id = e.intention || 'frappe';
       const act = parId[id];
       const cout = act ? (act.cout || 0) : 0;
-      if (!act || e.en < cout || (act.req && !act.req(D, e, j))) { id = 'frappe'; }
+      if (!act || e.en < cout || (act.req && !act.req(D, e, j))) id = 'frappe';
       const a2 = parId[id];
       e.en -= (a2.cout || 0);
       e.derniereAction = id;
@@ -456,8 +519,37 @@
       return ev;
     }
 
+    function tourEnnemi(D) {
+      const e = D.ennemi, j = D.joueur;
+      const t = e.temperament || {};
+      const id = e.intention || 'frappe';
+      const ev = agirEnnemi(D, id);
+
+      /* l'attente se paie en avance prise */
+      if (t.patient) {
+        if (e.derniereAction === 'garde') {
+          e.patience++;
+          const el2 = poser(e, 'elan', 99, 0);
+          el2.val = Math.min(0.42, (el2.val || 0) + 0.11);
+          ev.push({ t: 'statut', qui: e.cle, id: 'elan' });
+        } else e.patience = 0;
+      }
+      /* le second coup, quand sa fiche le promet */
+      if (t.double && j.pv > 0 && !D.fini && R.chance(0.26)) {
+        ev.push({ t: 'second', qui: e.cle });
+        Array.prototype.push.apply(ev, agirEnnemi(D, e.en >= 2 ? 'decharge' : 'frappe'));
+      }
+      /* ce qui se nourrit prend aussi la réserve */
+      if (t.vorace && j.pv > 0 && j.en > 0 && R.chance(0.45)) {
+        const q = Math.min(j.en, 2);
+        j.en -= q; e.en = Math.min(e.enMax, e.en + q);
+        ev.push({ t: 'ponction', qui: e.cle, montant: q });
+      }
+      return ev;
+    }
+
     return D;
   }
 
-  JJK.combat = { creer, combattantJoueur, combattantFleau, ACTIONS, STATUTS, MODS_NEUTRES, statut, profilDe };
+  JJK.combat = { creer, combattantJoueur, combattantFleau, ACTIONS, STATUTS, MODS_NEUTRES, statut, profilDe, temperamentsDe, CADENCE, REGLAGE };
 })(window);

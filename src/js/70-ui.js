@@ -39,22 +39,37 @@
   function rangee() { return el('div', 'btn-rangee'); }
 
   /* ---- lignes de rituel ------------------------------------------------ */
+  /* La hâte : au premier clic, tout ce qui reste à dire est déjà dit.
+     Un rituel qui impose son tempo n'est plus un rituel, c'est une attente. */
+  UI.hate = false;
+  function calmer() { UI.hate = false; }
+
   async function dire(parent, texte, opts) {
     const o = opts || {};
     const p = el('p', 'rituel-ligne' + (o.forte ? ' forte' : ''));
     parent.appendChild(p);
-    const t = JJK.fx.type(p, texte, { speed: o.speed || 24, sound: o.sound !== false });
+    if (UI.hate) {
+      p.textContent = texte;
+      await wait(24);
+      return p;
+    }
+    const t = JJK.fx.type(p, texte, { speed: o.speed || 19, sound: o.sound !== false });
     UI._enCours = t;
     await t;
     UI._enCours = null;
-    if (o.apres) await wait(o.apres);
+    if (o.apres && !UI.hate) await wait(o.apres);
     return p;
   }
 
-  /* Cliquer accélère : personne n'a envie qu'on lui impose un rythme. */
-  document.addEventListener('click', () => { if (UI._enCours && UI._enCours.skip) UI._enCours.skip(); }, true);
+  function presser() {
+    UI.hate = true;
+    if (UI._enCours && UI._enCours.skip) UI._enCours.skip();
+  }
+  /* On ne presse que si quelque chose est en train de se dire : sinon un
+     clic sur un bouton emporterait la tirade suivante avant qu'elle existe. */
+  document.addEventListener('click', () => { if (UI._enCours) presser(); }, true);
   document.addEventListener('keydown', e => {
-    if ((e.key === ' ' || e.key === 'Enter') && UI._enCours && UI._enCours.skip) UI._enCours.skip();
+    if ((e.key === ' ' || e.key === 'Enter' || e.key === 'Escape') && UI._enCours) presser();
   }, true);
 
   /* ---- murmures : le décor n'est jamais tout à fait muet --------------- */
@@ -92,16 +107,32 @@
     const son = el('button', '', 'SON : ON');
     son.id = 'be-son';
     son.addEventListener('click', () => {
-      if (UI.etat && UI.etat.mods && UI.etat.mods.coupeSon) return;
+      /* Le Serment de l'Oreille Coupée ne se reprend pas : le bouton reste
+         là, il refuse simplement d'obéir, et il le dit. */
+      if (sonScelle()) { JJK.fx.shake(0.12); majSon(); return; }
       JJK.audio.unlock();
-      const m = JJK.audio.toggleMute();
-      son.textContent = 'SON : ' + (m ? 'OFF' : 'ON');
+      JJK.audio.toggleMute();
+      majSon();
     });
     const reg = bouton('REGISTRE', 'fantome', () => { if (JJK.ecrans) JJK.ecrans.registre(); });
     reg.style.cssText = 'border:0;padding:4px 0;font-size:10px;letter-spacing:.2em;margin:0;color:inherit';
     b.appendChild(son); b.appendChild(reg);
     document.body.appendChild(b);
+    majSon();
     return b;
+  }
+
+  function sonScelle() {
+    const g = JJK.jeu;
+    if (g && g.mods && g.mods.coupeSon) return true;
+    return !!(JJK.memoire && JJK.memoire.lire().sonCoupe);
+  }
+  function majSon() {
+    const n = document.getElementById('be-son');
+    if (!n) return;
+    if (sonScelle()) { n.textContent = 'SON : SCELLÉ'; n.style.color = 'var(--sang)'; n.title = "Serment de l'Oreille Coupée."; return; }
+    n.style.color = '';
+    n.textContent = 'SON : ' + (JJK.audio.isMuted() ? 'OFF' : 'ON');
   }
   function majBarre(o) {
     barre();
@@ -146,7 +177,7 @@
   function voix(k, def) { return pioche(((JJK.CORPUS || {}).voix || {})[k], def); }
 
   JJK.ui = {
-    ecran, montrer, actif, bouton, rangee, dire, murmures, titreOnglet, titreFurtif,
-    barre, majBarre, bloc, stats, pointsDanger, pioche, voix, UI, etatRef: UI,
+    ecran, montrer, actif, bouton, rangee, dire, presser, calmer, murmures, titreOnglet, titreFurtif,
+    barre, majBarre, majSon, sonScelle, bloc, stats, pointsDanger, pioche, voix, UI,
   };
 })(window);

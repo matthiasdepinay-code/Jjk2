@@ -6,9 +6,9 @@
 <meta name="theme-color" content="#07070a">
 <title>RITUEL — 呪法帳</title>
 <meta name="description" content="Générateur déterministe de techniques maudites et duel occulte dans l'univers de Jujutsu Kaisen.">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=Noto+Serif+JP:wght@400;700&display=swap">
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=Noto+Serif+JP:wght@400;700&display=swap");
-
 /* =========================================================================
    RITUEL — feuille de style
    Un dossier d'autopsie qu'on aurait laissé trop longtemps dans le noir.
@@ -56,6 +56,17 @@ html.is-inverted { filter: invert(1) hue-rotate(180deg); }
 html.is-inverted #fx-flash { filter: invert(1); }
 
 ::selection { background: var(--sang); color: var(--os); }
+
+/* Le clavier doit voir où il est : personne ne joue à l'aveugle sans
+   l'avoir signé. */
+:focus-visible {
+  outline: 2px solid var(--sang-vif);
+  outline-offset: 3px;
+}
+.reponse:focus-visible, .contrat:focus-visible, .acte:focus-visible {
+  outline-offset: -2px;
+  color: var(--os);
+}
 
 /* ---- calques d'effets ---------------------------------------------- */
 .fx-layer {
@@ -110,7 +121,7 @@ body::before {
 }
 .etiquette.rouge { color: var(--sang); }
 .titre-rituel {
-  font-family: var(--serif); font-weight: 300;
+  font-family: var(--serif); font-weight: 300; text-wrap: balance;
   font-size: clamp(2.1rem, 7vw, 4.6rem); line-height: 1.02;
   letter-spacing: -.02em; margin: .1em 0 .2em;
 }
@@ -182,7 +193,7 @@ hr.trait.fort { border-top: var(--hair-fort); }
 
 .question-bloc { margin-top: 40px; }
 .question-texte {
-  font-size: clamp(1.35rem, 3.6vw, 2.1rem); font-weight: 300;
+  font-size: clamp(1.35rem, 3.6vw, 2.1rem); font-weight: 300; text-wrap: balance;
   line-height: 1.25; margin: 0 0 28px; max-width: 34ch;
 }
 .reponses { display: grid; gap: 10px; max-width: 780px; }
@@ -220,7 +231,7 @@ hr.trait.fort { border-top: var(--hair-fort); }
 @media (max-width: 860px) { .dossier { grid-template-columns: 1fr; } }
 
 .nom-technique {
-  font-size: clamp(2rem, 6.4vw, 4.2rem); font-weight: 300; line-height: 1.03;
+  font-size: clamp(2rem, 6.4vw, 4.2rem); font-weight: 300; line-height: 1.03; text-wrap: balance;
   letter-spacing: -.025em; margin: 6px 0 10px;
 }
 .nom-jp { font-family: var(--jp); font-size: clamp(.95rem, 2.2vw, 1.3rem); color: var(--sang); letter-spacing: .3em; }
@@ -313,8 +324,10 @@ hr.trait.fort { border-top: var(--hair-fort); }
 .puce.mauvais { border-color: rgba(179,18,23,.5); color: var(--sang-vif); }
 .puce.bon { border-color: rgba(242,193,78,.5); color: var(--or); }
 
-.mutilated { position: relative; filter: grayscale(1) brightness(.5); min-height: 42px; }
-.mutilated > * { opacity: .18; }
+/* Le filtre porte sur les enfants, pas sur l'élément : sinon il s'applique
+   aussi aux pseudo-éléments et la cicatrice devient illisible. */
+.mutilated { position: relative; min-height: 42px; }
+.mutilated > * { opacity: .16; filter: grayscale(1) brightness(.5); }
 .mutilated::before {
   content: ""; position: absolute; left: -4%; right: -4%; top: 50%; height: 2px;
   background: var(--sang-vif); transform: rotate(-2.4deg); z-index: 2;
@@ -370,7 +383,7 @@ hr.trait.fort { border-top: var(--hair-fort); }
   color: var(--sang-vif); letter-spacing: .34em; margin-bottom: 26px; opacity: .9;
 }
 #territoire .nom-dom {
-  font-size: clamp(2.2rem, 9vw, 6.4rem); font-weight: 300; line-height: .98;
+  font-size: clamp(2.2rem, 9vw, 6.4rem); font-weight: 300; line-height: .98; text-wrap: balance;
   letter-spacing: -.03em; max-width: 16ch; margin: 0 auto;
   text-shadow: 0 0 60px rgba(179,18,23,.6);
 }
@@ -433,7 +446,9 @@ body.in-domain #stage { filter: blur(3px) brightness(.35); }
 }
 
 /* ---- lisibilité pendant que le territoire est déployé ---------------- */
-body.domaine-calme #stage { filter: none; }
+/* Le territoire déployé recouvre la scène (calque 60). Tant qu'il dure,
+   la scène doit repasser au-dessus, sinon on joue sans voir ses boutons. */
+body.domaine-calme #stage { filter: none; position: relative; z-index: 62; }
 body.domaine-calme .fiche,
 body.domaine-calme .acte,
 body.domaine-calme .journal {
@@ -452,6 +467,28 @@ body.domaine-calme .fiche { border-color: rgba(233, 226, 212, .3); }
   #stage { padding-bottom: 96px; }
 }
 
+/* ---- téléphone : l'écran est petit, le rituel reste lisible ---------- */
+#barre-etat > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 620px) {
+  #be-registre, #be-grade { display: none; }
+  #barre-etat { gap: 12px; padding: 8px 14px; }
+  #stage { padding-bottom: 84px; }
+  .fiche { padding: 12px 14px; }
+  .fiche .nom { font-size: 1.2rem; }
+  .fiche .replique { font-size: .88rem; margin-top: 8px; }
+  .statuts { min-height: 0; }
+  .combattants { gap: 10px; }
+  .acte { padding: 10px 12px; }
+  .acte b { font-size: 1rem; }
+  .titre-rituel { font-size: clamp(1.9rem, 11vw, 3rem); }
+  .contrat { padding: 16px 16px; }
+  .grille-stats { grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); }
+  .stat { padding: 10px 12px; }
+  .stat b { font-size: 1.15rem; }
+}
+/* les murmures ne doivent jamais recouvrir une action */
+@media (max-width: 860px) { .murmure-flottant { display: none; } }
+
 </style>
 
 </head>
@@ -460,7 +497,7 @@ body.domaine-calme .fiche { border-color: rgba(233, 226, 212, .3); }
 
 <script>
 window.JJK = window.JJK || {};
-window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille","kanji":"錆","romaji":"sabi","concept":"L'énergie s'attaque d'abord à ce qui tient les choses ensemble.","sensoriel":"Un goût de pièce de monnaie au fond de la gorge.","couleur":"#8a4a22","emotion_source":"la rancune tenue trop longtemps"},{"id":"recensement","nom":"Le Recensement","kanji":"簿","romaji":"bo","concept":"Tout ce qui est compté cesse d'être libre.","sensoriel":"Un bruit de pages tournées derrière la nuque.","couleur":"#6b6f8a","emotion_source":"la peur d'être fiché"},{"id":"attente","nom":"L'Attente","kanji":"待","romaji":"machi","concept":"Le temps non vécu s'accumule quelque part et il faut bien qu'il sorte.","sensoriel":"L'odeur d'un couloir d'hôpital à quatre heures.","couleur":"#4a6b6b","emotion_source":"l'abandon poli"}]},"vecteurs":{"vecteurs":[{"id":"nom","nom":"Par le nom prononcé","condition":"Tu dois avoir dit son nom à voix haute au moins une fois dans la journée.","portee":"longue","verbe":"nommer","faille":"Ne jamais se faire appeler."},{"id":"sol","nom":"Par le sol partagé","condition":"Vous devez toucher la même surface continue.","portee":"moyenne","verbe":"appuyer","faille":"Sauter."},{"id":"regard","nom":"Par le regard soutenu","condition":"Trois secondes sans cligner.","portee":"courte","verbe":"fixer","faille":"Fermer un œil."}]},"lois":{"lois":[{"id":"deuxfois","nom":"Nommer Deux Fois","enonce":"Ce que je nomme deux fois cesse d'avoir eu lieu.","consequence":"Une blessure nommée deux fois n'a jamais été reçue ; un allié nommé deux fois n'a jamais existé.","limite":"Il faut connaître le nom exact, et un nom exact se change.","inversion":"Ce que je nomme deux fois recommence à avoir lieu, y compris ce qui était fini.","maximum":"Je prononce mon propre nom deux fois.","archetype":"soustraction"},{"id":"distance","nom":"Le Trajet Acquis","enonce":"Toute distance que j'ai parcourue à pied m'appartient.","consequence":"Sur un terrain déjà marché, la géométrie obéit à la mémoire des pas.","limite":"Un sol neuf ne t'appartient pas.","inversion":"Je rends une distance et le trajet se défait sous l'autre.","maximum":"Je réclame tout ce que j'ai jamais marché, d'un coup.","archetype":"mesure"},{"id":"dette","nom":"La Créance","enonce":"Tout ce qu'on me prend crée une dette payable en nature.","consequence":"Un coup encaissé devient un coup dû, et les intérêts courent.","limite":"Il faut avoir subi avant de pouvoir réclamer.","inversion":"J'éteins une dette et la blessure se referme.","maximum":"J'exige le solde de toutes mes créances au même instant.","archetype":"échange"}]},"serments":{"serments":[{"id":"oeil","nom":"Le Serment de l'Œil Fermé","clause":"Je renonce à savoir ce qu'il me reste à briser.","restriction":"Tu ne verras plus ses points de vie","gain":"Tes coups portent plus fort","restriction_code":"masque les PV ennemis","gain_code":"+40% dégâts","danger":2}]},"domaines":{"domaines":[{"id":"comptes","nom_fr":"Le Sanctuaire des Comptes Non Soldés","nom_jp":"未払之聖域","romaji":"Miharai no Seiiki","paysage":"Une salle de guichets sans employés, où chaque vitre reflète une somme que tu dois à quelqu'un que tu as oublié.","effet_garanti":"Chaque dette que tu as contractée depuis ta naissance est prélevée sur le corps de celui qui entre.","effet_code":"dégâts garantis 22% PV max par tour","incantation":"Ouvre le registre. Compte à voix haute. Ce que tu dois t'a déjà rattrapé.","faille":"Ne rien devoir à personne."},{"id":"couloir","nom_fr":"Le Couloir Qui Se Souvient","nom_jp":"記憶之廊","romaji":"Kioku no Rō","paysage":"Un couloir d'immeuble aux portes numérotées dans le désordre, chaque porte fermée sur une pièce que tu as quittée fâché.","effet_garanti":"Aucun pas ne peut être fait dans une direction que tu n'as pas déjà empruntée.","effet_code":"annule esquive, +35% dégâts","incantation":"Marche. Le couloir a compté tes pas avant toi.","faille":"Reculer."}]},"bestiaire":{"fleaux":[{"id":"guichet","nom":"Le Guichet","grade":"4","origine":"La peur d'arriver cinq minutes après la fermeture.","apparence":"Un buste d'homme derrière une vitre sale, dont la bouche est une fente à courrier.","comportement":"Il attend son tour, puis frappe deux fois de suite.","pv":70,"attaque":9,"energie":2,"replique":"Vous n'avez pas le bon formulaire.","technique_signature":"Prélèvement"},{"id":"marge","nom":"Ce Qui Vit Dans La Marge","grade":"3","origine":"La peur des annotations qu'on n'a pas écrites.","apparence":"Une écriture penchée qui se déplace sur les murs.","comportement":"Il recopie ta dernière action.","pv":160,"attaque":16,"energie":3,"replique":"J'ai relu ton dossier.","technique_signature":"Annotation"},{"id":"veilleuse","nom":"La Veilleuse","grade":"2","origine":"La peur d'être la seule lumière allumée de l'immeuble.","apparence":"Une femme faite de tissu d'abat-jour, brûlante et calme.","comportement":"Elle se soigne quand elle a peur.","pv":300,"attaque":26,"energie":5,"replique":"Reste. Il est tard.","technique_signature":"Veille"},{"id":"convoi","nom":"Le Convoi","grade":"spécial","origine":"La peur des trains de nuit qui ne s'arrêtent nulle part.","apparence":"Une colonne de dos d'hommes en manteau, marchant en file, sans tête.","comportement":"Il ouvre son territoire au sixième tour.","pv":800,"attaque":70,"energie":10,"replique":"Nous passons. Vous êtes sur la voie.","technique_signature":"Passage"}]},"rituel":{"ouverture":["On ne t'a pas fait venir.","La porte n'était pas fermée à clé, et c'est déjà un renseignement sur toi.","Ici on ne distribue pas de pouvoirs : on constate ce qui est déjà là.","Une technique innée ne s'apprend pas, ne se choisit pas, ne se refuse pas.","Elle attend, dans le nom, comme une dent sous la gencive.","Donne un nom. Pas forcément le tien."],"questions":[{"question":"Quand on t'a fait du tort, qu'as-tu gardé ?","reponses":[{"texte":"La date exacte.","archetype":"mesure","note":"Tu tiens des comptes."},{"texte":"Rien, j'ai rendu le soir même.","archetype":"échange","note":"Tu ne portes pas de dettes."},{"texte":"Le silence de la pièce juste après.","archetype":"témoignage","note":"Tu enregistres."}]},{"question":"Qu'est-ce qui, chez toi, ne guérit pas ?","reponses":[{"texte":"Une phrase que j'ai dite.","archetype":"répétition","note":"Elle se rejoue."},{"texte":"Un nom que je ne prononce plus.","archetype":"soustraction","note":"Tu retranches."},{"texte":"Une porte que j'ai passée.","archetype":"seuil","note":"Tu franchis."}]},{"question":"On te propose de tout recommencer, sans personne.","reponses":[{"texte":"Sans personne, non.","archetype":"lien","note":"Tu attaches."},{"texte":"Immédiatement.","archetype":"métamorphose","note":"Tu mues."},{"texte":"Je demande d'abord le prix.","archetype":"échange","note":"Tu négocies."}]}],"transitions":["Noté.","Le registre te suit.","Continue.","On avance."],"verdicts":["Ta technique était écrite dans ton nom avant que tu ne t'assoies.","Rien de ce que tu as dit ne l'a modifiée d'une lettre."]},"voix":{"mort":["Ce n'était pas assez.","Tu as été lisible."],"victoire":["Ce qui te faisait face a cessé de faire face."],"serment_accepte":["Le contrat prend."],"serment_rompu":["Le contrat te reprend."],"domaine_ouvert":["La pièce n'est plus à personne."],"domaine_brise":["Le décor tombe."],"inversion":["Ça se referme."],"retour":["Tu es déjà venu.","Le registre t'a reconnu avant que tu tapes."],"murmures":["quelqu'un a compté tes pas","la porte était ouverte","tu as déjà dit ça","ce n'est pas ton écriture"]},"nomenclature":{"patrons":["{LOI} de {ESSENCE}"],"prefixes":["Rite","Doctrine","Office","Protocole","Article"],"suffixes":["Perpétuel","Sans Recours","Exécutoire","de Nuit","Second"],"titres_joueur":[{"titre":"Premier Exorcisme","condition":"gagner une fois"},{"titre":"Récidiviste","condition":"cinq victoires"},{"titre":"Trois Fois Lié","condition":"trois serments"},{"titre":"Ouvreur","condition":"un territoire"},{"titre":"Déjà Mort","condition":"mourir"},{"titre":"Mauvais Payeur","condition":"trois serments improvisés"},{"titre":"Mûr","condition":"maturation 8"},{"titre":"Habitué","condition":"dix victoires"}],"grades":[{"grade":"4","nom":"Quatrième grade","description":"On te confie des couloirs.","seuil":0},{"grade":"3","nom":"Troisième grade","description":"On te confie des étages.","seuil":95},{"grade":"2","nom":"Deuxième grade","description":"On te confie des gens.","seuil":115},{"grade":"1","nom":"Premier grade","description":"On ne te confie plus rien : on te prévient.","seuil":140},{"grade":"semi-spécial","nom":"Semi-spécial","description":"Ton nom circule.","seuil":170},{"grade":"spécial","nom":"Grade spécial","description":"On ne t'envoie plus : on te lâche.","seuil":210}]},"matieres":{"matieres":["cendre","ardoise","lait tourné","zinc","cire","papier calque","suie","vitre","plomb","résine"],"nombres":["Neuf","Trois","Trois Cent Soixante","Un","Sept","Douze"],"lieux":["une salle d'attente sans porte","un parking au sixième sous-sol","une salle des pas perdus"],"organes":["la moelle","le larynx","la plèvre","le nerf cubital","l'oreille interne"]}};
+window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille","kanji":"錆","romaji":"Sabi","concept":"L'oxydation érigée en jugement : tout ce qui a été laissé sans entretien accepte de vieillir d'un seul coup, et la loi choisit la date de l'échéance.","sensoriel":"Un goût de pièce de monnaie au fond de la bouche, et toutes les charnières alentour se mettent à grincer dans le même ton.","couleur":"#8A4B24","emotion_source":"la résignation de celui qui a cessé d'entretenir ce qu'il aimait encore"},{"id":"recensement","nom":"Le Recensement","kanji":"戸籍","romaji":"Koseki","concept":"Ce qui est inscrit sur une liste perd le droit de varier : nommer une chose au registre, c'est lui interdire d'être autrement qu'écrite.","sensoriel":"Une voix neutre énumère des noms à trois pièces d'ici, sans jamais reprendre son souffle entre deux.","couleur":"#5D6470","emotion_source":"la peur d'être réduit à une ligne exacte dans un dossier"},{"id":"dette","nom":"La Dette","kanji":"負債","romaji":"Fusai","concept":"Tout ce qui est reçu ouvre une créance ; la loi tient le compte et peut exiger le remboursement en chair, en temps ou en distance parcourue.","sensoriel":"Les poches, les manches, l'intérieur des chaussures : tout s'alourdit d'exactement la même quantité, en même temps.","couleur":"#8C2F2F","emotion_source":"l'humiliation de devoir quelque chose à quelqu'un que l'on méprise"},{"id":"echo","nom":"L'Écho","kanji":"谺","romaji":"Kodama","concept":"Un son émis n'est jamais quitte : il continue d'appartenir à la bouche qui l'a produit et peut lui être rendu intact, très longtemps après.","sensoriel":"Vos propres phrases de la veille reviennent depuis le couloir, dans le bon ordre, sans que personne s'y trouve.","couleur":"#4B5E63","emotion_source":"la solitude de n'avoir pas été entendu la première fois"},{"id":"attente","nom":"L'Attente","kanji":"待合","romaji":"Machiai","concept":"Le temps passé à attendre est une matière : il s'accumule, se transvase, et peut être imposé à un autre corps qui devra le traverser entier.","sensoriel":"Les aiguilles ne bougent plus mais tout le monde a soif ; la chaise sous vous est tiède comme si quelqu'un venait de la quitter.","couleur":"#9A9384","emotion_source":"l'angoisse de celui à qui l'on n'a jamais dit à quelle heure"},{"id":"cicatrice","nom":"La Cicatrice","kanji":"傷痕","romaji":"Shōkon","concept":"La chair guérie conserve la géométrie exacte de la blessure ; la loi relit ce dessin et exige qu'il soit refait à l'identique.","sensoriel":"Une démangeaison précise le long d'une ancienne suture, et le fil, retiré depuis des années, tire de nouveau.","couleur":"#B9857A","emotion_source":"la rancune tenue longtemps, entretenue comme un pansement qu'on refuse de décoller"},{"id":"inventaire","nom":"L'Inventaire","kanji":"棚卸","romaji":"Tanaoroshi","concept":"N'existe que ce qui a été compté : à la clôture de l'inventaire, ce qui manque à la liste cesse simplement d'être disponible.","sensoriel":"Un claquement de compteur mécanique, puis un objet quotidien manque à sa place et personne ne parvient à retrouver son nom.","couleur":"#7C7A46","emotion_source":"l'avarice de qui a connu le manque et compte encore ses réserves chaque soir"},{"id":"maree-basse","nom":"La Marée Basse","kanji":"干潟","romaji":"Higata","concept":"Le retrait pris comme opérateur : la loi fait refluer ce qui recouvrait et met à découvert ce qui n'a jamais été prévu pour la lumière.","sensoriel":"L'air se charge d'iode et de vase ; sous les pas, des choses molles se rétractent au bruit.","couleur":"#55605A","emotion_source":"le chagrin sans forme de qui découvre ce qu'il y avait sous une habitude"},{"id":"anesthesie","nom":"L'Anesthésie","kanji":"麻酔","romaji":"Masui","concept":"La douleur n'est pas supprimée mais ajournée : elle est mise en réserve, capitalisée, puis rendue en une seule fois à l'échéance.","sensoriel":"Les doigts obéissent encore mais ne renvoient plus rien ; on s'aperçoit qu'on saigne en regardant sa manche.","couleur":"#9FB6B2","emotion_source":"le dégoût de sentir, chez celui qui a décidé un jour de ne plus rien sentir du tout"},{"id":"proces-verbal","nom":"Le Procès-Verbal","kanji":"調書","romaji":"Chōsho","concept":"Ce qui est consigné devient ce qui s'est passé ; la loi n'agit pas sur les corps mais sur la version officielle, et les corps suivent.","sensoriel":"Une machine à écrire frappe deux lignes quelque part, et ensuite votre souvenir de la scène ne vous convainc plus vous-même.","couleur":"#3F4550","emotion_source":"le sentiment de n'avoir pas été cru le jour où l'on disait la vérité"},{"id":"prescription","nom":"La Prescription","kanji":"時効","romaji":"Jikō","concept":"Passé un délai, un fait cesse d'être opposable ; la loi étend cette clémence aux plaies, aux appuis et aux promesses, qui cessent alors de tenir.","sensoriel":"Un coup de tampon sec, très loin, puis une articulation qu'on croyait solide accepte d'aller trop loin, sans douleur.","couleur":"#7E7466","emotion_source":"l'injustice restée impunie jusqu'à ce que plus personne n'ait le droit d'en parler"},{"id":"quarantaine","nom":"La Quarantaine","kanji":"隔離","romaji":"Kakuri","concept":"Le contact ouvre une créance de contagion : tout ce qui a touché la même chose est réuni en une catégorie unique et traité ensemble.","sensoriel":"Une odeur d'alcool évaporé, et une ligne de craie se dessine au sol autour de tout ce qui s'est frôlé depuis l'aube.","couleur":"#B8A24E","emotion_source":"le dégoût du contact, la certitude d'être sali par la peau des autres"},{"id":"reste","nom":"Le Reste","kanji":"剰余","romaji":"Jōyo","concept":"Toute répartition laisse un reste ; la loi désigne ce reste et lui retire le droit de participer à ce qui vient d'être partagé.","sensoriel":"On compte par deux à voix basse, et le dernier de la file cesse d'être regardé : sa chaleur part la première.","couleur":"#4E4A44","emotion_source":"le sentiment d'être en trop, chez qui n'a jamais été choisi dans un partage"},{"id":"vacance","nom":"La Vacance","kanji":"欠員","romaji":"Ketsuin","concept":"Une place vide est une force : elle appelle un occupant et attire vers elle le corps le plus conforme à sa description.","sensoriel":"Un uniforme plié sur une chaise, exactement à votre taille ; le formulaire porte déjà votre écriture, mais pas votre nom.","couleur":"#DAD5C7","emotion_source":"la peur d'être remplaçable, d'avoir été une fonction plutôt qu'une personne"},{"id":"bornage","nom":"Le Bornage","kanji":"境界","romaji":"Kyōkai","concept":"Une limite déclarée devient matérielle : la ligne tracée entre deux propriétés cesse d'être une convention et se met à refuser le passage.","sensoriel":"Un fil de chaux au sol, et un froid net qui coupe le corps en deux à la hauteur exacte où l'on tente de l'enjamber.","couleur":"#7B6A50","emotion_source":"la haine froide du voisin, pour quelques centimètres empiétés il y a vingt ans"},{"id":"delestage","nom":"Le Délestage","kanji":"停電","romaji":"Teiden","concept":"Il n'y en a jamais assez pour tous : la loi choisit qui reste alimenté et coupe le reste, sans rien détruire, en se contentant d'éteindre.","sensoriel":"Un déclic de disjoncteur, un rang de lampes qui tient, et un autre rang de gens dont les mains deviennent froides.","couleur":"#2E3338","emotion_source":"la culpabilité de celui qui a survécu à un tri qu'il n'a pas décidé"},{"id":"condensation","nom":"La Condensation","kanji":"結露","romaji":"Ketsuro","concept":"Le souffle trahit : tout ce qui respire dépose sur le monde une pellicule qui garde la trace de son passage et peut être relevée.","sensoriel":"Les vitres se couvrent de buée par l'intérieur, et sur chacune apparaît la marque d'une paume qui n'y a jamais été posée.","couleur":"#AEC0C6","emotion_source":"la honte d'être là, de laisser une trace rien qu'en existant"},{"id":"legs","nom":"Le Legs","kanji":"遺贈","romaji":"Izō","concept":"Ce que les morts n'ont pas réglé se répartit entre les vivants ; la loi désigne l'héritier et lui transfère le passif, sans acceptation possible.","sensoriel":"Un tiroir de bureau s'ouvre seul sur des papiers pliés en quatre, et vos mains prennent une posture qui n'est pas la vôtre.","couleur":"#5B4636","emotion_source":"le ressentiment envers une filiation qu'on n'a pas choisie et qu'on n'a pas su refuser"},{"id":"claudication","nom":"La Claudication","kanji":"跛行","romaji":"Hakō","concept":"Un déséquilibre se propage : la loi impose à toute démarche une asymétrie que le corps compense, jusqu'à user l'appui qui restait.","sensoriel":"Un pas plus court que l'autre dans le couloir, chez tout le monde en même temps, et le rythme finit par s'installer.","couleur":"#8B6E63","emotion_source":"la honte du corps qui trahit son propriétaire devant témoin"},{"id":"date-anniversaire","nom":"La Date Anniversaire","kanji":"命日","romaji":"Meinichi","concept":"Certaines dates gardent la faculté d'agir : la loi ramène un événement à son heure exacte et exige qu'il soit revécu par quelqu'un d'autre.","sensoriel":"Une odeur d'encens froid, une horloge domestique qui sonne un chiffre qu'elle ne possède pas, et tout le monde se tait à la même seconde.","couleur":"#5A4B52","emotion_source":"le deuil qui revient chaque année à la même heure sans avoir rien appris"},{"id":"eau-dormante","nom":"L'Eau Dormante","kanji":"死水","romaji":"Shisui","concept":"Ce qui ne circule plus se corrompt : la loi arrête la circulation d'une chose — le sang, la parole, la monnaie — et laisse la stagnation faire le travail.","sensoriel":"Un film irisé à la surface d'un verre, une douceur écœurante dans l'air, et les phrases prononcées restent à hauteur de bouche.","couleur":"#3E4A42","emotion_source":"l'aigreur d'une rancune qu'on n'a jamais formulée devant l'intéressé"},{"id":"creux-du-seuil","nom":"Le Creux du Seuil","kanji":"敷居","romaji":"Shikii","concept":"La répétition creuse la pierre : la loi comptabilise les passages d'un être et convertit ce compte en usure, sur lui plutôt que sous ses pieds.","sensoriel":"Le bruit de la semelle change de note au franchissement d'une porte, et la marche paraît chaque fois un peu plus basse.","couleur":"#8D7F6A","emotion_source":"la lassitude de qui refait le même trajet depuis vingt ans sans l'avoir jamais choisi"},{"id":"ankylose","nom":"L'Ankylose","kanji":"拘縮","romaji":"Kōshuku","concept":"Ce qu'on immobilise pour le soigner ne se remet plus à bouger : la loi accorde la protection, puis la rend définitive.","sensoriel":"Une chaleur d'attelle sous les vêtements, un craquement sec quand un doigt refuse de se déplier, et rien ne fait mal.","couleur":"#9B9EA3","emotion_source":"la peur du mouvement chez celui qui, blessé une fois, a préféré ne plus jamais s'exposer"},{"id":"anonymat","nom":"L'Anonymat","kanji":"匿名","romaji":"Tokumei","concept":"Ce qui n'a pas de nom ne peut être ni convoqué ni facturé ; la loi retire son nom à une chose et la met hors d'atteinte, donc hors de secours.","sensoriel":"Les étiquettes se vident une à une, et la personne en face vous appelle deux fois sans parvenir à dire quoi.","couleur":"#A8A29B","emotion_source":"la honte de son propre nom, chez qui a passé sa vie à ne pas vouloir être appelé"}]},"vecteurs":{"vecteurs":[{"id":"VEC-01","nom":"Par le nom prononcé en entier","condition":"Le porteur énonce à voix audible le nom d'état civil complet de la cible — patronyme et prénom, dans l'ordre du registre — d'un seul tenant, dans un air que les deux corps partagent. Une syllabe reprise, un bégaiement, une inversion, et l'énoncé est nul : il faut recommencer du premier son.","portee":"moyenne","verbe":"Prononcer","faille":"Cesser d'être nommable. Un changement d'état civil déposé, un prénom d'usage porté depuis assez longtemps pour que l'ancien ne soit plus su, et la loi énonce quelqu'un qui n'existe pas. À défaut : tousser sur la deuxième syllabe. L'adversaire qui interrompt l'énoncé une fois par battement ne sera jamais atteint, et il le sait dès qu'il a entendu le porteur reprendre."},{"id":"VEC-02","nom":"Par le sang bu","condition":"Le porteur avale au moins une gorgée du sang de la cible, sorti depuis moins de douze battements, encore au-dessus de la température de sa propre bouche, non mêlé d'eau, de salive étrangère ou de terre. La gorgée doit descendre : gardée sous la langue, elle ne compte pas.","portee":"illimitée conditionnelle","verbe":"Ingérer","faille":"Refroidir ou diluer avant que la main n'arrive. Saigner dans la neige, dans un seau, sous la pluie. Cautériser au fer une plaie qui coule. Les vieux exorcistes portent une lame passée dans un sel qui prend le sang en quatre secondes : ce qu'ils cèdent au sol est déjà mort et le porteur boit de la pierre."},{"id":"VEC-03","nom":"Par le regard soutenu","condition":"Ligne de vue réciproque, sans verre teinté ni fumée, tenue trois secondes pleines, le porteur ne clignant pas. Un reflet ne vaut rien : il faut l'œil, pas son image. Le compte repart à zéro à la première paupière.","portee":"longue","verbe":"Soutenir","faille":"Rompre par le bas. Baisser les yeux au deuxième temps coûte une demi-seconde et annule trois. Une poignée de cendre lancée en cloche, une vitre passée au noir de fumée, une paupière recousue. Un borgne qui se tient du côté mort ne peut jamais être compté : la loi exige la réciprocité, et il n'a rien à rendre."},{"id":"VEC-04","nom":"Par le sol partagé","condition":"Les deux corps posent leur poids sur une même surface continue — une dalle, un plancher, une veine de roche — sans joint de dilatation ni vide entre eux. La continuité se vérifie à l'oreille : un talon frappé par le porteur doit s'entendre sous le pied de la cible.","portee":"moyenne","verbe":"Fouler","faille":"S'élever ou se désolidariser. Deux centimètres suffisent : une caisse retournée, une marche isolée, un tapis épais, une flaque. Sauter au battement d'application est la parade des débutants et elle fonctionne. Un adversaire qui repère les joints du carrelage combat en restant du mauvais côté de la ligne et ne fait plus rien d'autre."},{"id":"VEC-05","nom":"Par la respiration comptée","condition":"Le porteur compte à voix basse sept expirations de la cible dans un volume d'air clos et commun. Le compte se dit en continu ; toute reprise, toute expiration manquée par le porteur lui-même, remet le nombre à un.","portee":"courte","verbe":"Compter","faille":"Fausser le débit. Apnée sur quatre temps, expiration par le nez puis par la bouche, souffles hachés qui empêchent de trancher où finit l'un et commence l'autre. Plus simple encore : ouvrir une fenêtre. Le volume cesse d'être commun, et le porteur compte l'air de la rue."},{"id":"VEC-06","nom":"Par l'objet touché deux fois","condition":"Un objet inerte de moins de trois kilos reçoit la paume nue du porteur, puis, dans le même quart d'heure et sans intermédiaire, la paume nue de la cible. L'ordre est fixe : le porteur d'abord. Une tasse rendue, une poignée de porte, une pièce de monnaie dans le creux de la main.","portee":"illimitée conditionnelle","verbe":"Repasser","faille":"Un gant, une manche tirée sur les doigts, un mouchoir. Ou l'ordre inverse, que rien n'interdit à l'adversaire d'imposer : prendre l'objet le premier, puis le tendre. La chaîne ne se ferme pas. Laver la chose ne sert à rien ; la casser, oui — l'objet doit rester d'une seule pièce."},{"id":"VEC-07","nom":"Par l'ombre franchie","condition":"L'ombre portée du porteur, projetée par une source lumineuse unique, recouvre à un instant donné le pied ou la tête de la cible. Le recouvrement doit être franc : une frange grise ne compte pas.","portee":"moyenne","verbe":"Recouvrir","faille":"Multiplier les sources. Deux lampes font deux ombres, et aucune n'est celle du porteur. Le zénith ne donne rien à franchir, l'obscurité pleine non plus. Un adversaire qui allume une seconde lanterne et se tient dans l'ombre d'un tiers a désarmé la loi sans lever la main."},{"id":"VEC-08","nom":"Par la signature contrefaite","condition":"Le porteur trace de sa propre main le nom de la cible en imitant son graphisme, sur un support qui boit l'encre — papier, bois tendre, peau. L'application doit intervenir tant que le tracé est humide.","portee":"illimitée conditionnelle","verbe":"Contresigner","faille":"Changer de main. Une nouvelle boucle apprise en une semaine, une signature à la croix, une écriture de la gauche : la contrefaçon ne trouve plus quoi contrefaire. À défaut, souffler dessus. Une signature sèche est une signature morte, et un support verni ne prend jamais."},{"id":"VEC-09","nom":"Par la dette reconnue","condition":"La cible reconnaît à voix haute, en présence d'un tiers vivant, devoir au porteur une chose chiffrée : une somme, une heure, un nombre de services. Le chiffre doit être dit par elle, pas par lui.","portee":"longue","verbe":"Créditer","faille":"Ne jamais dire le nombre. « Je te dois quelque chose » ne donne aucune prise : la loi cherche une quantité et n'en trouve pas. Payer sur-le-champ referme aussi. Le plus élégant reste le surpaiement : celui qui rend le double crée une dette inverse et le porteur se retrouve du mauvais côté de son propre registre."},{"id":"VEC-10","nom":"Par l'écho rendu","condition":"Un son émis par la cible revient à l'oreille du porteur après réflexion sur une surface dure, avec un retard perceptible d'au moins un dixième de seconde. Le porteur doit pouvoir désigner le mur qui l'a renvoyé.","portee":"moyenne","verbe":"Renvoyer","faille":"Tuer la réverbération. Combattre dans la neige, dans un couloir tendu de tissu, au milieu d'une foule. Ou réduire la distance : sous dix-sept mètres, l'écho ne se sépare plus du son et le porteur n'a plus qu'une voix, la sienne. Se taire fonctionne, mais peu d'adversaires tiennent quatre minutes sans un cri."},{"id":"VEC-11","nom":"Par le pas compté","condition":"Le porteur énonce le nombre de pas parcourus par la cible depuis le lever du jour, à moins de cent près, et le dit entier, sans arrondi. Le chiffre annoncé est vérifié à l'énoncé même : faux, il ferme la loi pour le reste du battement.","portee":"longue","verbe":"Énumérer","faille":"Rendre le compte insoluble ou nul. Tourner en rond sur douze mètres carrés, se faire porter, dormir jusqu'à midi. Zéro pas est l'exception écrite dans la loi elle-même : celui qui n'a pas bougé depuis l'aube ne peut pas être dénombré, et l'adversaire qui l'a compris commence ses journées assis."},{"id":"VEC-12","nom":"Par le sel versé","condition":"Une ligne continue de matière sèche — sel, cendre, chaux — versée par le porteur sur un sol dur, et franchie par la cible en la foulant. La ligne doit être ininterrompue d'un bord à l'autre du passage au moment du franchissement.","portee":"courte","verbe":"Répandre","faille":"Rompre avant de passer. Un coup de talon, un souffle, une semelle traînée : la continuité est ce qu'il y a de plus fragile au monde. Enjamber suffit également, puisque la loi exige que la ligne soit foulée, non traversée. Un courant d'air fait le travail sans que personne ait à s'en occuper."},{"id":"VEC-13","nom":"Par le vêtement porté","condition":"Le porteur tient contre sa peau nue une pièce de tissu ayant passé une nuit entière contre la peau de la cible, non lavée depuis. Un vêtement porté une heure ne vaut rien ; il faut le sommeil.","portee":"illimitée conditionnelle","verbe":"Revêtir","faille":"L'eau bouillante annule tout en quatre minutes. Dormir la peau nue ne cède rien du tout. Les maisons qui savent changent le linge chaque matin et brûlent l'ancien devant témoin — la dépense est ridicule au regard de ce qu'elle empêche, et c'est pour cela que si peu de gens la font."},{"id":"VEC-14","nom":"Par le tiers témoin","condition":"Un troisième vivant, ni porteur ni cible, voit les deux au même instant et peut les nommer tous les deux. Un animal fait l'affaire s'il porte un nom donné par un humain.","portee":"moyenne","verbe":"Convoquer","faille":"S'isoler, ou se rendre innommable au témoin. Se présenter sous un faux nom à celui qui regarde suffit : il voit deux corps et n'en connaît qu'un, l'énoncé reste ouvert. Aveugler le témoin fonctionne, le tuer aussi, et c'est précisément ce que la loi finit par exiger de son porteur — on la reconnaît aux pièces vides qu'elle laisse derrière elle."},{"id":"VEC-15","nom":"Par la mesure prise","condition":"Le porteur relève une dimension du corps de la cible avec un instrument gradué — corde nouée, mètre, empan calibré — et l'annonce à l'unité près : tour de poignet, envergure, longueur de l'avant-bras.","portee":"courte","verbe":"Toiser","faille":"Produire l'ex æquo. Deux corps de même mesure dans la même pièce, et la loi ne sait plus lequel elle désigne ; les frères se battent en paire pour cette raison. Autrement, fausser la dimension : un bandage sous la manche, une inspiration tenue, un poignet gonflé par le garrot déplacent le relevé d'une unité, et une unité suffit."},{"id":"VEC-16","nom":"Par le seuil franchi ensemble","condition":"Porteur et cible traversent la même ouverture — porte, portique, arche, brèche — dans le même battement et dans le même sens. Le cadre doit être matériel : une limite peinte au sol n'est pas un seuil.","portee":"contact","verbe":"Franchir","faille":"Céder le passage. Un temps d'attente d'une seconde, une main tendue vers la poignée qu'on laisse retomber, et rien ne se ferme. Entrer quand l'autre sort n'ouvre rien : le sens fait partie de la condition. Contre ce vecteur, on se bat par la fenêtre, et les couloirs deviennent des lieux de politesse extrême."},{"id":"VEC-17","nom":"Par le registre tenu","condition":"Le porteur inscrit sur un registre paginé la date, l'heure et l'acte de la cible, sur une ligne numérotée qui suit immédiatement la précédente. Aucun saut de numéro, aucune rature : la série doit être intègre du premier feuillet à la ligne du jour.","portee":"longue","verbe":"Inscrire","faille":"Corrompre la série. Faire écrire deux fois la même heure, provoquer une rature, arracher un feuillet — l'adversaire qui atteint le cahier n'a même pas besoin de le détruire, il lui suffit d'y ajouter une ligne fausse. Une goutte d'eau sur le numéro et la loi n'a plus de rang où s'accrocher."},{"id":"VEC-18","nom":"Par l'aiguille laissée","condition":"Un objet métallique du porteur, gravé de son nom ou trempé de son sang, demeure à moins d'un empan du corps de la cible pendant douze battements consécutifs : dans une doublure, une semelle, une plaie, un ourlet.","portee":"illimitée conditionnelle","verbe":"Ficher","faille":"Se fouiller. Un aimant passé sur les coutures, un déshabillage complet, une plaie ouverte au couteau plutôt que sondée. La parade la plus dure à supporter est la plus simple : retrouver l'aiguille et la rendre au porteur, dans sa main, en le regardant. L'objet revenu rompt la chaîne, et il doit tout recommencer à zéro empan."},{"id":"VEC-19","nom":"Par le repas partagé","condition":"Porteur et cible prélèvent leur part d'un même plat, cuit dans le même récipient, au même repas, et avalent. Deux portions de la même recette cuites séparément ne valent rien : la loi lit le récipient, pas le goût.","portee":"moyenne","verbe":"Rompre","faille":"Ne pas avaler. Garder en bouche, recracher dans la serviette, se servir dans un second plat identique mais sorti d'une autre marmite. Les banquets de trêve prévoient deux fonds de cuisson pour cette raison, et les convives qui savent regardent l'ustensile plutôt que l'assiette."},{"id":"VEC-20","nom":"Par la chaleur cédée","condition":"Peau nue contre peau nue, maintenues jusqu'à ce que les deux surfaces atteignent la même température : la vérification est sensorielle, la frontière entre les deux peaux cesse d'être perceptible. En moyenne quarante secondes, davantage sur un blessé.","portee":"contact","verbe":"Égaliser","faille":"Tenir l'écart ouvert. Une pièce de monnaie froide serrée dans le poing, une main plongée dans l'eau avant l'engagement, la fièvre. Rompre le contact à trente secondes annule tout et ne coûte rien. Contre ce vecteur, on ne meurt que si l'on est déjà trop faible pour retirer son bras — ce qui est exactement le cas visé."},{"id":"VEC-21","nom":"Par le mensonge accepté","condition":"Le porteur énonce sur la cible une phrase fausse et vérifiable, et la cible l'accepte : un mot, un hochement de tête, ou un silence tenu plus de trois secondes. L'acceptation doit être unique et pleine.","portee":"moyenne","verbe":"Faire acquiescer","faille":"Contredire, même mal, même à côté. Ou l'état à moitié, qui est la faille propre de toute condition binaire : acquiescer et nier dans la même phrase laisse la loi suspendue entre deux valeurs, et elle ne s'applique pas. Il existe enfin la parade rare — rendre la phrase vraie, et se transformer en ce dont on est accusé."},{"id":"VEC-22","nom":"Par la cicatrice nommée","condition":"Le porteur désigne une cicatrice visible sur la cible et en énonce l'origine exacte : l'objet, l'année, la main qui l'a faite. Les trois éléments, sans erreur, à voix haute, devant la marque découverte.","portee":"courte","verbe":"Nommer","faille":"Couvrir la marque : la loi exige qu'elle soit vue. Mentir sur son histoire n'aide en rien, la loi lit le fait et non le récit. Reste la solution des vétérans, qui est une mutilation : rouvrir la peau au même endroit. La nouvelle cicatrice recouvre l'ancienne, son origine est d'un jour, et personne ne la connaît encore."},{"id":"VEC-23","nom":"Par l'ordre d'arrivée","condition":"Porteur et cible sont entrés dans le lieu par la même issue, et le porteur peut établir sans erreur lequel des deux est entré le premier — par un registre d'entrée, un ticket numéroté, ou le témoignage d'un portier.","portee":"moyenne","verbe":"Classer","faille":"L'ex æquo, faille écrite de toute mesure ordinale : franchir la porte épaule contre épaule, ou entrer par deux issues différentes, et il n'y a plus de rang à établir. Un adversaire qui déchire son ticket et en tire un second brouille sa place dans la série. Les portiers achetés le sont d'abord pour cela."},{"id":"VEC-24","nom":"Par le silence tenu","condition":"Quatre secondes pendant lesquelles aucun son ne part du corps de la cible — ni voix, ni pas, ni frottement d'étoffe, ni déglutition — dans un lieu où le porteur entend tout ce qui s'y produit.","portee":"courte","verbe":"Guetter","faille":"Ne jamais se taire. Parler pour ne rien dire, traîner un pied, faire tinter une boucle de ceinture à chaque temps : le combat lui-même annule ce vecteur, qui ne mord que sur l'immobile. C'est sa cruauté propre — il ne prend jamais un adversaire debout, seulement celui qui s'est arrêté derrière une porte pour retenir son souffle."}]},"lois":{"lois":[{"id":"solde-thermique","nom":"Le Solde Thermique","enonce":"La chaleur qu'un corps a laissée derrière lui reste portée à mon compte.","consequence":"Onze heures de tiédeur dans un lit sont un capital : je les restitue en une seconde et l'air prend feu à hauteur de hanche. Poussée sur une salle chauffée depuis novembre, la loi rend en un souffle un hiver entier, et le verre coule avant de casser.","limite":"Un corps qui n'a jamais eu chaud ne me doit rien : l'adversaire qui s'immerge dans l'eau froide avant de venir se présente à mon registre avec un solde nul, et je n'ai rien à réclamer sur lui.","inversion":"Je rends la chaleur à qui l'a perdue : la brûlure remonte son propre trajet et la peau redevient de la peau, à la température exacte d'avant le contact.","maximum":"Je porte à mon compte toute la chaleur que j'ai moi-même cédée depuis ma naissance, et je la restitue en un seul point : celui où je me tiens.","archetype":"mesure"},{"id":"troisieme-fois","nom":"La Troisième Fois","enonce":"Ce qui se produit trois fois devant moi ne sait plus s'arrêter.","consequence":"Un homme qui tousse trois fois tousse jusqu'à ce que ses côtes cèdent. Un cœur dont j'ai compté trois battements n'a plus de pause pour se remplir : il bat à vide, et la mort arrive par manque de silence.","limite":"Il me faut trois occurrences identiques et je dois les voir. Un adversaire qui varie — un pas long, un pas court, un pas sauté — ne me fournit jamais la troisième, et la série retombe à zéro dès qu'une différence s'y glisse.","inversion":"Je casse la série : ce qui s'était produit trois fois cesse entièrement, y compris la première fois — l'hémorragie n'a pas commencé, le compte à rebours n'a pas été lancé.","maximum":"Je laisse la loi elle-même s'appliquer trois fois de suite : elle ne sait plus s'arrêter, et tout ce que je regarde entre dans la série dès sa première occurrence.","archetype":"répétition"},{"id":"main-restee","nom":"La Main Restée","enonce":"Le dernier qui m'a touché reste sur moi jusqu'à ce qu'un autre le remplace.","consequence":"Je répartis mes blessures sur lui à la distance que je veux. Poussée, la loi fait mourir à trois kilomètres l'infirmier qui m'a bandé le matin, de ce qu'on me fait ici, dans l'ordre exact où on me le fait.","limite":"Un seul remplaçant suffit à couper le fil. L'adversaire qui m'effleure volontairement au premier échange devient mon unique attache, et je n'ai plus personne d'autre sur qui poser ce que je reçois.","inversion":"Je remonte le fil au lieu de le descendre : ce qu'on lui a fait revient sur moi, et la plaie qu'il porte se referme exactement à mesure qu'elle s'ouvre sur ma peau.","maximum":"Je me touche moi-même en dernier. La loi se boucle : chaque coup que je porte à un autre m'est aussi porté, et je peux donc me tuer d'un geste destiné à quelqu'un.","archetype":"lien"},{"id":"porte-refermee","nom":"La Porte Refermée","enonce":"Aucune ouverture que j'ai refermée derrière moi ne fonctionne dans les deux sens.","consequence":"Tout encadrement devient à sens unique : une fenêtre, une mâchoire, une cage thoracique. Ce qui est entré reste, ce qui est sorti ne rentre pas, et un poumon qui vient d'expirer ne reprend plus rien.","limite":"Il faut que ce soit ma main qui referme. On me combat portes ouvertes, on entre par ce qui n'a pas de battant, et on me pousse vers les espaces sans seuil où la loi ne trouve rien à verrouiller.","inversion":"J'ouvre dans le sens interdit : ce qui était sorti rentre, le sang retourne dans la plaie par le trajet dont il est parti, la balle ressort du mur.","maximum":"Je referme derrière moi le seuil de ma propre bouche : plus rien de ce que j'ai dit ne peut être repris par personne, moi compris, et chaque phrase que je prononce est ma dernière fois de la prononcer.","archetype":"seuil"},{"id":"temoin-unique","nom":"Le Témoin Unique","enonce":"Ce dont je suis le seul témoin n'a pas eu lieu.","consequence":"J'isole un homme dans un couloir vide et je le démonte pièce par pièce. À la sortie il est intact, il n'a rien subi, et le couloir n'en garde pas la trace parce que l'événement n'a jamais été inscrit nulle part.","limite":"Un second regard annule tout : une caméra, un enfant à une fenêtre, un chien qui tourne la tête. Contre moi on n'apporte pas d'arme, on apporte du monde, et un seul suffit.","inversion":"J'atteste au lieu d'effacer : ce dont je suis le seul témoin devient irrévocablement arrivé, y compris ce que j'ai seulement cru voir — et personne ne peut plus le défaire, moi le premier.","maximum":"Je deviens le seul témoin de moi-même. Je n'ai pas eu lieu ; rien de ce qui m'atteint ne trouve de lieu où atteindre, et rien de ce que je fais n'a jamais été fait.","archetype":"témoignage"},{"id":"poids-declare","nom":"Le Poids Déclaré","enonce":"Rien ne pèse plus que le chiffre que j'ai annoncé pour lui.","consequence":"J'annonce quatre cents kilos pour une lame de cent grammes : elle traverse le sol jusqu'au niveau inférieur. J'annonce zéro pour un homme en pleine course et il continue, sans rien pour l'arrêter ni pour le poser.","limite":"L'annonce doit être un nombre entier, dit avant le contact, et je ne peux pas répéter deux fois le même chiffre dans la journée. Ce qui n'a pas de masse — une flamme, un cri, une ombre — reste hors du registre.","inversion":"Je démesure : la chose reprend d'un coup tout le poids que je lui avais retiré depuis l'aube, et le porteur d'un objet allégé toute la matinée s'effondre sous ce qu'il portait déjà.","maximum":"Je m'annonce moi-même à zéro. Rien de ce qui me frappe ne trouve de masse à déplacer, rien ne me retient au sol, et je continue de m'éloigner sans jamais me reposer nulle part.","archetype":"mesure"},{"id":"homonymie","nom":"L'Homonymie","enonce":"Ce qui porte le même nom occupe la même place.","consequence":"Je donne à la lame le nom de la main qui la tient et l'entaille apparaît dans la paume. Poussée, j'apprends le prénom entier d'un homme, je le donne à un clou, et il faut le voir marcher jusqu'au mur.","limite":"L'orthographe fait foi, l'homophonie ne suffit pas. Une seule syllabe fausse rend la substitution nulle, et celui qui refuse son nom, qu'on n'appelle plus, sort du monde de la loi.","inversion":"Je fixe au lieu de substituer : deux choses de même nom cessent de pouvoir se remplacer, et l'homme cloué dans sa propre place n'en est plus tiré ni par un déplacement ni par un domaine.","maximum":"Je donne mon nom à la loi. Elle occupe ma place et j'occupe la sienne : je ne suis plus quelqu'un qui l'applique, je suis ce qui s'applique, et on ne me tue plus qu'en la réfutant.","archetype":"échange"},{"id":"ordre-de-passage","nom":"L'Ordre de Passage","enonce":"Rien ne m'atteint avant d'avoir atteint tout ce qui est arrivé avant moi.","consequence":"J'entre le dernier dans une salle de quarante personnes et je suis intouchable jusqu'à ce que les trente-neuf autres soient tombés, dans l'ordre où ils ont franchi la porte. Le coup destiné à moi les traverse tous, et il arrive épuisé.","limite":"La file ne compte que ceux qui sont entrés. Seul avec moi, l'adversaire n'a qu'un nom devant lui, et c'est le mien : la loi ne me protège plus d'un seul battement.","inversion":"Je rends l'ordre : je passe volontairement en tête et j'encaisse à la place de tous ceux qui sont entrés après moi, leurs blessures déjà reçues comprises.","maximum":"Je m'inscris deux fois dans la file, en tête et en queue. Rien ne peut m'atteindre avant de m'avoir atteint, et la loi tourne sur elle-même jusqu'à ce que quelqu'un sorte de la pièce.","archetype":"mesure"},{"id":"prelevement-usure","nom":"Le Prélèvement d'Usure","enonce":"L'usure d'une chose m'appartient et je décide du jour où elle est due.","consequence":"Je diffère l'usure d'une lame pendant six ans, puis je la lui rends : elle tombe en limaille dans la main qui la serre. Sur un homme, l'usure d'une vie entière tient dans la durée d'un souffle.","limite":"Ce qui n'a jamais servi ne s'use pas. Une arme sortie de l'atelier, une main d'enfant, un os qui n'a rien porté ne me donnent aucun prélèvement, et l'on m'affronte avec du neuf.","inversion":"Je restitue l'usure retenue : le fer redevient droit, la corde neuve, la dent refaite — mais ce qui a été rendu sort définitivement de mon registre et ne pourra plus jamais être prélevé.","maximum":"Je prélève l'usure du prélèvement lui-même : la loi cesse de vieillir et devient permanente, et tout ce que j'avais différé depuis toujours échoit au même instant.","archetype":"soustraction"},{"id":"dette-de-sommeil","nom":"La Dette de Sommeil","enonce":"Les heures de sommeil que je ne prends pas, un autre les doit.","consequence":"Après quatre nuits blanches, l'homme en face s'effondre debout, paupières collées ; son corps entre en sommeil profond pendant que je lui ouvre la gorge, et les heures qu'il paie s'ajoutent aux miennes.","limite":"Le compte doit être réel, donc je veille vraiment. Un adversaire qui tient le duel court affronte un corps privé de sommeil depuis quatre-vingts heures, aux mains qui tremblent et aux yeux qui décrochent.","inversion":"Je paie dans l'autre sens : je dors une nuit d'avance et je la cède, et celui qui la reçoit se relève reposé au milieu d'un combat qu'il avait déjà perdu.","maximum":"Je réclame en une seule fois tout le sommeil que je dois depuis l'enfance. Celui qui l'endosse ne se réveille pas, et moi je ne me rendors plus jamais.","archetype":"échange"},{"id":"heritage-marques","nom":"L'Héritage des Marques","enonce":"Toute cicatrice que je touche devient une cicatrice que je porte.","consequence":"Après vingt contacts je porte les fractures de vingt corps, et je peux les rouvrir sur eux à l'endroit exact et dans l'ordre exact. Poussée jusqu'à la marque de naissance, l'homme redevient l'enfant qu'on a ouvert.","limite":"Il faut la peau nue et la marque refermée. Les blessures fraîches ne se transmettent pas, celui qui n'a jamais été entamé ne me laisse rien, et une manche suffit à me rendre inoffensif.","inversion":"Je déshérite : je retire la marque et son histoire avec elle. L'os ressoudé se ressoude autrement, et l'homme perd jusqu'au souvenir de la manière dont on l'a coupé.","maximum":"Je fais de la loi ma propre cicatrice et je l'hérite : tout ce qui m'a marqué devient transmissible par simple contact, y compris la blessure dont je mourrai, que je peux donner avant de l'avoir reçue.","archetype":"lien"},{"id":"archive-du-bruit","nom":"L'Archive du Bruit","enonce":"Aucun son émis devant moi n'a le droit de finir.","consequence":"Je garde cinq ans de sons dans une pièce close, puis j'ouvre : la pression cumulée casse les vitres, les tympans et les cages thoraciques dans cet ordre, et le cri d'un mort de février s'entend distinctement à la fin.","limite":"Ce que je conserve, je le porte. Chaque son gardé occupe une place, et un adversaire qui parle sans arrêt me remplit jusqu'à ce que je doive tout lâcher au même endroit — c'est-à-dire sur moi autant que sur lui.","inversion":"Je laisse fuir : un son conservé s'efface de l'air, des murs et des mémoires, et la phrase prononcée devant moi n'a plus jamais été prononcée par personne.","maximum":"Je conserve le son de mon propre énoncé : la loi ne finit plus de se dire, elle s'applique en continu, et je n'entendrai plus jamais rien d'autre.","archetype":"répétition"},{"id":"coupe-d-ombre","nom":"La Coupe d'Ombre","enonce":"Ce que je sépare de son ombre cesse de tenir ensemble.","consequence":"Un mur privé de son ombre s'écroule à la seconde suivante. Un homme séparé de la sienne se défait par couches, du bas vers le haut, à la vitesse à laquelle le soleil monte au-dessus de lui.","limite":"Il me faut une source de lumière unique et un sol pour recevoir l'ombre. Dans le noir complet, ou sous deux lampes qui se contredisent, la loi n'a rien à couper.","inversion":"Je recolle : je rends son ombre à ce qui l'avait perdue et la chose se retient — un corps ouvert tient à sa propre ombre le temps qu'on le recouse.","maximum":"Je me sépare de mon ombre. La coupe n'a plus besoin de lumière : tout ce que je désigne se défait, et plus rien ne me suit au sol.","archetype":"soustraction"},{"id":"versement-de-faim","nom":"Le Versement de Faim","enonce":"La faim se transporte d'un corps à un autre comme un objet qu'on pose.","consequence":"Je verse dans un homme les quatre jours de faim d'un autre : les sucs remontent, l'estomac se digère lui-même, et il mord ce qui est le plus proche de sa bouche, y compris sa propre main.","limite":"La faim doit exister quelque part avant d'être versée. Dans une ville rassasiée je n'ai presque rien à déplacer, et celui qui a mangé une heure plus tôt n'encaisse qu'une charge dérisoire.","inversion":"Je transporte la satiété au lieu du manque : un mourant est nourri sans rien avaler, et du poids revient sur ses os en quelques battements.","maximum":"Je verse en moi la faim de tout ce qui a faim à portée d'oreille, et je décide de ne rien manger tant qu'elle n'a pas trouvé un autre corps.","archetype":"échange"},{"id":"concordance-des-ages","nom":"La Concordance des Âges","enonce":"Deux choses qui se touchent finissent par avoir le même âge.","consequence":"Ma paume à plat sur une poutre de trois cents ans : mes cheveux blanchissent par la pointe pendant que la poutre reprend de la sève. L'écart se comble par le milieu, et sur un enfant la moyenne se fait aussi.","limite":"Je ne choisis pas la part et la moyenne va toujours dans les deux sens. Il suffit de me faire toucher plus vieux que moi — un mur, un os, une pierre — pour me coûter des décennies en un contact.","inversion":"J'écarte les âges au lieu de les rapprocher : je rends dix ans à l'un en les prenant à l'autre, avec un choix que le sens direct ne m'accorde jamais.","maximum":"Je pose les deux paumes à plat sur la terre et je laisse la concordance se faire avec elle.","archetype":"métamorphose"},{"id":"remontee-de-ligne","nom":"La Remontée de Ligne","enonce":"Un coup porté à un homme se paie d'abord sur la ligne qui l'a fait.","consequence":"Je frappe un cadet et trois générations reçoivent le coup avant lui, déterrées à distance. Quand la lignée est longue, il ne sent presque rien ; quand elle est courte, il n'en reste pas assez pour tomber.","limite":"Je n'atteins que ce qui a des ascendants nommés. Un homme sans nom de famille, un enfant abandonné, un fléau sans naissance absorbe seul la totalité du coup et reste debout devant moi.","inversion":"Je descends la ligne au lieu de la remonter : le coup se paie sur les descendants, y compris ceux qui ne sont pas encore nés — la loi les compte, donc ils sont.","maximum":"Je me frappe moi-même : toute ma ligne encaisse au même instant, et il ne reste plus personne pour porter la loi après moi.","archetype":"lien"},{"id":"passage-oblige","nom":"Le Passage Obligé","enonce":"Aucune douleur n'atteint un corps avant d'avoir traversé le mien.","consequence":"Je me place entre la lame et lui : le coup me traverse d'abord et lui arrive tiède. Sur une salle entière, plus personne ne peut souffrir tant que je tiens debout, et je tiens tout, jusqu'à la brûlure d'un enfant à l'étage.","limite":"Tout passe par un seul corps, et un corps a une capacité. Il suffit de blesser beaucoup de monde à la fois : la file me tue avant d'avoir atteint le troisième nom.","inversion":"Je renvoie au lieu d'absorber : la douleur repart par où elle est venue, remonte le bras, et la main qui a frappé reçoit l'intégralité de ce qui devait être reçu.","maximum":"Je me déclare passage de toute douleur à trente pas, puis je refuse de la relayer : autour de moi plus rien ne souffre, plus rien ne se protège, et je porte seul la totalité de ce que le monde aurait dû sentir.","archetype":"seuil"},{"id":"elan-confisque","nom":"L'Élan Confisqué","enonce":"Tout élan pris devant moi cesse d'appartenir à celui qui l'a pris.","consequence":"Dix pas de course me sont cédés ; je les replace dans un éclat de verre. La chute de quelqu'un est une réserve : je la garde une heure et je la dépose plus tard contre une nuque, avec toute la hauteur d'origine.","limite":"L'immobilité me prive de tout. Contre un adversaire qui ne se déplace plus et qui frappe du seul poignet, je n'ai rien à confisquer sinon mon propre mouvement, et je me vide en avançant.","inversion":"Je restitue l'élan à ce qui l'a perdu : un corps arrêté reprend exactement la vitesse qu'on lui avait ôtée, dans la direction d'origine, et le geste interrompu s'achève.","maximum":"Je confisque mon propre élan et je le garde : je ne peux plus bouger, et tout le mouvement du terrain m'appartient — chaque pas de l'autre est un pas que je place.","archetype":"soustraction"},{"id":"registre-du-sang","nom":"Le Registre du Sang","enonce":"Le sang qui a quitté un corps demeure sous mon autorité.","consequence":"Une goutte séchée sous un plancher depuis vingt ans m'obéit encore. Je la rappelle, et le trajet du retour ouvre tout ce qui se trouve entre elle et le corps qui l'a perdue, murs compris.","limite":"Le sang lavé, brûlé ou mêlé à celui d'un autre sort du registre. On me combat en saignant dans un seau d'eau salée, et il suffit de ne jamais saigner deux fois au même endroit.","inversion":"Je rends le sang à son corps : la restitution est entière et immédiate, l'homme se relève avec ses cinq litres — mais ce sang sort à jamais de mon autorité et ne me répondra plus.","maximum":"Je rappelle en une fois tout le sang que j'ai moi-même perdu depuis ma naissance, où qu'il soit et quel que soit ce qu'il doit traverser pour revenir.","archetype":"lien"},{"id":"executoire","nom":"L'Exécutoire","enonce":"Une promesse prononcée devant moi devient exigible dans sa lettre.","consequence":"« Je reviens tout de suite » oblige un homme à revenir d'où qu'il soit : les murs deviennent ce qu'il traverse et non ce qui l'arrête. Ce qui reste de lui arrive quand même, et à l'heure.","limite":"Je n'exige que la lettre, jamais l'intention. Une promesse ambiguë s'exécute au moins-disant, et celui qui ne promet rien — ou qui promet l'impossible — me laisse une créance nulle entre les mains.","inversion":"Je délie au lieu d'exiger : une promesse devient inexécutable pour toujours, et ce qu'elle retenait tombe — une garde, une allégeance, un serment gravé sous un sceau.","maximum":"Je prononce devant moi la promesse de tenir cette loi. Elle devient exigible contre moi dans sa lettre : je ne peux plus mentir, ni m'interrompre, ni mourir avant de l'avoir tenue.","archetype":"témoignage"},{"id":"droit-d-entree","nom":"Le Droit d'Entrée","enonce":"Nul n'entre dans une pièce où je me tiens sans y laisser une chose.","consequence":"Le prélèvement se fait à son insu : une lettre de son nom, le visage de quelqu'un, la sensibilité d'un doigt. Au bout de six pièces, celui qui me poursuit ne sait plus qui il poursuit et sa main tient mal.","limite":"C'est la pièce qui prélève, pas moi, et je ne choisis rien de ce qui est pris. En terrain ouvert, sans porte ni cloison, la loi ne s'exerce pas du tout — on me combat dehors.","inversion":"Je rends à la sortie : celui qui quitte la pièce récupère tout ce qu'il y avait laissé, et davantage — on en ressort avec ce que les autres y ont perdu.","maximum":"Je fais du monde une seule pièce et je me place dedans : chaque pas de chaque vivant vers moi lui coûte une chose, et je ne saurai jamais laquelle.","archetype":"seuil"},{"id":"trois-traits","nom":"Les Trois Traits","enonce":"Une chose décrite en trois traits vrais ne peut plus être que ces trois traits.","consequence":"Je décris un homme : grand, gaucher, essoufflé. Il perd tout le reste — la vue, le nom, l'estomac, la capacité de saigner — et se tient debout comme un meuble jusqu'à ce qu'on le pousse.","limite":"Je dois dire vrai : un seul trait faux annule la description entière. Celui qui se rend illisible — masqué, muet, immobile — ne me laisse jamais trois traits sûrs à énoncer.","inversion":"Je désécris : j'ôte les trois traits et je rends tout le reste. Un corps réduit reprend ses organes ; un fléau simplifié récupère une complexité qu'il ne sait plus gouverner.","maximum":"Je me décris moi-même : vivant, debout, porteur de la loi. Rien d'autre n'est vrai de moi, donc rien d'autre ne peut m'être retiré.","archetype":"métamorphose"},{"id":"oubli-operant","nom":"L'Oubli Opérant","enonce":"Ce dont je perds le souvenir cesse d'exister pour tout le monde.","consequence":"Une rue oubliée disparaît du plan et des jambes qui l'empruntaient. Poussée, j'oublie une technique adverse pendant qu'elle est en cours et elle s'interrompt au milieu de son geste, sans que son porteur sache ce qu'il faisait.","limite":"Je ne choisis pas ce que j'oublie et je perds réellement : chaque suppression prélève un morceau de ma propre vie. Il suffit de me faire oublier ce que je suis venu défendre pour que je le défasse moi-même.","inversion":"Je me souviens de ce qui n'a pas eu lieu et cela commence à exister : un mort revient, mais seulement la part que j'en garde, et il s'aperçoit très vite de ce qui manque.","maximum":"Je m'oublie moi-même. La loi reste, et continue de s'appliquer, sans plus personne pour se rappeler qui l'a énoncée.","archetype":"soustraction"},{"id":"plafond-releve","nom":"Le Plafond Relevé","enonce":"Ce que j'ai mesuré une fois ne peut plus dépasser la mesure.","consequence":"Je relève la vitesse d'un bras au premier échange : il n'ira plus jamais plus vite, ni ce soir, ni dans dix ans, ni contre un autre que moi. Le relevé vaut aussi pour un souffle, une portée, une réserve.","limite":"Une seule grandeur par relevé, et le chiffre doit être lu à l'instant exact. Ce qui varie pendant que je mesure ne se laisse pas fixer : un adversaire irrégulier m'impose un plafond haut, et le plafond est définitif pour moi aussi.","inversion":"Je démesure : je retire son plafond à une chose et elle n'a plus de valeur maximale tant que personne ne la mesure à nouveau — y compris moi, y compris un mourant.","maximum":"Je mesure la mesure : je relève le plafond de mon propre relevé et je le fixe à un. Désormais un seul chiffre suffit à figer un homme entier, et je n'aurai plus jamais qu'un chiffre par homme.","archetype":"mesure"},{"id":"heure-reprise","nom":"L'Heure Reprise","enonce":"À chaque minute, mon corps refait ce qu'il faisait la veille à la même minute.","consequence":"Je bâtis mes journées comme des pièges. Hier à 14 h 03 j'ai frappé le vide ; aujourd'hui à 14 h 03 mon poing part seul, avec la force d'hier ajoutée à celle d'aujourd'hui, et celui qui se tient là n'a rien vu venir parce que moi non plus.","limite":"Je n'ai aucun choix pendant la reprise. Celui qui a pu m'observer un jour connaît le lendemain à la minute près, et il lui suffit de se placer là où mes mains seront occupées.","inversion":"Je romps la veille : j'annule ce que je faisais à cette minute-là et tout ce qui en découlait — la blessure prise hier à 14 h 03 n'a plus de cause aujourd'hui, et se referme faute d'origine.","maximum":"Je passe une journée entière à ne rien faire d'autre qu'appliquer cette loi. Le lendemain, mes vingt-quatre heures ne sont plus qu'une reprise, et je ne m'appartiens plus d'aucune minute.","archetype":"répétition"},{"id":"premiere-version","nom":"La Première Version","enonce":"La première version d'un fait dite devant moi devient le fait.","consequence":"Un homme dit « je ne l'ai pas touchée » : sa main n'a plus jamais touché personne, elle traverse les corps et ne peut plus rien saisir. Un mensonge sur une blessure la fait disparaître, avec la chair qui allait autour.","limite":"Je retiens la première version, pas la plus utile. Celui qui parle vite décide de la loi à ma place, et une phrase absurde lancée avant moi me lie pour tout le duel.","inversion":"Je rétracte : la version retenue est retirée du monde et ce qu'elle avait fixé redevient libre — la main revient, la blessure revient, et l'homme redevient coupable.","maximum":"Je dis de moi la première version : « je suis intact ». Tant que personne ne parle de moi avant moi, je le suis — et je ne pourrai plus jamais dire de moi autre chose.","archetype":"témoignage"},{"id":"fonction-unique","nom":"La Fonction Unique","enonce":"Ce qui a servi deux fois au même usage ne peut plus servir à un autre.","consequence":"Une poignée ouverte mille fois n'est plus qu'ouverture : elle ne pèse plus, ne blesse plus, ne bloque plus. J'assigne à une main le seul fait de tenir : elle ne frappe plus, ne lâche plus, et se referme sur ce qu'elle tient jusqu'à l'os.","limite":"Il faut que j'aie vu les deux usages. Celui qui change de garde à chaque échange ne fixe jamais de fonction, et une arme sans histoire ne m'offre rien à verrouiller.","inversion":"Je déverrouille : la chose perd sa fonction et devient disponible pour n'importe quelle autre — un mur cesse de séparer, un os cesse de porter, une porte cesse d'être un passage.","maximum":"J'assigne à mon corps sa fonction unique : appliquer la loi. Je ne mange plus, je ne dors plus, je ne fais plus rien d'autre — et rien ne peut plus m'en empêcher.","archetype":"métamorphose"},{"id":"chambre-commune","nom":"La Chambre Commune","enonce":"Deux êtres qui respirent le même air respirent la même chose.","consequence":"Ce qui entre dans mes poumons entre dans les siens : une gorgée d'eau, une lame de fumée, une hémorragie interne. Dans une pièce close, il me suffit de cesser de respirer pour que la pièce cesse, et je tiens quatre minutes de plus que n'importe qui.","limite":"Le partage est intégral et symétrique. Tout ce qu'il inhale, je l'inhale : un poison fait deux morts, une apnée en fait deux, et il lui suffit d'accepter de mourir pour m'emporter à la même seconde.","inversion":"Je sépare les airs : plus personne ne respire ce que je respire. J'extrais un homme d'une fumée ou d'une eau, et il respire au fond du fleuve l'air d'une chambre que j'ai quittée le matin.","maximum":"J'ouvre la chambre commune à tout ce qui respire à portée d'oreille, puis j'inspire une seule fois, lentement, de la poussière d'os.","archetype":"lien"}]},"serments":{"serments":[{"id":"paupiere-cousue","nom":"Le Serment de la Paupière Cousue","clause":"Je renonce à voir ce qu'il me reste à entamer. Je le saurai fini quand mes mains ne rencontreront plus de résistance.","restriction":"La jauge et le nombre de points de vie de l'adversaire disparaissent de l'écran. Le bloc n'est pas masqué, il est retiré : il ne revient à aucun duel suivant.","gain":"Tes techniques frappent 45 % plus fort.","restriction_code":"masqueVieEnnemi=true ; suppression du nœud DOM de la jauge adverse, remplacé par des blocs U+2588 aux mêmes métriques ; état écrit en sauvegarde, réappliqué avant le premier paint","gain_code":"degatsMult ×1.45 sur toutes les techniques","danger":2},{"id":"gantelet-depose","nom":"Le Serment du Gantelet Déposé","clause":"Je n'oppose plus rien. Ce qui vient jusqu'à moi entrera entier, dans l'ordre où il a été lancé.","restriction":"Les actions Garde et Esquive te sont retirées. Leurs deux emplacements restent dans l'anneau, barrés, pour que tu les vises par réflexe pendant encore trois tours.","gain":"+2 énergie maudite au début de chaque tour.","restriction_code":"interdit=['garde','esquive'] ; boutons conservés à l'écran, rayés d'un trait 1 px, non cliquables (aria-disabled)","gain_code":"energieBonus +2 par tour","danger":3},{"id":"seuil-scelle","nom":"Le Serment du Seuil Scellé","clause":"Je ne repasserai pas la porte par laquelle je suis entré. On me sortira d'ici porté, ou on ne me sortira pas.","restriction":"Fuir devient impossible, dans ce duel et dans tous les suivants, y compris contre un fléau surclassé.","gain":"Tu encaisses 20 % de dégâts en moins et tu gagnes 10 % de points de vie maximum.","restriction_code":"interdit=['fuite'] ; l'action est retirée de l'anneau et l'abandon de duel est refusé","gain_code":"degatsRecusMult ×0.80 ; pvMaxMult ×1.10","danger":2},{"id":"tiers-rendu","nom":"Le Serment du Tiers Rendu","clause":"Je rends la part de moi qui ne servait qu'à durer. Je n'avais pas l'intention de durer.","restriction":"Tu perds 45 % de tes points de vie maximum, pour le reste de cette vie. Aucune greffe, aucun soin, aucune victoire ne les rend.","gain":"Tous tes dégâts sont multipliés par 2,1.","restriction_code":"pvMaxMult ×0.55 permanent (persisté) ; PV courants recalculés au prorata immédiatement","gain_code":"degatsMult ×2.10","danger":5},{"id":"plaie-tenue","nom":"Le Serment de la Plaie Tenue Ouverte","clause":"Rien de ce qui s'ouvre en moi ne se refermera avant la fin de la phrase. J'ai besoin qu'on voie par où ça passe.","restriction":"La technique inversée t'est retirée. Plus aucun soin, ni pendant le duel, ni entre deux dossiers.","gain":"+3 énergie au premier tour et +30 % sur les dégâts de tes coups critiques.","restriction_code":"interdit=['inverse'] ; soinMult=0 ; aucune régénération inter-duel","gain_code":"energieDepart +3 ; critMult ×1.30","danger":4},{"id":"cire-versee","nom":"Le Serment de la Cire Versée","clause":"Je ne veux plus entendre ce qui se déplace derrière moi pendant que je frappe devant.","restriction":"Le son est coupé, définitivement, et tu ne pourras pas le rallumer. Le métronome sourd qui calait les battements part avec le reste : tu perds la seule chose qui t'annonçait le tour adverse.","gain":"+18 points de chance de coup critique.","restriction_code":"coupeSon=true irréversible (persisté) ; le réglage audio est retiré du menu ; le repère sonore de fin de battement n'est plus émis","gain_code":"critBonus +0.18","danger":2},{"id":"marge-vierge","nom":"Le Serment de la Marge Vierge","clause":"Je ne demanderai pas le détail. Ce qui m'a été fait m'a été fait dans les règles, et les règles ne se relisent pas.","restriction":"Le journal de combat est vidé et ne se remplit plus : tu ne sauras plus quelle technique t'a touché, ni ce qu'elle a prélevé.","gain":"+1 énergie par tour et +20 % de dégâts.","restriction_code":"masqueJournal=true ; les lignes d'événement ne sont plus poussées dans le registre visible (les événements restent au moteur)","gain_code":"energieBonus +1 ; degatsMult ×1.20","danger":3},{"id":"sablier-retourne","nom":"Le Serment du Sablier Retourné","clause":"J'aurai fini avant le huitième battement. Au neuvième, je m'écroulerai sans qu'on ait à me pousser.","restriction":"Si un duel atteint le neuvième tour, tu meurs sur place, quelle que soit ta structure restante et quel que soit l'état de l'adversaire.","gain":"×1,55 sur tes dégâts et +2 énergie par tour.","restriction_code":"limiteTours=8 ; à l'ouverture du tour 9, PV joueur := 0, cause de mort 'échéance' inscrite à l'ossuaire","gain_code":"degatsMult ×1.55 ; energieBonus +2","danger":5},{"id":"puits-sec","nom":"Le Serment du Puits Sec","clause":"Je ne puiserai qu'au fond. Le fond a l'avantage d'être propre, et de se voir venir.","restriction":"Ta réserve maximale d'énergie maudite perd 3 points. Ton domaine devient presque impayable.","gain":"Chaque technique coûte 1 énergie de moins, sans jamais descendre sous 1.","restriction_code":"enMaxBonus −3 ; réserve courante écrêtée au nouveau maximum immédiatement","gain_code":"remise +1 sur le coût de toute action (plancher 1)","danger":3},{"id":"mains-nues","nom":"Le Serment des Mains Nues","clause":"Ma loi restera pliée dans son étui. J'ai deux mains, et personne au Bureau ne les a jamais comptées.","restriction":"Ta technique innée t'est interdite tant que tes murs ne sont pas ouverts. Tu descends les quatre premiers battements sans elle.","gain":"Tes frappes renforcées ne coûtent rien et frappent trois fois plus fort.","restriction_code":"interdit=['technique'] hors état domaineActif ; la levée est vérifiée à chaque déclaration","gain_code":"frappeMult ×3.0 ; coût de la frappe renforcée := 0","danger":4},{"id":"trace-effacee","nom":"Le Serment de la Trace Effacée","clause":"Si je tombe, qu'il ne reste ni le nom, ni le grade, ni l'heure. Le Bureau n'aura rien à classer et personne n'aura à se souvenir de la manière.","restriction":"À ta prochaine mort, l'ossuaire est détruit pour de bon : graines, lois exorcisées, greffes, durées écoulées. Il n'y aura pas de deuxième visite, et rien ne t'attendra pour te dire depuis combien de temps tu as cessé.","gain":"×1,6 sur tes dégâts et +30 % de points de vie maximum.","restriction_code":"effaceToutALaMort=true ; à l'événement mort : localStorage.removeItem sur toutes les clés du registre, dans un try/catch, avant l'écran de fin","gain_code":"degatsMult ×1.60 ; pvMaxMult ×1.30","danger":5},{"id":"formule-unique","nom":"Le Serment de la Formule Unique","clause":"Je ne referai jamais deux fois le même geste. Ce qui se répète s'apprend, et ce qui s'apprend finit par m'être rendu.","restriction":"Tu ne peux pas déclarer deux tours de suite la même action. L'emplacement se verrouille dès qu'il a servi, y compris quand c'est le seul que tu peux payer.","gain":"+35 % de dégâts et +10 points de critique.","restriction_code":"pasDeRepetition=true ; l'action égale à derniereAction est refusée à la déclaration et grisée dans l'anneau","gain_code":"degatsMult ×1.35 ; critBonus +0.10","danger":4},{"id":"territoire-unique","nom":"Le Serment du Lieu Ouvert Une Fois","clause":"J'ouvrirai mes murs une fois par corps. Un lieu qu'on rouvre n'est plus un lieu : c'est un couloir, et un couloir se traverse.","restriction":"Une seule extension du territoire par duel, et jamais deux duels de suite. Le second duel, tu le fais à découvert.","gain":"Ton domaine tient 2 battements de plus et son sûr-au-but compte double à chaque battement.","restriction_code":"domaineUnique=true ; verrou reporté au duel suivant (flag persisté entre duels)","gain_code":"domaineTours +2 ; domaineMult ×2.0 sur le sûr-au-but par battement","danger":3},{"id":"dette-rendue","nom":"Le Serment de la Dette Rendue","clause":"Je tiens le compte exact de ce qu'on me prend, et je le rends au taux dont personne ne m'a demandé s'il me convenait.","restriction":"Tu subis 45 % de dégâts en plus. Un enchaînement de trois coups adverses te tue à partir de la moitié de ta structure.","gain":"Chaque coup encaissé ajoute +30 % cumulatifs à ta prochaine attaque.","restriction_code":"degatsRecusMult ×1.45","gain_code":"rancune +0.30 : rancuneCourante += 0.30 à chaque coup subi, appliquée en multiplicateur à la prochaine attaque puis remise à 0","danger":4},{"id":"nom-saisi","nom":"Le Serment du Nom Saisi","clause":"Je n'appliquerai rien que je ne puisse écrire sans faute, à la main, pendant qu'on me frappe.","restriction":"Avant chaque technique, tu dois retaper au clavier le nom exact de ta loi, kanji exclus, en moins de quatre secondes. Une faute, une lettre en trop, un retard : le tour est perdu et l'énergie est prélevée quand même.","gain":"+40 % de dégâts de technique et +1 énergie par tour.","restriction_code":"saisieNomRequise=true : modale de saisie 4000 ms avant toute action de type technique ; comparaison stricte après normalizeSeed ; échec → action := 'passe', coût prélevé","gain_code":"degatsTechniqueMult ×1.40 ; energieBonus +1","danger":4},{"id":"tour-blanc","nom":"Le Serment du Tour Blanc","clause":"Le premier battement ne m'appartient pas. Je le laisse à celui qui a eu la politesse de se déplacer.","restriction":"Au premier tour de chaque duel, ton anneau reste fermé : tu ne déclares rien, tu encaisses, et tu regardes.","gain":"À partir du deuxième tour, +50 % de dégâts jusqu'à la fin du duel.","restriction_code":"tour===1 : toutes les actions verrouillées, action forcée 'attendre', aucune garde possible ; dégâts subis au taux normal","gain_code":"degatsMult ×1.50 appliqué à partir du tour 2","danger":3},{"id":"fenetre-etroite","nom":"Le Serment de la Fenêtre Étroite","clause":"Je réduis à un battement de cil l'instant où j'ai raison. En échange, j'aurai raison deux fois dans la même descente.","restriction":"La fenêtre du coup noir passe de 180 ms à 70 ms. Presque tous tes essais tomberont à côté, et un essai raté te coûte ta garde du tour.","gain":"Deux coups noirs autorisés par duel au lieu d'un, et +25 % sur leurs dégâts.","restriction_code":"fenetreCoupNoir=70 ms ; échec de fenêtre → gardeIndisponible pour le tour en cours","gain_code":"coupsNoirsParDuel=2 ; degatsCoupNoirMult ×1.25","danger":3},{"id":"reserve-aveugle","nom":"Le Serment de la Réserve Aveugle","clause":"Je cesse de compter ce qu'il me reste. Compter, c'est déjà choisir le battement où l'on s'arrêtera.","restriction":"Ta propre réserve d'énergie n'est plus chiffrée ni graduée : des blocs pleins, rien d'autre. Tu déclareras des techniques que tu ne peux pas payer, et elles échoueront en te prenant le tour.","gain":"+4 de réserve maximale et +1 énergie par tour.","restriction_code":"masqueEnergieJoueur=true : valeur numérique et graduation retirées du DOM ; les actions trop chères restent cliquables, échouent à la résolution et consomment le tour","gain_code":"enMaxBonus +4 ; energieBonus +1","danger":4},{"id":"usure-inscrite","nom":"Le Serment de l'Usure Inscrite","clause":"Chaque battement me retire deux lignes, et je signe pour que ces lignes ne soient jamais réécrites.","restriction":"À la fin de chaque tour, ton maximum de points de vie perd 2 points, définitivement, dans ce duel et dans tous ceux qui suivront. Un duel de seize tours te coûte trente-deux points que rien ne rendra.","gain":"+6 % de dégâts cumulatifs par tour écoulé, sans plafond jusqu'à la fin du duel.","restriction_code":"fin de tour : pvMax −2 (persisté, plancher 1) ; PV courants écrêtés au nouveau maximum","gain_code":"degatsMult ×(1 + 0.06 × toursEcoules), réinitialisé au duel suivant","danger":5},{"id":"dossier-ouvert","nom":"Le Serment du Dossier Ouvert","clause":"Je laisse lire mes annotations. Qu'on sache où je me suis trompé, puisque je saurai enfin où il se trompe.","restriction":"Tes deux failles sont affichées à l'adversaire dès le premier battement : il frappe 25 % plus fort et vise en priorité ta condition d'énonciation, qu'il coupera dès qu'il en aura les moyens.","gain":"Les quatre cases d'hypothèse sont cochées d'office : la faille rituelle et la faille arithmétique de l'adversaire s'affichent au tour 1, sans coûter un seul battement d'avance.","restriction_code":"degatsRecusMult ×1.25 ; IA adverse : priorité absolue aux actions ciblant la condition d'énonciation du joueur","gain_code":"casesHypothese := 4 résolues gratuitement ; failles adverses (rituelle + arithmétique) révélées au tour 1 ; aucun battement d'avance cédé au fléau","danger":4}]},"domaines":{"domaines":[{"id":"hyotenbo","nom_fr":"Le Relevé au Point de Congélation","nom_jp":"氷点簿","romaji":"Hyōtenbo","paysage":"Une chaufferie municipale éteinte depuis l'hiver, les tuyaux blanchis de givre jusqu'aux brides, les vannes prises. Devant chaque occupant, un thermomètre à alcool planté dans l'air, sans support, qui descend à la vitesse d'une signature.","effet_garanti":"Toute chaleur que vous avez cédée depuis votre naissance est portée au registre, additionnée, et retranchée de ce que votre corps a désormais le droit de tenir. Ce n'est pas une blessure : c'est une écriture, et rien n'efface une écriture.","effet_code":"À l'ouverture, mesure la structure maximale M de chaque occupant, imprime relevé = plancher(M × 0,45) et pose structure_max := relevé, conservé dans la sauvegarde après la fermeture. Ensuite −4 structure par battement. Entretien 11 RÉSERVE / battement.","incantation":"Relevé du jour, établi sans témoin.\nPortez au débit la chaleur donnée aux mains, aux draps, à l'air.\nLe solde figure en tête de page.\nLe solde ne se conteste pas.","faille":"Le registre n'inscrit que la chaleur cédée à l'air. Une paume à plat sur la fonte froide et c'est la fonte qui figure au relevé : on ressort avec les doigts détruits et la ligne inchangée."},{"id":"juden","nom_fr":"Le Palais des Charges Non Déclarées","nom_jp":"重殿","romaji":"Jūden","paysage":"Une consigne de gare aux casiers tous ouverts, valises éventrées, courroies pendantes. Au centre, une balance à fléau assez grande pour un homme, dont le plateau vide est déjà au plus bas.","effet_garanti":"Ici, chaque chose pèse ce qu'elle a pesé de plus lourd un jour : le bras, la tête, la faute. Nul ne se déclare plus léger que son maximum, et le maximum n'oublie pas.","effet_code":"Chaque occupant passe à une action par battement au lieu de deux ; esquive fixée à 0 tant que le poids déclaré est supérieur à zéro. Le poids monte de 1 par battement, plafond 6 ; à 6, l'occupant reste au sol un battement sur deux. Entretien 9 RÉSERVE / battement.","incantation":"Déclarez vos charges. Vous ne l'avez jamais fait.\nLa balance retient le plus lourd de vos jours et l'appelle votre poids.\nAvancez maintenant, si vous savez encore où sont vos genoux.","faille":"Le fléau pèse un corps entier ou rien. Entrer en deux masses tenues par un serment — un membre laissé dehors, une main sectionnée sur le seuil — ne présente que des moitiés, et la loi n'a pas de ligne pour la moitié d'un homme."},{"id":"seikan","nom_fr":"L'Anneau de l'Élan Confisqué","nom_jp":"勢環","romaji":"Seikan","paysage":"Un dépôt de tramways à trois heures du matin : six motrices sans conducteur tournent sur une boucle unique, toujours à la même vitesse, et le rail est poli jusqu'au miroir sur toute sa longueur.","effet_garanti":"Aucun mouvement ne peut être plus vif que celui qui l'a précédé. L'élan acquis est retenu au seuil et n'est rendu à personne, pas même à celui qui l'a produit.","effet_code":"Les dégâts et la vitesse de chaque action sont plafonnés à la valeur de l'action précédente −1, plancher 1. Chaque cran refusé verse +2 RÉSERVE au porteur du domaine. Entretien 8 RÉSERVE / battement.","incantation":"Ce qui prend de la vitesse ici la laisse au premier tour.\nL'anneau garde l'élan, l'anneau ne rend rien.\nFrappez : votre coup d'avant est déjà votre plafond.","faille":"Le plafond se calcule sur l'action précédente. Un coup porté à vide, dans l'air, ne vaut rien : la loi ne sait pas retrancher un cran à rien, et le compteur repart entier au battement suivant."},{"id":"onkoku","nom_fr":"La Geôle de Ce Qui a Déjà Été Dit","nom_jp":"音獄","romaji":"Onkoku","paysage":"Un standard téléphonique désaffecté, quarante cabines capitonnées ouvertes sur la même travée. Dans chaque combiné décroché, votre voix, avec deux secondes de retard, disant ce que vous n'avez pas encore dit.","effet_garanti":"Tout son émis ici demeure et se rejoue à chaque battement, en couches, sans s'atténuer. On ne finit jamais de payer ce qu'on a fait entendre.","effet_code":"Chaque action bruyante inscrit une trace, plafond 12. À chaque battement, tous les occupants subissent 2 × nombre de traces ; le porteur n'en subit que la moitié, arrondie au supérieur. Entretien 10 RÉSERVE / battement.","incantation":"Vous avez parlé, c'est consigné.\nLa phrase revient à l'heure, puis à l'heure d'après, en couches.\nÉcoutez-vous jusqu'à ce que cela cesse.\nCela ne cesse pas.","faille":"Le silence n'ajoute rien, mais les couches déjà écrites tuent quand même. La sortie tient à l'opposition de phase : parler exactement sur le rejeu, syllabe contre syllabe, efface une couche par battement."},{"id":"eitei","nom_fr":"Le Jardin où les Ombres Restent à leur Place","nom_jp":"影庭","romaji":"Eitei","paysage":"Une cour d'école à midi, sans enfants. Les ombres sont peintes au sol à l'endroit exact de la récréation d'hier, et le soleil, arrêté, ne les déplacera plus.","effet_garanti":"Aucune ombre ne suit son corps. Tout écart entre l'homme et l'ombre qu'il a portée s'inscrit dans les tendons, au pas près.","effet_code":"Déplacement et esquive supprimés (probabilité 0). Chaque tentative de déplacement inflige 5 + 2 par pas d'écart, cumulatif jusqu'à la fin du duel. Entretien 7 RÉSERVE / battement.","incantation":"Le soleil est arrêté, la cour est peinte.\nVotre ombre est restée où elle a joué hier.\nÉloignez-vous d'elle : ce sont vos tendons qui mesurent.","faille":"Une ombre exige une surface pour tomber. Se tenir sur une grille, un caillebotis, une arête de rail — là où l'ombre se rompt en morceaux — ne laisse plus rien à mesurer à la loi."},{"id":"ketsuden","nom_fr":"Le Salon des Transfusions Réciproques","nom_jp":"血殿","romaji":"Ketsuden","paysage":"Une salle de don du sang aux fauteuils inclinés, poches suspendues, aucune étiquette sur aucune poche. Les tubes ne descendent pas : ils remontent, doucement, vers les bras.","effet_garanti":"Le sang sorti retourne à la main qui l'a fait sortir. Chaque plaie ouverte ici alimente celui qui l'a ouverte, la vôtre comprise.","effet_code":"Chaque saignement actif draine 6 structure / battement à son porteur et en rend 4 à l'auteur de la blessure. Les blessures infligées par le porteur du domaine comptent double dans les deux sens. Entretien 12 RÉSERVE / battement.","incantation":"Le sang qui sort d'ici retourne à la main qui l'a ouvert.\nOuvrez donc. Ouvrez encore.\nVous alimentez ce qui vous vide.","faille":"La loi ne connaît que le sang sorti. Cautériser à chaud, ou frapper à l'os sans jamais rompre la peau, laisse le circuit vide : le domaine se paie alors tout seul, sur sa propre réserve."},{"id":"shokubo","nom_fr":"Le Registre de l'Usure Anticipée","nom_jp":"蝕簿","romaji":"Shokubo","paysage":"Un atelier d'horloger dont les tiroirs sont classés par degré d'usure. Sur le drap vert, des pièces de cuivre se creusent pendant qu'on les regarde, et la limaille tombe sans bruit.","effet_garanti":"Tout ce qui sert ici s'use maintenant plutôt que plus tard. Une lame, une articulation, une résolution : la loi avance leur fin et l'inscrit à sa date.","effet_code":"Chaque objet, technique et articulation employée perd 1 rang d'usure par battement ; au cinquième rang, hors service, définitif dans la sauvegarde. CONTRÔLE −0,5 par battement. Entretien 9 RÉSERVE / battement.","incantation":"Rien n'attend son usure.\nCe qui sert s'use maintenant, à la vue de tous.\nComptez les rangs : cinq, et l'outil cesse d'être un outil.\nVotre poignet est un outil.","faille":"L'usure se compte sur un geste mené à son terme. Un mouvement haché, arrêté puis repris avant l'appui final, n'accumule jamais un rang complet : on se bat mal, on se bat court, on ressort avec ses mains."},{"id":"kyokan","nom_fr":"L'Anneau du Retour Obligé","nom_jp":"距環","romaji":"Kyokan","paysage":"Une piste de cendrée sous une neige fine, une seule ligne blanche tracée en travers. C'est le départ et c'est l'arrivée, et rien sur la piste ne permet de les distinguer.","effet_garanti":"Toute distance parcourue est refaite en sens inverse à la fin du battement. On revient au point d'entrée avec la fatigue du trajet et rien d'autre.","effet_code":"En fin de battement, chaque occupant est replacé sur sa case d'entrée. FATIGUE +1 par tranche de trois pas effectués ; à 8 FATIGUE, une action sur deux échoue. Entretien 8 RÉSERVE / battement.","incantation":"La ligne blanche est le départ, la ligne blanche est l'arrivée.\nCourez : on vous rendra à votre place, la fatigue en supplément.\nIl n'y a pas d'ailleurs à gagner ici.","faille":"Le retour se calcule sur des distances distinctes. Deux occupants qui échangent leurs positions ont parcouru la même longueur en sens contraire : ex æquo, la loi ne sait plus qui rendre où et les laisse tous deux où ils sont."},{"id":"shokucho","nom_fr":"Le Registre du Dernier Contact","nom_jp":"触帳","romaji":"Shokuchō","paysage":"Le vestiaire d'un bain public à la fermeture. Sur chaque casier, l'empreinte grasse d'une main qui n'est plus là ; la buée reste collée au métal et refuse de tomber.","effet_garanti":"Tout ce que vous avez touché depuis l'aube se tient ici et vous touche en retour, en remontant l'ordre, du plus récent au premier.","effet_code":"Compte les contacts du jour, plafond 20. Dégâts par battement = contacts ÷ 2, arrondi au supérieur. +1 contact chaque fois qu'un occupant touche quoi que ce soit dans le domaine, le sol compris. Entretien 10 RÉSERVE / battement.","incantation":"Depuis l'aube, tout ce que vos mains ont pris est venu.\nLes poignées, les manches, la nuque de quelqu'un.\nElles vous touchent à leur tour, en remontant.","faille":"Un contact qu'on ne quitte pas n'est jamais un dernier contact. Rester agrippé au même barreau, sans jamais lâcher, gèle le registre à sa valeur d'entrée : il faut seulement se battre d'une seule main."},{"id":"jocho","nom_fr":"Le Rideau des Rangs d'Arrivée","nom_jp":"序帳","romaji":"Jochō","paysage":"Un bureau de tri postal la nuit : le tapis avance, chaque colis reçoit son numéro d'ordre au tampon. L'un des colis porte votre numéro et il est déjà passé sous la presse.","effet_garanti":"L'ordre d'arrivée est fixé au seuil et ne change plus. Le dernier n'agit qu'un battement sur deux, et seule une mort fait remonter la file.","effet_code":"Initiative verrouillée sur l'ordre d'entrée : le rang n ne peut agir qu'après tous les rangs inférieurs. Dernier rang : une action tous les deux battements et −25 % de dégâts. Chaque mort libère un rang, tous remontent d'un cran. Entretien 6 RÉSERVE / battement.","incantation":"Le tapis avance, les numéros sont tamponnés.\nVous êtes classé, et le classement ne se discute plus.\nLe dernier attend son tour ; le dernier attend deux tours.\nSeul un mort libère un rang.","faille":"Le registre ne classe que les vivants. Un battement complet sans action, sans souffle, cœur ralenti sous serment, vous retire de la file : on y revient au dernier rang, mais on y revient après avoir vu jouer tout le monde."},{"id":"saigoku","nom_fr":"La Geôle des Échéances","nom_jp":"債獄","romaji":"Saigoku","paysage":"Une salle des scellés, enveloppes kraft alignées par date d'ouverture, ficelées, cachetées. Chacune est gonflée par quelque chose qui n'a pas encore eu lieu et qui bouge un peu.","effet_garanti":"Rien ne se produit à l'instant où on le fait. Coup, soin, rupture : tout est mis sous enveloppe et arrive au huitième battement, intérêts compris.","effet_code":"Tous les dégâts et soins sont différés en dépôt et s'appliquent au battement 8 à 150 %. Jusque-là, structure figée. Si le domaine se referme avant l'échéance, le dépôt s'applique quand même, à 200 %, à celui qui l'a produit.","incantation":"Rien n'a lieu à l'instant où vous le faites.\nTout part sous enveloppe, datée du huitième battement.\nFrappez, soignez, rompez : on ouvrira tout ensemble.","faille":"L'échéance est datée, donc prévisible. Tenir jusqu'au septième battement sans rien déposer — ne frapper personne, ne se soigner de rien — laisse une seule enveloppe vide quand toutes s'ouvrent : la sienne."},{"id":"keiden","nom_fr":"Le Palais des Filiations Reconnues","nom_jp":"系殿","romaji":"Keiden","paysage":"Une salle de généalogie sous verrière, registres paroissiaux ouverts à la même page, tous. Sur chaque page, la même écriture, qui n'appartient à personne de vivant.","effet_garanti":"Nulle blessure ne reste sur un seul corps : elle remonte la lignée jusqu'à trouver un vivant, et à défaut redescend sur celui qui ressemble le plus au blessé.","effet_code":"40 % de tout dégât reçu est transféré au parent le plus proche présent ; à défaut au porteur du domaine, qui en garde 20 % et en renvoie 20 % à l'attaquant. Le transfert ignore les résistances et les serments défensifs. Entretien 11 RÉSERVE / battement.","incantation":"Aucune blessure ne reste sur un seul corps.\nElle remonte la ligne jusqu'au premier vivant qui vous ressemble.\nNommez celui qui paiera : vous l'avez nommé en naissant.","faille":"La remontée exige un lien reconnu. Un nom de famille renié par serment gravé, ou jamais déclaré, ne présente aucune marche à gravir : le dégât reste entier là où il est tombé, ce qui est rarement une bonne nouvelle, seulement une nouvelle exacte."},{"id":"tsutei","nom_fr":"Le Jardin des Douleurs Mises en Commun","nom_jp":"痛庭","romaji":"Tsūtei","paysage":"Un dispensaire de nuit, douze lits, une seule perfusion partagée par des tubes qui passent d'un bras à l'autre et se resserrent à mesure que le niveau descend.","effet_garanti":"Il n'y a plus qu'une douleur pour tout le monde. Elle ne diminue pas : elle se divise, et chaque corps qui tombe augmente la part de ceux qui restent debout.","effet_code":"Jauge unique partagée : tous les dégâts y sont versés. À chaque battement, la jauge se répartit à parts égales entre les occupants conscients, +3 par occupant tombé. Entretien 12 RÉSERVE / battement.","incantation":"Il n'y a qu'une douleur ici, et elle est à tout le monde.\nOn la divise par le nombre de ceux qui tiennent debout.\nChaque chute augmente la part des autres.","faille":"Le partage se fait entre conscients, et le porteur en est un. Perdre connaissance volontairement un battement retire une part au dénominateur : l'arithmétique se retourne, et c'est lui qui porte la somme entière."},{"id":"sokugoku","nom_fr":"La Geôle de l'Air Compté","nom_jp":"息獄","romaji":"Sokugoku","paysage":"Une salle de contrôle de mine, les cages arrêtées à mi-puits, les lampes alignées sur leur crochet. Sur un fil, trois cages à canaris dont les oiseaux respirent exactement en cadence avec vous.","effet_garanti":"Chacun entre avec un nombre de souffles fixé au seuil. Rien ici ne se fait sans en dépenser un, et le compte est affiché au-dessus des têtes.","effet_code":"14 souffles à l'entrée par occupant, 20 pour le porteur. Une action coûte 1, un déplacement 1, une technique 3. À 0 souffle : −8 structure par battement et CONTRÔLE divisé par deux. Entretien 9 RÉSERVE / battement.","incantation":"Vous êtes entrés avec quatorze souffles.\nChaque geste en prend un, chaque technique en prend trois.\nLe compte est affiché au-dessus de vos têtes.\nNe parlez pas pour rien.","faille":"L'air compté est l'air d'ici. Un souffle emprunté à autrui — bouche contre bouche, ou une poche scellée apportée du dehors — n'a pas de ligne au registre et ne décrémente rien."},{"id":"shocho","nom_fr":"Le Rideau des Cicatrices Rouvertes","nom_jp":"傷帳","romaji":"Shōchō","paysage":"Un cabinet de suture aux instruments encore tièdes, un bocal de fils retirés à d'autres, et sur le drap l'empreinte d'un corps qui vient à peine de se lever.","effet_garanti":"Aucune cicatrice n'est finie. Chacune redevient la plaie qu'elle a été, à la date exacte, dans l'ordre où on vous les a faites.","effet_code":"À l'ouverture, compte les cicatrices C de chaque occupant depuis la sauvegarde : perte immédiate de 3 × C structure, puis 1 × C par battement. Les soins d'énergie inversée sont plafonnés à 50 % tant que le domaine tient. Entretien 10 RÉSERVE / battement.","incantation":"Aucune cicatrice n'est finie.\nElles rouvrent dans l'ordre où on vous les a faites, à la date exacte.\nTenez la première : c'est la plus ancienne, elle saigne encore.","faille":"Une plaie ouverte n'est pas une cicatrice. Se rouvrir soi-même la plus ancienne avant le seuil la retire du compte, interrompt la série en tête, et tout le décompte glisse d'un cran vers le vide."},{"id":"kiro","nom_fr":"Le Réfectoire des Parts Non Servies","nom_jp":"飢廊","romaji":"Kirō","paysage":"Un réfectoire d'internat sans fenêtres, deux cents couverts mis au cordeau, cloches d'argent posées sur des assiettes propres. Sous chaque cloche, un bruit de mastication très régulier.","effet_garanti":"Ce qui n'est pas servi est prélevé sur celui qui a faim. Ici l'énergie maudite se consomme comme un repas, et le service ne commence jamais.","effet_code":"−9 RÉSERVE par battement pour chaque occupant, +6 RÉSERVE au porteur par occupant affamé. À RÉSERVE 0, toute technique se paie en structure au double du tarif. Entretien 8 RÉSERVE / battement.","incantation":"Le couvert est mis pour deux cents, personne ne sert.\nCe qui n'est pas mangé est prélevé sur celui qui a faim.\nLevez la cloche si vous voulez : vous entendrez mâcher.","faille":"La faim se mesure au manque réclamé. Trois battements sans appeler la moindre technique, sans rien demander à sa réserve, et l'on cesse d'être une part à servir : le service passe devant vous sans s'arrêter."},{"id":"minden","nom_fr":"Le Palais du Sommeil Dû","nom_jp":"眠殿","romaji":"Minden","paysage":"Un dortoir de caserne, lits faits au carré, couvertures rabattues à main d'homme, chaussures alignées sous les sommiers. La pendule murale n'a plus que l'aiguille des heures et elle avance.","effet_garanti":"Toute heure de sommeil que vous n'avez pas prise est réclamée ici, à l'heure, et le corps s'exécute sans consulter personne.","effet_code":"Dette D = heures d'éveil au-delà de 16, par tranche de 4. Tous les 3 battements, l'occupant perd un battement entier (aucune action, esquive 0) ; à D ≥ 6, deux battements. Le porteur est exempté tant qu'il paie l'entretien de 10 RÉSERVE / battement.","incantation":"L'heure est réclamée.\nToute nuit que vous n'avez pas dormie est due, et due maintenant.\nLe corps s'exécute sans vous demander.\nFermez les yeux ; vous les fermerez de toute façon.","faille":"La dette se solde par du sommeil, pas par de la résistance. Un micro-sommeil consenti à l'instant exact de la réclamation éteint la ligne pour un prix dérisoire : il faut seulement accepter de ne pas voir le coup qui arrive pendant ce temps."},{"id":"reikan","nom_fr":"L'Anneau des Âges Égalisés","nom_jp":"齢環","romaji":"Reikan","paysage":"Une salle de radiologie où tous les clichés punaisés montrent la même main, os pour os. En bas à droite de chaque film, des dates séparées par quarante ans.","effet_garanti":"Tous les occupants sont ramenés à l'âge moyen du domaine. L'écart, en années, est payé comptant, dans les os, sans échelonnement possible.","effet_code":"Calcule l'âge moyen A des occupants. Chaque occupant subit |âge − A| × 2 structure à l'ouverture, puis |âge − A| ÷ 2 par battement. Vitesse et régénération recalculées sur A. Entretien 9 RÉSERVE / battement.","incantation":"Nous prenons l'âge de chacun et nous faisons la moyenne.\nL'écart se paie en os, comptant, sans échelonnement.\nVous aurez tous le même âge avant le troisième battement.","faille":"La moyenne se fait sur les présents, et un cadavre récent compte encore. Faire entrer un troisième corps déplace A ; deux âges rendus identiques ne se doivent plus rien du tout."},{"id":"meibo","nom_fr":"Le Registre des Noms Entendus","nom_jp":"名簿","romaji":"Meibo","paysage":"Un bureau d'état civil, tiroirs de fiches cartonnées jusqu'au plafond, encriers bouchés. Une machine à dicter tourne à vide au bout de la table et prend note quand même.","effet_garanti":"Tout nom prononcé ici est inscrit, et l'inscrit n'a plus le droit d'être ailleurs que là où sa fiche le dit.","effet_code":"Un nom entendu inscrit son porteur : esquive 0, position publique, +30 % de dégâts subis. L'inscription tombe si le nom n'est pas répété pendant 4 battements. Le porteur peut inscrire un nom par battement. Entretien 7 RÉSERVE / battement.","incantation":"Un nom prononcé est un nom inscrit.\nL'inscrit n'a plus le droit d'être ailleurs que sur sa fiche.\nDites-le encore : la machine tourne à vide et prend note quand même.","faille":"Le registre n'accepte que le nom exact. Un surnom, une initiale, un patronyme d'emprunt gravé par serment avant le seuil, et la fiche part au rebut : plus rien ici ne sait où vous êtes."},{"id":"mukonden","nom_fr":"Le Sanctuaire Sans Personne Dedans","nom_jp":"無魂殿","romaji":"Mukonden","paysage":"Un colombarium neuf, niches ouvertes, plaques déjà gravées aux noms de gens vivants. L'une d'elles n'a pas de nom, seulement une date, et la date est celle d'aujourd'hui.","effet_garanti":"Le domaine ne blesse pas : il retranche. À chaque battement il retire à chaque occupant une chose qu'il pourrait nommer, et cette chose ne revient pas.","effet_code":"Chaque battement, perte définitive d'un élément de fiche (un serment, une greffe, une entrée d'ossuaire ou 1 point de CONTRÔLE), écrite dans la sauvegarde. Énergie inversée interdite aux deux camps pour tout le duel. Prépaiement irrécupérable de 40 RÉSERVE à l'ouverture, entretien 18 / battement.","incantation":"Nous ne blessons pas. Nous retranchons.\nDonnez le nom de ce que vous tenez : la niche est ouverte, la plaque est gravée.\nCe qui entre ici n'a pas de ligne de retour.","faille":"La loi ne prend que ce qui peut être nommé. Celui qui n'a jamais dit à voix haute ce à quoi il tient — pas une fois, à personne — présente une fiche vide : les niches restent ouvertes et le domaine se ruine à ne rien trouver."},{"id":"shigoku","nom_fr":"La Geôle Faite de Votre Propre Dossier","nom_jp":"紙獄","romaji":"Shigoku","paysage":"Quatre murs de pages collées bord à bord : c'est votre dossier, monté à l'échelle d'une pièce. Vos annotations rouges se lisent à l'envers, parfaitement, depuis l'intérieur.","effet_garanti":"Votre loi vous est appliquée, opérateur inversé, à chaque battement et sans condition d'énonciation : les murs ont vu, touché et porté l'inscription à votre place.","effet_code":"Copie la loi du joueur, remplace le verbe par son inverse, applique à quantité minimale chaque battement : dégâts = rang de coût × 3. Les serments du joueur deviennent opposables contre lui. Entretien 14 RÉSERVE / battement.","incantation":"Les murs sont votre dossier ; l'encre rouge est de vous.\nNous appliquons votre loi, verbe retourné, sans condition.\nLe papier a vu, le papier a touché, le papier a entendu.\nLisez-vous à l'envers.","faille":"Le papier récite la fiche telle qu'elle est écrite, corruptions comprises. Une greffe hors compatibilité y a imposé une condition involontaire que du papier ne peut pas exécuter : au battement où l'on refuse de l'accomplir à sa place, la ligne saute."},{"id":"jintei","nom_fr":"Le Jardin de la Poussière Rendue","nom_jp":"塵庭","romaji":"Jintei","paysage":"Un sous-sol d'archives, un rai de lumière oblique plein de particules parfaitement immobiles. Sur la table, une brosse d'orfèvre et un tas gris trié par provenance, avec des étiquettes.","effet_garanti":"Tout ce qui est tombé de vous — peau, cheveu, écaille d'ongle — est ici, et le domaine le remet en place sans savoir quelle place était la sienne.","effet_code":"Chaque battement, réintégration d'une unité : −4 structure et −1 CONTRÔLE cumulatif ; à partir du troisième battement, l'ordre des actions déclarées s'inverse une fois sur trois. Au sixième, toute action ratée frappe un allié. Entretien 10 RÉSERVE / battement.","incantation":"Tout ce qui est tombé de vous est resté.\nNous le remettons en place, sans savoir laquelle.\nTenez votre main : elle obéit avec un battement de retard.","faille":"Le tri se fait par provenance. Se couvrir de la poussière d'un autre — cendre, vêtements d'un mort, limaille d'atelier — brouille les étiquettes : la loi rend alors à chacun ce qui n'est pas à lui, c'est-à-dire rien qui tienne."}]},"bestiaire":{"fleaux":[{"id":"temoin","nom":"Le Témoin Rouge","grade":"4","origine":"La peur d'avoir laissé un appareil branché dans un appartement vide.","apparence":"Une diode rouge à hauteur de plinthe, au bout d'un cordon dont l'autre extrémité n'est reliée à rien. Le sol autour est tiède comme un fer qu'on vient de poser.","comportement":"Il s'éteint un battement sur trois : éteint, il ne peut ni frapper ni être touché. Il faut apprendre son cycle et ne porter ses coups que sur l'allumage.","pv":55,"attaque":7,"energie":1,"replique":"Tu es sorti quand même.","technique_signature":"Rémanence"},{"id":"accuse","nom":"Les Deux Traits","grade":"4","origine":"La peur d'un message lu et laissé sans réponse.","apparence":"Un adolescent au regard baissé, deux petites barres bleues incisées en travers du front, cicatrisées depuis longtemps. Ses mains sentent le plastique chaud.","comportement":"Il ne riposte jamais dans le battement : il retient ta dernière attaque et la restitue à l'identique deux battements plus tard. Placer un coup faible juste avant un coup fort trompe la restitution.","pv":62,"attaque":8,"energie":1,"replique":"J'ai vu. Je réponds plus tard.","technique_signature":"Accusé de réception"},{"id":"interphone","nom":"L'Interphone","grade":"4","origine":"La peur de la voix qui répond quand on n'a sonné chez personne.","apparence":"Une bouche en grille de haut-parleur encastrée dans le mur d'une cage d'escalier, à hauteur d'homme. Il n'y a rien derrière ce mur : on l'a ouvert pour vérifier.","comportement":"Il annonce l'étage avant de frapper, toujours un battement à l'avance. Le frapper pendant l'annonce coupe le message et annule la frappe.","pv":48,"attaque":10,"energie":2,"replique":"Troisième. C'est ouvert, montez.","technique_signature":"Ouverture"},{"id":"bonde","nom":"La Bonde","grade":"4","origine":"La peur de l'eau qui remonte au lieu de descendre.","apparence":"Un poing de cheveux mouillés, serré, gros comme un torse, qui laisse partout où il s'arrête une flaque exactement à la température du corps.","comportement":"Chaque coup encaissé le gorge : il gagne deux points d'attaque et ne les rend jamais. Deux battements sans le toucher et il sèche, perdant la moitié de sa masse.","pv":78,"attaque":6,"energie":2,"replique":"Tout ce que tu as perdu est resté là.","technique_signature":"Engorgement"},{"id":"audessus","nom":"Celui d'Au-Dessus","grade":"4","origine":"La peur des pas du voisin qui s'arrêtent juste au-dessus de la chambre.","apparence":"Un plafond bas qui suit la pièce, portant une empreinte de talon fraîche, en creux, qui se déplace à contresens de la marche.","comportement":"Il frappe l'endroit où tu seras, jamais celui où tu es : avancer te met dessous, rester immobile le fait manquer. Il ne peut pas frapper deux battements de suite au même aplomb.","pv":85,"attaque":12,"energie":2,"replique":"Il s'est arrêté juste au-dessus de toi.","technique_signature":"Aplomb"},{"id":"pli","nom":"Le Pli Non Ouvert","grade":"3","origine":"La peur des résultats d'analyse qu'on garde deux jours sans décacheter.","apparence":"Une silhouette d'homme en papier kraft cacheté, sans visage, la poitrine barrée d'une bande de fermeture intacte. Elle sent la colle et le froid des halls.","comportement":"Tant qu'il est scellé, il n'encaisse qu'un point par coup. Le déchirer le rend vulnérable pour tout le reste du duel, mais libère aussitôt sa frappe entière, une fois, sans parade possible.","pv":130,"attaque":15,"energie":3,"replique":"Vous préférez savoir plus tard.","technique_signature":"Résultat"},{"id":"kilometres","nom":"Les Vingt Kilomètres","grade":"3","origine":"La peur d'arriver chez soi sans se rappeler la route.","apparence":"Un conducteur assis dans le vide, mains à dix heures dix, phalanges blanches, les yeux ouverts et parfaitement secs.","comportement":"Il joue par séquences de trois battements, puis rejoue exactement les trois mêmes. Noter l'ordre une fois revient à connaître tous ses coups suivants.","pv":165,"attaque":18,"energie":3,"replique":"Je ne me souviens pas d'avoir freiné.","technique_signature":"Trajet"},{"id":"cinq","nom":"Cinq Secondes","grade":"3","origine":"La peur de lâcher la main d'un enfant dans une allée de supermarché.","apparence":"Une main d'adulte seule, ouverte à hauteur de hanche, qui se referme sur du vide avec un bruit sec, à intervalle régulier.","comportement":"Elle compte à voix haute. Sur cinq, elle est déjà dans ton dos et la frappe part avant que tu te retournes. Agir sur quatre casse le compte et la ramène à un.","pv":145,"attaque":20,"energie":4,"replique":"Un. Deux. Tu ne regardais pas.","technique_signature":"Perte de vue"},{"id":"cabine","nom":"L'Entre-Deux-Étages","grade":"3","origine":"La peur de la cabine qui s'immobilise entre deux paliers.","apparence":"Une cabine sans porte, parois de miroir piqué, où l'on ne voit pas son propre reflet mais le sien, penché, un peu trop près.","comportement":"Toute attaque lancée à distance se perd contre les parois. Au contact il rend la moitié de ce qu'il reçoit : on ne le tue qu'en acceptant de payer chaque coup deux fois.","pv":190,"attaque":14,"energie":4,"replique":"On va rester ensemble un moment.","technique_signature":"Immobilisation"},{"id":"table","nom":"Le Silence Après La Phrase","grade":"2","origine":"La peur d'avoir dit en réunion quelque chose qu'on ne pourra pas reprendre.","apparence":"Une table de conférence de six mètres portée par des jambes humaines nues, entourée de chaises toutes tournées vers toi. Le bois est tiède aux endroits où l'on s'est appuyé.","comportement":"Chaque fois que tu répètes une action déjà employée, il ajoute une chaise, et chaque chaise ajoute une frappe au battement. Ne jamais se répéter le maintient à une seule.","pv":260,"attaque":25,"energie":5,"replique":"Personne n'a répondu. Continuez.","technique_signature":"Tour de table"},{"id":"videmaison","nom":"Le Vide-Maison","grade":"2","origine":"La peur d'avoir un jour à vider l'appartement d'un mort.","apparence":"Un empilement d'affaires à hauteur d'homme — manteaux, cadres, sacs de linge — qui tient debout et respire par le fond des cartons.","comportement":"À chaque battement il te tend un objet, et refuser n'est pas prévu : chaque objet reçu ferme une de tes actions. Chaque coup encaissé lui arrache un objet, et l'objet qui tombe rouvre l'action correspondante ; au septième, il s'effondre.","pv":340,"attaque":24,"energie":5,"replique":"Prends ça, ça se garde.","technique_signature":"Succession"},{"id":"rediffusion","nom":"L'Enregistrement","grade":"2","origine":"La peur d'une vidéo de soi qu'on n'a jamais tournée.","apparence":"Un corps grenu qui amorce chaque geste une fraction avant de le faire, vêtu de ce que tu portais hier.","comportement":"Il rejoue ton action du battement précédent à soixante pour cent de sa force. Il ne connaît que ce qu'il a vu : deux battements sans rien tenter le laissent sans répertoire, et il se blesse en cherchant.","pv":295,"attaque":30,"energie":6,"replique":"On t'a vu faire ça.","technique_signature":"Rediffusion"},{"id":"sonnerie","nom":"La Sonnerie de Quatre Heures","grade":"2","origine":"La peur du téléphone qui sonne à quatre heures du matin.","apparence":"Un combiné de plastique jauni greffé dans une orbite, le fil descendant dans la gorge ; le visage est celui d'un proche, mal tendu sur l'os.","comportement":"Il sonne trois fois avant chaque frappe. Décrocher annule la frappe mais lui cède un point d'énergie ; laisser sonner coûte une frappe pleine et l'épuise d'autant.","pv":270,"attaque":34,"energie":6,"replique":"Décroche. C'est pour toi.","technique_signature":"Annonce"},{"id":"champ","nom":"Le Patient Attentif","grade":"1","origine":"La peur de se réveiller pendant l'opération sans pouvoir le dire.","apparence":"Un corps sous un champ opératoire vert, immobile, un seul doigt battant la mesure. Sous le tissu, la respiration va deux fois trop vite.","comportement":"Il ne se déplace pas du duel. Il ne frappe que les battements où tu te soignes, recharges ou prépares : il punit le repos et rien d'autre. On ne le tue qu'en ne reprenant jamais son souffle.","pv":410,"attaque":46,"energie":7,"replique":"Je sens tout. Je ne peux rien dire.","technique_signature":"封痛 Fūtsū — le scellement de la douleur"},{"id":"interpellation","nom":"L'Appel Par Le Prénom","grade":"1","origine":"La peur d'entendre son prénom dans la rue, prononcé par quelqu'un qu'on ne connaît pas.","apparence":"Un homme de dos à trente mètres, dont la nuque pivote seule quand les épaules restent de face.","comportement":"Chaque syllabe de ton nom qu'il prononce lui donne huit points d'attaque et un pas d'approche. Le nom entier prononcé le fixe : il perd toute portée pendant deux battements, et c'est la seule fenêtre du duel.","pv":455,"attaque":41,"energie":7,"replique":"Tu t'es retourné. C'était bien toi.","technique_signature":"索名 Sakumei — l'indexation du nom entendu"},{"id":"poussee","nom":"La Poussée","grade":"1","origine":"La peur d'une foule qui se met à courir dans le même sens.","apparence":"Un mur de dos et d'épaules à hauteur d'homme, sans un seul visage, avançant au pas d'une marche lente et ne s'arrêtant pas aux obstacles.","comportement":"Il n'avance que d'un pas par battement et ne recule jamais ; l'espace derrière toi se réduit d'autant. Il ne sait pas tourner : se ranger de flanc contre une paroi le laisse passer et découvre son côté pendant trois battements.","pv":480,"attaque":44,"energie":8,"replique":"Personne ne peut plus s'arrêter.","technique_signature":"積勢 Sekisei — la sommation de l'élan acquis"},{"id":"visite","nom":"L'Étrangère du Dimanche","grade":"semi-spécial","origine":"La peur que sa mère demande un jour à quel titre on vient la voir.","apparence":"Une femme assise au bord d'un lit fait au carré, très propre, qui sourit du sourire réservé aux visiteurs. Ses mains ont trente ans de moins que son visage.","comportement":"À chaque battement elle oublie une de tes actions, et l'action oubliée cesse d'exister jusqu'à la fin du duel. Elle oublie aussi sa propre frappe la plus forte au quatrième battement : tenir jusque-là avec deux actions suffit à survivre.","pv":520,"attaque":50,"energie":8,"replique":"Vous êtes le fils de qui, déjà ?","technique_signature":"断系 Dankei — la séparation de la filiation"},{"id":"tirage","nom":"La Cage d'Escalier Unique","grade":"semi-spécial","origine":"La peur de l'incendie dans une tour qui n'a qu'un escalier.","apparence":"Une colonne de fumée tiède qui monte dans un corps d'immeuble, portant à l'intérieur des empreintes de mains propres, à hauteur d'épaule, toutes tournées vers le haut.","comportement":"Il occupe la sortie et retire un cran d'air par battement : ta réserve plafonne, puis se rétracte. Il ne sait que monter — se tenir plus bas que lui le rend inoffensif, au prix de rester enfermé avec lui.","pv":560,"attaque":56,"energie":9,"replique":"L'air est meilleur en bas. Descends.","technique_signature":"移息 Isoku — le transfert du souffle"},{"id":"archive","nom":"Ce Qui A Été Sauvegardé","grade":"spécial","origine":"La peur que tout ce qu'on a écrit à seize ans existe encore quelque part.","apparence":"Un corps cousu de feuillets montrant le même homme à tous ses âges, mis à plat et superposés. Il ne prononce que des phrases que tu as réellement dites.","comportement":"Chaque battement il rejoue une de tes actions passées, y compris celles des duels précédents. Il ne peut citer que ce qui est consigné : une action jamais employée le laisse sans réponse un battement entier. Au septième, il ouvre son registre et inscrit ta structure maximale.","pv":780,"attaque":74,"energie":11,"replique":"Rien n'a été supprimé. Rien ne le sera.","technique_signature":"保名 Homei — la conservation de ce qui a été nommé"},{"id":"sediment","nom":"Celui Qu'on Retrouve En Août","grade":"spécial","origine":"La peur de mourir chez soi et d'être découvert par l'odeur.","apparence":"Un fauteuil, un téléviseur d'information resté muet, et derrière, sur le mur, la silhouette jaunie de quelqu'un qui est resté assis très longtemps. Le fléau est le mur.","comportement":"Il n'engage rien : il attend, et chaque battement où tu ne commets aucune erreur lui rapporte deux points d'attaque. Il n'existe que pendant les battements où on ne le regarde pas ; le fixer deux battements de suite le rend solide et frappable, et coûte une frappe pleine à chaque fois.","pv":860,"attaque":86,"energie":12,"replique":"Personne n'est venu depuis quatre mois.","technique_signature":"積齢 Sekirei — la sommation de l'âge"}]},"rituel":{"ouverture":["Le registre est ouvert à la page suivante. Elle est vide, ce qui n'a jamais voulu dire libre.","On ne délivre rien ici. On relève.","Une technique innée n'est pas un don : c'est une phrase que votre corps impose au réel, et que le réel exécute sans discuter.","Elle existait avant vous, sous la forme d'une émotion que personne n'a évacuée à temps.","Elle ne sait pas qui la porte. C'est précisément pour cela qu'elle se retourne.","Le Bureau n'a besoin ni de votre accord ni de votre courage. Il a besoin d'un nom à normaliser.","Huit questions vont suivre. Aucune ne porte sur ce que vous savez faire.","Répondez vite. Les réponses lentes finissent toutes par se ressembler.","L'encre sèche en douze secondes. Passé ce délai, ce n'est plus une hypothèse."],"questions":[{"question":"Enfant, dans une maison endormie, qu'alliez-vous vérifier ?","reponses":[{"texte":"Que la porte d'entrée était bien fermée.","archetype":"seuil","note":"Vous ne gardiez pas la maison. Vous gardiez le passage."},{"texte":"Que les autres respiraient encore.","archetype":"lien","note":"Vous teniez des souffles qui n'étaient pas les vôtres. On ne repose jamais ça."},{"texte":"Je recomptais les marches en remontant.","archetype":"répétition","note":"Douze à l'aller, douze au retour. Le monde tient tant que le compte tient."},{"texte":"Que le gaz était coupé.","archetype":"mesure","note":"Un robinet, deux positions. Vous avez appris tôt qu'un état binaire peut vider une famille."}]},{"question":"On vous a fait un tort qui n'a jamais été reconnu. Où se trouve-t-il aujourd'hui ?","reponses":[{"texte":"Dans un carnet, avec la date et l'heure.","archetype":"mesure","note":"Vous n'avez pas pardonné. Vous avez archivé."},{"texte":"Je l'ai rendu plus tard, à quelqu'un d'autre.","archetype":"échange","note":"Le montant était juste. Ce n'est pas la même chose que la justice."},{"texte":"Nulle part : j'ai retiré la personne, proprement.","archetype":"soustraction","note":"Vous savez soustraire sans laisser de reste. Ça s'entend, dans une pièce."},{"texte":"Je peux encore décrire la lumière qu'il y avait ce jour-là.","archetype":"témoignage","note":"Vous n'avez pas conservé la blessure. Vous avez conservé la preuve."}]},{"question":"Un inconnu vous frôle dans un couloir étroit. Que se passe-t-il dans la seconde qui suit ?","reponses":[{"texte":"Je m'écarte avant de savoir qui c'est.","archetype":"seuil","note":"Votre corps trace des frontières que votre nom n'a pas signées."},{"texte":"J'enregistre la texture du tissu.","archetype":"témoignage","note":"Rien ne se perd chez vous. C'est une charge, pas une qualité."},{"texte":"Je frotte l'endroit, plusieurs fois, sans y penser.","archetype":"répétition","note":"Le geste ne nettoie rien. Il rejoue."},{"texte":"Rien. Je rends le contact, brièvement.","archetype":"lien","note":"Vous avez répondu. Cela vaut signature."}]},{"question":"Vous avez menti une fois pour de bon. À quoi ressemblait la phrase ?","reponses":[{"texte":"Une omission. J'ai seulement retiré un mot.","archetype":"soustraction","note":"Un mot retiré ne laisse pas de trou. Il laisse une phrase qui a l'air entière."},{"texte":"J'ai donné une autre vérité à la place.","archetype":"échange","note":"Vous avez payé. Mal, mais vous avez payé."},{"texte":"Je l'ai répétée jusqu'à ce qu'elle tienne debout seule.","archetype":"répétition","note":"Au septième passage ce n'était plus un mensonge, c'était un usage."},{"texte":"Je l'ai dite en regardant quelqu'un, et je l'y revois encore.","archetype":"témoignage","note":"Vous avez pris un témoin. Il ne vous rendra pas ce regard."}]},{"question":"On vous doit une somme dérisoire depuis des années.","reponses":[{"texte":"Je connais le chiffre au centime.","archetype":"mesure","note":"Le montant ne vous intéresse pas. C'est l'exactitude qui vous tient debout."},{"texte":"J'ai effacé la dette. Elle coûtait plus cher que son montant.","archetype":"soustraction","note":"Effacer n'est pas absoudre. Le registre le distingue très bien."},{"texte":"J'attends le jour où il aura besoin de moi.","archetype":"échange","note":"Vous ne réclamez pas : vous laissez la créance prendre de la valeur."},{"texte":"Je la reprendrai sur son fils, s'il le faut.","archetype":"lien","note":"Une dette se transmet mieux qu'un nom. Vous le saviez avant nous."}]},{"question":"La nuit, devant une vitrine, vous voyez votre reflet une seconde avant de le reconnaître. Cette seconde-là :","reponses":[{"texte":"Elle m'a soulagé.","archetype":"métamorphose","note":"Vous préférez l'inconnu que vous étiez. Le corps entend ce genre de préférence."},{"texte":"Elle m'a fait chercher les différences, une par une.","archetype":"mesure","note":"Deux images, un écart. Vous avez immédiatement voulu le chiffre."},{"texte":"C'est toujours exactement la même seconde.","archetype":"répétition","note":"Ce qui revient à l'identique n'est plus un souvenir. C'est un mécanisme."},{"texte":"Je suis resté sur le trottoir, du mauvais côté du verre.","archetype":"seuil","note":"Vous savez toujours de quel côté vous êtes. C'est plus rare qu'on ne croit."}]},{"question":"Quelqu'un est mort et vous n'êtes pas allé à l'enterrement.","reponses":[{"texte":"Je n'ai pas pu passer la grille du cimetière.","archetype":"seuil","note":"La grille était ouverte. Ce n'était pas la grille."},{"texte":"J'y suis allé après, seul, quand il n'y avait plus rien à voir.","archetype":"témoignage","note":"Vous vouliez constater, pas partager. Le Bureau recrute là-dedans."},{"texte":"Je fais autre chose ce jour-là, à la même heure, chaque année.","archetype":"répétition","note":"Vous appelez ça une habitude. Ailleurs on appelle ça une condition d'énonciation."},{"texte":"J'ai gardé un de ses objets, et je m'en sers.","archetype":"lien","note":"L'objet fonctionne encore. C'est ce qui vous dérange."}]},{"question":"On vous propose de retirer une seule chose du monde, sans conséquence apparente.","reponses":[{"texte":"Un bruit précis.","archetype":"soustraction","note":"Vous avez répondu en moins de deux secondes. La liste était faite depuis longtemps."},{"texte":"Le droit qu'a un certain visage de me reconnaître.","archetype":"lien","note":"Couper un lien par le haut. Ça se paie toujours en descendant."},{"texte":"Rien. J'échangerais plutôt, et je sais quoi contre quoi.","archetype":"échange","note":"Vous n'avez même pas demandé qui tenait la caisse."},{"texte":"Ma part. Le reste continue sans moi, autrement.","archetype":"métamorphose","note":"Se retirer soi n'est pas disparaître. C'est changer de support."}]},{"question":"Une pièce est froide alors que personne n'a ouvert la fenêtre. Votre première pensée :","reponses":[{"texte":"Quelqu'un est resté ici très longtemps.","archetype":"témoignage","note":"Vous lisez les lieux comme des dépositions. Ils mentent moins que les gens."},{"texte":"Combien de degrés manquent ?","archetype":"mesure","note":"La bonne question. Elle vous coûtera une vie ou deux."},{"texte":"C'est parti quelque part. Il faut chercher où c'est arrivé.","archetype":"échange","note":"Rien ne se perd. Vous cherchez déjà le compte d'en face."},{"texte":"Je m'y habitue en trois minutes. C'est plus simple.","archetype":"métamorphose","note":"Votre corps négocie sans vous consulter. Un jour il signera sans vous."}]}],"transitions":["Consigné. On ne revient pas dessus.","La réponse est arrivée avant la fin de la question. Cela figure aussi au dossier.","Vous n'avez pas hésité là où les gens hésitent.","Le stylo change de main.","Rien de ce que vous dites ici ne sera retenu contre vous. Tout y sera utilisé.","Suivante. Elle sera plus courte, et pire.","Deux personnes sur trois mentent à celle-là. Le registre s'en accommode.","Ne relisez pas. On ne corrige pas une déposition.","Vous venez de vous décrire sans employer un seul adjectif. C'était l'exercice.","Le classeur descend d'un cran.","Le grain du papier change. Nous quittons les formulaires.","Encore une. Ensuite on ira chercher la loi là où elle dort."],"verdicts":["Voilà. Ce n'est pas une attribution, c'est un constat, et il est daté.","La loi n'a pas été choisie pour vous. Elle a été relevée sur vous, comme une empreinte sur un verre.","Aucune de vos réponses ne l'a modifiée d'une lettre. Elles ont seulement permis de l'écrire lisiblement.","Elle ignore qui la porte. Retenez-le : c'est exactement par là qu'on vous tuera.","Il y a une exception. Elle est en bas, en petit corps, et elle vous survivra.","Elle agira sur vous aussi bien que sur eux. Le réel ne fait pas de faveur au signataire.","Vous connaissez votre verbe. Vous ne connaissez pas encore votre gage : il se présentera seul, et il ne frappera pas.","Le nom se tamponne. À compter de cette seconde, quelque chose, quelque part, perd un battement par tour.","On vous a écouté par procédure. Le nom, lui, avait déjà tout dit à la troisième lettre.","Prenez la fiche. Elle pèse plus qu'une feuille : elle contient une règle du monde.","Ce que vous venez de recevoir a d'abord été la peur de quelqu'un d'autre. Vous n'en êtes que le support en service.","Le dossier se referme sur votre pouce. Ce n'est pas un présage, c'est du papier."]},"voix":{"mort":["Le porteur a cessé à 4 h 09. Le dossier reste ouvert.","On a retrouvé la loi intacte. C'est le corps qui manquait.","Vous avez arrêté de payer l'entretien. Le reste a suivi tout seul.","La dernière chose énoncée n'était pas votre nom.","Votre exception ne vous couvrait pas : vous n'avez jamais valu zéro.","L'énergie inversée répare la chair. Il n'en restait pas assez pour l'appliquer.","Il a fallu quatre secondes pour que vos mains rejoignent la température du sol.","Vous avez tenu onze battements. La moyenne est de neuf. Ce n'est pas une consolation, c'est une statistique.","Le fléau n'a pas terminé son geste. Il n'en a pas eu l'usage.","Votre sang est sorti dans l'ordre où il était compté.","Personne n'a prononcé votre nom en entier. Vous êtes tombé comme une quantité.","Le métronome continue. Il ne vous comptait pas.","Classé. Le tampon est sec avant que vous ne le soyez."],"victoire":["Le fléau se défait dans l'ordre inverse de son assemblage.","La loi adverse est éteinte. Vous en gardez un axe, et l'axe vous garde.","Il n'a plus de condition à remplir. Dans les rapports, on appelle cela la paix.","Vous avez payé jusqu'au dernier battement. Il a manqué le sien.","Ce qui restait de lui tient dans une ligne de registre, sans marge.","Sa faille était rituelle : il lui fallait la peau nue. Vous aviez des gants.","Le vermillon retombe. L'encre sèche plus vite que le sang.","Le dossier se referme sur un nom complet. Le vôtre est encore lisible.","Fin de relevé. Vous ressortez avec une articulation de moins et une loi de plus.","Il a cessé d'être une exception. Il redevient une adresse, une date, une peur."],"serment_accepte":["Gravé. La laque ne s'écaille pas.","Vous avez signé sans relire. Le Bureau le note en marge.","Un serment avec soi-même ne se trahit pas : il se subit.","Ce que vous venez de céder ne figure plus dans vos options. Cherchez-le, il n'y est plus.","La restriction est réelle. C'est exactement pour cela qu'elle paie.","L'encre a mordu jusque sous le sceau, des deux côtés de la feuille.","Vous êtes plus fort de tout ce que vous ne ferez plus jamais.","Le tiroir se referme sur votre clause. Il n'a pas de poignée à l'intérieur.","Contresigné par personne. C'est la seule forme qui tienne."],"serment_rompu":["Vous avez fait ce que vous aviez juré de ne pas faire. Le gain se retire d'abord, la dette ensuite.","La clause vous relit.","Rupture consignée. Le vermillon vire à la laque.","Ce n'est pas une sanction, c'est une restitution.","L'énergie avancée est reprise à la source. La source, c'est vous.","Le pacte n'est pas annulé. Il a changé de bénéficiaire.","Vous respirez ce que vous vous étiez interdit. Chaque inspiration est facturée."],"domaine_ouvert":["La marge se referme. Il n'y a plus de dehors à atteindre.","Les murs touchent, voient et portent l'inscription. La condition n'a plus lieu d'être.","Ici, énoncer devient inutile : le lieu énonce.","Le registre s'ouvre à la page où vous êtes déjà inscrit.","La barrière se pose comme un couvercle sur un bocal, sans bruit d'air.","Le sûr-au-but s'imprime en haut, comme une ligne de comptabilité.","Vous êtes à l'intérieur d'une phrase, et la phrase est déjà terminée.","À chaque battement, la loi vous est appliquée à la quantité minimale, sans faute et sans hâte.","L'entretien court. Regardez votre réserve, pas votre adversaire.","Le sol a pris la température de la loi."],"domaine_brise":["La résille cède par le bord. Le dehors revient d'un coup, plus froid que prévu.","Barrière rompue : la condition d'énonciation redevient exigible.","Vous avez cessé de pouvoir payer. Le lieu vous a rendu au monde.","Le relevé s'interrompt en milieu de ligne. Il compte quand même.","Les murs retombent en pages. Certaines portent votre écriture.","L'entretien n'a pas été honoré au douzième battement. Le douzième battement s'en souvient.","La marge se rouvre. Il manque trois pas au monde, et personne ne les remettra."],"inversion":["L'encre remonte le long du trait qui vous a ouvert.","La plaie se referme en reprenant sa cause à l'envers.","Cyan sur vermillon. Ne les regardez pas longtemps ensemble.","Le verbe tourne : ce que vous preniez, vous le rendez, et cela coûte deux fois.","Huit pour cent de structure. La fatigue, elle, ne s'inverse pas.","Vous réparez la chair. L'âme n'est pas dans le périmètre.","Le sens du flux change sans que le débit baisse. Comptez avant de recommencer."],"retour":["Le porteur a cessé il y a 3 jours, 4 heures et 11 minutes. Le dossier n'a pas été rouvert depuis.","Vous revenez. Le bouton, lui, n'est pas revenu avec vous.","Nous avons gardé votre loi au chaud. Elle vous attend de l'autre côté de la table.","Votre nom figure deux fois au registre : une fois comme porteur, une fois comme cause.","Ce qui a été caviardé la dernière fois l'est encore. Ne cherchez pas la ligne, vous l'avez payée.","L'adversaire du jour a votre grade, votre substrat et vos rayures aux poignets.","Vous ne reverrez pas l'interface intacte. Elle n'existe plus dans ce dossier.","Le Bureau ne demande pas comment vous êtes revenu. Il note l'heure.","La première fois, vous êtes tombé au onzième tour. Nous avons laissé le compteur là où il s'est arrêté.","Vous connaissez déjà votre faille. C'est la seule chose que vous ayez emportée."],"murmures":["quelque chose compte à voix basse","le café a la température du sol","n'écris pas ton nom en entier","il manque un battement quelque part","la grille n'est plus droite","on t'a déjà mesuré","garde tes gants","le tiroir du bas ne s'ouvre plus","une main d'inconnu, un train bondé","ce qui vaut zéro passe au travers","respire moins fort, ça se facture","la dette court, même à l'arrêt","il y a une page de trop dans ton dossier","tu as signé avant de lire","le métronome ne t'attend pas","quelqu'un relit ta loi à l'envers","la cicatrice se souvient de l'ordre","l'encre sèche du bord vers le centre"]},"nomenclature":{"grades":[{"grade":"4","nom":"Quatrième grade · 四級","description":"On te confie des couloirs après fermeture, des cages d'escalier, des choses qui n'ont jamais eu de nom. Le Bureau ne prévient personne : il n'y a rien à annoncer.","seuil":0},{"grade":"3","nom":"Troisième grade · 三級","description":"Un étage entier, un fléau qui a déjà mangé au moins une fois, un rapport à rendre avant six heures. Les frais de nettoyage sont retenus sur ta solde.","seuil":104},{"grade":"2","nom":"Deuxième grade · 二級","description":"On te confie des vivants. À partir d'ici, l'erreur a un nom, une adresse et un âge, et c'est toi qui écris les trois de ta main.","seuil":122},{"grade":"1","nom":"Premier grade · 一級","description":"On ne te confie plus rien : on te prévient. Ta fiche est recopiée en double, et le second exemplaire part au service chargé d'exorciser les porteurs.","seuil":142},{"grade":"semi-spécial","nom":"Semi-spécial · 準特級","description":"Ton nom circule avant ton corps. L'évacuation du quartier commence quand tu montes dans le train, et personne ne te l'a jamais dit en face.","seuil":168},{"grade":"spécial","nom":"Grade spécial · 特級","description":"Le barème s'arrête un cran plus bas que toi. On ne t'envoie pas : on te lâche, on note l'heure, et on attend que le bruit cesse.","seuil":196}],"patrons":["{LOI} de {ESSENCE}","{LOI} : {NOMBRE} {MATIERE}","{ESSENCE} rendue en {MATIERE}","{NOMBRE} {MATIERE} pour {ESSENCE}","Article {NOMBRE} — {LOI}","{MATIERE} de {ESSENCE}","{LOI}, {VECTEUR}","{VECTEUR} : {ESSENCE}","{LOI} au prix de {MATIERE}","{ESSENCE} sous {MATIERE}","{NOMBRE} fois {LOI}","Ce que {ESSENCE} doit à {MATIERE}","{LOI} de {ESSENCE}, {VECTEUR}","Relevé de {ESSENCE} en {NOMBRE} lignes","{MATIERE} recomptée {NOMBRE} fois","{ESSENCE} divisée en {NOMBRE} parts","{VECTEUR}, et rien d'autre : {LOI}","{LOI} tenue par {NOMBRE} {MATIERE}"],"prefixes":["Rite","Protocole","Article","Office","Registre","Constat","Relevé","Décret","Codicille","Procès-Verbal","Barème","Extrait","Feuillet","Scellé","Inventaire","Mandat","Arrêté","Précis","Cadastre","Bordereau","Répertoire","Recensement","Legs","Ordinaire","Formulaire","Verdict"],"suffixes":["Perpétuel","Exécutoire","Second","Irrévocable","Rétroactif","Nominatif","Opposable","Contradictoire","Immédiat","Différé","Insolvable","Muet","Confidentiel","Définitif","Grégorien","de Nuit","sans Recours","sous Scellé","à Jeun","en Défaut","par Défaut","au Comptant","sans Témoin","de la Main Gauche","à Terme Échu","en Souffrance","sans Provision","à Découvert","de Second Rang","sous Astreinte","en Instance","sans Date"],"titres_joueur":[{"titre":"Première Radiation","condition":"Exorciser un fléau : une victoire enregistrée."},{"titre":"Cinq Dossiers Clos","condition":"Cinq victoires au registre."},{"titre":"Trois Fois Lié","condition":"Porter trois serments gravés en même temps."},{"titre":"Ouvreur de Barrière","condition":"Déployer un territoire au moins une fois."},{"titre":"Inscrit à l'Ossuaire","condition":"Mourir une fois : la fiche reste, l'amputation aussi."},{"titre":"Mauvais Payeur","condition":"Improviser trois serments en plein duel."},{"titre":"Loi Mûre","condition":"Atteindre la maturation 8."},{"titre":"Fonctionnaire de la Descente","condition":"Dix victoires au registre."},{"titre":"Les Quatre Cases","condition":"Valider verbe, substrat, métrique et condition sans une seule annotation rouge."},{"titre":"Engagé à Zéro Case","condition":"Gagner un duel sans avoir validé une seule hypothèse."},{"titre":"Le Blanc","condition":"Faire éclater les deux barrières au même battement : |ΔRAFF| ≤ 2."},{"titre":"Coup Noir","condition":"Toucher dans la fenêtre de 180 ms sur trois duels différents."},{"titre":"L'Œil Fermé","condition":"Achever une descente sous le serment de l'Œil Fermé, jauge adverse amputée."},{"titre":"Greffe Corrompue","condition":"Greffer trois axes hors compatibilité et survivre à la condition involontaire."},{"titre":"Rendu à l'Envers","condition":"Réussir neuf inversées dans une même session, fatigue cumulée comprise."},{"titre":"Sans Trace","condition":"Signer le Serment de la Trace Effacée et détruire le registre pour de bon."},{"titre":"Reçu à l'Examen","condition":"Battre sa propre loi, opérateur inversé, par la faille que ses greffes lui ont fabriquée."},{"titre":"Meilleur Payeur","condition":"Remporter une attrition de territoires en tenant l'entretien deux battements de plus que l'adversaire."}]},"matieres":{"matieres":["cendre de registre brûlé","ardoise fendue par le gel","lait tourné dans un bol laissé sur l'évier","cire rouge d'un cachet rompu","plomb des scellés d'huissier","sel des larmes séchées sur le col","rouille prise sous l'ongle","suif de veille figé au bord du bougeoir","craie humide des comptes effacés à la paume","verre dépoli d'une porte de cabinet","encre ferrogallique qui mange son papier","limaille d'aiguille","gypse d'un plafond crevé par la fuite du dessus","résine d'un pin entaillé au même endroit chaque année","mercure d'un thermomètre brisé sur le carrelage","suie de lampe à huile déposée en couronne","os poncé jusqu'à la transparence","laine mouillée qui n'a pas séché de l'hiver","son de riz","goudron refroidi en peau ridée","calcaire d'eau dormante","vert-de-gris des poignées trop tenues","gélatine d'une plaque photographique décollée","sable de fonderie encore tiède","givre au revers d'une vitre, côté chambre","vernis craquelé d'un cadre retourné contre le mur","amidon des cols empesés","graisse de fusil sur un chiffon plié","moisissure bleue sous la croûte du pain","eau de pluie stagnante dans un pli de bâche"],"nombres":["Zéro","Un Demi","Un","Trois","Quatre","Sept","Neuf","Onze","Treize","Dix-Sept","Vingt et Un","Trente-Trois","Quarante-Neuf","Soixante-Douze","Cent Huit","Cent Vingt-Sept","Deux Cent Seize","Trois Cent Soixante","Mille Vingt-Quatre","Six Mille Quatre Cents"],"lieux":["une salle d'attente sans porte","un couloir d'archives où les lampes s'allument une travée en retard","le sous-sol carrelé d'un bain public vidé","une chambre froide de marché aux poissons, crochets nus","un dortoir d'internat où tous les lits sont faits au carré","le hall d'une gare la nuit, aucun train annoncé au tableau","un bureau des objets trouvés dont les étiquettes portent la même date","une salle de dissection lavée à grande eau, rigoles encore humides","l'arrière-boutique d'un teinturier, vêtements sous housse par ordre alphabétique","une bibliothèque de prêt dont toutes les fiches portent le même nom","un escalier de secours enroulé sur lui-même, sans palier d'arrivée","la salle des machines d'un ascenseur, câbles tendus, cabine absente","la cour intérieure d'un immeuble où le linge ne sèche jamais","une salle de tri postal aux casiers vides et aux sacs pleins","un vestiaire d'usine, une seule serrure fermée","une chapelle ardente municipale, quatre chaises, un ventilateur","le parloir d'une maison d'arrêt, hygiaphone rayé au niveau de la bouche","une piscine municipale vidangée, la ligne d'eau encore marquée","un standard téléphonique désaffecté, fiches enfoncées, cordons croisés","une salle des coffres aux portes ouvertes et aux serrures intactes","un couloir d'hôpital avec les chaises alignées face au mur","une salle de classe le jour des résultats, tables numérotées","un grenier à sel où le sol boit les pas","la cabine d'un poste d'aiguillage, tous les leviers en position basse"],"organes":["la fourchette sternale","le sinus carotidien","la moelle du fémur","la septième vertèbre cervicale","le nerf ulnaire, au passage du coude","le plexus cœliaque","la face antérieure du poignet, entre les deux tendons","l'isthme de la thyroïde","le labyrinthe de l'oreille interne","l'arche plantaire","l'os hyoïde, seul os qui ne touche aucun autre","la rate","la coupole gauche du diaphragme","la chaîne ganglionnaire axillaire","la papille optique, là où la rétine ne voit pas","le tendon calcanéen","le tympan droit","la crête iliaque","le nerf phrénique","la voûte palatine","le canal lacrymal","la fosse cubitale","la fontanelle refermée","le maxillaire, à l'implantation des dents de sagesse"]}};
 </script>
 <script>
 /* ==== 00-core.js ==== */
@@ -576,6 +613,12 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     return String(s || '').split(' ').map((w, i) => {
       const low = w.toLowerCase();
       if (i > 0 && PARTICULES[low]) return low;
+      /* « l'attente » garde son article en minuscule : « de l'Attente » */
+      const ap = /^([ldjmtnscLDJMTNSC])['\u2019](.+)$/.exec(w);
+      if (ap) {
+        const tete = i > 0 ? ap[1].toLowerCase() : ap[1].toUpperCase();
+        return tete + "'" + ap[2].charAt(0).toUpperCase() + ap[2].slice(1);
+      }
       return w.charAt(0).toUpperCase() + w.slice(1);
     }).join(' ');
   }
@@ -960,7 +1003,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     L.veil = layer('fx-veil', 0);
     L.ink = layer('fx-ink', 3);
     L.dom = layer('fx-dom', 60, 'is-hidden');
-    L.over = layer('fx-over', 70);
+    L.over = layer('fx-over', 78);
     resize();
     root.addEventListener('resize', resize);
     t0 = now();
@@ -1075,7 +1118,13 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     stage.style.transform = 'translate(' + chaos.r(-a, a).toFixed(2) + 'px,' + chaos.r(-a, a).toFixed(2) + 'px) rotate(' + chaos.r(-a * 0.09, a * 0.09).toFixed(3) + 'deg)';
     state.shake *= 0.88;
   }
-  function shake(p) { state.shake = Math.max(state.shake, clamp(p, 0, 1.6)); }
+  /* Qui a demandé moins de mouvement ne doit pas se faire secouer l'écran :
+     la puissance passe alors par la couleur, l'encre et le son. */
+  function shake(p) {
+    if (state.reduced) return;
+    state.shake = Math.max(state.shake, clamp(p, 0, 1.6));
+  }
+  function reduit() { return state.reduced; }
 
   function pulse(x, y, r, col, w) {
     state.pulses.push({ x: x == null ? W / 2 : x, y: y == null ? H / 2 : y,
@@ -1124,6 +1173,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
 
   /* ---- inversion : le monde se retourne ------------------------------ */
   function invert(ms) {
+    if (state.reduced) return;
     document.documentElement.classList.add('is-inverted');
     setTimeout(() => document.documentElement.classList.remove('is-inverted'), ms || 120);
   }
@@ -1394,7 +1444,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
         const ch = text.charAt(i++);
         node.textContent += ch;
         if (o.sound !== false && ch !== ' ' && i % 2 === 0 && JJK.audio) JJK.audio.tick(chaos.r(900, 2200), 0.012, 0.018);
-        const pause = /[.,;:!?…—]/.test(ch) ? speed * 9 : (ch === ' ' ? speed * 0.6 : speed);
+        const pause = /[.…!?]/.test(ch) ? speed * 5 : (/[,;:—]/.test(ch) ? speed * 2.5 : (ch === ' ' ? speed * 0.6 : speed));
         setTimeout(step, pause * chaos.r(0.6, 1.5));
       }
       step();
@@ -1418,7 +1468,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
 
   JJK.fx = {
     mount, resize, shake, pulse, slash, ink, inkFade, inkClear, invert, flash,
-    sigil, domainOpen, domainClose, type, mutilate, setIntensity, setHue, setDead,
+    sigil, domainOpen, domainClose, type, mutilate, setIntensity, setHue, setDead, reduit,
     hexA, state,
     get size() { return { W, H }; },
   };
@@ -1451,6 +1501,85 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
          .replace(/'\s+/g, "'");
     return t.trim();
   }
+  /* Accord d'un qualificatif. Le français ne pardonne pas « L'Attente Second ». */
+  const PREPO = /^(de |du |des |d'|à |au |aux |en |sans |sous |sur |par |contre |pour |avant |après )/i;
+  function accorder(mot, genre, pluriel) {
+    let m = String(mot || '').trim();
+    if (!m || PREPO.test(m)) return m;              /* « de Nuit » ne s'accorde pas */
+    if (/^[a-z]/.test(m) && / /.test(m)) return m;  /* locution : on n'y touche pas */
+    const fem = (genre === 'f') || (genre === 'e' && false);
+    if (fem) {
+      const regles = [
+        [/eux$/, 'euse'], [/eur$/, 'euse'], [/if$/, 'ive'], [/el$/, 'elle'],
+        [/eil$/, 'eille'], [/et$/, 'ette'], [/ien$/, 'ienne'], [/on$/, 'onne'],
+        [/er$/, 'ère'], [/ier$/, 'ière'], [/eur$/, 'euse'], [/ateur$/, 'atrice'],
+        [/anc$/, 'anche'], [/ec$/, 'èche'], [/ard$/, 'arde'], [/and$/, 'ande'],
+        [/ond$/, 'onde'], [/ain$/, 'aine'], [/ant$/, 'ante'], [/ent$/, 'ente'],
+        [/al$/, 'ale'], [/eux$/, 'euse'], [/ct$/, 'cte'], [/ien$/, 'ienne'],
+      ];
+      for (const [re, rep] of regles) if (re.test(m)) return m.replace(re, rep);
+      if (/[^e]$/.test(m) && !/[sxz]$/.test(m)) return m + 'e';
+      if (/é$/.test(m)) return m + 'e';
+    }
+    if (pluriel) return plurielDe(m);
+    return m;
+  }
+  /* Mot-outil : soit le mot entier, soit une forme élidée (d', l', jusqu').
+     Sans l'ancre finale, « labyrinthe » passerait pour « la ».           */
+  const INVARIABLE = /^(?:de|du|des|la|le|les|un|une|à|au|aux|en|sans|sous|sur|par|et|contre|dans|pour|avant|après|depuis|entre|chez|vers|selon)$|^(?:d|l|qu|jusqu|puisqu|lorsqu)['\u2019]/i;
+
+  /* Le corpus écrit de belles phrases : « Os hyoïde, seul os qui ne touche
+     aucun autre ». Un nom de technique veut un syntagme, pas une notice.
+     On coupe à la première articulation et on plafonne la longueur.       */
+  function raccourcir(phrase, maxMots) {
+    let t = String(phrase || '').trim();
+    t = t.split(/[,;(—–:]/)[0].trim();                       /* la subordonnée saute */
+    t = t.split(/\s+(?:qui|que|dont|où|quand|lorsque)\s+/i)[0].trim();
+    const max = maxMots || 3;
+    let mots = t.split(/\s+/);
+    if (mots.length <= max) return sansJointFinal(t);
+    /* on coupe AVANT le premier joint prépositionnel : « ardoise fendue par
+       le gel » doit donner « ardoise fendue », jamais « ardoise fendue par ». */
+    for (let i = 1; i < mots.length; i++) {
+      if (INVARIABLE.test(mots[i])) return sansJointFinal(mots.slice(0, i).join(' '));
+    }
+    return sansJointFinal(mots.slice(0, max).join(' '));
+  }
+  /* Un nom ne se termine jamais sur une préposition en suspens. */
+  function sansJointFinal(t) {
+    let s2 = String(t || '').trim();
+    for (let i = 0; i < 3; i++) {
+      const m = /\s+\S+$/.exec(s2);
+      if (!m) break;
+      const dernier = m[0].trim();
+      if (INVARIABLE.test(dernier) || /['\u2019]$/.test(dernier)) s2 = s2.slice(0, m.index).trim();
+      else break;
+    }
+    return s2 || String(t || '').trim();
+  }
+  function plurielMot(m) {
+    if (!m || INVARIABLE.test(m)) return m;
+    if (/[sxz]$/.test(m)) return m;
+    if (/(au|eau|eu)$/.test(m)) return m + 'x';
+    if (/al$/.test(m)) return m.replace(/al$/, 'aux');
+    if (/ail$/.test(m)) return m;
+    return m + 's';
+  }
+  /* « lait tourné » → « laits tournés ». Dès qu'une préposition apparaît,
+     la suite est un complément : on n'y touche plus. « peau de tambour »
+     donne « peaux de tambour », jamais « peaux de tambours ».            */
+  function plurielDe(mot) {
+    const m = String(mot || '').trim();
+    if (!m) return m;
+    const mots = m.split(' ');
+    let stop = false;
+    return mots.map(w => {
+      if (stop) return w;
+      if (INVARIABLE.test(w) && !/^(la|le)$/i.test(w)) { stop = true; return w; }
+      return plurielMot(w);
+    }).join(' ');
+  }
+
   /* « La Rouille » → { nu: 'Rouille', genre: 'f', art: 'la' } */
   function decoupe(nom) {
     const s = String(nom || '').trim();
@@ -1503,22 +1632,27 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
   }
 
   /* ---- noms de technique ---------------------------------------------- */
+  /* Chaque patron est répété selon le poids qu'on veut lui donner : les
+     tournures pauvres en entropie (la loi seule) doivent rester rares,
+     sinon deux graines sur dix portent le même nom.                      */
   const PATRONS = [
-    p => fr(p.LOI),
-    p => fr(p.LOI + ' de ' + p.ESSENCE_ART),
-    p => fr('Technique de ' + p.ESSENCE_ART),
-    p => fr(p.NOMBRE + ' ' + p.MATIERE),
-    p => fr(p.ESSENCE_NU + ' ' + p.SUFFIXE),
-    p => fr(p.PREFIXE + ' ' + p.ESSENCE_NU),
-    p => fr(p.MATIERE + ' de ' + p.ESSENCE_ART),
-    p => fr(p.LOI + ' : ' + p.NOMBRE + ' ' + p.MATIERE),
-    p => fr(p.ESSENCE_ART + ' ' + p.SUFFIXE),
-    p => fr(p.PREFIXE + ' de ' + p.ESSENCE_ART),
-    p => fr(p.ESSENCE_NU + ' ' + p.NOMBRE),
-    p => fr('Doctrine de ' + p.ESSENCE_ART),
-    p => fr(p.ORGANE + ' de ' + p.ESSENCE_ART),
-    p => fr(p.LOI + ' ' + p.SUFFIXE),
-  ];
+    [1, p => fr(p.LOI)],
+    [3, p => fr(p.LOI + ' de ' + p.ESSENCE_ART)],
+    [2, p => fr('Technique de ' + p.ESSENCE_ART)],
+    [3, p => fr(p.NOMBRE_MATIERE)],
+    [3, p => fr(p.ESSENCE_NU + ' ' + accorder(p.SUFFIXE, p.GENRE))],
+    [3, p => fr(p.PREFIXE + ' de ' + p.ESSENCE_ART)],
+    [3, p => fr(p.MATIERE + ' de ' + p.ESSENCE_ART)],
+    [3, p => fr(p.LOI + ' : ' + p.NOMBRE_MATIERE)],
+    [3, p => fr(p.ESSENCE_ART + ' ' + accorder(p.SUFFIXE, p.GENRE))],
+    [2, p => fr(p.PREFIXE + ' ' + accorder(p.SUFFIXE, 'm'))],
+    [2, p => fr('Doctrine de ' + p.ESSENCE_ART)],
+    [3, p => fr(p.ORGANE + ' de ' + p.ESSENCE_ART)],
+    [3, p => fr(p.ESSENCE_ART + ' de ' + p.MATIERE)],
+    [3, p => fr(p.PREFIXE + ' de ' + p.MATIERE)],
+    [2, p => fr(p.MATIERE + ', ' + accorder(p.SUFFIXE, 'm'))],
+    [2, p => fr(p.ORGANE + ' de ' + p.MATIERE)],
+  ].reduce((acc, [n, f]) => { for (let i = 0; i < n; i++) acc.push(f); return acc; }, []);
 
   /* ---- la forge --------------------------------------------------------
      Tout ce qui suit ne dépend que de la graine. Rien d'autre.           */
@@ -1535,20 +1669,31 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     const vecteur = meilleur(vecteurs, (loi.id || '') + (essence.id || ''), R.fork('vecteur'), 5) || { id: 'z', nom: 'Par le contact', condition: '', portee: 'contact' };
     const domaine = meilleur(domaines, (loi.id || '') + ':' + (essence.id || ''), R.fork('domaine'), 4) || null;
 
-    const matiere = R.pick(matieres.matieres || ['cendre']);
-    const nombre = R.pick(matieres.nombres || ['Neuf']);
+    const matiere = raccourcir(R.pick(matieres.matieres || ['cendre']), 3);
+    /* « Un Demi Cendres » n'existe pas ; « Zéro Cendre » si. */
+    const nombres = (matieres.nombres || ['Neuf'])
+      .filter(x => !/^(un|une|un demi|une demie|zéro)$/i.test(String(x).trim()));
+    const nombre = R.pick(nombres.length ? nombres : ['Neuf']);
     const lieu = R.pick(matieres.lieux || ['une salle sans porte']);
-    const organe = R.pick(matieres.organes || ['la moelle']);
+    /* on retire l'article AVANT de raccourcir, sinon « le labyrinthe de
+       l'oreille interne » se réduit à « le », ce qui ne nomme rien.      */
+    const organe = raccourcir(String(R.pick(matieres.organes || ['la moelle']))
+      .replace(/^(les|le|la|l['\u2019]|des|du|de\s+l['\u2019]|de\s+la|de)\s*/i, ''), 3);
     const prefixe = R.pick(nomen.prefixes || ['Rite']);
     const suffixe = R.pick(nomen.suffixes || ['Perpétuel']);
 
     const d = decoupe(essence.nom);
+    /* « Neuf Lait Tourné » est une faute ; « Neuf Laits Tournés » n'en est pas une.
+       On a par ailleurs écarté « Un » : le genre d'une matière est incertain. */
+    const matiereN = titre(plurielDe(matiere));
     const jetons = {
       ESSENCE: essence.nom, ESSENCE_NU: d.nu, ESSENCE_ART: avecArticle(essence.nom),
-      LOI: loi.nom, VECTEUR: vecteur.nom, NOMBRE: nombre, MATIERE: titre(matiere),
-      PREFIXE: prefixe, SUFFIXE: suffixe, ORGANE: titre(String(organe).replace(/^(la|le|les|l')\s*/i, '')),
+      GENRE: d.pluriel ? 'p' : d.genre,
+      LOI: loi.nom, VECTEUR: vecteur.nom, NOMBRE: nombre,
+      MATIERE: titre(matiere), NOMBRE_MATIERE: nombre + ' ' + matiereN,
+      PREFIXE: prefixe, SUFFIXE: suffixe, ORGANE: titre(organe),
     };
-    let nom = titre(PATRONS[R.int(PATRONS.length)](jetons));
+    let nom = titre(sansJointFinal(PATRONS[R.int(PATRONS.length)](jetons)));
     /* deux techniques de même nom, c'est une insulte au registre */
     nom = nom.replace(/\s+/g, ' ').trim();
 
@@ -1604,7 +1749,9 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
 
     const dominante = AXES.slice().sort((a, b) => stats[b] - stats[a])[0];
     const pvMax = 90 + stats.vigueur * 3.4 | 0;
-    const enMax = 5 + Math.round(stats.flux / 14);
+    /* la réserve doit pouvoir contenir une extension du territoire (8),
+       sinon la moitié du jeu reste hors d'atteinte quel que soit le talent */
+    const enMax = 8 + Math.round(stats.flux / 9);
     const enTour = 2 + (stats.flux >= 26 ? 1 : 0) + (stats.flux >= 40 ? 1 : 0);
 
     return {
@@ -1638,7 +1785,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
   }
   function minuscule(s) { const t = String(s || ''); return t.charAt(0).toLowerCase() + t.slice(1); }
 
-  JJK.forge = { forgeTechnique, forgeReceptacle, grade, dossier, fr, decoupe, avecArticle, AXES, affinite, liste };
+  JJK.forge = { forgeTechnique, forgeReceptacle, grade, dossier, fr, decoupe, avecArticle, accorder, plurielDe, raccourcir, AXES, affinite, liste };
 })(window);
 
 
@@ -1807,11 +1954,14 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     const m = {
       degatsMult: 1, degatsRecusMult: 1, pvMaxMult: 1, soinMult: 1,
       critBonus: 0, critMult: 1, energieBonus: 0, energieDepart: 0, enMaxBonus: 0,
-      remise: 0, frappeMult: 1, domaineMult: 1, domaineTours: 0, rancune: 0,
+      remise: 0, frappeMult: 1, domaineMult: 1, domaineTours: 0, rancune: 0, raffinementBonus: 0,
       interdit: {}, masqueVieEnnemi: false, masqueJournal: false, coupeSon: false,
       pasDeRepetition: false, domaineUnique: false, effaceToutALaMort: false,
       limiteTours: 0,
     };
+    /* chaque serment signé affine le territoire : c'est ce qui décide
+       d'un affrontement d'extensions, et c'est ce qu'on a payé pour */
+    m.raffinementBonus = (signes || []).length * 22;
     (signes || []).forEach(s => {
       const e = s.eff || {};
       if (e.degatsMult) m.degatsMult *= e.degatsMult;
@@ -1986,7 +2136,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       },
     },
     {
-      id: 'domaine', nom: 'Extension du Territoire', cout: 8,
+      id: 'domaine', nom: 'Extension du Territoire', cout: 6,
       ultime: true,
       desc: 'Déployer un espace clos où ta loi est la seule physique. Exige 100 de tension.',
       req: (D, a) => a.tension >= 100 && !statut(a, 'scelle') && !(a.mods.domaineUnique && a.domaineUtilise),
@@ -2052,7 +2202,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       archetype: tech.archetype, domaine: tech.domaine, technique: tech,
       statuts: [], tension: 0, domaineTours: 0, domaineUtilise: false,
       sermentPris: false, rancune: 0, derniereAction: null, mods,
-      raffinement: corps.puissance, intention: null, humain: true,
+      raffinement: corps.puissance + (mods.raffinementBonus || 0), intention: null, humain: true,
     };
   }
 
@@ -2060,12 +2210,21 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
      On vise une durée de duel, pas des chiffres arbitraires. Ainsi un fléau
      reste dangereux quel que soit le réceptacle qui lui fait face.        */
   const CADENCE = {
-    '4':             { tours: 3.0, survie: 10.0 },
-    '3':             { tours: 4.2, survie: 8.5 },
-    '2':             { tours: 5.6, survie: 7.2 },
-    '1':             { tours: 7.2, survie: 6.4 },
-    'semi-spécial':  { tours: 9.0, survie: 5.8 },
-    'spécial':       { tours: 11.5, survie: 5.0 },
+    '4':             { tours: 4.0,  survie: 13.0 },
+    '3':             { tours: 5.5,  survie: 11.0 },
+    '2':             { tours: 7.5,  survie: 10.0 },
+    '1':             { tours: 10.0, survie: 9.5 },
+    'semi-spécial':  { tours: 11.0, survie: 9.5 },
+    'spécial':       { tours: 12.5, survie: 9.5 },
+  };
+  /* Rendement réel d'un tour de joueur : la technique innée vaut 2,3 fois
+     l'attaque, mais elle pose « Marqué » (+30 %) et les critiques ajoutent
+     encore. Mesuré en simulation, pas supposé — c'est 3,4, pas 1,9.       */
+  const REGLAGE = {
+    rendementJoueur: 3.4,   /* dégâts moyens d'un tour de joueur, en multiples d'attaque */
+    rendementFleau: 1.9,    /* idem côté fléau */
+    expoAttaque: 0.40,      /* la courbe pèse à plein sur les PV du fléau, à peine sur sa frappe :
+                               une descente doit s'allonger, pas se raccourcir brutalement */
   };
 
   function combattantFleau(f, ref, R, courbe) {
@@ -2078,12 +2237,12 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
        maturation. Sinon progresser ne servirait à rien : le monde grandirait
        exactement à la vitesse du joueur, et le joueur ne sentirait rien.
        Ici, le fléau ignore ce que tu as signé. C'est à toi d'en profiter.  */
-    const dpsRef = Math.max(6, ref.attaque * 1.9);
+    const dpsRef = Math.max(6, ref.attaque * REGLAGE.rendementJoueur);
     /* variance de caractère : deux fléaux de même grade ne se ressemblent pas */
     const vPv = rng.range(0.86, 1.16), vAtt = rng.range(0.86, 1.16);
 
     const pvMax = Math.max(40, Math.round(dpsRef * c.tours * vPv * k));
-    const attaque = Math.max(6, Math.round((ref.pvMax / c.survie / 1.45) * vAtt * k));
+    const attaque = Math.max(6, Math.round((ref.pvMax / c.survie / REGLAGE.rendementFleau) * vAtt * Math.pow(k, REGLAGE.expoAttaque)));
 
     return {
       cle: 'ennemi', nom: f.nom, sousTitre: 'Fléau de grade ' + g,
@@ -2094,10 +2253,15 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       statuts: [], tension: 0, domaineTours: 0, domaineUtilise: false,
       sermentPris: false, rancune: 0, derniereAction: null,
       mods: MODS_NEUTRES(),
-      raffinement: Math.round(pvMax / 5 + attaque * 2.2),
+      /* Le raffinement décide qui l'emporte quand deux territoires se
+         touchent. On le veut comparable à la puissance du joueur, pas
+         indexé sur des PV : sinon un grade spécial gagne toujours. */
+      raffinement: ({ '4': 70, '3': 110, '2': 150, '1': 200, 'semi-spécial': 235, 'spécial': 290 }[g] || 150),
       intention: null, humain: false,
       profil: profilDe(g),
       grade: g,
+      temperament: temperamentsDe(f),
+      patience: 0,
     };
   }
 
@@ -2106,6 +2270,35 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       energieBonus: 0, energieDepart: 0, enMaxBonus: 0, remise: 0, frappeMult: 1, domaineMult: 1,
       domaineTours: 0, rancune: 0, interdit: {}, masqueVieEnnemi: false, masqueJournal: false,
       coupeSon: false, pasDeRepetition: false, domaineUnique: false, effaceToutALaMort: false, limiteTours: 0 };
+  }
+
+  /* ------------------------------------------------------------------
+     Tempéraments. Le bestiaire décrit des comportements précis :
+     « il attend », « il rejoue une de tes actions », « il frappe deux
+     fois de suite ». Sans lecture, ce serait de la littérature posée
+     sur une IA générique. On lit donc le texte, et on le tient.
+     ------------------------------------------------------------------ */
+  const TEMPERAMENTS = [
+    { id: 'patient',    re: /attend|n['’]engage rien|patiente|immobile|sans bouger|ne bouge|reste au fond|laisse venir/i },
+    { id: 'imitateur',  re: /rejoue|recopie|répète|imite|copie|reproduit|renvoie ton|ton propre geste/i },
+    { id: 'double',     re: /deux fois de suite|frappe deux fois|double|coup double|enchaîne deux/i },
+    { id: 'horloge',    re: /\bau (?:cinquième|sixième|septième|huitième|neuvième|dixième|\d+)(?:e|ème)?\b/i },
+    { id: 'soigneur',   re: /se referme|se recoud|se répare|régénère|se soigne|repousse|cicatrise/i },
+    { id: 'vorace',     re: /dévore|absorbe|aspire|se nourrit|draine|vide|siphonne/i },
+    { id: 'fuyant',     re: /disparaît|s['’]efface|n['’]existe que|invisible|ne se laisse pas|hors de portée/i },
+  ];
+  const MOTS_TOUR = { cinquième: 5, sixième: 6, septième: 7, huitième: 8, neuvième: 9, dixième: 10 };
+
+  function temperamentsDe(f) {
+    const texte = [f.comportement, f.apparence, f.technique_signature].join(' ');
+    const t = {};
+    TEMPERAMENTS.forEach(x => { if (x.re.test(texte)) t[x.id] = true; });
+    if (t.horloge) {
+      const m = /\bau (cinquième|sixième|septième|huitième|neuvième|dixième|\d+)/i.exec(texte);
+      const v = m ? (MOTS_TOUR[String(m[1]).toLowerCase()] || parseInt(m[1], 10)) : 7;
+      t.tourCle = Math.max(3, Math.min(12, v || 7));
+    }
+    return t;
   }
 
   function profilDe(grade) {
@@ -2142,6 +2335,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       if (a.domaineTours > 0) base *= 1.35;
 
       const lec = statut(a, 'lecture');
+      const lisait = !!lec;
       const chanceCrit = clamp((a.crit || 0.1) + (lec ? 0.55 : 0), 0, 0.95);
       const crit = R.chance(chanceCrit);
       if (crit) base *= 1.85 * (a.mods.critMult || 1);
@@ -2151,6 +2345,10 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
 
       const g = statut(d, 'garde');
       if (g && !o.ignoreGarde) { base *= 1 - (g.val || 0.5); retirer(d, 'garde'); }
+      /* Ce qui n'existe que hors du regard encaisse mal les coups portés
+         à l'aveugle. Le fixer — Lire l'adversaire — le rend solide, et
+         c'est exactement ce que sa fiche annonce. */
+      if (d.temperament && d.temperament.fuyant && !lisait && !statut(d, 'marque') && !o.surAuBut) base *= 0.68;
       if (statut(d, 'marque')) base *= 1.30;
       base *= d.mods.degatsRecusMult || 1;
       if (d.domaineTours > 0 && !o.surAuBut) base *= 0.70;
@@ -2162,8 +2360,8 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       }
       d.pv -= q;
       a.rancune = 0;
-      a.tension = Math.min(200, a.tension + Math.round(q * 0.30) + 6);
-      d.tension = Math.min(200, d.tension + Math.round(q * 0.55) + 4);
+      a.tension = Math.min(200, a.tension + Math.round(q * 0.18) + 4);
+      d.tension = Math.min(200, d.tension + Math.round(q * 0.35) + 3);
       d.rancune = Math.min(1.5, (d.rancune || 0) + (d.mods.rancune || 0));
 
       const ec = statut(d, 'echo');
@@ -2254,8 +2452,10 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
           ev.push({ t: 'degats', par: 'saignee', cible: c.cle, montant: q, verbe: 'saigne', dot: true });
         }
         if (statut(c, 'corrosion')) c.en = Math.max(0, c.en - 1);
-        c.en = Math.min(c.enMax, c.en + 2 + (c.mods.energieBonus || 0) + (c.humain ? 0 : 1));
-        c.tension = Math.min(200, c.tension + 8);
+        /* +3 par tour : une technique innée (3) est ainsi soutenable,
+           et mettre de côté les 8 d'une extension reste un vrai choix. */
+        c.en = Math.min(c.enMax, c.en + 3 + (c.mods.energieBonus || 0));
+        c.tension = Math.min(200, c.tension + 6);
         if (c.domaineTours > 0) {
           c.domaineTours--;
           const cible = c === D.joueur ? D.ennemi : D.joueur;
@@ -2277,11 +2477,25 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     /* ---- l'adversaire n'improvise pas : il a un tempérament ------------ */
     function choisirIntention(D, e, cible) {
       if (!e.profil) e.profil = profilDe((e.fleau || {}).grade || '2');
-      const p = e.profil;
+      const p = e.profil, t = e.temperament || {};
       const bas = e.pv / e.pvMax < 0.35;
+
+      /* l'heure dite : ce qu'annonce sa fiche arrive au tour annoncé */
+      if (t.tourCle && D.tour === t.tourCle && !statut(e, 'scelle')) {
+        if (p.domaine && e.en >= 6 && e.domaineTours === 0) return 'domaine';
+        if (e.en >= 6) return 'maximum';
+      }
       if (p.domaine && e.tension >= p.seuilTension && e.en >= 6 && !statut(e, 'scelle') && e.domaineTours === 0) return 'domaine';
       if (e.tension >= 70 && e.en >= 5 && R.chance(0.55)) return 'maximum';
-      if (bas && p.soin > 0 && e.en >= 3 && R.chance(0.55)) return 'inverse';
+      if (bas && (p.soin > 0 || t.soigneur) && e.en >= 3 && R.chance(t.soigneur ? 0.75 : 0.55)) return 'inverse';
+
+      /* celui qui attend : il se garde, et chaque attente le charge */
+      if (t.patient && e.patience < 3 && R.chance(0.45)) return 'garde';
+      /* celui qui rejoue : il te renvoie ton dernier geste */
+      if (t.imitateur && cible.derniereAction && R.chance(0.55)) {
+        const a = parId[cible.derniereAction];
+        if (a && a.id !== 'fuite' && a.id !== 'serment' && a.id !== 'domaine' && e.en >= (a.cout || 0)) return a.id;
+      }
       const r = R.next();
       if (r < p.agressif) return e.en >= 2 && R.chance(0.6) ? 'decharge' : 'frappe';
       if (r < p.agressif + p.technique) return e.en >= 3 ? 'technique' : 'frappe';
@@ -2289,12 +2503,11 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       return 'frappe';
     }
 
-    function tourEnnemi(D) {
+    function agirEnnemi(D, id) {
       const e = D.ennemi, j = D.joueur;
-      let id = e.intention || 'frappe';
       const act = parId[id];
       const cout = act ? (act.cout || 0) : 0;
-      if (!act || e.en < cout || (act.req && !act.req(D, e, j))) { id = 'frappe'; }
+      if (!act || e.en < cout || (act.req && !act.req(D, e, j))) id = 'frappe';
       const a2 = parId[id];
       e.en -= (a2.cout || 0);
       e.derniereAction = id;
@@ -2303,10 +2516,39 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       return ev;
     }
 
+    function tourEnnemi(D) {
+      const e = D.ennemi, j = D.joueur;
+      const t = e.temperament || {};
+      const id = e.intention || 'frappe';
+      const ev = agirEnnemi(D, id);
+
+      /* l'attente se paie en avance prise */
+      if (t.patient) {
+        if (e.derniereAction === 'garde') {
+          e.patience++;
+          const el2 = poser(e, 'elan', 99, 0);
+          el2.val = Math.min(0.42, (el2.val || 0) + 0.11);
+          ev.push({ t: 'statut', qui: e.cle, id: 'elan' });
+        } else e.patience = 0;
+      }
+      /* le second coup, quand sa fiche le promet */
+      if (t.double && j.pv > 0 && !D.fini && R.chance(0.26)) {
+        ev.push({ t: 'second', qui: e.cle });
+        Array.prototype.push.apply(ev, agirEnnemi(D, e.en >= 2 ? 'decharge' : 'frappe'));
+      }
+      /* ce qui se nourrit prend aussi la réserve */
+      if (t.vorace && j.pv > 0 && j.en > 0 && R.chance(0.45)) {
+        const q = Math.min(j.en, 2);
+        j.en -= q; e.en = Math.min(e.enMax, e.en + q);
+        ev.push({ t: 'ponction', qui: e.cle, montant: q });
+      }
+      return ev;
+    }
+
     return D;
   }
 
-  JJK.combat = { creer, combattantJoueur, combattantFleau, ACTIONS, STATUTS, MODS_NEUTRES, statut, profilDe };
+  JJK.combat = { creer, combattantJoueur, combattantFleau, ACTIONS, STATUTS, MODS_NEUTRES, statut, profilDe, temperamentsDe, CADENCE, REGLAGE };
 })(window);
 
 
@@ -2472,22 +2714,37 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
   function rangee() { return el('div', 'btn-rangee'); }
 
   /* ---- lignes de rituel ------------------------------------------------ */
+  /* La hâte : au premier clic, tout ce qui reste à dire est déjà dit.
+     Un rituel qui impose son tempo n'est plus un rituel, c'est une attente. */
+  UI.hate = false;
+  function calmer() { UI.hate = false; }
+
   async function dire(parent, texte, opts) {
     const o = opts || {};
     const p = el('p', 'rituel-ligne' + (o.forte ? ' forte' : ''));
     parent.appendChild(p);
-    const t = JJK.fx.type(p, texte, { speed: o.speed || 24, sound: o.sound !== false });
+    if (UI.hate) {
+      p.textContent = texte;
+      await wait(24);
+      return p;
+    }
+    const t = JJK.fx.type(p, texte, { speed: o.speed || 19, sound: o.sound !== false });
     UI._enCours = t;
     await t;
     UI._enCours = null;
-    if (o.apres) await wait(o.apres);
+    if (o.apres && !UI.hate) await wait(o.apres);
     return p;
   }
 
-  /* Cliquer accélère : personne n'a envie qu'on lui impose un rythme. */
-  document.addEventListener('click', () => { if (UI._enCours && UI._enCours.skip) UI._enCours.skip(); }, true);
+  function presser() {
+    UI.hate = true;
+    if (UI._enCours && UI._enCours.skip) UI._enCours.skip();
+  }
+  /* On ne presse que si quelque chose est en train de se dire : sinon un
+     clic sur un bouton emporterait la tirade suivante avant qu'elle existe. */
+  document.addEventListener('click', () => { if (UI._enCours) presser(); }, true);
   document.addEventListener('keydown', e => {
-    if ((e.key === ' ' || e.key === 'Enter') && UI._enCours && UI._enCours.skip) UI._enCours.skip();
+    if ((e.key === ' ' || e.key === 'Enter' || e.key === 'Escape') && UI._enCours) presser();
   }, true);
 
   /* ---- murmures : le décor n'est jamais tout à fait muet --------------- */
@@ -2525,16 +2782,32 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     const son = el('button', '', 'SON : ON');
     son.id = 'be-son';
     son.addEventListener('click', () => {
-      if (UI.etat && UI.etat.mods && UI.etat.mods.coupeSon) return;
+      /* Le Serment de l'Oreille Coupée ne se reprend pas : le bouton reste
+         là, il refuse simplement d'obéir, et il le dit. */
+      if (sonScelle()) { JJK.fx.shake(0.12); majSon(); return; }
       JJK.audio.unlock();
-      const m = JJK.audio.toggleMute();
-      son.textContent = 'SON : ' + (m ? 'OFF' : 'ON');
+      JJK.audio.toggleMute();
+      majSon();
     });
     const reg = bouton('REGISTRE', 'fantome', () => { if (JJK.ecrans) JJK.ecrans.registre(); });
     reg.style.cssText = 'border:0;padding:4px 0;font-size:10px;letter-spacing:.2em;margin:0;color:inherit';
     b.appendChild(son); b.appendChild(reg);
     document.body.appendChild(b);
+    majSon();
     return b;
+  }
+
+  function sonScelle() {
+    const g = JJK.jeu;
+    if (g && g.mods && g.mods.coupeSon) return true;
+    return !!(JJK.memoire && JJK.memoire.lire().sonCoupe);
+  }
+  function majSon() {
+    const n = document.getElementById('be-son');
+    if (!n) return;
+    if (sonScelle()) { n.textContent = 'SON : SCELLÉ'; n.style.color = 'var(--sang)'; n.title = "Serment de l'Oreille Coupée."; return; }
+    n.style.color = '';
+    n.textContent = 'SON : ' + (JJK.audio.isMuted() ? 'OFF' : 'ON');
   }
   function majBarre(o) {
     barre();
@@ -2579,8 +2852,8 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
   function voix(k, def) { return pioche(((JJK.CORPUS || {}).voix || {})[k], def); }
 
   JJK.ui = {
-    ecran, montrer, actif, bouton, rangee, dire, murmures, titreOnglet, titreFurtif,
-    barre, majBarre, bloc, stats, pointsDanger, pioche, voix, UI, etatRef: UI,
+    ecran, montrer, actif, bouton, rangee, dire, presser, calmer, murmures, titreOnglet, titreFurtif,
+    barre, majBarre, majSon, sonScelle, bloc, stats, pointsDanger, pioche, voix, UI,
   };
 })(window);
 
@@ -2609,6 +2882,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
      1. LE SEUIL
      ===================================================================== */
   async function seuil() {
+    U.calmer();
     const n = U.montrer('ecran-seuil');
     n.innerHTML = '';
     JJK.fx.setIntensity(0.12);
@@ -2628,6 +2902,12 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
 
     const flux = el('div');
     n.appendChild(flux);
+    const presse = el('p', 'discret mort');
+    presse.style.cssText = 'position:absolute;right:0;margin-top:-26px;font-family:var(--mono);font-size:9px;letter-spacing:.22em';
+    presse.textContent = 'CLIC — PLUS VITE';
+    n.style.position = 'relative';
+    n.appendChild(presse);
+    setTimeout(() => { presse.remove(); }, 14000);
 
     const ouverture = (C().rituel || {}).ouverture || [
       "On ne t'a pas fait venir.",
@@ -2646,8 +2926,13 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
         await U.dire(flux, U.voix('retour', "Rien ne t'oblige à recommencer. Rien ne t'en empêche non plus."), { apres: 300 });
       }
     } else {
-      for (let i = 0; i < ouverture.length; i++) {
-        await U.dire(flux, ouverture[i], { forte: i === ouverture.length - 1, apres: i === 0 ? 500 : 260 });
+      /* On garde les cinq premières et la dernière : la dernière est
+         l'invitation, elle ne se coupe pas. Le reste est du décor. */
+      const lignes = ouverture.length > 6
+        ? ouverture.slice(0, 5).concat([ouverture[ouverture.length - 1]])
+        : ouverture;
+      for (let i = 0; i < lignes.length; i++) {
+        await U.dire(flux, lignes[i], { forte: i === lignes.length - 1, apres: i === 0 ? 420 : 200 });
       }
     }
 
@@ -2742,6 +3027,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
   ];
 
   async function rituel() {
+    U.calmer();
     const n = U.montrer('ecran-rituel');
     n.innerHTML = '';
     JJK.fx.setIntensity(0.28);
@@ -2817,6 +3103,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
      3. LA RÉVÉLATION
      ===================================================================== */
   async function revelation() {
+    U.calmer();
     const n = U.montrer('ecran-revelation');
     n.innerHTML = '';
     const t = G.tech;
@@ -2955,6 +3242,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
      CONSULTATION — on arrive par un lien : on ne joue pas, on vérifie.
      ===================================================================== */
   async function consultation(graine) {
+    U.calmer();
     const n = U.montrer('ecran-consultation');
     n.innerHTML = '';
     G.graine = graine;
@@ -3025,12 +3313,16 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     JJK.fx.setIntensity(0.4);
     G.catalogue = G.catalogue.length ? G.catalogue : JJK.serments.catalogue(G.tech.seed);
     G.serments = G.serments || [];
+    const cap = capSerments();
+    /* si le contrat a rétréci (mort, recul de maturation), on rend le trop-plein */
+    while (G.serments.length > cap) G.serments.pop();
 
     n.appendChild(el('span', 'etiquette rouge', 'Serments contraignants'));
     n.appendChild(el('h1', 'titre-rituel', 'Ce que tu <em>rends</em>'));
     const p = el('p');
     p.style.cssText = 'max-width:62ch;font-weight:300;color:var(--os-faible)';
-    p.textContent = "Un serment n'est pas une amélioration. C'est une amputation payée d'avance : tu perds vraiment ce qui est écrit, dans ce jeu, tout de suite. En échange, le réel te doit quelque chose. Tu peux en signer trois.";
+    p.textContent = "Un serment n'est pas une amélioration. C'est une amputation payée d'avance : tu perds vraiment ce qui est écrit, dans ce jeu, tout de suite. En échange, le réel te doit quelque chose. " +
+      (cap > 3 ? "Tu es descendu assez bas pour qu'on t'en laisse signer " + cap + "." : "Tu peux en signer trois. Plus bas, on t'en laissera davantage.");
     n.appendChild(p);
 
     const compteur = el('p', 'etiquette');
@@ -3044,7 +3336,10 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     const r = U.rangee();
     const suite = U.bouton('Descendre', 'rouge', () => {
       G.mods = JJK.serments.agreger(G.serments);
-      if (G.mods.coupeSon) JJK.audio.toggleMute(true);
+      /* le silence est persisté : il doit survivre au rechargement,
+         sinon le serment ne coûte rien qu'un raccourci clavier */
+      if (G.mods.coupeSon) { JJK.audio.toggleMute(true); M().ecrire({ sonCoupe: true }); }
+      U.majSon();
       M().ecrire({ serments: G.serments.map(s => s.id) });
       descente();
     });
@@ -3052,7 +3347,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     n.appendChild(r);
 
     function maj() {
-      const reste = 3 - G.serments.length;
+      const reste = cap - G.serments.length;
       compteur.textContent = reste > 0 ? (reste + ' serment' + (reste > 1 ? 's' : '') + ' encore possible' + (reste > 1 ? 's' : '')) : 'Le contrat est plein.';
       liste.innerHTML = '';
       G.catalogue.forEach(s => {
@@ -3072,7 +3367,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
             maj();
             return;
           }
-          if (G.serments.length >= 3) { JJK.fx.shake(0.15); return; }
+          if (G.serments.length >= cap) { JJK.fx.shake(0.15); return; }
           G.serments.push(s);
           JJK.audio.oath();
           JJK.fx.invert(140);
@@ -3089,6 +3384,10 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     }
     maj();
   }
+
+  /* Le contrat s'allonge à mesure qu'on descend : à ce niveau-là, plus
+     personne ne s'inquiète de ce qu'on signe. */
+  function capSerments() { return Math.min(5, 3 + Math.floor(G.maturation / 4)); }
 
   /* =====================================================================
      5. LA DESCENTE
@@ -3221,7 +3520,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     JJK.fx.setDead(0);
   }
 
-  JJK.ecrans = { seuil, rituel, revelation, serments, descente, registre, consultation, reinit, appliquerMaturation, gradeCible, courbe, lienDe, G };
+  JJK.ecrans = { seuil, rituel, revelation, serments, descente, registre, consultation, reinit, capSerments, appliquerMaturation, gradeCible, courbe, lienDe, G };
 })(window);
 
 
@@ -3260,6 +3559,11 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       ennemi.attaque = Math.round(ennemi.attaque * 1.10);
     }
     D = JJK.combat.creer({ seed: g.tech.seed, joueur, ennemi, numero: g.descente });
+    N.decor = null;
+    JJK.fx.domainClose();
+    document.body.classList.remove('domaine-calme');
+    const boite = document.getElementById('territoire');
+    if (boite) { boite.classList.remove('actif'); boite.innerHTML = ''; }
     D.revenant = !!o.revenant;
     D.fleau = fleau;
     M().ecrire({ descentes: M().lire().descentes + 1 });
@@ -3422,11 +3726,28 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     for (let i = 0; i < ev.length; i++) {
       await mettreEnScene(ev[i]);
     }
+    if (!D.fini) majDecor();
     majTout();
     verrou = false; majActions();
   }
 
   const NOM = c => (c === 'joueur' ? (D.joueur.nom || 'Toi') : D.ennemi.nom);
+
+  /* Le décor du territoire est déduit de l'état du duel, jamais posé et
+     retiré à la main : deux extensions peuvent se chevaucher, l'une peut
+     se briser pendant que l'autre tient, et la précédente version fermait
+     le décor de quelqu'un d'autre. */
+  function majDecor() {
+    const cote = D.joueur.domaineTours > 0 ? 'joueur' : (D.ennemi.domaineTours > 0 ? 'ennemi' : null);
+    if (!cote) {
+      JJK.fx.domainClose();
+      document.body.classList.remove('domaine-calme');
+      return;
+    }
+    const d = N.decor && N.decor[cote];
+    if (d) JJK.fx.domainOpen(d);
+    document.body.classList.add('domaine-calme');
+  }
 
   async function mettreEnScene(e) {
     const g = G();
@@ -3501,6 +3822,19 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
         await wait(600);
         break;
 
+      case 'second':
+        journal('<span class="mono sang">ET ENCORE UNE FOIS.</span>', 'mal');
+        JJK.fx.shake(0.35);
+        await wait(260);
+        break;
+
+      case 'ponction':
+        JJK.audio.whisper(0.5);
+        journal(NOM(e.qui) + ' te prend <span class="n">' + e.montant + '</span> d\'énergie maudite.', 'mal');
+        majTout();
+        await wait(240);
+        break;
+
       case 'sursis':
         JJK.fx.flash('#f2c14e', 500);
         journal(NOM(e.qui) + ' aurait dû tomber. <span class="or">Sursis.</span>', 'important');
@@ -3521,7 +3855,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
         JJK.fx.shake(1.4);
         JJK.fx.slash('#fff6ee', 4);
         JJK.audio.hit(1.6);
-        JJK.fx.domainClose();
+        majDecor();
         journal('<span class="mono sang">TERRITOIRE BRISÉ</span> — ' + NOM(e.perdant) + ' encaisse <span class="n">' + e.degats + '</span>.', 'important');
         await wait(900);
         break;
@@ -3529,17 +3863,14 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       case 'brise':
         JJK.fx.flash('#fff', 1100);
         JJK.fx.shake(1.6);
-        JJK.fx.domainClose();
+        majDecor();
         journal('<span class="mono sang">LES DEUX TERRITOIRES SE FENDENT.</span>', 'important');
         await wait(900);
         break;
 
       case 'domaineFerme':
-        if (e.qui === 'joueur' || e.qui === 'ennemi') {
-          JJK.fx.domainClose();
-          document.body.classList.remove('domaine-calme');
-          journal('Le territoire se referme.', '');
-        }
+        journal('Le territoire de ' + NOM(e.qui) + ' se referme.', '');
+        majDecor();
         await wait(200);
         break;
 
@@ -3587,13 +3918,36 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     return t;
   }
 
+  /* Un joueur qui a déjà vu la cérémonie trois fois a le droit de passer.
+     Un clic emporte le reste de la séquence, comme au rituel. */
+  function ecouterSaut() {
+    const etat = { saute: false };
+    const h = () => { etat.saute = true; };
+    document.addEventListener('pointerdown', h, true);
+    document.addEventListener('keydown', h, true);
+    etat.fin = () => {
+      document.removeEventListener('pointerdown', h, true);
+      document.removeEventListener('keydown', h, true);
+    };
+    return etat;
+  }
+
   async function sequenceDomaine(e) {
     const g = G();
     const joueur = e.qui === 'joueur';
+    const saut = ecouterSaut();
+    const souffle = ms => saut.saute ? wait(0) : wait(ms);
+    const ecrire = (n, t2, o) => saut.saute
+      ? Promise.resolve((n.textContent = t2))
+      : JJK.fx.type(n, t2, o);
     const spec = e.spec || (joueur ? g.tech.domaine : D.ennemi.domaine) || {};
     const t = boiteTerritoire();
     t.innerHTML = '';
     t.classList.add('actif');
+    const indice = el('div', 'etiquette');
+    indice.style.cssText = 'position:absolute;bottom:22px;left:0;right:0;text-align:center;opacity:.4';
+    indice.textContent = 'clic — abréger';
+    t.appendChild(indice);
 
     M().ecrire({ domainesOuverts: M().lire().domainesOuverts + 1 });
     JJK.audio.heartbeat(false);
@@ -3610,29 +3964,32 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
 
     const inc = el('div', 'incantation');
     t.appendChild(inc);
-    const gestes = ['領域展開', 'りょういき てんかい'];
-    await JJK.fx.type(inc, gestes[0], { speed: 120, sound: false });
+    await ecrire(inc, '領域展開', { speed: 110, sound: false });
 
-    for (let i = 0; i < 16; i++) {
-      JJK.fx.shake(0.12 + i * 0.055);
-      JJK.fx.pulse(null, null, 120 + i * 55, joueur ? (g.tech.couleur || '#b31217') : '#b31217', 0.5 + i * 0.07);
-      await wait(105);
+    const passes = JJK.fx.reduit() ? 4 : 12;
+    for (let i = 0; i < passes && !saut.saute; i++) {
+      JJK.fx.shake(0.14 + i * 0.07);
+      JJK.fx.pulse(null, null, 120 + i * 70, joueur ? (g.tech.couleur || '#b31217') : '#b31217', 0.5 + i * 0.09);
+      await wait(JJK.fx.reduit() ? 70 : 95);
     }
 
     /* --- 2. la bascule --------------------------------------------- */
     JJK.fx.flash('#ffffff', 1100);
     JJK.fx.invert(220);
     JJK.fx.shake(1.6);
-    JJK.fx.domainOpen({
+    N.decor = N.decor || {};
+    N.decor[joueur ? 'joueur' : 'ennemi'] = {
       seed: graineSceau,
       accent: joueur ? (g.tech.couleur || '#b31217') : '#b31217',
       invert: !joueur,               /* son territoire à lui retourne le monde */
       sigilCanvas: sceau,
-    });
+    };
+    JJK.fx.domainOpen(N.decor[joueur ? 'joueur' : 'ennemi']);
     U.titreFurtif('領域展開', 6000);
-    await wait(260);
+    await souffle(240);
 
     t.innerHTML = '';
+    t.appendChild(indice);
     if (!joueur) t.style.color = '#0a0a0c';
     else t.style.color = '';
 
@@ -3641,8 +3998,8 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     const nomJp = el('div', 'incantation');
     nomJp.style.marginTop = '18px';
     t.appendChild(nomJp);
-    await JJK.fx.type(nomFr, spec.nom_fr || 'Territoire sans nom', { speed: 34, sound: false });
-    if (spec.nom_jp) await JJK.fx.type(nomJp, spec.nom_jp + (spec.romaji ? ' · ' + spec.romaji : ''), { speed: 40, sound: false });
+    await ecrire(nomFr, spec.nom_fr || 'Territoire sans nom', { speed: 26, sound: false });
+    if (spec.nom_jp) nomJp.textContent = spec.nom_jp + (spec.romaji ? ' · ' + spec.romaji : '');
 
     /* --- 3. l'incantation ------------------------------------------- */
     if (spec.incantation) {
@@ -3652,29 +4009,34 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       for (const ligne of vers) {
         const p = el('p');
         v.appendChild(p);
-        await JJK.fx.type(p, ligne.trim(), { speed: 20, sound: false });
+        await ecrire(p, ligne.trim(), { speed: 11, sound: false });
       }
     }
 
     /* --- 4. le coup au but ------------------------------------------ */
-    await wait(400);
+    await souffle(320);
     if (spec.effet_garanti) {
       const s = el('div', 'sur');
       const lab = el('div', 'etiquette rouge', 'Coup au but — il ne se refuse pas');
       s.appendChild(lab);
+      /* Le coup au but n'est pas une incantation : c'est un constat.
+         On ne le scande pas lettre à lettre, on le pose. */
       const p = el('p', 'serif-italique');
-      p.style.cssText = 'font-size:1.25rem;margin-top:10px;max-width:44ch';
+      p.style.cssText = 'font-size:1.25rem;margin-top:10px;max-width:44ch;opacity:0;transition:opacity .5s ease';
+      p.textContent = spec.effet_garanti;
       s.appendChild(p);
       t.appendChild(s);
-      await JJK.fx.type(p, spec.effet_garanti, { speed: 18, sound: false });
+      requestAnimationFrame(() => { p.style.opacity = '1'; });
+      await souffle(900);
     }
     JJK.fx.slash('#fff6ee', 3);
     JJK.audio.slash();
     JJK.fx.ink(null, null, 1.6, joueur ? '#b31217' : '#e9e2d4');
-    await wait(1200);
+    await souffle(900);
+    saut.fin();
 
     t.classList.remove('actif');
-    document.body.classList.add('domaine-calme');
+    majDecor();
     journal('<span class="mono ' + (joueur ? 'or' : 'sang') + '">EXTENSION DU TERRITOIRE</span> — ' +
       esc(spec.nom_fr || '') + ' · ' + e.tours + ' tours.', 'important');
     if (spec.faille && joueur === false) journal('Une sortie existe : ' + esc(spec.faille), '');
@@ -3682,13 +4044,16 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
   }
 
   async function sequenceClash(e) {
+    const saut = ecouterSaut();
     const t = boiteTerritoire();
     t.innerHTML = ''; t.classList.add('actif');
     const h = el('div', 'nom-dom');
     h.style.fontSize = 'clamp(1.6rem,6vw,4rem)';
     t.appendChild(h);
-    await JJK.fx.type(h, 'DEUX LOIS DANS LA MÊME PIÈCE', { speed: 26, sound: false });
-    for (let i = 0; i < 10; i++) {
+    if (saut.saute) h.textContent = 'DEUX LOIS DANS LA MÊME PIÈCE';
+    else await JJK.fx.type(h, 'DEUX LOIS DANS LA MÊME PIÈCE', { speed: 22, sound: false });
+    const coups = JJK.fx.reduit() ? 4 : 10;
+    for (let i = 0; i < coups && !saut.saute; i++) {
       JJK.fx.invert(60); JJK.fx.shake(1.2); JJK.audio.hit(1.2);
       JJK.fx.slash(i % 2 ? '#b31217' : '#fff6ee', 2);
       await wait(90);
@@ -3697,7 +4062,8 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     r.style.marginTop = '20px';
     r.innerHTML = '<span class="mono">RAFFINEMENT ' + e.ra + ' — ' + e.rb + '</span>';
     t.appendChild(r);
-    await wait(700);
+    await (saut.saute ? wait(0) : wait(600));
+    saut.fin();
     t.classList.remove('actif');
     journal('<span class="mono sang">AFFRONTEMENT DE TERRITOIRES</span> — ' + e.ra + ' contre ' + e.rb + '.', 'important');
   }
@@ -3707,6 +4073,8 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
      ===================================================================== */
   async function finir(vainqueur) {
     const g = G();
+    N.decor = null;
+    D.joueur.domaineTours = 0; D.ennemi.domaineTours = 0;
     JJK.fx.domainClose();
     document.body.classList.remove('domaine-calme');
     JJK.audio.heartbeat(false);
@@ -3769,6 +4137,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
   }
 
   async function mort() {
+    JJK.ui.calmer();
     const g = G();
     JJK.fx.setDead(1);
     JJK.fx.invert(900);
@@ -3856,6 +4225,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       JJK.audio.unlock();
       const r = JJK.memoire.lire();
       if (r.sonCoupe) JJK.audio.toggleMute(true);
+      JJK.ui.majSon();
       document.removeEventListener('pointerdown', eveil);
       document.removeEventListener('keydown', eveil);
     };

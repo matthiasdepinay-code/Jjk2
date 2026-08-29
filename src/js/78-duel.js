@@ -32,6 +32,11 @@
       ennemi.attaque = Math.round(ennemi.attaque * 1.10);
     }
     D = JJK.combat.creer({ seed: g.tech.seed, joueur, ennemi, numero: g.descente });
+    N.decor = null;
+    JJK.fx.domainClose();
+    document.body.classList.remove('domaine-calme');
+    const boite = document.getElementById('territoire');
+    if (boite) { boite.classList.remove('actif'); boite.innerHTML = ''; }
     D.revenant = !!o.revenant;
     D.fleau = fleau;
     M().ecrire({ descentes: M().lire().descentes + 1 });
@@ -194,11 +199,28 @@
     for (let i = 0; i < ev.length; i++) {
       await mettreEnScene(ev[i]);
     }
+    if (!D.fini) majDecor();
     majTout();
     verrou = false; majActions();
   }
 
   const NOM = c => (c === 'joueur' ? (D.joueur.nom || 'Toi') : D.ennemi.nom);
+
+  /* Le décor du territoire est déduit de l'état du duel, jamais posé et
+     retiré à la main : deux extensions peuvent se chevaucher, l'une peut
+     se briser pendant que l'autre tient, et la précédente version fermait
+     le décor de quelqu'un d'autre. */
+  function majDecor() {
+    const cote = D.joueur.domaineTours > 0 ? 'joueur' : (D.ennemi.domaineTours > 0 ? 'ennemi' : null);
+    if (!cote) {
+      JJK.fx.domainClose();
+      document.body.classList.remove('domaine-calme');
+      return;
+    }
+    const d = N.decor && N.decor[cote];
+    if (d) JJK.fx.domainOpen(d);
+    document.body.classList.add('domaine-calme');
+  }
 
   async function mettreEnScene(e) {
     const g = G();
@@ -273,6 +295,19 @@
         await wait(600);
         break;
 
+      case 'second':
+        journal('<span class="mono sang">ET ENCORE UNE FOIS.</span>', 'mal');
+        JJK.fx.shake(0.35);
+        await wait(260);
+        break;
+
+      case 'ponction':
+        JJK.audio.whisper(0.5);
+        journal(NOM(e.qui) + ' te prend <span class="n">' + e.montant + '</span> d\'énergie maudite.', 'mal');
+        majTout();
+        await wait(240);
+        break;
+
       case 'sursis':
         JJK.fx.flash('#f2c14e', 500);
         journal(NOM(e.qui) + ' aurait dû tomber. <span class="or">Sursis.</span>', 'important');
@@ -293,7 +328,7 @@
         JJK.fx.shake(1.4);
         JJK.fx.slash('#fff6ee', 4);
         JJK.audio.hit(1.6);
-        JJK.fx.domainClose();
+        majDecor();
         journal('<span class="mono sang">TERRITOIRE BRISÉ</span> — ' + NOM(e.perdant) + ' encaisse <span class="n">' + e.degats + '</span>.', 'important');
         await wait(900);
         break;
@@ -301,17 +336,14 @@
       case 'brise':
         JJK.fx.flash('#fff', 1100);
         JJK.fx.shake(1.6);
-        JJK.fx.domainClose();
+        majDecor();
         journal('<span class="mono sang">LES DEUX TERRITOIRES SE FENDENT.</span>', 'important');
         await wait(900);
         break;
 
       case 'domaineFerme':
-        if (e.qui === 'joueur' || e.qui === 'ennemi') {
-          JJK.fx.domainClose();
-          document.body.classList.remove('domaine-calme');
-          journal('Le territoire se referme.', '');
-        }
+        journal('Le territoire de ' + NOM(e.qui) + ' se referme.', '');
+        majDecor();
         await wait(200);
         break;
 
@@ -359,13 +391,36 @@
     return t;
   }
 
+  /* Un joueur qui a déjà vu la cérémonie trois fois a le droit de passer.
+     Un clic emporte le reste de la séquence, comme au rituel. */
+  function ecouterSaut() {
+    const etat = { saute: false };
+    const h = () => { etat.saute = true; };
+    document.addEventListener('pointerdown', h, true);
+    document.addEventListener('keydown', h, true);
+    etat.fin = () => {
+      document.removeEventListener('pointerdown', h, true);
+      document.removeEventListener('keydown', h, true);
+    };
+    return etat;
+  }
+
   async function sequenceDomaine(e) {
     const g = G();
     const joueur = e.qui === 'joueur';
+    const saut = ecouterSaut();
+    const souffle = ms => saut.saute ? wait(0) : wait(ms);
+    const ecrire = (n, t2, o) => saut.saute
+      ? Promise.resolve((n.textContent = t2))
+      : JJK.fx.type(n, t2, o);
     const spec = e.spec || (joueur ? g.tech.domaine : D.ennemi.domaine) || {};
     const t = boiteTerritoire();
     t.innerHTML = '';
     t.classList.add('actif');
+    const indice = el('div', 'etiquette');
+    indice.style.cssText = 'position:absolute;bottom:22px;left:0;right:0;text-align:center;opacity:.4';
+    indice.textContent = 'clic — abréger';
+    t.appendChild(indice);
 
     M().ecrire({ domainesOuverts: M().lire().domainesOuverts + 1 });
     JJK.audio.heartbeat(false);
@@ -382,29 +437,32 @@
 
     const inc = el('div', 'incantation');
     t.appendChild(inc);
-    const gestes = ['領域展開', 'りょういき てんかい'];
-    await JJK.fx.type(inc, gestes[0], { speed: 120, sound: false });
+    await ecrire(inc, '領域展開', { speed: 110, sound: false });
 
-    for (let i = 0; i < 16; i++) {
-      JJK.fx.shake(0.12 + i * 0.055);
-      JJK.fx.pulse(null, null, 120 + i * 55, joueur ? (g.tech.couleur || '#b31217') : '#b31217', 0.5 + i * 0.07);
-      await wait(105);
+    const passes = JJK.fx.reduit() ? 4 : 12;
+    for (let i = 0; i < passes && !saut.saute; i++) {
+      JJK.fx.shake(0.14 + i * 0.07);
+      JJK.fx.pulse(null, null, 120 + i * 70, joueur ? (g.tech.couleur || '#b31217') : '#b31217', 0.5 + i * 0.09);
+      await wait(JJK.fx.reduit() ? 70 : 95);
     }
 
     /* --- 2. la bascule --------------------------------------------- */
     JJK.fx.flash('#ffffff', 1100);
     JJK.fx.invert(220);
     JJK.fx.shake(1.6);
-    JJK.fx.domainOpen({
+    N.decor = N.decor || {};
+    N.decor[joueur ? 'joueur' : 'ennemi'] = {
       seed: graineSceau,
       accent: joueur ? (g.tech.couleur || '#b31217') : '#b31217',
       invert: !joueur,               /* son territoire à lui retourne le monde */
       sigilCanvas: sceau,
-    });
+    };
+    JJK.fx.domainOpen(N.decor[joueur ? 'joueur' : 'ennemi']);
     U.titreFurtif('領域展開', 6000);
-    await wait(260);
+    await souffle(240);
 
     t.innerHTML = '';
+    t.appendChild(indice);
     if (!joueur) t.style.color = '#0a0a0c';
     else t.style.color = '';
 
@@ -413,8 +471,8 @@
     const nomJp = el('div', 'incantation');
     nomJp.style.marginTop = '18px';
     t.appendChild(nomJp);
-    await JJK.fx.type(nomFr, spec.nom_fr || 'Territoire sans nom', { speed: 34, sound: false });
-    if (spec.nom_jp) await JJK.fx.type(nomJp, spec.nom_jp + (spec.romaji ? ' · ' + spec.romaji : ''), { speed: 40, sound: false });
+    await ecrire(nomFr, spec.nom_fr || 'Territoire sans nom', { speed: 26, sound: false });
+    if (spec.nom_jp) nomJp.textContent = spec.nom_jp + (spec.romaji ? ' · ' + spec.romaji : '');
 
     /* --- 3. l'incantation ------------------------------------------- */
     if (spec.incantation) {
@@ -424,29 +482,34 @@
       for (const ligne of vers) {
         const p = el('p');
         v.appendChild(p);
-        await JJK.fx.type(p, ligne.trim(), { speed: 20, sound: false });
+        await ecrire(p, ligne.trim(), { speed: 11, sound: false });
       }
     }
 
     /* --- 4. le coup au but ------------------------------------------ */
-    await wait(400);
+    await souffle(320);
     if (spec.effet_garanti) {
       const s = el('div', 'sur');
       const lab = el('div', 'etiquette rouge', 'Coup au but — il ne se refuse pas');
       s.appendChild(lab);
+      /* Le coup au but n'est pas une incantation : c'est un constat.
+         On ne le scande pas lettre à lettre, on le pose. */
       const p = el('p', 'serif-italique');
-      p.style.cssText = 'font-size:1.25rem;margin-top:10px;max-width:44ch';
+      p.style.cssText = 'font-size:1.25rem;margin-top:10px;max-width:44ch;opacity:0;transition:opacity .5s ease';
+      p.textContent = spec.effet_garanti;
       s.appendChild(p);
       t.appendChild(s);
-      await JJK.fx.type(p, spec.effet_garanti, { speed: 18, sound: false });
+      requestAnimationFrame(() => { p.style.opacity = '1'; });
+      await souffle(900);
     }
     JJK.fx.slash('#fff6ee', 3);
     JJK.audio.slash();
     JJK.fx.ink(null, null, 1.6, joueur ? '#b31217' : '#e9e2d4');
-    await wait(1200);
+    await souffle(900);
+    saut.fin();
 
     t.classList.remove('actif');
-    document.body.classList.add('domaine-calme');
+    majDecor();
     journal('<span class="mono ' + (joueur ? 'or' : 'sang') + '">EXTENSION DU TERRITOIRE</span> — ' +
       esc(spec.nom_fr || '') + ' · ' + e.tours + ' tours.', 'important');
     if (spec.faille && joueur === false) journal('Une sortie existe : ' + esc(spec.faille), '');
@@ -454,13 +517,16 @@
   }
 
   async function sequenceClash(e) {
+    const saut = ecouterSaut();
     const t = boiteTerritoire();
     t.innerHTML = ''; t.classList.add('actif');
     const h = el('div', 'nom-dom');
     h.style.fontSize = 'clamp(1.6rem,6vw,4rem)';
     t.appendChild(h);
-    await JJK.fx.type(h, 'DEUX LOIS DANS LA MÊME PIÈCE', { speed: 26, sound: false });
-    for (let i = 0; i < 10; i++) {
+    if (saut.saute) h.textContent = 'DEUX LOIS DANS LA MÊME PIÈCE';
+    else await JJK.fx.type(h, 'DEUX LOIS DANS LA MÊME PIÈCE', { speed: 22, sound: false });
+    const coups = JJK.fx.reduit() ? 4 : 10;
+    for (let i = 0; i < coups && !saut.saute; i++) {
       JJK.fx.invert(60); JJK.fx.shake(1.2); JJK.audio.hit(1.2);
       JJK.fx.slash(i % 2 ? '#b31217' : '#fff6ee', 2);
       await wait(90);
@@ -469,7 +535,8 @@
     r.style.marginTop = '20px';
     r.innerHTML = '<span class="mono">RAFFINEMENT ' + e.ra + ' — ' + e.rb + '</span>';
     t.appendChild(r);
-    await wait(700);
+    await (saut.saute ? wait(0) : wait(600));
+    saut.fin();
     t.classList.remove('actif');
     journal('<span class="mono sang">AFFRONTEMENT DE TERRITOIRES</span> — ' + e.ra + ' contre ' + e.rb + '.', 'important');
   }
@@ -479,6 +546,8 @@
      ===================================================================== */
   async function finir(vainqueur) {
     const g = G();
+    N.decor = null;
+    D.joueur.domaineTours = 0; D.ennemi.domaineTours = 0;
     JJK.fx.domainClose();
     document.body.classList.remove('domaine-calme');
     JJK.audio.heartbeat(false);
@@ -541,6 +610,7 @@
   }
 
   async function mort() {
+    JJK.ui.calmer();
     const g = G();
     JJK.fx.setDead(1);
     JJK.fx.invert(900);

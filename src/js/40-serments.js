@@ -162,11 +162,14 @@
     const m = {
       degatsMult: 1, degatsRecusMult: 1, pvMaxMult: 1, soinMult: 1,
       critBonus: 0, critMult: 1, energieBonus: 0, energieDepart: 0, enMaxBonus: 0,
-      remise: 0, frappeMult: 1, domaineMult: 1, domaineTours: 0, rancune: 0,
+      remise: 0, frappeMult: 1, domaineMult: 1, domaineTours: 0, rancune: 0, raffinementBonus: 0,
       interdit: {}, masqueVieEnnemi: false, masqueJournal: false, coupeSon: false,
       pasDeRepetition: false, domaineUnique: false, effaceToutALaMort: false,
       limiteTours: 0,
     };
+    /* chaque serment signé affine le territoire : c'est ce qui décide
+       d'un affrontement d'extensions, et c'est ce qu'on a payé pour */
+    m.raffinementBonus = (signes || []).length * 22;
     (signes || []).forEach(s => {
       const e = s.eff || {};
       if (e.degatsMult) m.degatsMult *= e.degatsMult;
