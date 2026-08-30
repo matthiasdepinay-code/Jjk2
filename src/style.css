@@ -917,3 +917,11 @@ body.en-kokusen #fx-ink {
 .onglet:hover { color: var(--os-faible); }
 .onglet.actif { color: var(--sang-vif); border-bottom-color: var(--sang); }
 .meta-variante .manif { color: var(--inverse); }
+
+/* Un échange dont les deux membres sont des phrases se lit en serif : le
+   monospace convient à « −45 % de PV », pas à une conséquence de vie. */
+.echange-long {
+  display: flex; flex-direction: column; gap: 6px;
+  font-family: var(--serif); font-size: 1rem; letter-spacing: 0; line-height: 1.5;
+}
+.echange-long .perte, .echange-long .gain { max-width: 66ch; font-weight: 300; }

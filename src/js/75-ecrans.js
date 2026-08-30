@@ -876,8 +876,14 @@
         c.appendChild(meta);
         if (k.forme) { const p2 = el('p'); p2.style.marginTop = '10px'; p2.textContent = k.forme; c.appendChild(p2); }
         if (k.office) { const p3 = el('p', 'office'); p3.textContent = k.office; c.appendChild(p3); }
-        if (k.ordre) { const p4 = el('p', 'ordre'); p4.textContent = '« ' + k.ordre + ' »'; c.appendChild(p4); }
-        const bas = el('div', 'echange');
+        /* certains ordres portent déjà leurs guillemets : ne pas les doubler */
+        if (k.ordre) {
+          const p4 = el('p', 'ordre');
+          const brut = String(k.ordre).trim().replace(/^[«"\u201c]\s*/, '').replace(/\s*[»"\u201d]$/, '');
+          p4.textContent = '« ' + brut + ' »';
+          c.appendChild(p4);
+        }
+        const bas = el('div', 'echange echange-long');
         bas.style.marginTop = '12px';
         if (k.cout) bas.appendChild(el('span', 'perte', k.cout));
         if (k.perte) bas.appendChild(el('span', 'gain', 'S\'il tombe : ' + k.perte));

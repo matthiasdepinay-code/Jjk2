@@ -2521,6 +2521,35 @@
       "consequence": "Tout ce qui entre y est mesuré, étiqueté, puis rangé. Votre civière est déjà attribuée."
      }
     ]
+   },
+   {
+    "axe": "manifestation",
+    "numero": 11,
+    "intitule": "Voie de manifestation déclarée",
+    "question": "Une loi n'agit jamais à vide : dites-moi ce qui touche la cible en premier, et par quoi votre 呪力 juryoku doit passer avant d'atteindre le réel.",
+    "precision": "Nous n'évaluons pas la puissance, nous évaluons ce qu'on peut vous retirer : un bras, un serviteur, une poche, un plancher. Trois de ces quatre réponses se détruisent sans vous tuer — c'est la seule chose que le 補助監督 note en marge.",
+    "reponses": [
+     {
+      "tag": "directe",
+      "texte": "Rien ne sort de moi : je pose la main, la loi est déjà passée.",
+      "consequence": "Portée : la longueur de votre bras, et rien au-delà. Aucun intermédiaire à perdre, donc aucun à sacrifier — chaque blessure de la technique est la vôtre, dans votre chair, sans délai ni recours. Vous mourrez à distance de contact."
+     },
+     {
+      "tag": "familier",
+      "texte": "J'envoie des corps que j'ai battus ; ils entrent là où je n'entre pas.",
+      "consequence": "Chaque 式神 shikigami est une pièce unique, arrachée au 調伏 chōbuku dans un combat qui ne se rejoue jamais. Détruit, il ne revient pas : il ne se répare pas, ne se rappelle pas, ne se remplace pas. Vous finirez votre carrière avec moins de mains que vous ne l'avez commencée, et vous saurez à la seconde près laquelle vous avez dépensée."
+     },
+     {
+      "tag": "objet",
+      "texte": "Ma loi dort dans un 呪具 jugu que je porte sous la chemise.",
+      "consequence": "Une technique transportable est une technique confiscable. Fouille, désarmement, vol, saisie administrative : le 呪具 jugu quitte vos mains plus vite que votre volonté. Les 上層部 en conserveront le double des scellés, et vous signerez sa sortie du dépôt à chaque mission, en trois exemplaires."
+     },
+     {
+      "tag": "terrain",
+      "texte": "Je marche le lieu une heure, le carrelage tiédit, ensuite il me répond.",
+      "consequence": "Vous ne défendez que ce que vous avez eu le temps d'écrire au sol. Hors de vos surfaces préparées, vous n'êtes qu'un témoin qualifié. Affectation en garde fixe, jamais en poursuite : on vous enverra attendre les 呪霊 jurei, pas les rattraper."
+     }
+    ]
    }
   ],
   "titre_formulaire": "Formulaire R-9 : consignation de loi innée avant attribution de grade"
@@ -3978,5 +4007,700 @@
     }
    ]
   }
+ },
+ "shikigami": {
+  "shikigami": [
+   {
+    "id": "urado",
+    "nom": "La Porte de Service",
+    "kanji": "裏戸",
+    "romaji": "Urado",
+    "forme": "Un chambranle de chêne seul, sans mur autour, 2 m 14 de haut, gonflé d'humidité, qui marche sur les deux pieds de son propre encadrement. Le battant ne tient plus que par une penture et claque toutes les onze secondes, sans vent, dedans comme dehors. Le bois est tiède à la main, à la température d'un corps, et sent le linge oublié mouillé.",
+    "office": "Il ne s'ouvre que sur un lieu où son maître a déjà saigné, et sur aucun autre : il refuse les pièces propres. Le passage dure le temps que met le battant à revenir claquer.",
+    "ordre": "S'agenouiller, poser le front contre le seuil et dire : « Je rentre par-derrière, on ne m'attend pas devant. »",
+    "perte": "Le sens du retour. Le maître ne retrouvera plus jamais seul la sortie d'un bâtiment où il est entré — y compris son propre logement ; il faudra qu'on vienne le chercher, chaque fois, jusqu'à la fin.",
+    "rang": "mineur",
+    "archetype": "seuil",
+    "cout": "Trois minutes de 呪力 (juryoku) par franchissement, et tant qu'il est dehors aucune porte ordinaire ne cède à son maître : il faut qu'un tiers la lui tienne."
+   },
+   {
+    "id": "shinkoku-mado",
+    "nom": "Le Guichet des Déclarations",
+    "kanji": "申告窓",
+    "romaji": "Shinkoku-mado",
+    "forme": "Une cabine de guichet en verre dépoli et laiton, 1 m 90 sur 1 m 10, montée sur quatre roulettes de fonte qui ne roulent jamais dans le sens où on la pousse. Derrière la vitre : personne, une plaque d'ardoise, un tampon encreur, et un courant d'air à 9 °C qui sort par la lunule. Elle ne grince pas — le bruit qu'elle fait est celui d'un tiroir qu'on ouvre dans la pièce d'à côté.",
+    "office": "Rien ne franchit la ligne tracée devant lui sans avoir déclaré ce qu'il transporte : lame, technique, intention, 呪霊 (jurei) avalé. Ce qui n'est pas déclaré reste dehors, tranché net à la surface du guichet.",
+    "ordre": "Se présenter le premier : nom, grade, motif de la venue, à voix haute — puis attendre trois secondes qu'on ne réponde pas.",
+    "perte": "Le droit d'être cru. Toute parole du maître — devant les 上層部 (jōsōbu), un 補助監督 (hojo-kantoku), un médecin — sera désormais consignée « sous réserve » ; on ne le croira plus sur déclaration.",
+    "rang": "majeur",
+    "archetype": "seuil",
+    "cout": "Un prélèvement fixe d'un cinquième de la réserve, indépendant de la durée, et l'obligation pour le maître de se déclarer lui-même à chaque repassage de la ligne, sans exception ni raccourci."
+   },
+   {
+    "id": "soshaku",
+    "nom": "L'Aune de l'Éloignement",
+    "kanji": "疎尺",
+    "romaji": "Soshaku",
+    "forme": "Une règle d'arpenteur en buis noirci, 3 m 20 dépliée, articulée en dix-huit segments qui s'ouvrent seuls, un claquement sec par segment. Elle est froide, 4 °C constants, et laisse sur la paume une poussière de craie que le premier lavage n'enlève pas. Elle tient debout sans appui et penche vers ce qu'on lui a nommé.",
+    "office": "Elle ne mesure pas la distance mais l'éloignement : combien de mètres exactement séparent une chose de la personne à qui elle appartient encore. Un corps volé, un 呪具 (jugu) dérobé, un membre arraché, un enfant emmené.",
+    "ordre": "Dire tout haut ce qu'on a perdu, sans euphémisme, en nommant la personne à qui cela manque.",
+    "perte": "L'appartenance. Plus rien n'appartient au maître au sens des techniques : ses 呪具 se laissent manier par n'importe qui, ses scellés s'ouvrent pour tous, ses affaires cessent d'être les siennes.",
+    "rang": "mineur",
+    "archetype": "mesure",
+    "cout": "Trois minutes de 呪力 par segment déplié, et dix-huit mesures en tout pour la vie du 式神 : on ne la rallonge pas, on ne la replie pas deux fois sur la même."
+   },
+   {
+    "id": "chinsui",
+    "nom": "Le Plomb de Fond",
+    "kanji": "沈錘",
+    "romaji": "Chinsui",
+    "forme": "Une olive de plomb de 6,4 kg, glacée, couverte d'un dépôt gras, suspendue à un crin de 40 m qu'on ne voit jamais en entier. Elle descend toujours, quel que soit le sol sous elle, et le fil en se dévidant tient une note très basse qu'on sent dans le sternum plutôt qu'on ne l'entend. Rien ne remonte avec elle que le fil.",
+    "office": "Il donne la profondeur exacte de ce qui n'en a pas : le nombre de couches d'un mensonge, l'ancrage d'un 呪霊 sous un bâtiment, jusqu'où descend une blessure d'origine maudite dans un corps qui paraît intact.",
+    "ordre": "Se taire pendant toute la descente, et rester silencieux jusqu'à la remontée — même interpellé, même frappé.",
+    "perte": "L'aplomb, au sens propre. Le maître perd la verticale : il marchera de travers le restant de ses jours et ne pourra plus jamais se tenir debout sur un toit ni sur une poutre.",
+    "rang": "mineur",
+    "archetype": "mesure",
+    "cout": "Le fil file à 1 m/s et ne se rembobine pas seul : environ deux minutes de 呪力 par tranche de 10 m, à payer une seconde fois pour la remontée."
+   },
+   {
+    "id": "jomeishi",
+    "nom": "Le Buvard de Radiation",
+    "kanji": "除名紙",
+    "romaji": "Jomeishi",
+    "forme": "Une feuille de buvard rose sale, 4 m sur 3 m, humide au toucher, lourde comme une bâche pleine d'eau. Elle avance en se couchant et se relevant, à plat, comme on tourne une page trop grande. Elle est parfaitement silencieuse sauf à l'instant où elle boit : un raclement de gorge, une seule fois.",
+    "office": "Posé sur un nom écrit — registre, plaque, contrat, sceau, tatouage — il le boit, et le nom disparaît de tous les exemplaires du document à la fois. La personne reste ; plus rien d'administratif ne la tient.",
+    "ordre": "Épeler le nom à voix haute, lettre à lettre, en entier, particules et prénoms d'usage compris. À la première erreur, le buvard boit le nom du maître.",
+    "perte": "Sa propre inscription. Le maître cesse d'être un exorciste enregistré : plus de grade, plus d'affectation, plus de 補助監督. Il existe encore ; le 呪術高専 (jujutsu-kōsen) ne le sait plus.",
+    "rang": "majeur",
+    "archetype": "soustraction",
+    "cout": "Un nom par sortie, jamais deux. Chaque nom bu occupe définitivement un dixième de sa surface : au dixième, il n'est plus qu'une feuille pleine et inerte, qu'on porte sans usage."
+   },
+   {
+    "id": "akutori",
+    "nom": "L'Écumoire des Vivants",
+    "kanji": "灰汁取",
+    "romaji": "Akutori",
+    "forme": "Une écumoire de cuivre étamé, manche de 1 m 80, coupelle percée de quarante-sept trous, tenue par un bras unique sorti du manche à mi-hauteur. Le métal est brûlant et grésille quand il prélève. Elle sent la graisse froide de cantine, et l'odeur reste sur les vêtements trois jours.",
+    "office": "Passée lentement au-dessus d'un corps, elle enlève ce qui surnage : la douleur, la fièvre, l'ivresse, la peur — une seule qualité par passage, retirée entière. Ce qu'elle a pris reste dans la coupelle et doit être jeté quelque part.",
+    "ordre": "Nommer ce qu'on retire et le réclamer pour soi, au-dessus de l'intéressé : « Sa peur est à moi. Donnez-la-moi. »",
+    "perte": "La sensation de chaleur. Le maître ne distinguera plus jamais le tiède du brûlant ; il se brûlera sans le savoir, tous les jours, et l'apprendra chaque fois à l'odeur.",
+    "rang": "mineur",
+    "archetype": "soustraction",
+    "cout": "Une minute de 呪力 par passage. Ce qui reste dans la coupelle au-delà de quatre-vingt-dix secondes revient au maître, entier, et pour la durée qu'il aurait fallu à l'autre."
+   },
+   {
+    "id": "shichidai",
+    "nom": "Le Comptoir de Gage",
+    "kanji": "質台",
+    "romaji": "Shichidai",
+    "forme": "Un comptoir de mont-de-piété en acajou verni, 2 m 40 de long, creusé par l'usure à l'endroit des coudes, porté par six pieds trop courts qui le font avancer à hauteur de genou. Sous le plateau, un tiroir qu'on n'ouvre pas et qui pèse 71 kg à vide. Il fait claquer ses serrures en approchant, et le bois est froid comme une pierre de cave.",
+    "office": "On y dépose une chose, on annonce ce qu'on veut à la place, et s'il accepte il rend l'équivalent exact en 呪力 accumulée — jamais en objet. Il n'accepte que ce à quoi le déposant tient réellement, et il en juge seul.",
+    "ordre": "Poser l'objet à plat, retirer les deux mains du plateau, et dire tout haut ce qu'on est prêt à ne jamais reprendre.",
+    "perte": "Le contenu du tiroir. Tous les gages non repris disparaissent avec lui, et le maître, qui croyait pouvoir les récupérer un jour, ne saura même plus lesquels il y a laissés.",
+    "rang": "mineur",
+    "archetype": "échange",
+    "cout": "Il reste ouvert quatre-vingt-dix secondes par sortie, montre en main ; au-delà il ferme et emporte le dernier objet posé, sans contrepartie et sans discussion."
+   },
+   {
+    "id": "nigae-bitsu",
+    "nom": "Le Monte-Charge Jumeau",
+    "kanji": "荷替櫃",
+    "romaji": "Nigaebitsu",
+    "forme": "Deux cages de monte-charge en tôle rivetée, 2 m sur 2 m, 2 m 30 de haut, sans câble, sans rail, qui se posent à plat n'importe où et vibrent à très basse fréquence. L'intérieur est huileux et n'est éclairé qu'une fois la grille refermée. Il fait 6 °C dans l'une et 34 °C dans l'autre, jamais l'inverse.",
+    "office": "Ce qui est enfermé dans la cage froide et ce qui est enfermé dans la cage chaude changent de place, instantanément, quelle que soit la distance qui les sépare. À condition que les deux masses ne diffèrent pas de plus de 3 kg.",
+    "ordre": "Se peser à voix haute avant chaque échange, chiffre exact, devant qui se trouve là.",
+    "perte": "La possibilité d'être secouru. Nul ne pourra plus jamais atteindre le maître à temps : les renforts, désormais, arriveront systématiquement après.",
+    "rang": "majeur",
+    "archetype": "échange",
+    "cout": "L'écart de masse se paie en 呪力, une minute de réserve par 400 g d'écart, et la grille refuse de se rouvrir tant que l'échange n'est pas complet."
+   },
+   {
+    "id": "saisatsu",
+    "nom": "La Presse à Redire",
+    "kanji": "再刷",
+    "romaji": "Saisatsu",
+    "forme": "Une presse à bras d'imprimeur, fonte peinte en vert d'atelier, 1 m 50 de haut, 240 kg, qui se déplace en basculant d'un montant sur l'autre avec un fracas d'enclume. Le marbre est encore encré ; l'odeur est celle du solvant et du papier chaud. Le barreau tourne seul, une fois par seconde, à vide.",
+    "office": "Elle imprime le dernier geste accompli devant elle et le rejoue à l'identique, six fois au plus, à la même vitesse et avec la même force. Toujours à l'endroit exact où le geste a eu lieu la première fois, jamais ailleurs.",
+    "ordre": "Refaire le geste une fois de trop, lentement, pour elle, en le commentant à voix haute pendant qu'on l'exécute.",
+    "perte": "La primeur. Plus rien de ce que fait le maître ne sera jamais une surprise : quiconque lui a vu faire une chose une seule fois la verra venir toujours.",
+    "rang": "mineur",
+    "archetype": "répétition",
+    "cout": "Une minute de 呪力 par tirage, et le maître demeure incapable de refaire ce geste-là de lui-même pendant l'heure qui suit."
+   },
+   {
+    "id": "warin",
+    "nom": "Le Timbre à Cheval",
+    "kanji": "割印",
+    "romaji": "Warin",
+    "forme": "Un timbre humide de bureau sur socle d'acier de 30 cm, porté par huit pattes fines et articulées comme un pied d'appareil photo ; il court bas et vite, à hauteur de cheville, avec un cliquetis de machine à écrire. Le tampon est toujours mouillé d'une encre noire qui ne sèche pas et qui sent le fer.",
+    "office": "Il appose une seule et même marque à cheval sur deux corps, deux objets ou deux lieux. Tant que la marque reste lisible, ce qui arrive à l'un arrive à l'autre — coupure, brûlure, fracture — sans transport et sans délai.",
+    "ordre": "Présenter d'abord sa propre main gauche à timbrer, à plat, chaque fois, avant de désigner quoi que ce soit d'autre.",
+    "perte": "L'unicité de son corps. Les timbrages ne s'annulent pas à la destruction du 式神 : ils se figent. Le maître reste apparié à vie à ce qu'il a marqué en dernier, objet ou personne, et subira tout ce que celui-là subit.",
+    "rang": "majeur",
+    "archetype": "répétition",
+    "cout": "L'encre tient huit minutes sur une peau vivante, deux heures sur la pierre ; le maître doit entretenir sa moitié de marque, ce qui lui interdit toute 反転術式 (hanten-jutsushiki) sur cette main pendant la durée."
+   },
+   {
+    "id": "tojibari",
+    "nom": "L'Aiguille à Relier",
+    "kanji": "綴じ針",
+    "romaji": "Tojibari",
+    "forme": "Une aiguille de relieur en acier, 4 m 10, épaisse d'un pouce, qui se tient verticale et avance en piquant le sol à chaque pas, comme une canne d'aveugle. Elle traîne 22 m de fil de lin ciré, chauffé à la température du corps, jamais plus, jamais moins. Ce qu'elle traverse fait un bruit de toile épaisse, jamais un bruit de chair.",
+    "office": "Elle coud ensemble deux choses qui n'ont aucune raison de tenir : deux murs, un homme et le sol, une plaie et le vêtement qui la couvre. Ce qui est cousu reste solidaire jusqu'à ce que le fil soit coupé.",
+    "ordre": "Tendre le fil entre ses propres dents avant chaque passage, et le garder en bouche jusqu'à la fin de la couture.",
+    "perte": "La cicatrisation. Les plaies du maître ne se referment plus d'elles-mêmes : il faudra les coudre à la main, chaque fois, et toujours par quelqu'un d'autre.",
+    "rang": "mineur",
+    "archetype": "lien",
+    "cout": "22 m de fil par sortie, pas un centimètre de plus, à raison d'une minute de 呪力 par mètre — et le maître ne peut pas parler tant qu'il tient le fil."
+   },
+   {
+    "id": "setsuzokuban",
+    "nom": "Le Standard des Veilles",
+    "kanji": "接続盤",
+    "romaji": "Setsuzokuban",
+    "forme": "Un tableau de standard téléphonique en bakélite noire, 1 m 20 sur 80 cm, dressé sur un pied unique, hérissé de quarante fiches et de leurs cordons rétractables. Deux manches de tissu gris, vides et bourrées, enfichent et retirent sans jamais s'arrêter. Il chauffe, il sent le vernis brûlé, et il souffle en continu le bruit d'une ligne ouverte où personne ne parle.",
+    "office": "Il relie deux personnes par un seul sens, choisi à l'enfichage : ce que l'une voit, l'autre le voit ; ce que l'une entend, l'autre l'entend. La ligne traverse les murs, les étages et les 領域展開 (ryōiki tenkai), et ne transporte rien d'autre — ni voix, ni pensée, ni 呪力.",
+    "ordre": "Épeler soi-même les deux noms au standard, dire « je vous passe la communication », puis attendre sans rien ajouter.",
+    "perte": "Un sens, définitivement, désigné par le dernier branchement en cours. Le maître se réveille sourd, ou aveugle d'un œil, ou sans odorat, et ne saura jamais pourquoi celui-là plutôt qu'un autre.",
+    "rang": "mineur",
+    "archetype": "lien",
+    "cout": "Trente secondes de 呪力 par minute de ligne ouverte, et le sens branché est confisqué chez le maître : tant que la communication tient, il ne voit — ou n'entend — que par elle."
+   },
+   {
+    "id": "chotsuke",
+    "nom": "Le Teneur de Registres",
+    "kanji": "帳付",
+    "romaji": "Chōtsuke",
+    "forme": "Une pile de registres reliés en toile noire, 1 m 70 de haut, qui tient debout et glisse sans jamais rien renverser ; du sommet sort un unique bras, manchette et manchon de lustrine, tenant un porte-plume. Il écrit sans discontinuer, quatre-vingt-dix signes à la minute, et l'on entend la plume gratter à dix mètres. Le papier est froid et sent la colle d'os.",
+    "office": "Il consigne ce qui arrive, et ce qu'il a consigné devient la version retenue : les autres 式神 (shikigami) ne tiennent que parce qu'ils sont inscrits chez lui. Ce qu'il n'a pas noté n'a pas eu lieu pour la technique — un coup non consigné n'a pas porté.",
+    "ordre": "Lui dicter sa position, l'heure, et la faute qu'on vient de commettre — la sienne, jamais celle d'un autre.",
+    "perte": "Tous les autres. Les inscriptions périssent avec le registre : chaque 式神 encore soumis redevient sauvage et devra être 調伏 (chōbuku) un par un, et ceux qui avaient été détruits n'auront jamais existé — le maître ne se souviendra pas de les avoir eus.",
+    "rang": "pivot",
+    "archetype": "témoignage",
+    "cout": "Une minute de 呪力 par page remplie, quatre pages à la minute au maximum, sans interruption possible : on ne l'arrête pas, on le referme."
+   },
+   {
+    "id": "inaoshi",
+    "nom": "La Refonderie de Poche",
+    "kanji": "鋳直",
+    "romaji": "Inaoshi",
+    "forme": "Un four à creuset portatif, brique réfractaire cerclée de fer, 90 cm de haut, 110 kg, avançant sur trois pieds de fonte qui laissent des marques de brûlé sur le sol. La porte de chargement s'ouvre seule ; il fait 1 140 °C à l'intérieur et cela ne rayonne pas — on peut y poser la main sans rien sentir jusqu'à ce qu'il ferme. Il siffle, très haut, quand il est plein.",
+    "office": "Il refond une chose et la recoule sous la forme de l'usage qu'on en a le plus souvent fait : une épée qui n'a servi qu'à ouvrir des portes en ressort clef, un homme qui n'a servi qu'à porter en ressort civière. C'est de lui que sortent les corps de tous les autres 式神 de la technique.",
+    "ordre": "Déclarer devant le four ouvert à quoi la chose a servi — et si l'on ment, c'est le mensonge qui est coulé.",
+    "perte": "Ses mains. Le four éteint refroidit sur son maître : les os des deux mains se ressoudent en une forme unique et fermée, que la 反転術式 ne défera pas. Plus aucun 式神 détruit ne sera remplacé, plus aucun ne sera coulé.",
+    "rang": "pivot",
+    "archetype": "métamorphose",
+    "cout": "Une coulée par jour, jamais deux : elle emporte d'un coup un tiers de la réserve du maître et le laisse six heures à 39 °C, sans infection et sans remède."
+   },
+   {
+    "id": "veuve-de-tissu",
+    "nom": "La Veuve de Tissu",
+    "kanji": "喪服憑",
+    "romaji": "Mofukutsuki",
+    "forme": "Un kimono de deuil noir, taille femme, tenu debout par rien : un mètre soixante-deux, les manches lourdes comme si des bras y pendaient encore. Le tissu est froid, quatre degrés sous la température de la pièce, et sent le camphre et l'eau de vaisselle. Quand elle se déplace, on entend le frottement de la soie et, dessous, une respiration qui ne correspond à aucune bouche.",
+    "office": "Elle porte le deuil à la place de son maître : tant qu'elle est dehors, le chagrin lui est retiré et rangé dans la doublure. Il peut ouvrir le corps de quelqu'un qu'il aimait sans que la main tremble.",
+    "ordre": "« Prends mon deuil. Je le porte mal. »",
+    "perte": "Il ne pleurera plus jamais personne. Les glandes lacrymales demeurent, l'affect ne vient plus : aux funérailles il aura le visage sec, et tout le monde le verra.",
+    "rang": "mineur",
+    "archetype": "soustraction",
+    "cout": "Une larme par minute, prélevée sur l'œil gauche et absorbée dans le col. Au-delà de vingt minutes, la cornée s'ulcère."
+   },
+   {
+    "id": "choeur-des-absents",
+    "nom": "Le Chœur des Absents",
+    "kanji": "不在合唱",
+    "romaji": "Fuzai-gasshō",
+    "forme": "Neuf gorges d'adultes, sans tête ni mâchoire, enfilées sur une tringle de laiton de deux mètres quarante qu'elles portent elles-mêmes en marchant sur des moignons. Chaque gorge est tiède — trente-sept degrés deux — et humide. N'ayant pas de bouche, la voix sort par la trachée ouverte, mouillée, avec un sifflement à chaque fin de phrase.",
+    "office": "Elles restituent, mot pour mot et avec le timbre d'origine, les dernières paroles prononcées dans un lieu avant qu'on n'y meure. Elles ne comprennent rien à ce qu'elles disent et ne s'interrompent jamais avant le point final.",
+    "ordre": "« Écoutez pour moi. Je suis arrivé trop tard. »",
+    "perte": "Il perd définitivement la reconnaissance des voix. Au téléphone il devra demander chaque fois qui parle — y compris à sa mère, y compris pour identifier la sienne sur un enregistrement.",
+    "rang": "mineur",
+    "archetype": "témoignage",
+    "cout": "Trois minutes de sa propre voix par restitution : il chuchote ensuite pendant une heure, et le 補助監督 doit rédiger le rapport à sa place."
+   },
+   {
+    "id": "doublure",
+    "nom": "La Doublure",
+    "kanji": "代役",
+    "romaji": "Daiyaku",
+    "forme": "Une copie du maître montée sur une carcasse de bois et tendue de papier huilé couleur de peau : trois centimètres plus petite, le visage exact mais avec quatre jours de retard — la barbe, la fatigue et les plaies qu'il avait quatre jours plus tôt. Les articulations claquent sec, comme un métier à tisser. Elle sent le vernis chaud.",
+    "office": "Elle prend la place de son maître dans une situation : elle occupe son nom, sa position, son tour de garde, et reçoit à sa place tout ce qui était destiné à ce corps-là — coups, sorts, convocations. Elle ne sait rien faire d'autre qu'être lui.",
+    "ordre": "« Vas-y. Tu tiendras mieux le rôle que moi. »",
+    "perte": "Son visage cesse d'être mémorisable. Ceux qui le quittent ne savent plus le décrire ; au bout d'un an, ses collègues le saluent avec la prudence qu'on réserve aux inconnus.",
+    "rang": "majeur",
+    "archetype": "métamorphose",
+    "cout": "Un quart du 呪力 du maître immobilisé tant qu'elle est dehors, et interdiction de parler pendant ce temps : deux voix identiques dans le même lieu la font s'effondrer."
+   },
+   {
+    "id": "avaleuse-de-service",
+    "nom": "L'Avaleuse de Service",
+    "kanji": "嚥下庫",
+    "romaji": "Engeko",
+    "forme": "Un œsophage tressé de muscle rouge sombre, long de six mètres, dressé à la verticale sur un anneau de dents humaines de quarante centimètres de diamètre. Elle est chaude — trente-neuf degrés quatre, la fièvre exacte — et déglutit à vide toutes les onze secondes, avec un bruit de linge mouillé qu'on essore.",
+    "office": "Ce qu'elle avale cesse d'être dans le monde sans cesser d'exister : ni détruit, ni scellé, seulement retiré de la portée de tous, son maître compris. Elle ne digère rien et ne restitue qu'en ordre inverse, exactement dans l'ordre où elle a avalé.",
+    "ordre": "« Ouvre. Je n'ai pas su faire autrement. »",
+    "perte": "Le réflexe pharyngé disparaît. Il ne déglutit plus jamais : il se nourrit à la sonde, il ne boit plus, et il crache sa salive toutes les deux minutes, en public comme ailleurs.",
+    "rang": "majeur",
+    "archetype": "seuil",
+    "cout": "Chaque objet retenu pèse un kilo de masse corporelle par jour de rétention, quoi qu'il mange. Un 呪物 gardé une semaine lui coûte sept kilos."
+   },
+   {
+    "id": "suiveur-quatre-genoux",
+    "nom": "Le Suiveur à Quatre Genoux",
+    "kanji": "四膝追",
+    "romaji": "Shishitsutsui",
+    "forme": "Deux jambes d'homme adulte greffées l'une sur l'autre à la hanche, marchant donc sur quatre genoux, sans tronc, sans tête, sans bras : un mètre trente au plus haut. La peau est tannée, sèche, et grince comme une selle neuve. Il ne laisse pas d'empreintes ; il laisse une odeur d'eau croupie qui tient trois jours.",
+    "office": "Une fois qu'on lui a donné le nom complet de quelqu'un, il marche vers cette personne à quatre kilomètres-heure, sans jamais accélérer, sans jamais s'arrêter, sans jamais dormir, contournant les murs qu'il a tout le temps de contourner. Il n'attaque pas : il arrive.",
+    "ordre": "« Marche pour moi. Je m'essouffle. »",
+    "perte": "Ses jambes perdent l'immobilité : debout, elles tremblent ; couché, elles marchent. Il dort assis et sanglé, ou il ne dort pas.",
+    "rang": "mineur",
+    "archetype": "répétition",
+    "cout": "Un battement de cœur sur douze lui est prélevé tant qu'il marche. Le pouls du maître tombe à quarante-six et il a froid aux mains pendant toute la durée de la poursuite, qui peut durer des semaines."
+   },
+   {
+    "id": "veilleur-sans-clignement",
+    "nom": "Le Veilleur Sans Clignement",
+    "kanji": "不瞬番",
+    "romaji": "Fushunban",
+    "forme": "Une colonne de peau tendue sur une armature de lampadaire, deux mètres vingt, éclairée de l'intérieur par une lueur jaune de veilleuse. Sur toute la face interne sont cousues quarante paupières humaines, qu'on voit en transparence. Il est tiède comme un front fiévreux et bourdonne à cinquante hertz, exactement comme un tube de néon d'hôpital.",
+    "office": "Il ouvre autant de paupières qu'il y a d'êtres vivants ou de 呪霊 dans le lieu : invisibles compris, dissimulés compris, son maître compris. Il ne dit jamais où ils se trouvent. Il dit combien.",
+    "ordre": "« Compte. Je me crois seul et je me trompe souvent. »",
+    "perte": "Il perd le sens de la présence. Plus jamais il ne sentira qu'on le regarde ou qu'on est entré derrière lui ; il se retournera par habitude, tous les vingt pas, et on le lui fera remarquer.",
+    "rang": "mineur",
+    "archetype": "mesure",
+    "cout": "Une paupière se consume par heure de veille ; à quarante, il s'éteint pour un mois. Le maître ne peut pas fermer les yeux pendant qu'il compte."
+   },
+   {
+    "id": "porteur-douze-epaules",
+    "nom": "Le Porteur aux Douze Épaules",
+    "kanji": "十二肩",
+    "romaji": "Jūniken",
+    "forme": "Un monticule de douze épaules d'hommes soudées en cercle autour d'un vide, sans tête ni bras : un mètre dix de haut, quatre cents kilos, la peau grise et poudrée comme un mur chaulé. Il ne produit aucun son, sauf à la charge : les douze clavicules craquent alors ensemble, comme une charpente qu'on monte.",
+    "office": "Il porte à la place de son maître ce qui n'est pas seulement lourd : une dette, une fatigue, une hémorragie, une sanction des 上層部. Rien n'est supprimé, seulement déplacé — il faudra tout reprendre quand il rentrera.",
+    "ordre": "« Porte à ma place. Je suis faible. »",
+    "perte": "Son rachis s'affaisse de huit centimètres en une nuit. Il reste debout, mais courbé, et ne peut plus regarder personne au visage sans se dévisser le cou.",
+    "rang": "mineur",
+    "archetype": "échange",
+    "cout": "Tout ce qu'il a porté revient d'un coup à la dissipation, intérêts compris : une heure de fatigue confiée en coûte deux à reprendre."
+   },
+   {
+    "id": "ausculteuse-soixante-mains",
+    "nom": "L'Ausculteuse aux Soixante Mains",
+    "kanji": "触診婆",
+    "romaji": "Shokushinba",
+    "forme": "Une vertèbre de bambou de deux mètres plantée dans le sol, d'où partent soixante avant-bras de femmes âgées, tous droitiers, tous sectionnés au coude, tous froids : dix-neuf degrés, la température d'une salle d'examen mal chauffée. Les mains ne se touchent jamais entre elles ; elles se frottent lentement, avec un bruit de papier de verre fin.",
+    "office": "Posée sur un corps vivant, elle transmet trois chiffres directement dans les paumes de son maître : la réserve de 呪力 disponible, l'âge réel des organes, et le nombre de jours restants si rien ne change. Elle ne se trompe pas et ne console pas.",
+    "ordre": "« Touche-le à ma place. Je juge mal. »",
+    "perte": "Toute sensibilité tactile de ses deux paumes disparaît. Il ne saura plus si ce qu'il tient est brûlant, ni s'il serre trop fort la main qu'on lui tend.",
+    "rang": "mineur",
+    "archetype": "mesure",
+    "cout": "Chaque auscultation prélève une journée sur la vie du maître, jamais sur celle du patient. La comptabilité en est tenue ailleurs, et elle est exacte."
+   },
+   {
+    "id": "frere-de-lait",
+    "nom": "Le Frère de Lait",
+    "kanji": "乳兄弟",
+    "romaji": "Chikyōdai",
+    "forme": "Deux demi-torses d'enfants, cousus sternum contre sternum au fil de crin, hauts de quatre-vingt-dix centimètres. L'un est brûlant, l'autre glacé ; entre eux court une veine nue de quatre mètres qu'ils déroulent en marchant. Ils n'ont pas de visage : chacun porte une seule oreille, et elles écoutent dans des directions opposées.",
+    "office": "On applique une moitié sur un être, l'autre sur un second. Tant que la veine tient, toute blessure reçue par l'un apparaît intégralement sur l'autre. Il ne partage pas la douleur en deux : il la sert deux fois.",
+    "ordre": "« Cousez-nous. Je n'ai pas le courage de le lui demander. »",
+    "perte": "Le contact d'une autre peau devient une brûlure définitive. Il portera des gants, refusera les poignées de main, et ne dormira plus jamais contre personne.",
+    "rang": "majeur",
+    "archetype": "lien",
+    "cout": "La veine se nourrit du sang du maître : quatre-vingts millilitres par minute de liaison, prélevés à l'aine, quel que soit celui des deux liés qui saigne."
+   },
+   {
+    "id": "foule-de-feutre",
+    "nom": "La Foule de Feutre",
+    "kanji": "毛氈群衆",
+    "romaji": "Mōsen-gunshū",
+    "forme": "Trente silhouettes d'adultes découpées dans du feutre gris de sept millimètres, épaisses comme un manteau plié, sans visage ni mains, hautes d'un mètre soixante-douze — toutes exactement de la même taille. Elles avancent par saccades en frottant : un bruit de chaussons sur du linoléum. Elles sentent la naphtaline et la salle d'attente.",
+    "office": "Elles occupent un lieu comme le ferait une foule : elles font la queue, elles patientent, elles se retournent toutes au même instant. Ce qui cherche quelqu'un là doit d'abord écarter trente présences qui répondent, à distance, à la définition d'une personne.",
+    "ordre": "« Faites semblant d'être des gens. »",
+    "perte": "Il devient définitivement remarquable. Dans n'importe quel groupe, les têtes se tournent vers lui à son entrée, sans motif et sans que personne sache dire pourquoi. La filature lui devient impossible ; la discrétion aussi.",
+    "rang": "mineur",
+    "archetype": "répétition",
+    "cout": "Un souvenir de foule par sortie : après chaque emploi, une scène de sa vie où il y avait du monde se vide de tout le monde, sauf de lui."
+   },
+   {
+    "id": "boeuf-qui-recule",
+    "nom": "Le Bœuf Qui Recule",
+    "kanji": "退牛",
+    "romaji": "Taigyū",
+    "forme": "Un bœuf de labour dont la peau tannée a été retendue sur une charpente de chaises d'école : huit cents kilos, deux mètres au garrot, harnaché à l'envers, la tête tournée vers le timon. Il n'a plus de langue et son souffle sent le vinaigre de riz. Il ne marche qu'à reculons, en ahanant à chaque pas, et son sabot arrière touche le sol avant l'autre.",
+    "office": "Il annule le déplacement, non le temps : tout ce qui a bougé dans un rayon de vingt mètres durant la dernière minute est ramené à sa position initiale — les corps, les armes, les débris, le sang. Ce qui est arrivé reste arrivé ; ce qui a bougé n'a plus bougé.",
+    "ordre": "« Recule. J'ai avancé trop vite. »",
+    "perte": "Il ne sait plus revenir sur ses pas. Dans les bâtiments qu'il connaît par cœur, il prendra toujours le mauvais couloir, et devra demander son chemin chez lui.",
+    "rang": "mineur",
+    "archetype": "soustraction",
+    "cout": "Chaque pas en arrière coûte une minute de mémoire immédiate au maître. Après trois emplois consécutifs, il ne sait plus pourquoi il est venu."
+   },
+   {
+    "id": "porte-de-peau",
+    "nom": "La Porte de Peau",
+    "kanji": "皮戸",
+    "romaji": "Kawado",
+    "forme": "Un vantail de deux mètres dix monté sur un cadre de fémurs assemblés à tenon, tendu d'une seule pièce de peau humaine sans couture : le grain, les grains de beauté, une cicatrice d'appendicectomie. Elle est tiède, elle se soulève et retombe lentement — elle respire — et son gond gémit comme un lit.",
+    "office": "Appuyée contre n'importe quel mur, elle s'ouvre sur un lieu où son maître a déjà saigné, et sur celui-là seulement. Elle ne mène nulle part où il n'a pas laissé quelque chose de lui.",
+    "ordre": "« Ouvre-toi. J'ai saigné là-bas, tu le sais. »",
+    "perte": "Tous les lieux où il a saigné lui deviennent interdits : au seuil, la tête tourne, les jambes cèdent, il tombe. Cela comprend l'hôpital où il est né et l'enceinte du 呪術高専.",
+    "rang": "majeur",
+    "archetype": "seuil",
+    "cout": "Une plaie du maître se rouvre tant que le vantail tient — toujours la plus ancienne encore ouvrable — et ne se referme qu'après la fermeture."
+   },
+   {
+    "id": "nourrice-onze-bouches",
+    "nom": "La Nourrice aux Onze Bouches",
+    "kanji": "十一口乳母",
+    "romaji": "Jūichikō-uba",
+    "forme": "Un torse de femme de deux mètres quarante, sans tête ni bras, assis, portant onze bouches ouvertes réparties du sternum aux hanches, chacune avec ses dents et sa langue. Elle est à trente-six degrés neuf, elle sent le lait tiède et le fer, et elle mâche à vide en continu, du bruit régulier d'une horloge de vestibule.",
+    "office": "Elle détient en réserve le 呪力 de tous les autres 式神 de la technique et le leur distribue par les bouches. Aucun ne se nourrit directement du maître : ils tètent, et c'est elle qui paie.",
+    "ordre": "« Nourris-les. Je n'ai pas de quoi. »",
+    "perte": "Elle emporte définitivement avec elle tous les 式神 qu'elle allaitait à l'instant de sa destruction ; aucun ne se soumet une seconde fois. Le maître, lui, cesse de stocker le 呪力 : son corps ne retient plus rien et doit être rechargé toutes les quarante minutes, éveillé comme endormi, jusqu'à sa mort.",
+    "rang": "pivot",
+    "archetype": "lien",
+    "cout": "Elle ne coûte rien tant qu'elle est seule dehors, et tout dès qu'elle nourrit : le maître acquitte la somme des autres, majorée de onze pour cent de frais."
+   },
+   {
+    "id": "greffier-de-chair",
+    "nom": "Le Greffier de Chair",
+    "kanji": "肉書記",
+    "romaji": "Niku-shoki",
+    "forme": "Un homme assis d'un mètre quarante, entièrement fait de registres reliés en peau : les cuisses sont des volumes empilés, le torse un classeur, le visage une page vierge sur laquelle l'encre remonte par-dessous quand il écrit. Il est à seize degrés, il sent la colle d'os, et il tourne une page toutes les quatre secondes, même lorsqu'il ne se passe rien.",
+    "office": "Il constate. Tout ce que fait son maître en sa présence acquiert l'existence administrative : l'exorcisme est enregistré, le grade tenu, le salaire dû, la légitime défense établie. Ce qu'il n'a pas vu n'a juridiquement pas eu lieu.",
+    "ordre": "« Note que j'y étais. »",
+    "perte": "Ses états de service s'effacent rétroactivement dans les archives des 上層部 : missions, grade, solde, autorisations. Il demeure un exorciste, il n'est plus un exorciste enregistré — et ses empreintes digitales disparaissent la nuit même, si bien qu'il ne peut plus prouver être quelqu'un.",
+    "rang": "pivot",
+    "archetype": "témoignage",
+    "cout": "Un nom par séance : à chaque constat, un nom quitte la mémoire du maître et ne subsiste que dans le registre. Il a déjà perdu le prénom de son père."
+   }
+  ]
+ },
+ "chobuku": {
+  "epreuves": [
+   {
+    "id": "chobuku-01",
+    "nom": "Se tenir dans l'embrasure",
+    "kanji": "歩門 homon",
+    "condition": "Le battant fait deux mètres dix de chêne humide et se déplace sur ses gonds comme sur des jambes ; il faut se tenir dans son cadre ouvert, dos au vide, quarante et une minutes, pendant qu'il bat contre les épaules à intervalles irréguliers. Ni franchir, ni reculer, ni s'appuyer.",
+    "prix": "Le maître n'entre plus jamais quelque part le premier : toute porte qu'il pousse en tête reste close tant qu'un autre ne l'a pas ouverte avant lui.",
+    "echec": "Le battant se ferme. Le corps reste debout dans le cadre, tiède et vide de 呪力 juryoku ; le dossier est classé en disparition."
+   },
+   {
+    "id": "chobuku-02",
+    "nom": "Le fil qu'on prélève",
+    "kanji": "八脚機 hakkyakubata",
+    "condition": "Le métier marche sur huit pattes de buis et claque à quatre-vingt-dix coups par minute ; il exige trois mètres de fil pris sur le corps du maître — cheveu, tendon, nerf, c'est lui qui choisit. Le maître reste ensuite assis sous la lame du peigne, tête basse, tant que dure le tissage, quoi qu'il tombe sur sa nuque.",
+    "prix": "Chaque invocation se paie d'un souvenir précis, désigné par le 式神 shikigami et jamais par le maître, qui n'apprend lequel qu'en le cherchant.",
+    "echec": "Le métier ne s'arrête pas faute de fil. Il continue avec ce qu'il a sous lui."
+   },
+   {
+    "id": "chobuku-03",
+    "nom": "La phrase reprise juste",
+    "kanji": "無口童子 mukuchi-dōji",
+    "condition": "Ils sont neuf, hauts d'un mètre dix, lisses du nez au menton, et chantent par les os du crâne. Le maître doit dire devant eux, et devant le 補助監督 hojo-kantoku, une phrase vraie qu'il n'a jamais dite à personne, puis la répéter jusqu'à ce que le chœur la reprenne juste — tant qu'elle sonne faux, ils la reprennent faux.",
+    "prix": "La phrase leur appartient désormais : la mâchoire du maître se bloque à la première syllabe chaque fois qu'il tente de la reformer lui-même.",
+    "echec": "Ils la chantent quand même, et juste. Ils sont neuf, ils ne dorment pas, et ils le suivent."
+   },
+   {
+    "id": "chobuku-04",
+    "nom": "Le compte exact",
+    "kanji": "数取手 kazutorite",
+    "condition": "La main mesure dix mètres du poignet au majeur, paume ouverte vers le ciel, et compte en repliant les doigts un par un. Le maître doit annoncer le nombre exact des morts qu'il a causées, directes et indirectes, avant le repli du cinquième doigt ; au-delà d'une unité d'écart avec le compte de la main, tout recommence à zéro.",
+    "prix": "Elle compte à voix basse à trois pas derrière lui, en permanence. Le chiffre monte avec les années, et il l'entend monter.",
+    "echec": "Elle referme le cinquième doigt et corrige le total."
+   },
+   {
+    "id": "chobuku-05",
+    "nom": "Attendre qu'on appelle",
+    "kanji": "待合 machiai",
+    "condition": "Douze chaises de bois clair, un carrelage tiède qui sent le désinfectant refroidi : le 式神 shikigami est la salle entière et se déplace sur les pieds de ses sièges. Il faut s'asseoir et attendre d'être appelé six heures durant, sans se lever, sans parler, sans fermer les yeux ; personne n'appelle.",
+    "prix": "Chaque invocation prélève une heure de vie consciente : le maître la passe assis quelque part, ailleurs, et n'en rapporte rien.",
+    "echec": "Il se lève. On l'appelle à cet instant précis, et ce n'est pas son nom."
+   },
+   {
+    "id": "chobuku-06",
+    "nom": "Égaliser les deux plateaux",
+    "kanji": "秤頸 hakarikubi",
+    "condition": "Deux plateaux de cuivre pendent au bout d'un cou de deux mètres quarante, sans tête, qui oscille au moindre souffle. Le maître pose à gauche une chose qu'il ne peut pas remplacer, l'apporte lui-même, la nomme à voix haute, puis équilibre le plateau droit avec ce qu'il a sur lui jusqu'à ce que les deux soient à la même hauteur.",
+    "prix": "Ce qui est monté à gauche n'en redescend pas : le 式神 shikigami le garde dans la gorge, et le maître l'entend cliqueter quand la chose marche.",
+    "echec": "Le plateau droit touche terre. Le maître y monte à sa place."
+   },
+   {
+    "id": "chobuku-07",
+    "nom": "Trois cents points à froid",
+    "kanji": "縫子 nuiko",
+    "condition": "Elle mesure un mètre quatre-vingts, n'a pas de visage, et tient entre les dents une aiguille de vingt-deux centimètres. Elle choisit sur le maître une cicatrice ancienne, la rouvre proprement et la referme à sa façon — trois cents points, à froid, et il est interdit de retirer la main de l'ouvrage.",
+    "prix": "Chaque invocation consomme trois points ; quand il n'en reste plus, la couture s'ouvre, et la 反転術式 hanten-jutsushiki n'a aucune prise sur ce que la couseuse a fermé.",
+    "echec": "Elle finit son ouvrage. Elle coud simplement autre chose."
+   },
+   {
+    "id": "chobuku-08",
+    "nom": "Trier ce qui est à soi",
+    "kanji": "灰篩 haifurui",
+    "condition": "Cadre de fer, toile de crin d'un mètre vingt, chaude au toucher comme une peau de fièvre. Le maître doit brûler devant lui un bien qui lui importe, puis tamiser les cendres quatre heures à mains nues en séparant ce qui vient de l'objet de ce qui vient de lui ; le tamis vérifie le tri.",
+    "prix": "Le maître renonce au feu : toute flamme qu'il allume s'éteint dans la seconde, briquet, mèche ou 呪具 jugu incendiaire.",
+    "echec": "Il reste trop de lui dans le tas de gauche. Le tamis le passe."
+   },
+   {
+    "id": "chobuku-09",
+    "nom": "Accepter la mesure",
+    "kanji": "検地 kenchi",
+    "condition": "Un trépied de bois noir de deux mètres, surmonté d'une lunette sans verre, qui avance en pivotant sur ses pieds ferrés. Le maître se tient nu et immobile une heure quarante pendant qu'il le mesure, puis annonce à voix haute, devant le 補助監督 hojo-kantoku, le chiffre que la chose lui donne — même faux, même dérisoire.",
+    "prix": "Le chiffre devient vrai : la portée maximale du 呪力 juryoku du maître se fixe à cette valeur, en mètres, et rien ne l'augmentera plus.",
+    "echec": "Il conteste la mesure. Le 式神 shikigami le mesure alors autrement, et le chiffre suivant est une durée."
+   },
+   {
+    "id": "chobuku-10",
+    "nom": "Douze coups sans se boucher",
+    "kanji": "鐘腹 kanebara",
+    "condition": "Trois cent quarante kilos de bronze montés à hauteur de ventre sur un corps humain accroupi ; cela sent le métal froid et le lait tourné. Il faut se tenir dessous, front contre la robe de la cloche, mains le long du corps, pendant qu'elle sonne douze fois.",
+    "prix": "Le maître perd l'aigu. Les voix d'enfants lui parviennent comme un raclement, et les 呪霊 jurei qui parlent haut deviennent inaudibles avant d'être visibles.",
+    "echec": "Le treizième coup est intérieur."
+   },
+   {
+    "id": "chobuku-11",
+    "nom": "Le laisser prendre",
+    "kanji": "蠟客 rōkyaku",
+    "condition": "Deux mètres de cire tiède, habillé de neuf, poli comme une chose qu'on a beaucoup manipulée. Le maître doit le faire entrer chez lui, s'asseoir en face de lui une demi-heure sans parler, puis le laisser repartir avec un objet de la maison qu'il choisit seul — sans regarder lequel, sans le suivre.",
+    "prix": "Il revient le même jour chaque mois, invité ou non, et prend encore ; les portes fermées ne le concernent pas.",
+    "echec": "Il repart avec ce qu'il a choisi. Ce n'était pas un objet."
+   },
+   {
+    "id": "chobuku-12",
+    "nom": "Le nom qu'on jette",
+    "kanji": "立井 tatei",
+    "condition": "Un puits de pierre sèche de quatre mètres, debout sur son propre coffrage, ouvert vers le haut, d'où monte un courant d'air à onze degrés qui sent la craie mouillée. Le maître doit y prononcer le nom d'une personne vivante à laquelle il tient, et s'engager à ne plus jamais le prononcer nulle part.",
+    "prix": "La personne nommée cesse de se souvenir de lui. Elle reste en vie, en bonne santé, et le croise sans rien.",
+    "echec": "Le nom remonte. Il n'appartient plus à personne, et le maître répond quand on l'appelle ainsi."
+   },
+   {
+    "id": "chobuku-13",
+    "nom": "Nommer ce qui est mort",
+    "kanji": "骨櫛 honegushi",
+    "condition": "Un peigne d'os de trente-huit centimètres qui se déplace sur ses dents, à la manière d'un mille-pattes, et peigne le maître de la nuque aux talons pour retirer ce qui est mort. Pendant l'opération, celui-ci doit nommer à voix haute, un par un et devant témoin, tous ceux qu'il n'aime plus et prétend aimer encore.",
+    "prix": "Ce qui est nommé ne revient pas : le maître garde les personnes, perd l'affection, et sait exactement laquelle.",
+    "echec": "Le peigne continue de chercher du mort dans un corps qui en contient assez."
+   },
+   {
+    "id": "chobuku-14",
+    "nom": "Annoncer ses pas",
+    "kanji": "長廊 chōrō",
+    "condition": "Soixante mètres de couloir d'hôpital désaffecté, plafond bas, néon vert, qui avance en repliant ses murs derrière lui. Le maître annonce avant d'entrer le nombre exact de pas qu'il lui faudra, puis traverse sans corriger son allure ; à une unité près, le couloir s'allonge et il recommence par l'autre bout.",
+    "prix": "Le maître ne court plus. Son corps refuse toute allure supérieure au pas, en mission comme ailleurs.",
+    "echec": "Le couloir cesse d'avoir deux bouts."
+   }
+  ],
+  "regles": [
+   "Article premier. — Le 調伏 chōbuku s'accomplit seul ; toute assistance, même verbale, même émanant du 補助監督 hojo-kantoku, annule la subjugation et libère le 式神 shikigami de toute obligation envers le porteur.",
+   "Article 2. — Le porteur se présente à jeun, sans 呪具 jugu, sans recours à la 反転術式 hanten-jutsushiki ni au 領域展開 ryōiki tenkai ; l'emploi de l'un de ces moyens vaut aveu d'incapacité et le dossier est transmis aux 上層部 jōsōbu.",
+   "Article 3. — La condition posée par le 式神 shikigami ne se négocie pas, ne se reformule pas et ne s'acquitte pas par un tiers : elle est acceptée en entier ou refusée en entier.",
+   "Article 4. — Le 補助監督 hojo-kantoku assiste, consigne l'heure et la formule exacte, et n'intervient sous aucun prétexte ; son témoignage vaut acte de subjugation et ne l'oblige à aucun secours.",
+   "Article 5. — Le prix consenti lors du 調伏 chōbuku est définitif, ne relève pas de la 反転術式 hanten-jutsushiki et n'ouvre aucun recours au porteur qui n'en découvre l'étendue qu'après coup.",
+   "Article 6. — Un 式神 shikigami détruit est détruit : son nom est rayé une fois, à l'encre rouge, sur la fiche du porteur, et aucune demande de remplacement n'est instruite.",
+   "Article 7. — Le porteur qui échoue et survit dispose de trente jours pour se présenter de nouveau ; passé ce délai, ou au second échec, il est inscrit au registre des 呪霊 jurei probables et traité comme tel."
+  ]
+ },
+ "jugu": {
+  "outils": [
+   {
+    "id": "jugu-01",
+    "nom": "Le fil à plomb du maçon",
+    "kanji": "墜線",
+    "romaji": "tsuisen",
+    "objet": "Plomb d'acier de 340 g, ogive nickelée piquée de rouille, suspendu à 4,2 m de cordeau de lin tressé, raidi et noirci jusqu'à ne plus s'enrouler correctement. Le lin sent le suif et la cave.",
+    "charge": "Chargé sur le chantier d'un immeuble de Kōbe entre 1937 et 1961, par la peur répétée de vingt-six hommes travaillant sans harnais au-dessus du vide. Le 呪力 (juryoku) n'y est pas venu d'une mort mais d'une habitude : celle de regarder en bas avant de poser le pied.",
+    "usage": "Tendu à bout de bras, le cordeau désigne la verticale vraie sur une quarantaine de mètres, à travers les planchers, la roche et la chair. Ce que le fil traverse tombe : le porteur peut annuler l'appui d'un 呪霊 (jurei) sur un seul plan et le faire choir dans son propre axe. Contre un fléau sans masse propre, il fournit au moins un point d'accroche à frapper.",
+    "defaut": "Le fil ne distingue pas les corps. Tant qu'il est déroulé, le porteur pèse lui aussi selon le fil : chaque pas lui coûte comme s'il montait, et s'il lâche le cordeau à plus de trois mètres du sol, il descend à la vitesse que le fil a choisie.",
+    "rang": "ordinaire"
+   },
+   {
+    "id": "jugu-02",
+    "nom": "Les ciseaux de la ravaudeuse",
+    "kanji": "裁ち切り",
+    "romaji": "tachikiri",
+    "objet": "Ciseaux de tailleur en acier de Seki, 27 cm, lames dépolies, anneaux dissymétriques élargis par quarante ans de la même main. Une des deux lames a été réaffûtée si souvent qu'elle a perdu 4 mm de largeur et siffle en se refermant.",
+    "charge": "Chargés par une couturière d'Ōsaka qui a recousu, de 1945 à 1948, les vêtements des morts pour les rendre aux familles. 呪力 (juryoku) de deuil administratif : patient, méthodique, sans colère, renouvelé chaque matin.",
+    "usage": "Ils coupent le lien avant la matière. Une manche tranchée, un fléau perd la liaison entre le membre et le reste : le morceau ne se recolle pas et ne repousse pas dans l'heure. Sur un 式神 (shikigami) adverse, l'entaille sépare la créature de la voix de son maître pendant dix à quinze secondes.",
+    "defaut": "Les ciseaux exigent d'être refermés à chaque coup, complètement, lames jointes. Un porteur qui tranche en biais et laisse les branches écartées coupe alors quelque chose de son côté à lui — une phrase, un nom de collègue, la reconnaissance d'un visage. Cela n'est jamais rendu.",
+    "rang": "ordinaire"
+   },
+   {
+    "id": "jugu-03",
+    "nom": "Le thermomètre de la salle des contagieux",
+    "kanji": "七度七分",
+    "romaji": "shichido-shichibu",
+    "objet": "Thermomètre clinique japonais d'avant-guerre, tige de verre de 12 cm, échelle 35–42, colonne de mercure figée sur 37,7. Le verre reste froid même serré dans la main. Une fêlure capillaire court sur 2 cm sans jamais laisser fuir le mercure.",
+    "charge": "Chargé dans le pavillon d'isolement d'un hôpital de Niigata, hiver 1958, par des parents qui relevaient la température de leurs enfants toutes les heures pendant onze jours. 呪力 (juryoku) d'espoir mesuré, chiffré, renouvelé et déçu.",
+    "usage": "Placé au contact d'un corps — vivant, maudit, ou d'un fragment de 呪霊 (jurei) — il fixe sa température à 37,7 °C pour environ quatre minutes. Les fléaux qui opèrent par le froid, la combustion ou la putréfaction sont interrompus net : beaucoup de choses ne savent plus quoi faire d'un corps tiède.",
+    "defaut": "Il ne prend qu'une mesure à la fois, et il la prend aussi sur le porteur. Pendant ces quatre minutes, celui-ci est maintenu au même chiffre : il ne peut ni transpirer, ni frissonner, ni employer une 反転術式 (hanten-jutsushiki) pour se réchauffer. À la troisième utilisation dans la même journée, la colonne descend d'un dixième et ne remonte plus.",
+    "rang": "ordinaire"
+   },
+   {
+    "id": "jugu-04",
+    "nom": "Le cachet de réception",
+    "kanji": "受理印",
+    "romaji": "juri-in",
+    "objet": "Cachet cylindrique en buis, 15 mm de diamètre, portant en négatif un nom de service et non un nom d'homme : 「受理」. Le tampon encreur qui l'accompagne est un boîtier d'aluminium cabossé dont l'encre rouge a séché en croûte et qu'il faut humecter de salive avant chaque usage.",
+    "charge": "Chargé au guichet d'un bureau de conscription devenu bureau d'indemnisation, de 1943 à 1979. Trente-six ans de 呪力 (juryoku) déposé par des gens à qui l'on répondait que leur dossier était en état. Aucun mort ne s'y rattache : c'est un objet chargé d'attente en file.",
+    "usage": "Apposé sur une surface — mur, sol, peau, membrane d'un fléau — il rend cette surface administrativement close pendant huit minutes. Rien ne la franchit dans le sens de la sortie : un 呪霊 (jurei) tamponné ne peut plus quitter son enveloppe, un passage tamponné ne s'ouvre plus, une plaie tamponnée cesse de saigner.",
+    "defaut": "L'encre exige une signature. Le porteur doit prononcer son propre nom au moment de l'apposition, et ce nom est enregistré ailleurs. Les 補助監督 (hojo-kantoku) qui ont manipulé l'objet rapportent que leur courrier se met à arriver en double, puis que le double contient des convocations qu'ils n'ont jamais reçues.",
+    "rang": "ordinaire"
+   },
+   {
+    "id": "jugu-05",
+    "nom": "L'équerre du charpentier de sanctuaire",
+    "kanji": "曲尺",
+    "romaji": "kanejaku",
+    "objet": "Équerre d'acier plat, branches de 50 et 25 cm, graduée en shaku sur une face et en mesure oblique sur l'autre. La petite branche est bleuie par le feu sur toute sa longueur et reste tiède, autour de 31 °C, sans aucune source de chaleur.",
+    "charge": "Retirée de l'incendie d'un sanctuaire en reconstruction, 1971. Le charpentier est mort à l'intérieur en vérifiant un assemblage; on a retrouvé l'équerre encore appliquée contre le tenon. 呪力 (juryoku) d'exactitude tenue contre la panique.",
+    "usage": "Appliquée sur une structure — bâti, ossature, articulation d'un 式神 (shikigami) — elle révèle l'assemblage : quelles pièces se tiennent, et par quel tenon. Tant que le porteur la maintient en contact, il voit le seul point dont la destruction fait tomber le reste. Elle ne frappe pas; elle désigne.",
+    "defaut": "Elle mesure aussi du côté de celui qui la tient. Une main qui l'a serrée plus de dix minutes devient hors d'équerre : les doigts ne se referment plus à angle droit, la prise sur une arme glisse d'un demi-degré, et rien ne corrige cela. Les artisans du 呪術高専 (jujutsu-kōsen) la tiennent avec un chiffon et changent de main.",
+    "rang": "ordinaire"
+   },
+   {
+    "id": "jugu-06",
+    "nom": "Le rabot du fabricant de cercueils",
+    "kanji": "際鉋",
+    "romaji": "kiwaganna",
+    "objet": "Rabot à recaler japonais, semelle de chêne blanc de 21 cm, fer forgé de 42 mm, coin de bois remplacé deux fois. Une couche de copeaux tassés dans la lumière n'a jamais pu être dégagée : ils sont durs comme de l'os et sentent le cheveu brûlé.",
+    "charge": "Chargé dans un atelier de cercueils de Kanazawa entre 1955 et 1968 par un homme dont le métier était d'ajuster les couvercles aux corps. 呪力 (juryoku) de finition : le besoin, répété quatre mille fois, que la chose ferme bien.",
+    "usage": "Passé sur une surface, il enlève ce qui dépasse, au sens large. Excroissance de fléau, membre en trop, masse de 呪力 (juryoku) mal fixée partent en copeau et ne se reforment pas dans l'heure. Il est particulièrement efficace contre les 呪霊 (jurei) qui gagnent en volume au fil d'un combat : il les ramène à leur plan.",
+    "defaut": "Il ne travaille que dans le sens du fil, et le sens du fil est décidé par l'objet, non par le porteur. Pris à contresens, le fer accroche et arrache; le premier arrachement se produit dans l'avant-bras qui pousse. Deux utilisateurs référencés y ont laissé le tendon extenseur du pouce.",
+    "rang": "ordinaire"
+   },
+   {
+    "id": "jugu-07",
+    "nom": "La capote de l'agent de nuit",
+    "kanji": "夜行外套",
+    "romaji": "yakō-gaitō",
+    "objet": "Manteau de service ferroviaire en drap de laine noire, taille 4, doublure de coton gris, 3,1 kg, sept boutons dont deux dépareillés. L'épaule droite est lustrée par le frottement d'une sacoche disparue. L'intérieur conserve une odeur de charbon froid et de phénol.",
+    "charge": "Porté par quatre agents successifs sur une ligne de nuit du Tōhoku entre 1949 et 1974. Trois d'entre eux ont ramassé des corps sur la voie. Le 呪力 (juryoku) qui l'imprègne est celui de la veille : rester éveillé pendant que tout le monde dort.",
+    "usage": "Boutonné entièrement, il rend le porteur inintéressant. Les 呪霊 (jurei) de rang inférieur cessent de le suivre — non parce qu'ils ne le voient plus, mais parce qu'il ressemble à du personnel. Il permet de traverser une zone infestée, de relever un blessé, d'installer un rideau. Pas de se battre.",
+    "defaut": "Il ne fonctionne que tant que le porteur travaille. Dès qu'il s'assied, s'arrête ou porte un coup, la protection tombe et il redevient d'un coup la seule chose qui bouge dans le couloir. Les rapports notent un second effet : au bout de quelques heures, le porteur trouve normal de faire des rondes, et il faut le lui interdire à voix haute.",
+    "rang": "ordinaire"
+   },
+   {
+    "id": "jugu-08",
+    "nom": "La seringue du poste de transfusion",
+    "kanji": "瀉血管",
+    "romaji": "shaketsu-kan",
+    "objet": "Seringue de verre borosilicaté de 20 ml, piston rodé, embase métallique, aiguille de 1,2 mm réaffûtée à la pierre. Le corps est gradué jusqu'à 20 mais le piston bute à 17. Approchée d'un fléau, le verre tinte : une note aiguë et brève, toujours la même.",
+    "charge": "Chargée dans un poste de transfusion mobile en 1946 par un interne qui a prélevé sur lui-même jusqu'à l'anémie pour un patient mort le lendemain. 呪力 (juryoku) de don qui n'a servi à rien, et que personne n'a réclamé.",
+    "usage": "Elle prélève du 呪力 (juryoku) à la place du sang. Plantée dans une masse maudite, elle en tire jusqu'à 17 ml d'un liquide noir et tiède : de quoi affaiblir sensiblement un 呪霊 (jurei) de rang 3, ou recharger un autre 呪具 (jugu) pour une dizaine de minutes.",
+    "defaut": "Le contenu doit être réinjecté ou détruit dans les vingt minutes. Passé ce délai, il cherche un corps, et le corps le plus proche est celui qui tient la seringue. Les porteurs expérimentés le vident dans du gros sel; les autres développent à l'avant-bras un réseau de veines qui ne correspond à aucune anatomie.",
+    "rang": "ordinaire"
+   },
+   {
+    "id": "jugu-09",
+    "nom": "La courroie de la filature",
+    "kanji": "送り革",
+    "romaji": "okuri-gawa",
+    "objet": "Courroie plate en cuir de bœuf, 6,4 m de long, 90 mm de large, épissure à agrafes de laiton, tannée et poissée jusqu'au noir. À quarante centimètres de l'épissure, le cuir garde en creux l'empreinte de quatre doigts.",
+    "charge": "Chargée dans une filature de Nagano en 1932 : une ouvrière de dix-sept ans, prise par la courroie, a fait quatre tours d'arbre avant l'arrêt de la machine. 呪力 (juryoku) d'entraînement — ce qui est saisi continue, que la machine s'arrête ou non.",
+    "usage": "Lancée ou nouée, elle transmet le mouvement. Ce qu'elle enserre reçoit la vitesse de ce qu'elle enserre à l'autre bout : on arrache un fléau de son ancrage en le couplant à une masse en chute, on immobilise une chose rapide en la couplant à une chose immobile. Elle ne coupe pas, elle attelle.",
+    "defaut": "Elle ignore la marche arrière et refuse d'être détachée sous tension. Tant qu'un couple est établi, il faut que quelque chose cède : la cible, l'ancrage, ou le bras du porteur. Le rapport du 補助監督 (hojo-kantoku) de secteur tient en une phrase : « ne jamais s'en servir en portant des gants. »",
+    "rang": "ordinaire"
+   },
+   {
+    "id": "jugu-10",
+    "nom": "Le carnet à souches du recensement",
+    "kanji": "複写簿",
+    "romaji": "fukushabo",
+    "objet": "Carnet à souches de 200 feuillets, format B6, couverture cartonnée verte, carbones intercalaires encore utilisables. Cent quatre feuillets ont été arrachés; les souches ne portent plus que les numéros. L'encre violette du carbone laisse sur les doigts une trace que le savon n'enlève pas.",
+    "charge": "Chargé par un service de recensement des disparus après un glissement de terrain, 1966. Le 呪力 (juryoku) vient de ce qu'on y a écrit les noms de gens que l'on n'a jamais retrouvés, et que le carbone, lui, en a gardé le double.",
+    "usage": "Ce qui est inscrit sur le feuillet apparaît en double sur la souche, et le double existe. Un porteur peut y écrire un objet qu'il tient — talisman, clé, dose de 呪力 (juryoku) — et en obtenir une copie unique, valable environ deux heures avant de pâlir. On l'emploie surtout pour dupliquer un support de sceau au moment de refermer un lieu.",
+    "defaut": "Le carnet n'accepte pas qu'on écrive deux fois la même chose. Un porteur qui insiste voit son écriture changer, puis sa signature devenir illisible pour les autres. Il reste quatre-vingt-seize feuillets, et personne au 呪術高専 (jujutsu-kōsen) ne veut savoir ce qui arrive au dernier.",
+    "rang": "ordinaire"
+   },
+   {
+    "id": "jugu-11",
+    "nom": "Le diapason de l'institut des sourds",
+    "kanji": "四三五",
+    "romaji": "yon-san-go",
+    "objet": "Diapason d'acier accordé à 435 Hz, branches de 11 cm, pied taraudé, poinçon d'un facteur d'orgues lyonnais, importé en 1904. Le métal est piqué, la note est restée juste. Frappé, il ne s'éteint pas au bout de vingt secondes comme les autres : il tient un peu plus de quatre minutes.",
+    "charge": "Chargé dans la salle de répétition d'un institut de sourds-muets, 1922–1940 : les élèves posaient les doigts à plat sur la table pour sentir la note qu'ils n'entendraient jamais. 呪力 (juryoku) de ce qui est perçu par le corps et jamais par l'oreille.",
+    "usage": "Posé sur une surface dure, il impose sa fréquence à tout ce qui y est en contact. Les 呪霊 (jurei) qui se maintiennent par oscillation — brume, essaim, chœur, chose qui bourdonne — se remettent au pas du diapason et deviennent, le temps de la note, un objet unique, localisé et frappable. C'est un instrument de mise au point, pas de destruction.",
+    "defaut": "La note prend aussi le porteur. Pendant les quatre minutes, il n'entend rien d'autre : ni la voix d'un coéquipier, ni le déclenchement d'un 領域展開 (ryōiki tenkai). Deux morts d'exorcistes gradés sont imputées non au fléau, mais au fait que l'avertissement n'a pas été entendu.",
+    "rang": "gradé"
+   },
+   {
+    "id": "jugu-12",
+    "nom": "La navette vide",
+    "kanji": "空杼",
+    "romaji": "karahi",
+    "objet": "Navette de métier à tisser en buis, 33 cm, extrémités ferrées, canette absente. Le corps est poli jusqu'au brillant d'ongle et porte, gravés au canif, dix-neuf traits groupés par cinq. Elle pèse 610 g — beaucoup trop pour du buis creux.",
+    "charge": "Chargée dans une manufacture de soie du Gunma. La tisserande comptait ses journées au canif; le compte s'arrête au dix-neuvième trait et on ne l'a plus revue à l'atelier. 呪力 (juryoku) du compte tenu jusqu'au bout, puis abandonné par quelqu'un d'autre.",
+    "usage": "Lancée à travers un espace vide, elle laisse derrière elle un fil de 呪力 (juryoku) tendu, invisible, résistant à la traction et coupant en glissement. Vingt lancers construisent une chaîne où un 式神 (shikigami) lourd s'englue et se tranche. En duel, elle sert à border : on interdit une direction, puis une autre, jusqu'à ce qu'il n'en reste plus.",
+    "defaut": "La navette veut une trame et la prend où elle peut. Si le porteur cesse de lancer avant d'avoir bouclé un motif fermé, le fil se cherche un point d'attache dans le corps le plus chaud à portée. Les tisseuses du 呪術高専 (jujutsu-kōsen) travaillent par séries de cinq et ne s'arrêtent jamais à quatre.",
+    "rang": "gradé"
+   },
+   {
+    "id": "jugu-13",
+    "nom": "La balance du préparateur",
+    "kanji": "等分秤",
+    "romaji": "tōbunbakari",
+    "objet": "Balance à fléau de pharmacien, laiton et acajou, portée 200 g, plateaux de 9 cm, sous cloche de verre fêlée. Le jeu de poids est complet, sauf le poids de 1 g : il a été remplacé par une phalange d'index sciée et vernie, qui pèse exactement 1 g.",
+    "charge": "Chargée dans une officine de Kure où le préparateur a, huit ans durant, coupé les doses pour faire durer les stocks. Des gens sont morts de trop peu, d'autres plus tard de trop. 呪力 (juryoku) de l'équité falsifiée, tenue à la décimale.",
+    "usage": "Les deux plateaux couplent deux cibles désignées par contact. Tout ce que l'une reçoit — dégâts, poison, 呪力 (juryoku) dépensé — se répartit à parts égales entre les deux, jusqu'à rupture du couplage ou bris de la cloche. Un exorciste blessé peut ainsi partager sa mort avec ce qui la lui donne.",
+    "defaut": "La balance n'admet pas de plateau vide. Si l'une des deux cibles disparaît avant l'autre, le porteur devient d'office le plateau manquant, où qu'il se trouve. Deux exorcistes gradés ont été perdus lors de l'incident de 1988 pour cette raison; le rapport tient en une ligne : « le second plateau était la salle. »",
+    "rang": "gradé"
+   },
+   {
+    "id": "jugu-14",
+    "nom": "Le rasoir du barbier des morts",
+    "kanji": "逆剃",
+    "romaji": "sakazori",
+    "objet": "Rasoir droit à manche d'écaille, lame de 7,5 cm en acier suédois, dos gravé d'un numéro de boutique. Le tranchant ne s'émousse pas et chauffe légèrement à l'usage, autour de 39 °C. La lanière de cuir qui l'accompagne est indispensable et sent la lavande éventée.",
+    "charge": "Chargé dans un salon de Yokohama où l'on rasait les morts avant la mise en bière, 1930–1962. Le barbier répétait qu'un homme mal rasé n'est pas encore parti. 呪力 (juryoku) de soin apporté à ce qui ne le sent plus.",
+    "usage": "Il coupe à rebours du sens : ce qu'il tranche n'est pas la matière présente, mais la dernière minute de la cible. Une entaille annule la régénération, la reconstitution ou le repli qu'un 呪霊 (jurei) vient d'accomplir et le ramène à l'état où il se trouvait soixante secondes plus tôt, plaies comprises. C'est l'un des rares 呪具 (jugu) efficaces contre une 反転術式 (hanten-jutsushiki) adverse.",
+    "defaut": "La lame doit être repassée sur le cuir entre chaque coup : dix allers-retours, sans exception. Le geste dure quatre secondes et se fait à découvert. Un porteur qui saute le repassage tranche au coup suivant sa propre dernière minute — il perd ce qu'il vient de faire, y compris s'il venait de parer.",
+    "rang": "gradé"
+   },
+   {
+    "id": "jugu-15",
+    "nom": "La lampe de sûreté du puits Onze",
+    "kanji": "安全燈",
+    "romaji": "anzentō",
+    "objet": "Lampe de mineur à flamme, laiton et treillis de cuivre, 26 cm, verre remplacé par un modèle plus récent mal ajusté. Elle brûle sans combustible depuis 1959, d'une flamme de 3 cm bleue à la base, qui ne dégage aucune chaleur : le laiton reste à la température de la pièce.",
+    "charge": "Chargée au fond d'un puits de Kyūshū après un coup de grisou. Onze hommes ont vécu quarante heures dans le noir en se relayant pour tenir la lampe et surveiller si la flamme montait. 呪力 (juryoku) de vigilance partagée, distribuée par tours de garde.",
+    "usage": "La flamme change de hauteur en présence de 呪力 (juryoku) non déclaré. Elle monte devant un 呪霊 (jurei) dissimulé, se couche devant un 領域展開 (ryōiki tenkai) en préparation, et s'aplatit à 2 mm quand un 式神 (shikigami) non soumis au 調伏 (chōbuku) se trouve dans la pièce. C'est le meilleur instrument de détection non technique dont dispose l'institution.",
+    "defaut": "Le treillis a été ouvert une fois, en bas, et la lampe a gardé cette manière de laisser passer. Celui qui la porte plus de deux heures d'affilée devient lui-même détectable, et les fléaux du secteur convergent vers la seule flamme du couloir. On la confie aux 補助監督 (hojo-kantoku) en rotation, jamais aux éclaireurs isolés.",
+    "rang": "gradé"
+   },
+   {
+    "id": "jugu-16",
+    "nom": "L'écarteur du bloc de guerre",
+    "kanji": "開創器",
+    "romaji": "kaisōki",
+    "objet": "Écarteur autostatique en acier inoxydable, crémaillère à neuf crans, valves de 40 mm, 780 g. Le chrome est terni par une centaine de passages à l'autoclave. Serré, il produit un cliquet très sec, très propre, et il ne se referme jamais seul.",
+    "charge": "Chargé dans un bloc de chirurgie de guerre où l'on opérait sans anesthésie suffisante, 1944–1945. Les infirmières disaient s'en souvenir au bruit avant de s'en souvenir à la vue. 呪力 (juryoku) de ce qui est tenu ouvert pendant que quelqu'un travaille dedans.",
+    "usage": "Posé sur une brèche — plaie de fléau, fissure de mur, couture d'un espace maudit, entaille faite par un autre 呪具 (jugu) — il l'écarte cran par cran et l'empêche de se refermer. Neuf crans ouvrent un passage d'environ 40 cm dans un 呪霊 (jurei) de rang 2, le temps qu'un coéquipier travaille à l'intérieur. C'est un outil d'équipe, sans aucun intérêt pour un homme seul.",
+    "defaut": "Ce qui est tenu ouvert n'est pas anesthésié. La cible sait exactement où elle est ouverte et vers quoi, et son attention entière se reporte sur celui qui a posé l'écarteur, non sur celui qui frappe. La procédure veut que le poseur soit le plus rapide de l'équipe, et non le plus solide.",
+    "rang": "gradé"
+   },
+   {
+    "id": "jugu-17",
+    "nom": "Le poumon d'acier numéro neuf",
+    "kanji": "鉄肺・第九号",
+    "romaji": "tetsupai daikyūgō",
+    "objet": "Respirateur à pression négative, cylindre d'acier riveté de 2,10 m sur 68 cm, hublots de verre épais, collerette de caoutchouc durci, soufflet et moteur déposés. Vide, il inspire et expire treize fois par minute, audible à quinze mètres, le caoutchouc se creusant à chaque cycle. Masse 340 kg; conservé horizontal, scellé en quatre points, sous garde permanente.",
+    "charge": "Neuvième appareil d'un pavillon de poliomyélite, 1953. Une coupure de courant de quarante heures a laissé six enfants à l'intérieur des machines, conscients, incapables de respirer seuls. Ce 呪物 (jubutsu) n'est pas chargé de leur peur : il est chargé de leur effort. Ils ont continué d'essayer jusqu'au bout.",
+    "usage": "Un corps introduit et refermé dans le cylindre respire à la place de tout ce qui, alentour, respire déjà. Sur une portée mesurée à 300 m, tout 呪霊 (jurei) fonctionnant par souffle, aspiration, brume ou parole est privé de son cycle et se fige. Les 上層部 (jōsōbu) ont autorisé trois emplois depuis 1970, chaque fois contre un fléau de rang spécial, chaque fois avec un volontaire.",
+    "defaut": "Le cylindre ne s'ouvre pas de l'intérieur, et il n'a jamais rendu personne intact. Sur les trois volontaires, deux sont morts dans l'appareil au bout de quarante heures — exactement la durée de la coupure — et le troisième en est ressorti respirant treize fois par minute, pour le reste de sa vie, sans pouvoir changer de rythme. Le dossier classe l'objet comme consommable et le volontaire comme dépense.",
+    "rang": "scellé"
+   },
+   {
+    "id": "jugu-18",
+    "nom": "Le tatami de la cabane d'accouchement",
+    "kanji": "産畳",
+    "romaji": "ubudatami",
+    "objet": "Un tatami unique, 88 × 176 cm, 55 mm d'épaisseur, jonc décoloré jusqu'au blanc paille, bordure de coton noir rongée. La face inférieure porte deux cent onze marques à l'encre, une par naissance, dont trente-neuf sont cerclées. Il est tiède : 34 à 36 °C sur toute sa surface, en toute saison, quelle que soit la pièce.",
+    "charge": "Plancher d'une cabane d'accouchement d'un village de la côte du Tōhoku, en service de 1811 à 1904. On y naissait; les mauvaises années, on y remettait au monde à l'envers ce qu'on ne pouvait pas nourrir. Les trente-neuf cercles ne marquent pas des morts d'enfants : ils marquent des décisions.",
+    "usage": "Ce que l'on dépose sur le tatami est expulsé de ce qui le contient. Un 呪霊 (jurei) y perd son enveloppe et se retrouve à nu; un possédé est séparé de ce qui l'habite; un 呪具 (jugu) rend d'un seul coup tout le 呪力 (juryoku) dont il est chargé. Le processus dure de huit à quarante minutes, accompagné d'un bruit de linge mouillé et d'une odeur de sang et de riz cuit.",
+    "defaut": "L'objet ne distingue pas le contenant du contenu et n'accepte pas d'être interrompu. Une 生得術式 (seitoku-jutsushiki) est, de son point de vue, quelque chose qu'un corps contient : un exorciste agenouillé dessus plus de vingt secondes commence à rendre la sienne, et elle ne revient pas. On le conserve roulé, debout, ligaturé de six cordes, dans une réserve où il est interdit de s'asseoir.",
+    "rang": "scellé"
+   }
+  ]
  }
 }
