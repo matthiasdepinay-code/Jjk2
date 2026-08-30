@@ -39,6 +39,20 @@
 
     /* raccourcis */
     document.addEventListener('keydown', e => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const cible = e.target;
+      if (cible && (cible.tagName === 'INPUT' || cible.tagName === 'TEXTAREA')) return;
+      /* le générateur se pilote au clavier : on relance sans viser un bouton */
+      const surFiche = JJK.ui.actif() === 'ecran-revelation';
+      if (surFiche && (e.key === 'r' || e.key === 'R')) {
+        JJK.ecrans.toutRetirer(); JJK.ecrans.revelation({ rapide: true }); return;
+      }
+      if (surFiche && (e.key === 'v' || e.key === 'V')) {
+        const G = JJK.jeu;
+        G.variante = JJK.taxo.codeVariante((G.variante || 0) + 1);
+        JJK.ecrans.assembler(); JJK.ecrans.revelation({ rapide: true }); return;
+      }
+      if (surFiche && (e.key === 'g' || e.key === 'G')) { JJK.ecrans.galerie(); return; }
       if (e.key === 'Escape' && JJK.ui.actif() !== 'ecran-duel') JJK.ecrans.registre();
       if (e.key >= '1' && e.key <= '9' && JJK.ui.actif() === 'ecran-duel') {
         const b = document.querySelectorAll('#ecran-duel .acte');

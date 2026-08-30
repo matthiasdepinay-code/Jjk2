@@ -373,6 +373,37 @@
     const contre = R.fork('contre').pick(sousListe('affectation', 'contres')) || '';
     const jubaku = tirerJubaku(code, R.fork('jubaku'));
 
+    /* ---- ce par quoi la loi passe pour atteindre le réel --------------
+       Déclarer « familier » attache des 式神 : un pivot ou un majeur, qui
+       tient la technique, et deux mineurs qu'on sort souvent. Chacun vient
+       avec l'épreuve de 調伏 par laquelle on l'a soumis. Déclarer « objet »
+       attache un 呪具, qu'on peut vous prendre.                          */
+    let familiers = null, outil = null;
+    if (decl.manifestation === 'familier') {
+      const tous = sousListe('shikigami', 'shikigami');
+      if (tous.length) {
+        const Rs = R.fork('shikigami');
+        const parRang = r2 => tous.filter(x => x.rang === r2);
+        const hauts = parRang('pivot').concat(parRang('majeur'));
+        const affines = hauts.filter(x => x.archetype === (loi.archetype || 'seuil'));
+        const tete = choisir(affines.length ? affines : (hauts.length ? hauts : tous), 'sk:' + code, Rs, 2);
+        const petits = tous.filter(x => x.rang === 'mineur' && x.id !== (tete || {}).id);
+        const deux = Rs.sample(petits.length >= 2 ? petits : tous.filter(x => x.id !== (tete || {}).id), 2);
+        const epreuves = sousListe('chobuku', 'epreuves');
+        familiers = [tete].concat(deux).filter(Boolean).map((x, i) => ({
+          shikigami: x,
+          epreuve: epreuves.length ? epreuves[cyrb128('chobuku:' + code + ':' + x.id)[2] % epreuves.length] : null,
+          ordre: i,
+        }));
+      }
+    } else if (decl.manifestation === 'objet') {
+      const tous = sousListe('jugu', 'outils');
+      if (tous.length) {
+        const nobles = tous.filter(x => x.rang === 'gradé' || x.rang === 'scellé');
+        outil = choisir(nobles.length ? nobles : tous, 'jg:' + code, R.fork('jugu'), 3);
+      }
+    }
+
     return {
       declaration: decl, code, codeBase, variante: v,
       nom, nomJp, romaji, couleur,
@@ -385,6 +416,7 @@
       revers: loi.inversion || '',
       maximum: loi.maximum || '',
       kakucho, kanri, kokusen, affectation, contre, jubaku,
+      manifestation: decl.manifestation || 'directe', familiers, outil,
       tenu,
     };
   }

@@ -20,6 +20,7 @@
     { id: 'siege',      tags: ['gorge', 'sang', 'nerf', 'os'] },
     { id: 'faille',     tags: ['condition_stricte', 'epuisement', 'retour', 'lisibilite'] },
     { id: 'territoire', tags: ['administration', 'domestique', 'transit', 'clinique'] },
+    { id: 'manifestation', tags: ['directe', 'familier', 'objet', 'terrain'] },
   ];
   const AXE = {};
   AXES.forEach(a => { AXE[a.id] = a; });
@@ -67,6 +68,10 @@
     nerf:  /nerf|plexus|oreille interne|papille|tympan|lacrymal|rétine/i,
     os:    /vertèbre|iliaque|fontanelle|plantaire|calcanéen|poignet|fémur|os\b|crête/i,
   };
+
+  /* familles de 式神 par rang, et d'outils par rang : le tirage doit sortir
+     un ensemble cohérent, pas trois pivots ou trois babioles */
+  const RANGS_SHIKIGAMI = ['pivot', 'majeur', 'mineur'];
 
   /* ---- ce que chaque réponse fait à la mécanique -----------------------
      Un « lean » déplace la répartition des cinq axes du corps.
@@ -132,6 +137,16 @@
       transit:        { lean: { flux: 1.2 }, mod: { domaineCout: -1 }, note: "Territoire de transit : ouverture à −1 énergie." },
       clinique:       { lean: { inversion: 1.2 }, mod: { soinMult: 1.20 }, note: "Territoire clinique : la technique inversée rend 20 % de plus." },
     },
+    manifestation: {
+      directe:  { lean: { tranchant: 1.25 }, mod: { degatsMult: 1.15 },
+        note: "Application directe : +15 % de dégâts. Rien ne s'interpose, rien ne peut vous être pris." },
+      familier: { lean: { flux: 1.35 }, mod: { familiers: true, degatsMult: 0.88, energieBonus: 1 },
+        note: "式神 : −12 % en direct, +1 呪力 par battement, mais ils portent la loi à votre place. Un 式神 détruit ne revient jamais." },
+      objet:    { lean: { tranchant: 1.3 }, mod: { outil: true, degatsMult: 1.25, degatsRecusMult: 1.10 },
+        note: "呪具 : +25 % de dégâts, +10 % de dégâts subis. L'objet porte la charge, et on peut vous le prendre." },
+      terrain:  { lean: { vigueur: 1.35 }, mod: { domaineTours: 1, domaineMult: 1.15, degatsMult: 0.95 },
+        note: "La loi s'installe dans le lieu : territoire plus long et plus lourd, −5 % en dehors. Elle met du temps à prendre." },
+    },
   };
 
   function effet(axe, tag) {
@@ -156,13 +171,24 @@
     }
     return n.toString(36).toUpperCase().padStart(4, '0');
   }
-  function declarationDepuisCode(code) {
+  /* Un code R1 ne portait que dix rubriques : la manifestation n'existait
+     pas encore. On le relit quand même, en la posant à « directe ».      */
+  function declarationDepuisCode(code, axesLus) {
     let n = parseInt(String(code || '').trim(), 36);
     if (!isFinite(n) || n < 0) return null;
+    const liste = axesLus || AXES;
     const brut = [];
-    for (let i = AXES.length - 1; i >= 0; i--) {
-      brut[i] = AXES[i].tags[n % 4];
+    for (let i = liste.length - 1; i >= 0; i--) {
+      brut[i] = liste[i].tags[n % 4];
       n = Math.floor(n / 4);
+    }
+    if (liste !== AXES) {
+      const out0 = {};
+      liste.forEach((a, i) => { out0[a.id] = brut[i]; });
+      AXES.forEach(a => { if (!out0[a.id]) out0[a.id] = a.tags[0]; });
+      const ordonne = {};
+      AXES.forEach(a => { ordonne[a.id] = out0[a.id]; });
+      return ordonne;
     }
     /* on reconstruit dans l'ordre du formulaire : un dossier se lit de haut
        en bas, et deux dossiers identiques doivent se comparer à l'identique */
@@ -201,7 +227,7 @@
   const VARIANTES = 36;
   function codeVariante(v) { return (((v | 0) % VARIANTES) + VARIANTES) % VARIANTES; }
 
-  const VERSION = 'R1';
+  const VERSION = 'R2';
   function dossierCode(decl, poids, archetype, variante) {
     const v = codeVariante(variante || 0);
     return VERSION + '-' + codeDeclaration(decl) + '-' + codeCorps(poids, archetype) +
@@ -210,12 +236,14 @@
   function lireDossierCode(s) {
     const m = /^([A-Z0-9]+)-([A-Z0-9]+)-([A-Z0-9]+)(?:-([A-Z0-9]))?$/i.exec(String(s || '').trim());
     if (!m) return null;
-    const decl = declarationDepuisCode(m[2]);
+    const version = m[1].toUpperCase();
+    const anciens = version === 'R1' ? AXES.filter(a => a.id !== 'manifestation') : null;
+    const decl = declarationDepuisCode(m[2], anciens);
     const corps = corpsDepuisCode(m[3]);
     if (!decl || !corps) return null;
     const v = m[4] ? parseInt(m[4], 36) : 0;
     return {
-      version: m[1].toUpperCase(), declaration: decl, poids: corps.poids,
+      version: version, declaration: decl, poids: corps.poids,
       archetype: corps.archetype, variante: isFinite(v) ? codeVariante(v) : 0,
     };
   }
@@ -224,6 +252,6 @@
     AXES, AXE, AXES_CORPS, ARCH_LISTE, ESSENCES, ARCHETYPES, PORTEES, CONDITIONS,
     TERRITOIRES, SIEGES, EFFETS, effet, tagValide,
     codeDeclaration, declarationDepuisCode, codeCorps, corpsDepuisCode,
-    dossierCode, lireDossierCode, codeVariante, VERSION, VARIANTES,
+    dossierCode, lireDossierCode, codeVariante, VERSION, VARIANTES, RANGS_SHIKIGAMI,
   };
 })(window);
