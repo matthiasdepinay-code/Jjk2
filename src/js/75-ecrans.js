@@ -12,7 +12,7 @@
   const G = {
     porteur: '', declaration: null, poids: null, archetype: 'seuil',
     tech: null, ref: null, corps: null, mods: null, variante: 0,
-    serments: [], maturation: 0, descente: 0, grade: null,
+    serments: [], maturation: 0, descente: 0, grade: null, modeGalerie: 'variantes',
     catalogue: [], reponsesExamen: [],
   };
   JJK.jeu = G;
@@ -554,50 +554,97 @@
   }
 
   /* =====================================================================
-     GALERIE — six 生得術式 issus de la même déclaration
+     GALERIE — deux planches : variantes d'une déclaration, ou tirages
+     entièrement neufs. C'est la surface de feuilletage du générateur.
      ===================================================================== */
-  function galerie() {
+  let planche = [];
+
+  function galerie(mode) {
+    const m = mode || G.modeGalerie || 'variantes';
+    G.modeGalerie = m;
     const n = U.montrer('ecran-galerie');
     n.innerHTML = '';
-    n.appendChild(el('span', 'etiquette rouge', '生得術式 · tirages issus de votre déclaration'));
-    n.appendChild(U.titreRituel('Six lois <em>possibles</em>'));
+    n.appendChild(el('span', 'etiquette rouge', '生得術式 · planche de tirage'));
+    n.appendChild(U.titreRituel(m === 'variantes' ? 'Six lois <em>possibles</em>' : 'Six lois <em>quelconques</em>'));
+
+    const onglets = el('div', 'onglets');
+    [['variantes', 'Variantes de votre déclaration'], ['hasard', 'Tirages entièrement neufs']].forEach(([k, lib]) => {
+      const b = el('button', 'onglet' + (k === m ? ' actif' : ''), lib);
+      b.addEventListener('click', () => { JJK.audio.tick(760, 0.03, 0.05); galerie(k); });
+      onglets.appendChild(b);
+    });
+    n.appendChild(onglets);
+
     const p = el('p', 'discret');
-    p.style.maxWidth = '66ch';
-    p.textContent = "Votre déclaration a fixé les familles : le substrat, l'archétype de la loi, la clause, le territoire, le siège. À l'intérieur de ces limites, le réel a encore le choix. Voici six porteurs qui auraient rempli le même formulaire que vous.";
+    p.style.maxWidth = '68ch';
+    p.textContent = m === 'variantes'
+      ? "Votre déclaration a fixé les familles : substrat, archétype de la loi, clause, territoire, siège, manifestation. À l'intérieur de ces limites, le réel a encore le choix. Voici six porteurs qui auraient rempli le même formulaire que vous."
+      : "Six déclarations tirées au hasard, sans rapport avec la vôtre. Cliquez pour adopter celle qui vous prend.";
     n.appendChild(p);
 
+    /* on fige la planche : recharger l'écran ne doit pas la redistribuer */
+    if (m === 'hasard') {
+      if (!planche.length || G._planchePour !== 'hasard') {
+        planche = [];
+        for (let k = 0; k < 6; k++) {
+          planche.push({ declaration: declarationAuHasard(), poids: poidsAuHasard(),
+            archetype: T().ARCH_LISTE[Math.floor(Math.random() * T().ARCH_LISTE.length)],
+            variante: Math.floor(Math.random() * T().VARIANTES) });
+        }
+        G._planchePour = 'hasard';
+      }
+    } else {
+      planche = [];
+      const base = G.variante || 0;
+      for (let k = 0; k < 6; k++) {
+        planche.push({ declaration: G.declaration, poids: G.poids, archetype: G.archetype,
+          variante: T().codeVariante(base + k) });
+      }
+      G._planchePour = 'variantes';
+    }
+
     const grille = el('div', 'galerie');
-    const base = G.variante || 0;
-    for (let k = 0; k < 6; k++) {
-      const v = T().codeVariante(base + k);
-      const t = JJK.forge.forgeDepuisDeclaration(G.declaration, v);
-      const c = el('div', 'carte-variante' + (v === base ? ' actuelle' : ''));
+    planche.forEach(item => {
+      const t = JJK.forge.forgeDepuisDeclaration(item.declaration, item.variante);
+      const courante = m === 'variantes' && item.variante === (G.variante || 0);
+      const c = el('div', 'carte-variante' + (courante ? ' actuelle' : ''));
       const cv = el('canvas', 'sceau-mini');
       c.appendChild(cv);
-      const h = el('h4', '', t.nom);
-      c.appendChild(h);
+      c.appendChild(el('h4', '', t.nom));
       c.appendChild(el('div', 'jp faible', t.nomJp + ' · ' + t.romaji));
       const l = el('p', 'clause');
       l.textContent = t.loi.enonce || t.loi.nom;
       c.appendChild(l);
       const meta = el('div', 'meta-variante');
       meta.appendChild(el('span', '', t.essence.nom));
-      if (t.jubaku) { const b = el('span', 'or', '天与呪縛'); meta.appendChild(b); }
-      if (v === base) meta.appendChild(el('span', 'sang', 'tirage actuel'));
+      meta.appendChild(el('span', 'manif', MANIF[t.manifestation] || t.manifestation));
+      if (t.familiers && t.familiers.length) meta.appendChild(el('span', 'or', t.familiers.length + ' 式神'));
+      if (t.outil) meta.appendChild(el('span', 'or', '呪具'));
+      if (t.jubaku) meta.appendChild(el('span', 'or', '天与呪縛'));
+      if (courante) meta.appendChild(el('span', 'sang', 'tirage actuel'));
       c.appendChild(meta);
       c.addEventListener('click', () => {
-        G.variante = v; assembler(); JJK.audio.tick(620, 0.04, 0.07);
+        G.declaration = item.declaration; G.poids = item.poids;
+        G.archetype = item.archetype; G.variante = item.variante;
+        assembler(); JJK.audio.tick(620, 0.04, 0.07);
         revelation({ rapide: true });
       });
       grille.appendChild(c);
       requestAnimationFrame(() => JJK.fx.sigil(cv, t.code, { size: 150, accent: t.couleur }));
-    }
+    });
     n.appendChild(grille);
+
     const r = U.rangee();
     r.appendChild(U.bouton('Revenir à la fiche', 'fantome', () => revelation({ rapide: true })));
-    r.appendChild(U.bouton('Six tirages de plus', '', () => { G.variante = T().codeVariante((G.variante || 0) + 6); galerie(); }));
+    r.appendChild(U.bouton('Six de plus', '', () => {
+      if (m === 'hasard') { planche = []; G._planchePour = null; }
+      else G.variante = T().codeVariante((G.variante || 0) + 6);
+      galerie(m);
+    }));
     n.appendChild(r);
   }
+
+  const MANIF = { directe: 'directe', familier: '式神', objet: '呪具', terrain: 'terrain' };
 
   /* =====================================================================
      RUBRIQUES — revenir sur une seule ligne du formulaire
@@ -808,6 +855,58 @@
       }
       if (t.domaine.faille) { const p = el('p', 'cout-ligne'); p.textContent = '↳ ' + t.domaine.faille; d.appendChild(p); }
       const s9 = sec('ryoiki', 9); g.appendChild(section(s9.libelle, s9.kanji, d));
+    }
+
+    /* 式神 : la loi a pris un corps, et ce corps a fallu le battre d'abord */
+    if (t.familiers && t.familiers.length) {
+      const d = el('div', 'meute');
+      const chapeau = el('p', 'discret');
+      chapeau.style.marginBottom = '4px';
+      chapeau.textContent = t.familiers.length + " 式神 soumis au 調伏. Un 式神 détruit ne revient jamais : ce qui suit est un inventaire, pas un arsenal.";
+      d.appendChild(chapeau);
+      t.familiers.forEach(f => {
+        const k = f.shikigami;
+        const c = el('div', 'shikigami rang-' + (k.rang || 'mineur'));
+        const h = el('p', 'sous-nom');
+        h.textContent = k.nom;
+        c.appendChild(h);
+        const meta = el('div', 'meta-shikigami');
+        meta.appendChild(el('span', 'jp', (k.kanji || '') + (k.romaji ? ' · ' + k.romaji : '')));
+        meta.appendChild(el('span', 'rang', k.rang || 'mineur'));
+        c.appendChild(meta);
+        if (k.forme) { const p2 = el('p'); p2.style.marginTop = '10px'; p2.textContent = k.forme; c.appendChild(p2); }
+        if (k.office) { const p3 = el('p', 'office'); p3.textContent = k.office; c.appendChild(p3); }
+        if (k.ordre) { const p4 = el('p', 'ordre'); p4.textContent = '« ' + k.ordre + ' »'; c.appendChild(p4); }
+        const bas = el('div', 'echange');
+        bas.style.marginTop = '12px';
+        if (k.cout) bas.appendChild(el('span', 'perte', k.cout));
+        if (k.perte) bas.appendChild(el('span', 'gain', 'S\'il tombe : ' + k.perte));
+        c.appendChild(bas);
+        if (f.epreuve) {
+          const e2 = el('div', 'chobuku');
+          e2.appendChild(el('span', 'etiquette', '調伏 · ' + (f.epreuve.nom || 'subjugation')));
+          if (f.epreuve.condition) { const p5 = el('p'); p5.textContent = f.epreuve.condition; e2.appendChild(p5); }
+          if (f.epreuve.prix) { const p6 = el('p', 'cout-ligne'); p6.textContent = '↳ ' + f.epreuve.prix; e2.appendChild(p6); }
+          c.appendChild(e2);
+        }
+        d.appendChild(c);
+      });
+      g.appendChild(section('式神 attachés', '式神', d));
+    }
+
+    /* 呪具 : la loi passe par un objet, et un objet se prend */
+    if (t.outil) {
+      const d = el('div');
+      const h = el('p', 'sous-nom');
+      h.textContent = t.outil.nom;
+      d.appendChild(h);
+      d.appendChild(el('div', 'jp faible', (t.outil.kanji || '') + (t.outil.romaji ? ' · ' + t.outil.romaji : '') +
+        (t.outil.rang ? ' · ' + t.outil.rang : '')));
+      if (t.outil.objet) { const p2 = el('p'); p2.style.marginTop = '10px'; p2.textContent = t.outil.objet; d.appendChild(p2); }
+      if (t.outil.charge) { const p3 = el('p', 'discret'); p3.textContent = t.outil.charge; d.appendChild(p3); }
+      if (t.outil.usage) { const p4 = el('p'); p4.style.marginTop = '8px'; p4.textContent = t.outil.usage; d.appendChild(p4); }
+      if (t.outil.defaut) { const p5 = el('p', 'cout-ligne'); p5.textContent = '↳ ' + t.outil.defaut; d.appendChild(p5); }
+      g.appendChild(section('Outil maudit attaché', '呪具', d));
     }
 
     if (t.kokusen) {

@@ -875,3 +875,45 @@ body.en-kokusen #fx-ink {
 }
 .chip-actif:hover b { color: var(--sang); }
 @media (max-width: 620px) { .chip b { display: none; } }
+
+/* ---- 式神 : un inventaire, pas un arsenal ----------------------------- */
+.meute { display: flex; flex-direction: column; gap: 16px; }
+.shikigami {
+  border-left: 2px solid rgba(233, 226, 212, .2); padding-left: 18px;
+}
+.shikigami.rang-majeur { border-left-color: rgba(242, 193, 78, .55); }
+.shikigami.rang-pivot { border-left-color: var(--sang); }
+.meta-shikigami {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; margin-top: 2px;
+}
+.meta-shikigami .jp { font-size: 11px; letter-spacing: .16em; color: var(--sang); }
+.meta-shikigami .rang {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--os-mort);
+}
+.rang-pivot .meta-shikigami .rang { color: var(--sang); }
+.rang-majeur .meta-shikigami .rang { color: var(--or); }
+.shikigami .office { margin-top: 8px; color: var(--os-faible); font-weight: 300; }
+.shikigami .ordre {
+  margin-top: 10px; font-style: italic; font-weight: 300;
+  color: var(--or); font-size: 1.02rem;
+}
+.chobuku {
+  margin-top: 14px; padding: 12px 14px;
+  border: 1px dotted rgba(233, 226, 212, .16);
+  background: linear-gradient(180deg, rgba(233, 226, 212, .02), transparent);
+}
+.chobuku p { margin: 8px 0 0; font-weight: 300; font-size: .97rem; color: var(--os-faible); }
+.chobuku .cout-ligne { font-size: .95rem; }
+
+/* ---- onglets de planche ------------------------------------------------ */
+.onglets { display: flex; flex-wrap: wrap; gap: 2px; margin: 20px 0 18px; border-bottom: var(--hair); }
+.onglet {
+  background: transparent; border: 0; border-bottom: 2px solid transparent;
+  padding: 10px 16px; cursor: pointer; color: var(--os-mort);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+  transition: all .22s var(--ease);
+}
+.onglet:hover { color: var(--os-faible); }
+.onglet.actif { color: var(--sang-vif); border-bottom-color: var(--sang); }
+.meta-variante .manif { color: var(--inverse); }
