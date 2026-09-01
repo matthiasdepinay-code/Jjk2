@@ -18,6 +18,21 @@ est disponible pour s'en servir, mais c'est la fiche qui compte.
 
 ---
 
+## Le recto et le verso
+
+Une fiche complète fait quinze mille caractères. Personne ne lit ça d'un trait, et tout ce qu'on
+y ajoutait finissait par se neutraliser. Chaque section déclare donc sa **face**.
+
+Le **recto** tient en deux écrans et dit ce qu'*est* la technique : sa loi — en grand, avant tout
+le reste —, le constat de 呪力, son application directe, sa première application nommée, son
+territoire, le premier de ses 式神 s'il y en a, sa 天与呪縛 s'il y en a une, et son numéro de
+dossier. Le **verso** est le dossier entier, déplié d'un clic ou de la touche `D`.
+
+Rien n'est retiré : le 目次 liste tout et marque d'un chevron ce qui est replié, viser une
+section repliée ouvre le dossier au lieu de rater la cible, la recherche du navigateur trouve
+tout, et l'impression sort toujours le dossier complet. Mesuré sur une même fiche : **3 666 px
+au recto contre 7 400 au verso**, et une fiche à trois 式神 passe de 8 458 px à 4 148.
+
 ## Ce que c'est
 
 Vous êtes convoqué au **呪術高専**, greffe des techniques innées. Un **補助監督** — superviseur
@@ -184,7 +199,7 @@ open index.html            # ou : npx serve .
 bonus, la page reste correcte sans elles).
 
 Raccourcis : sur une fiche, `R` retire au sort, `V` passe à la variante suivante, `G` ouvre la
-planche. En duel, `1`–`9` déclenchent les actions, `Échap` ouvre le registre, un clic ou
+planche, `D` déplie ou replie le dossier. En duel, `1`–`9` déclenchent les actions, `Échap` ouvre le registre, un clic ou
 `Espace` emporte le texte en cours de frappe. Pendant une extension du territoire, un clic abrège
 la cérémonie — sept secondes la première fois, une seconde et demie quand on l'a assez vue.
 
@@ -224,18 +239,35 @@ Marteler la frappe renforcée ne passe pas le grade 3, quels que soient les serm
 spécial ne tombe que si vous avez tout rendu : la moitié de votre chair, votre garde, vos yeux,
 votre délai, et la trace de votre passage.
 
+## Ce qu'une déclaration parcourt vraiment
+
+La question n'est pas combien le corpus contient, mais combien **une** déclaration rencontre sur
+ses 144 variantes — c'est ce que la touche `V` fait défiler. Mesuré avant et après cette écriture :
+
+| | avant | après |
+|---|---|---|
+| essences | 26 | 26 |
+| **lois** | **10 à 13** | **30 à 33** |
+| **術式拡張** | **5 à 6** | **15 à 16** |
+| 派生術式 | 16 à 17 | 16 à 17 |
+| noms distincts | 144 | 144 |
+
+La loi variait deux fois moins que l'essence, alors que l'essence n'est que la matière du 呪力 et
+que la loi *est* la technique. Ce n'était pas l'algorithme — la forge atteignait déjà presque
+tout ce qui existait —, c'était le corpus. Il a triplé là, et seulement là.
+
 ## Le corpus
 
-469 entrées à la première écriture, **1 579** aujourd'hui, toutes écrites pour ce projet :
+469 entrées à la première écriture, **1 699** aujourd'hui, toutes écrites pour ce projet :
 
 | | |
 |---|---|
 | 100 essences de 呪力 | vingt-quatre à vingt-six par famille de substrat, chacune avec son genre grammatical déclaré |
-| 46 lois maudites | cinq à sept par archétype, chacune avec sa conséquence, sa faille, son 反転術式, sa sortie maximale et son nom japonais |
+| 126 lois maudites | quinze à dix-sept par archétype, chacune avec sa conséquence, sa faille, son 反転術式, sa sortie maximale et son nom japonais |
 | 66 派生術式 | huit à neuf par archétype : effet, **signe précurseur**, coût, limite |
 | 26 provenances | 相伝, 突然変異, 受肉, 縛り — récit daté, témoin, prix, mention au dossier |
 | 64 vecteurs · 22 territoires innés | avec paysage, incantation, coup au but et faille |
-| 22 術式拡張 | appariées à l'archétype de votre loi, pour qu'elles en découlent vraiment |
+| 62 術式拡張 | sept à huit par archétype, appariées à l'archétype de votre loi pour qu'elles en découlent vraiment |
 | 14 簡易領域 · 10 aptitudes au 黒閃 | |
 | 14 天与呪縛 | cinq formes mécaniques, habillées par le corpus |
 | 28 式神 | 4 pivots, 8 majeurs, 16 mineurs — chacun avec sa description, son ordre d'appel et ce que coûte sa perte |
