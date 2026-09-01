@@ -8,7 +8,9 @@
   'use strict';
   const JJK = (root.JJK = root.JJK || {});
 
-  /* ---- les dix rubriques, dans l'ordre du formulaire ------------------- */
+  /* ---- les rubriques, dans l'ordre du formulaire -----------------------
+     Toute rubrique nouvelle s'ajoute EN FIN DE LISTE : les codes de dossier
+     déjà distribués se relisent alors en posant sa première étiquette. */
   const AXES = [
     { id: 'substrat',   tags: ['usure', 'compte', 'absence', 'contact'] },
     { id: 'operateur',  tags: ['retrancher', 'echanger', 'repeter', 'constater'] },
@@ -21,6 +23,7 @@
     { id: 'faille',     tags: ['condition_stricte', 'epuisement', 'retour', 'lisibilite'] },
     { id: 'territoire', tags: ['administration', 'domestique', 'transit', 'clinique'] },
     { id: 'manifestation', tags: ['directe', 'familier', 'objet', 'terrain'] },
+    { id: 'origine',    tags: ['soden', 'mutation', 'jubutsu', 'shibari'] },
   ];
   const AXE = {};
   AXES.forEach(a => { AXE[a.id] = a; });
@@ -63,10 +66,10 @@
 
   /* les organes sont du texte libre : on les reconnaît par leur anatomie */
   const SIEGES = {
-    gorge: /thyroïde|hyoïde|palatine|maxillaire|sternale|larynx|glotte|trachée/i,
-    sang:  /carotid|moelle|rate|ganglionnaire|diaphragme|cubitale|artère|plèvre|veine/i,
-    nerf:  /nerf|plexus|oreille interne|papille|tympan|lacrymal|rétine/i,
-    os:    /vertèbre|iliaque|fontanelle|plantaire|calcanéen|poignet|fémur|os\b|crête/i,
+    gorge: /thyroïde|thyro|hyoïde|palatin|maxillaire|sternale|larynx|glotte|trachée|pharynx|épiglotte|cricoïde|aryténoïde|vocale|œsophag|luette|voile du palais|amygdale/i,
+    sang:  /carotid|moelle|rate|ganglionnaire|diaphragme|cubitale|artère|plèvre|veine|aorte|jugulaire|splénique|capillaire|lymphatique|thymus|ombilicale|péricarde|sinus/i,
+    nerf:  /nerf|plexus|oreille interne|papille|tympan|lacrymal|rétine|cochlée|vestibule|chiasma|trijumeau|sciatique|olfactif|dermatome|racine dorsale|corne postérieure/i,
+    os:    /vertèbre|iliaque|fontanelle|plantaire|calcanéen|poignet|fémur|os\b|crête|sacrum|coccyx|sternum|clavicule|omoplate|rotule|astragale|scaphoïde|malléole|apophyse|périoste|sésamoïde|côte|carpe|tarse|mandibule/i,
   };
 
   /* familles de 式神 par rang, et d'outils par rang : le tirage doit sortir
@@ -136,6 +139,19 @@
       domestique:     { lean: { vigueur: 1.2 }, mod: { domaineTours: 1 }, note: "Territoire domestique : il tient un battement de plus." },
       transit:        { lean: { flux: 1.2 }, mod: { domaineCout: -1 }, note: "Territoire de transit : ouverture à −1 énergie." },
       clinique:       { lean: { inversion: 1.2 }, mod: { soinMult: 1.20 }, note: "Territoire clinique : la technique inversée rend 20 % de plus." },
+    },
+    /* 出自 : d'où la technique est venue. Une technique transmise est déjà
+       fichée ; une mutation n'a pas de contre-mesure écrite mais rate ;
+       un 呪物 nourrit et se nourrit ; un 縛り donne beaucoup et prend autant. */
+    origine: {
+      soden:    { lean: { lucidite: 1.25 }, mod: { degatsMult: 0.94, critBonus: 0.06, enMaxDelta: 1 },
+        note: "相伝 : technique de lignée. −6 % de dégâts (le Bureau en a la fiche depuis trois générations), +6 % de critique, +1 de réserve." },
+      mutation: { lean: { tranchant: 1.25 }, mod: { degatsMult: 1.12, rate: 0.06 },
+        note: "突然変異 : premier cas constaté. +12 % de dégâts — personne n'a de contre-mesure écrite —, mais la loi refuse de partir un coup sur seize." },
+      jubutsu:  { lean: { vigueur: 1.25 }, mod: { pvMaxMult: 1.12, coutChair: 0.02 },
+        note: "呪物 : la loi est venue d'un objet ingéré. +12 % de structure, et 2 % de vos points de vie à chaque application — la chose se nourrit encore." },
+      shibari:  { lean: { flux: 1.25 }, mod: { degatsMult: 1.22, enMaxDelta: -2, soinMult: 0.75 },
+        note: "縛り : technique achetée par un pacte que vous n'avez pas rédigé. +22 % de dégâts, −2 de réserve, et la technique inversée ne rend plus que les trois quarts." },
     },
     manifestation: {
       directe:  { lean: { tranchant: 1.25 }, mod: { degatsMult: 1.15 },
@@ -224,20 +240,31 @@
      dans l'archétype, quel territoire, quelle matière — se retire au sort,
      et ce tirage porte un numéro. Deux porteurs peuvent déclarer la même
      chose et ne pas porter la même loi : ils n'ont pas le même 生得術式.  */
-  const VARIANTES = 36;
+  /* 36 variantes suffisaient à un corpus de dix essences par famille ; avec
+     vingt-six essences et quinze lois par archétype, une déclaration a plus
+     de latitude que ça, et il faut pouvoir la parcourir. Le code de dossier
+     passe donc à deux caractères de variante. */
+  const VARIANTES = 144;
   function codeVariante(v) { return (((v | 0) % VARIANTES) + VARIANTES) % VARIANTES; }
 
-  const VERSION = 'R2';
+  /* Chaque version du dossier connaît les rubriques qui n'existaient pas
+     encore ; on relit un vieux code en leur donnant leur première valeur. */
+  const RUBRIQUES_POSTERIEURES = {
+    R1: ['manifestation', 'origine'],
+    R2: ['origine'],
+  };
+  const VERSION = 'R3';
   function dossierCode(decl, poids, archetype, variante) {
     const v = codeVariante(variante || 0);
     return VERSION + '-' + codeDeclaration(decl) + '-' + codeCorps(poids, archetype) +
-      (v ? '-' + v.toString(36).toUpperCase() : '');
+      (v ? '-' + v.toString(36).toUpperCase() : '');   /* jusqu'à deux caractères */
   }
   function lireDossierCode(s) {
-    const m = /^([A-Z0-9]+)-([A-Z0-9]+)-([A-Z0-9]+)(?:-([A-Z0-9]))?$/i.exec(String(s || '').trim());
+    const m = /^([A-Z0-9]+)-([A-Z0-9]+)-([A-Z0-9]+)(?:-([A-Z0-9]{1,2}))?$/i.exec(String(s || '').trim());
     if (!m) return null;
     const version = m[1].toUpperCase();
-    const anciens = version === 'R1' ? AXES.filter(a => a.id !== 'manifestation') : null;
+    const posterieures = RUBRIQUES_POSTERIEURES[version];
+    const anciens = posterieures ? AXES.filter(a => posterieures.indexOf(a.id) < 0) : null;
     const decl = declarationDepuisCode(m[2], anciens);
     const corps = corpsDepuisCode(m[3]);
     if (!decl || !corps) return null;

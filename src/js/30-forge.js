@@ -12,10 +12,13 @@
   const VOY = /[aeiouyàâäéèêëîïôöûüh]/i;
   function fr(s) {
     let t = ' ' + String(s || '').replace(/\s+/g, ' ').trim() + ' ';
+    /* « \b » ne borne pas une lettre accentuée en JavaScript : sans le
+       « (^|[\s(«"']) » explicite, « à Le » n'était jamais contracté en
+       « au » et le registre écrivait « doit à Le Goudron ».              */
     t = t.replace(/\bde Les\b/gi, 'des').replace(/\bde Le\b/gi, 'du')
          .replace(/\bde La\b/g, 'de la').replace(/\bde L'/gi, "de l'")
-         .replace(/\bà Les\b/gi, 'aux').replace(/\bà Le\b/gi, 'au')
-         .replace(/\bà La\b/g, 'à la').replace(/\bà L'/gi, "à l'")
+         .replace(/(^|[\s(«"'])à Les\b/gi, '$1aux').replace(/(^|[\s(«"'])à Le\b/gi, '$1au')
+         .replace(/(^|[\s(«"'])à La\b/g, '$1à la').replace(/(^|[\s(«"'])à L'/gi, "$1à l'")
          .replace(/\bde ([AEIOUYÉÈÊÎÔÛaeiouyéèêîôû])/g, "d'$1")
          .replace(/\bDe ([AEIOUYÉÈÊÎÔÛaeiouyéèêîôû])/g, "D'$1")
          .replace(/\ble ([AEIOUYÉÈÊÎÔÛaeiouyéèêîôû])/g, "l'$1")
@@ -124,6 +127,41 @@
     const art = pluriel ? 'les' : (genre === 'f' ? 'la' : (genre === 'e' ? "l'" : 'le'));
     return { nu, genre, art, pluriel };
   }
+  /* Retirer l'article initial d'un syntagme. La frontière de mot est
+     obligatoire : sans le « \\s+ », « une salle » perdait « un » et sortait
+     en « e salle », puis en « E Salle » une fois mis en titre.           */
+  const ARTICLE_INITIAL = /^(?:les|le|la|des|du|un|une|de\s+l['\u2019]|de\s+la|de)\s+|^[ld]['\u2019]/i;
+
+  /* Une matière est écrite sans article : « laine mouillée », « vert-de-gris ».
+     Son genre se lit d'abord dans le corpus (une entrée peut être un objet
+     { nom, genre }), et seulement à défaut dans la terminaison. La règle
+     du -e final se trompe une fois sur cinq ; c'est le corpus qui tranche. */
+  const FIN_FEMININE = /(?:tion|sion|ance|ence|ure|té|ité|esse|ie|eur|aille|elle|ette|ine|ade|ée|euse|aine|otte|olle)$/;
+  function genreMot(mot, defaut) {
+    const tete = String(mot || '').trim().toLowerCase().split(/[\s-]/)[0];
+    if (!tete) return defaut || 'm';
+    if (FIN_FEMININE.test(tete)) return 'f';
+    if (/e$/.test(tete) && !/(?:age|isme|ice|ège|iste|acle|ule|ombre|arbre)$/.test(tete)) return 'f';
+    return 'm';
+  }
+  function articleDe(mot, genre) {
+    const m = String(mot || '').trim();
+    if (!m) return m;
+    if (VOY.test(m[0])) return "l'" + m;
+    return (genre === 'f' ? 'la ' : 'le ') + m;
+  }
+  function accordDe(genre, pluriel) { return (genre === 'f' ? 'e' : '') + (pluriel ? 's' : ''); }
+
+  /* Une banque lexicale peut livrer une chaîne nue ou un objet { nom, genre }.
+     Le genre déclaré prime toujours : « une escarre », « un pétale », « une
+     oriflamme » ne se devinent pas, et un accord faux se voit dans le titre. */
+  function motEtGenre(entree, defaut) {
+    if (entree && typeof entree === 'object') {
+      return { nom: String(entree.nom || ''), genre: /^[mf]$/.test(entree.genre || '') ? entree.genre : genreMot(entree.nom, defaut) };
+    }
+    return { nom: String(entree || ''), genre: genreMot(entree, defaut) };
+  }
+
   /* « L'Attente » ne dit pas son genre. Le registre le sait : sans cette
      table, on écrirait « Attente Confidentiel ».                        */
   const GENRE_ESSENCE = {
@@ -131,6 +169,9 @@
     'eau-dormante': 'f', ankylose: 'f', anonymat: 'm',
   };
   function genreEssence(essence, decoupee) {
+    /* Une essence écrite après coup déclare son genre : c'est plus sûr que
+       toute heuristique, et la table ci-dessus ne sert plus qu'aux anciennes. */
+    if (essence && /^[mfp]$/.test(essence.genre || '')) return essence.genre;
     const g = GENRE_ESSENCE[essence && essence.id];
     if (g) return g;
     if (decoupee.pluriel) return 'p';
@@ -143,19 +184,9 @@
     return fr(d.art + (d.art === "l'" ? '' : ' ') + d.nu);
   }
 
-  /* ---- composition japonaise ----------------------------------------- */
-  const KANJI_SUF = [
-    { k: '術', r: 'jutsu' }, { k: '呪法', r: 'juhō' }, { k: '縛', r: 'baku' },
-    { k: '律', r: 'ritsu' }, { k: '蝕', r: 'shoku' }, { k: '帳', r: 'chō' },
-    { k: '環', r: 'kan' }, { k: '秤', r: 'hakari' }, { k: '骸', r: 'mukuro' },
-    { k: '灯', r: 'tō' }, { k: '簿', r: 'bo' }, { k: '轍', r: 'wadachi' },
-  ];
-  const KANJI_PRE = [
-    { k: '', r: '' }, { k: '', r: '' }, { k: '逆', r: 'gyaku' }, { k: '真', r: 'shin' },
-    { k: '黒', r: 'koku' }, { k: '無', r: 'mu' }, { k: '深', r: 'shin' }, { k: '虚', r: 'kyo' },
-  ];
-
-  /* ---- accès tolérant au corpus --------------------------------------- */
+  /* ---- accès tolérant au corpus ---------------------------------------
+     Le corpus grossit par lots : rien ici ne doit supposer qu'une clé
+     existe déjà, ni qu'une liste est au premier niveau.                  */
   function C() { return JJK.CORPUS || {}; }
   function liste(k, fallback) {
     const c = C();
@@ -177,28 +208,88 @@
     return R.pick(court).o;
   }
 
-  /* ---- noms de technique ---------------------------------------------- */
-  /* Chaque patron est répété selon le poids qu'on veut lui donner : les
-     tournures pauvres en entropie (la loi seule) doivent rester rares,
-     sinon deux graines sur dix portent le même nom.                      */
-  const PATRONS = [
-    [1, p => fr(p.LOI)],
-    [3, p => fr(p.LOI + ' de ' + p.ESSENCE_ART)],
-    [2, p => fr('Technique de ' + p.ESSENCE_ART)],
-    [3, p => fr(p.NOMBRE_MATIERE)],
-    [3, p => fr(p.ESSENCE_NU + ' ' + accorder(p.SUFFIXE, p.GENRE))],
-    [3, p => fr(p.PREFIXE + ' de ' + p.ESSENCE_ART)],
-    [3, p => fr(p.MATIERE + ' de ' + p.ESSENCE_ART)],
-    [3, p => fr(p.LOI + ' : ' + p.NOMBRE_MATIERE)],
-    [3, p => fr(p.ESSENCE_ART + ' ' + accorder(p.SUFFIXE, p.GENRE))],
-    [2, p => fr(p.PREFIXE + ' ' + accorder(p.SUFFIXE, 'm'))],
-    [2, p => fr('Doctrine de ' + p.ESSENCE_ART)],
-    [3, p => fr(p.ORGANE + ' de ' + p.ESSENCE_ART)],
-    [3, p => fr(p.ESSENCE_ART + ' de ' + p.MATIERE)],
-    [3, p => fr(p.PREFIXE + ' de ' + p.MATIERE)],
-    [2, p => fr(p.MATIERE + ', ' + accorder(p.SUFFIXE, 'm'))],
-    [2, p => fr(p.ORGANE + ' de ' + p.MATIERE)],
-  ].reduce((acc, [n, f]) => { for (let i = 0; i < n; i++) acc.push(f); return acc; }, []);
+  /* ---- composition japonaise ------------------------------------------
+     L'ancien nom japonais tenait dans une grille fixe préfixe × essence ×
+     suffixe : 3 840 combinaisons pour des centaines de millions de fiches.
+     Il se compose maintenant de morceaux — l'essence, la loi, un affixe —
+     assemblés selon des gabarits, romaji compris.                        */
+  const KANJI_SUF_REPLI = [
+    { k: '術', r: 'jutsu' }, { k: '呪法', r: 'juhō' }, { k: '縛', r: 'baku' },
+    { k: '律', r: 'ritsu' }, { k: '蝕', r: 'shoku' }, { k: '帳', r: 'chō' },
+    { k: '環', r: 'kan' }, { k: '秤', r: 'hakari' }, { k: '骸', r: 'mukuro' },
+    { k: '灯', r: 'tō' }, { k: '簿', r: 'bo' }, { k: '轍', r: 'wadachi' },
+  ];
+  const KANJI_PRE_REPLI = [
+    { k: '逆', r: 'gyaku' }, { k: '真', r: 'shin' }, { k: '黒', r: 'koku' },
+    { k: '無', r: 'mu' }, { k: '深', r: 'shin' }, { k: '虚', r: 'kyo' },
+  ];
+  function affixes(cle, repli) {
+    const v = (C().nomenclature || {})[cle];
+    return (Array.isArray(v) && v.length && v.every(x => x && x.k)) ? v : repli;
+  }
+
+  /* Gabarits japonais : E = essence, L = loi, P = préfixe, S = suffixe.
+     Ceux qui appellent L ne sortent que si la loi porte un kanji.        */
+  const GABARITS_JP = [
+    ['E', 'S'], ['E', 'S'], ['P', 'E', 'S'], ['L', 'E'], ['E', 'L'],
+    ['P', 'L', 'S'], ['L', 'S'], ['P', 'E'], ['E', 'L', 'S'], ['L', 'E', 'S'],
+  ];
+
+  function composerJp(essence, loi, R) {
+    const piece = {
+      E: { k: essence.kanji || '呪', r: essence.romaji || 'ju' },
+      L: (loi && loi.kanji) ? { k: loi.kanji, r: loi.romaji || '' } : null,
+      P: R.pick(affixes('kanji_pre', KANJI_PRE_REPLI)),
+      S: R.pick(affixes('kanji_suf', KANJI_SUF_REPLI)),
+    };
+    const possibles = GABARITS_JP.filter(g => g.every(c => piece[c] && piece[c].k));
+    let g = R.pick(possibles.length ? possibles : [['E', 'S']]);
+    /* un nom japonais de six kanji ne se lit plus : on retombe sur deux pièces */
+    if ([...g.map(c => piece[c].k).join('')].length > 5) g = [g[0], g[g.length - 1]];
+    return {
+      kanji: g.map(c => piece[c].k).join(''),
+      romaji: g.map(c => piece[c].r).filter(Boolean).join('-')
+        .replace(/--+/g, '-').replace(/^-|-$/g, '').toLowerCase(),
+    };
+  }
+
+  /* ---- noms de technique ----------------------------------------------
+     Les patrons sont du CONTENU, pas du code : ils vivent dans le corpus,
+     sous forme de gabarits « {LOI} de {ESSENCE_ART} ». Deux réservoirs :
+     ceux qui vont à toutes les lois, et ceux qui n'appartiennent qu'à un
+     archétype — une loi de mesure ne se nomme pas comme une loi de seuil,
+     et c'est là que le registre gagne sa couleur.                        */
+  const PATRONS_REPLI = [
+    '{LOI} de {ESSENCE_ART}', 'Technique de {ESSENCE_ART}', '{NOMBRE_MATIERE}',
+    '{ESSENCE_NU} {SUFFIXE_ESSENCE}', '{PREFIXE} de {ESSENCE_ART}', '{MATIERE} de {ESSENCE_ART}',
+    '{LOI} : {NOMBRE_MATIERE}', '{ESSENCE_ART} {SUFFIXE_ESSENCE}', '{PREFIXE} {SUFFIXE_PREFIXE}',
+    '{ORGANE} de {ESSENCE_ART}', '{ESSENCE_ART} de {MATIERE}', '{PREFIXE} de {MATIERE}',
+    '{MATIERE}, {SUFFIXE_MATIERE}', '{ORGANE} de {MATIERE}',
+  ];
+
+  /* Un gabarit sans jeton produirait le même nom pour tout le monde :
+     on l'écarte à la lecture du corpus plutôt qu'à l'affichage.          */
+  function patronsUtiles(liste) {
+    return (Array.isArray(liste) ? liste : []).filter(t => typeof t === 'string' && /\{[A-Z_]+\}/.test(t));
+  }
+  function reservoirPatrons(archetype) {
+    const nomen = C().nomenclature || {};
+    const communs = patronsUtiles(nomen.patrons);
+    const propres = patronsUtiles((nomen.patrons_archetype || {})[archetype]);
+    if (!communs.length && !propres.length) return PATRONS_REPLI;
+    /* les patrons d'archétype pèsent double : c'est eux qui donnent le ton */
+    return communs.concat(propres, propres);
+  }
+  /* Deux corrections que les gabarits ne peuvent pas porter eux-mêmes :
+     un nombre devant une matière l'accorde au pluriel (« Trois Eaux », pas
+     « Trois Eau »), et un participe collé au nom suit le genre de l'essence
+     via {ACCORD} — « Le Délestage Divisé », « La Rouille Divisée ».      */
+  function remplirPatron(gabarit, p) {
+    const g = String(gabarit)
+      .replace(/\{NOMBRE\}(\s+)\{MATIERE\}/g, '{NOMBRE}$1{MATIERES}')
+      .replace(/\{NOMBRE\}(\s+)\{ORGANE\}/g, '{NOMBRE}$1{ORGANES}');
+    return fr(g.replace(/\{([A-Z_]+)\}/g, (m, k) => (p[k] == null ? '' : String(p[k]))));
+  }
 
   /* ---- la forge --------------------------------------------------------
      Une technique n'est plus lue dans un nom : elle est DÉCLARÉE. Les dix
@@ -305,8 +396,12 @@
           durement, sinon certaines combinaisons ne trouveraient rien */
     const idsCond = tx.CONDITIONS[decl.condition] || [];
     const porteesOk = tx.PORTEES[decl.portee] || [];
+    /* Un vecteur déclare lui-même sa clause (condition_tag) ; la liste d'ids
+       de la taxonomie ne sert plus que de repli pour les entrées anciennes.
+       Ajouter un vecteur au corpus suffit désormais : rien à recâbler. */
+    const clause = v => v.condition_tag ? v.condition_tag === decl.condition : idsCond.indexOf(v.id) >= 0;
     const notesVec = vecteurs.map(v => ({
-      v, n: (idsCond.indexOf(v.id) >= 0 ? 1000 : 0)
+      v, n: (clause(v) ? 1000 : 0)
          + (porteesOk.indexOf(v.portee) >= 0 ? 600 : 0)
          + affinite(loi.id + code, v.id),
     })).sort((a, b) => b.n - a.n);
@@ -319,7 +414,7 @@
     const DECLAREE = { contact: 0, courte: 1, moyenne: 2, lointaine: 3 };
     const ecart = Math.abs((ECHELLE[vecteur.portee] == null ? 2 : ECHELLE[vecteur.portee]) - (DECLAREE[decl.portee] == null ? 2 : DECLAREE[decl.portee]));
     const tenu = {
-      condition: idsCond.indexOf(vecteur.id) >= 0,
+      condition: clause(vecteur),
       portee: porteesOk.indexOf(vecteur.portee) >= 0 || ecart <= 1,
       ecart,
     };
@@ -329,33 +424,71 @@
 
     /* 5. le siège choisit l'organe */
     const re = tx.SIEGES[decl.siege];
-    const organesOk = (matieres.organes || []).filter(o => re && re.test(o));
+    const nomDe = o => String(o && typeof o === 'object' ? o.nom : o || '');
+    const organesOk = (matieres.organes || []).filter(o => re && re.test(nomDe(o)));
     const organeBrut = R.fork('organe').pick(organesOk.length ? organesOk : (matieres.organes || ['la moelle']));
 
-    const matiere = raccourcir(R.pick(matieres.matieres || ['cendre']), 3);
+    const mMat = motEtGenre(R.pick(matieres.matieres || ['cendre']), 'f');
+    const matiere = raccourcir(mMat.nom || 'cendre', 3);
+    const genreMatiere = mMat.genre;
     const nombres = (matieres.nombres || ['Neuf'])
       .filter(x => !/^(un|une|un demi|une demie|zéro)$/i.test(String(x).trim()));
     const nombre = R.pick(nombres.length ? nombres : ['Neuf']);
     const lieu = R.pick(matieres.lieux || ['une salle sans porte']);
-    const organe = raccourcir(String(organeBrut)
-      .replace(/^(les|le|la|l[\u2019\']|des|du|de\s+l[\u2019\']|de\s+la|de)\s*/i, ''), 3);
-    const prefixe = R.pick(nomen.prefixes || ['Rite']);
+    const mOrg = motEtGenre(organeBrut, 'm');
+    const organe = raccourcir(mOrg.nom.replace(ARTICLE_INITIAL, ''), 3);
+    const genreOrgane = mOrg.genre;
+    const mPre = motEtGenre(R.pick(nomen.prefixes || ['Rite']), 'm');
+    const prefixe = mPre.nom;
     const suffixe = R.pick(nomen.suffixes || ['Perpétuel']);
 
     const d = decoupe(essence.nom);
+    const dl = decoupe(loi.nom || '');
+    const g = genreEssence(essence, d);
     const matiereN = titre(plurielDe(matiere));
+    /* Un lieu ne se raccourcit pas comme une matière : « salle des
+       professeurs » perd tout son sel réduit à « salle ». On coupe à la
+       première virgule ou subordonnée, et on garde jusqu'à quatre mots. */
+    const lieuCourt = titre(sansJointFinal(String(lieu)
+      .replace(ARTICLE_INITIAL, '')
+      .split(/[,;(—–]| (?:où|dont|que|qui|quand|lorsque) /i)[0]
+      .trim().split(/\s+/).slice(0, 4).join(' ')));
     const jetons = {
       ESSENCE: essence.nom, ESSENCE_NU: d.nu, ESSENCE_ART: avecArticle(essence.nom),
-      GENRE: genreEssence(essence, d),
-      LOI: loi.nom, VECTEUR: vecteur.nom, NOMBRE: nombre,
-      MATIERE: titre(matiere), NOMBRE_MATIERE: nombre + ' ' + matiereN,
-      PREFIXE: prefixe, SUFFIXE: suffixe, ORGANE: titre(organe),
+      GENRE: g,
+      LOI: loi.nom, VECTEUR: vecteur.nom, VERBE: vecteur.verbe || 'Poser',
+      NOMBRE: nombre, MATIERE: titre(matiere), MATIERES: matiereN,
+      NOMBRE_MATIERE: nombre + ' ' + matiereN,
+      PREFIXE: prefixe, ORGANE: titre(organe), ORGANES: titre(plurielDe(organe)),
+      LIEU: lieuCourt,
+      /* accords tout prêts : le suffixe suit l'essence, ou reste neutre ;
+         {ACCORD} sert aux participes écrits dans les gabarits du corpus */
+      /* Un adjectif ou un participe s'accorde toujours avec un nom PRÉCIS :
+         le jeton dit lequel, et il le dit en toutes lettres. Un jeton dont
+         on doit deviner le référent finit par accorder sur le mauvais mot. */
+      SUFFIXE_ESSENCE: accorder(suffixe, g),
+      SUFFIXE_MATIERE: accorder(suffixe, genreMatiere),
+      SUFFIXE_ORGANE: accorder(suffixe, genreOrgane),
+      SUFFIXE_PREFIXE: accorder(suffixe, mPre.genre),
+      SUFFIXE_NEUTRE: accorder(suffixe, 'm'),
+      MATIERE_ART: titre(articleDe(matiere, genreMatiere)),
+      ORGANE_ART: titre(articleDe(organe, genreOrgane)),
+      LIEU_ART: titre(articleDe(lieuCourt, genreMot(lieuCourt, 'f'))),
+      ACCORD_ESSENCE: accordDe(g, d.pluriel),
+      ACCORD_LOI: accordDe(dl.genre === 'e' ? 'm' : dl.genre, dl.pluriel),
+      ACCORD_MATIERE: accordDe(genreMatiere, false),
+      ACCORD_ORGANE: accordDe(genreOrgane, false),
+      ACCORD_PREFIXE: accordDe(mPre.genre, false),
     };
-    const nom = titre(sansJointFinal(PATRONS[R.int(PATRONS.length)](jetons))).replace(/\s+/g, ' ').trim();
+    const patrons = reservoirPatrons(loi.archetype || 'seuil');
+    /* La ponctuation française : pas d'espace avant la virgule, une espace
+       avant les deux-points. L'inverse est une faute qui saute aux yeux. */
+    const nom = titre(sansJointFinal(remplirPatron(R.pick(patrons), jetons)))
+      .replace(/\s+/g, ' ').replace(/\s+,/g, ',').replace(/\s*([:;])\s*/g, ' $1 ')
+      .replace(/\s+/g, ' ').trim();
 
-    const kp = R.pick(KANJI_PRE), ks = R.pick(KANJI_SUF);
-    const nomJp = (kp.k || '') + (essence.kanji || '呪') + ks.k;
-    const romaji = ((kp.r ? kp.r + '-' : '') + (essence.romaji || 'ju') + '-' + ks.r).replace(/--+/g, '-');
+    const jp = composerJp(essence, loi, R.fork('jp'));
+    const nomJp = jp.kanji, romaji = jp.romaji;
     const couleur = essence.couleur && /^#[0-9a-f]{3,8}$/i.test(essence.couleur) ? essence.couleur : '#b31217';
 
     /* 術式拡張 : la même loi, prise sous un autre angle. On l'apparie par
@@ -372,6 +505,45 @@
     const affectation = R.fork('affectation').pick(sousListe('affectation', 'affectations')) || null;
     const contre = R.fork('contre').pick(sousListe('affectation', 'contres')) || '';
     const jubaku = tirerJubaku(code, R.fork('jubaku'));
+
+    /* ---- 出自 : par où la technique est entrée dans ce corps -----------
+       La rubrique de provenance ne décore pas : elle décide de qui, en face,
+       a déjà lu la fiche. Chaque étiquette a son propre registre.        */
+    const provenance = (function () {
+      const lot = sousListe('provenances', decl.origine || 'soden');
+      if (!lot.length) return null;
+      const pris = choisir(lot, 'prov:' + code, R.fork('provenance'), 3);
+      return pris ? Object.assign({ origine: decl.origine || 'soden' }, pris) : null;
+    })();
+
+    /* ---- 派生術式 : les applications nommées --------------------------
+       Une technique innée ne s'emploie pas en bloc : elle se décline en
+       coups qui portent un nom et un rang. On en retient deux à quatre,
+       toujours une de rang 1 — celle de tous les jours — et jamais deux
+       du même rang, pour que la liste se lise comme un apprentissage.   */
+    const derivations = (function () {
+      const tous = sousListe('derivations', 'derivations')
+        .filter(x => x.archetype === (loi.archetype || 'seuil'));
+      if (!tous.length) return [];
+      const Rd = R.fork('derivations');
+      const combien = 2 + (cyrb128('nb-der:' + code)[0] % 3);
+      const parRang = r2 => tous.filter(x => x.rang === r2);
+      const retenues = [];
+      for (let rang = 1; rang <= 4 && retenues.length < combien; rang++) {
+        const lot = parRang(rang);
+        if (!lot.length) continue;
+        const pris = choisir(lot, 'der' + rang + ':' + code, Rd, 3);
+        if (pris) retenues.push(pris);
+      }
+      /* si un rang manquait au corpus, on complète sans jamais doubler */
+      const vus = {};
+      retenues.forEach(x => { vus[x.id] = 1; });
+      const reste = tous.filter(x => !vus[x.id]);
+      while (retenues.length < combien && reste.length) {
+        retenues.push(reste.splice(Rd.int(reste.length), 1)[0]);
+      }
+      return retenues.sort((x, y) => (x.rang || 0) - (y.rang || 0));
+    })();
 
     /* ---- ce par quoi la loi passe pour atteindre le réel --------------
        Déclarer « familier » attache des 式神 : un pivot ou un majeur, qui
@@ -415,7 +587,8 @@
       hanten: loi.inversion || '',
       revers: loi.inversion || '',
       maximum: loi.maximum || '',
-      kakucho, kanri, kokusen, affectation, contre, jubaku,
+      kakucho, kanri, kokusen, affectation, contre, jubaku, derivations, provenance,
+      origine: decl.origine || 'soden',
       manifestation: decl.manifestation || 'directe', familiers, outil,
       tenu,
     };

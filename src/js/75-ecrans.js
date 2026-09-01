@@ -128,6 +128,24 @@
     ],
   };
 
+  /* Même repli pour la douzième rubrique : d'où la technique est venue.
+     Le corpus la reprendra ; d'ici là, elle est posée quand même.        */
+  const RUBRIQUE_ORIGINE = {
+    axe: 'origine', numero: 12, intitule: 'Provenance de la technique',
+    question: "Une technique innée n'apparaît pas de nulle part. Dites-nous par où celle-ci est entrée dans votre corps.",
+    precision: "Cette ligne ne mesure pas votre force : elle décide de qui, en face, a déjà lu votre fiche.",
+    reponses: [
+      { tag: 'soden', texte: "Elle est dans ma famille. On me l'a apprise avant que je sache lire.",
+        consequence: "相伝. Le Bureau conserve trois générations de relevés sur cette loi : on saura la contrer avant de vous voir. En échange, vous ne l'avez jamais découverte seul." },
+      { tag: 'mutation', texte: "Personne ne l'avait avant moi. Elle est arrivée un jour, sans prévenir.",
+        consequence: "突然変異. Aucune contre-mesure n'existe : vous êtes le premier cas. Aucune non plus n'a été écrite pour vous, et la loi vous refuse parfois le service." },
+      { tag: 'jubutsu', texte: "J'ai avalé quelque chose. Ce quelque chose n'est jamais ressorti.",
+        consequence: "受肉. Un 呪物 a fait de vous son logement. Il vous rend plus solide et continue de manger — de vous, un peu, à chaque application." },
+      { tag: 'shibari', texte: "On me l'a donnée contre un engagement que je n'ai pas rédigé.",
+        consequence: "縛り. La loi est puissante parce qu'elle est payée d'avance. Ce que le pacte retient ne vous sera pas rendu, et le contractant existe toujours." },
+    ],
+  };
+
   /* Le formulaire doit poser UNE question par axe : on complète les
      manquantes plutôt que de les laisser retomber en défaut silencieux. */
   function formulaire() {
@@ -140,6 +158,7 @@
     const secours = {};
     FORMULAIRE_SECOURS.questions.forEach(q => { secours[q.axe] = q; });
     secours.manifestation = RUBRIQUE_MANIFESTATION;
+    secours.origine = RUBRIQUE_ORIGINE;
     const questions = base.questions.concat(manquants.map(a => secours[a.id]).filter(Boolean));
     questions.forEach((q, i) => { q.numero = q.numero || (i + 1); });
     return { titre_formulaire: base.titre_formulaire, questions };
@@ -725,9 +744,15 @@
     { cle: 'ryoiki',   libelle: 'Extension du territoire', kanji: '領域展開' },
     { cle: 'kokusen',  libelle: 'Aptitude à l\'Éclair Noir', kanji: '黒閃' },
     { cle: 'jubaku',   libelle: 'Restriction céleste', kanji: '天与呪縛' },
+    { cle: 'derivations', libelle: 'Applications nommées', kanji: '派生術式' },
+    { cle: 'provenance',  libelle: 'Provenance constatée', kanji: '出自' },
   ];
 
   const SECTIONS = SECTIONS_REPLI;
+  /* 第一式, 第二式… : le rang d'une application se lit à sa numérotation,
+     comme dans les registres d'école. Au-delà de quatre, on ne numérote plus. */
+  const ORDINAUX_JP = ['第一式', '第二式', '第三式', '第四式'];
+  const ETIQUETTE_ORIGINE = { soden: '相伝', mutation: '突然変異', jubutsu: '受肉', shibari: '縛り' };
   function sec(cle, i, suffixe) {
     const m = sectionsCanon();
     const c = m && m[cle];
@@ -796,6 +821,29 @@
     const s0 = sec('loi', 0); g.appendChild(section(s0.libelle, s0.kanji, t.loi.enonce || t.loi.nom, 'loi'));
     const desc = JJK.forge.dossier(t);
     const s1 = sec('constat', 1); if (desc) g.appendChild(section(s1.libelle, s1.kanji, desc));
+    /* 出自 : d'où la loi est venue. Ce bloc arrive tôt dans la fiche parce
+       qu'il ne dit pas ce que le porteur peut faire — il dit à qui il le doit. */
+    if (t.provenance) {
+      const pr = t.provenance;
+      const d = el('div', 'provenance origine-' + (pr.origine || 'soden'));
+      const h = el('p', 'sous-nom');
+      h.appendChild(el('span', 'ordinal jp', ETIQUETTE_ORIGINE[pr.origine] || '出自'));
+      h.appendChild(document.createTextNode(pr.nom || ''));
+      d.appendChild(h);
+      if (pr.kanji) d.appendChild(el('div', 'meta-derive', pr.kanji + (pr.romaji ? ' · ' + pr.romaji : '')));
+      if (pr.recit) { const p2 = el('p'); p2.style.marginTop = '10px'; p2.textContent = pr.recit; d.appendChild(p2); }
+      if (pr.temoin) { const p3 = el('p', 'office'); p3.textContent = pr.temoin; d.appendChild(p3); }
+      if (pr.prix) { const p4 = el('p', 'cout-ligne'); p4.textContent = '↳ ' + pr.prix; d.appendChild(p4); }
+      if (pr.mention) {
+        const m = el('div', 'mention-dossier');
+        m.appendChild(el('span', 'etiquette', 'Mention portée au dossier'));
+        m.appendChild(el('p', '', pr.mention));
+        d.appendChild(m);
+      }
+      const sp = sec('provenance', 13);
+      g.appendChild(section(sp.libelle, sp.kanji, d));
+    }
+
     const s2 = sec('junten', 2); if (t.junten) g.appendChild(section(s2.libelle, s2.kanji, t.junten));
     if (t.vecteur && t.vecteur.condition) {
       const s3 = sec('vecteur', 3, ' — ' + t.vecteur.nom);
@@ -806,6 +854,45 @@
       w.querySelector('p').style.color = 'var(--sang-vif)';
       g.appendChild(w);
     }
+    /* 派生術式 : ce que le porteur fait vraiment de sa loi, sous des noms
+       qu'il annonce. Le champ « signe » est la seule chance de l'adversaire :
+       on l'affiche à part, pour qu'il se lise comme un avertissement.   */
+    if (t.derivations && t.derivations.length) {
+      const d = el('div', 'derives');
+      const chapeau = el('p', 'discret');
+      chapeau.style.marginBottom = '2px';
+      chapeau.textContent = t.derivations.length > 1
+        ? t.derivations.length + " applications nommées. Annoncées avant le contact : "
+          + "l'annonce est un 縛り, et c'est elle qui les rend fiables."
+        : "Une seule application nommée. Annoncée avant le contact : "
+          + "l'annonce est un 縛り, et c'est elle qui la rend fiable.";
+      d.appendChild(chapeau);
+      t.derivations.forEach((x, i) => {
+        const c = el('div', 'derive');
+        const h = el('p', 'sous-nom');
+        h.appendChild(el('span', 'ordinal jp', ORDINAUX_JP[i] || '式'));
+        h.appendChild(document.createTextNode(x.nom));
+        c.appendChild(h);
+        c.appendChild(el('div', 'meta-derive',
+          (x.kanji || '') + (x.romaji ? ' · ' + x.romaji : '') + '   rang ' + (x.rang || 1)));
+        if (x.effet) { const p2 = el('p'); p2.style.marginTop = '10px'; p2.textContent = x.effet; c.appendChild(p2); }
+        if (x.signe) {
+          const sg = el('div', 'signe');
+          sg.appendChild(el('span', 'etiquette', 'Signe précurseur'));
+          sg.appendChild(el('p', '', x.signe));
+          c.appendChild(sg);
+        }
+        const bas = el('div', 'echange echange-long');
+        bas.style.marginTop = '10px';
+        if (x.cout) bas.appendChild(el('span', 'perte', x.cout));
+        if (x.limite) bas.appendChild(el('span', 'gain', 'Ne prend pas : ' + x.limite));
+        c.appendChild(bas);
+        d.appendChild(c);
+      });
+      const sd = sec('derivations', 12);
+      g.appendChild(section(sd.libelle, sd.kanji, d));
+    }
+
     const s4 = sec('faille', 4); if (t.loi.limite) g.appendChild(section(s4.libelle, s4.kanji, t.loi.limite));
     const s5 = sec('hanten', 5); if (t.hanten) g.appendChild(section(s5.libelle, s5.kanji, t.hanten));
     const s6 = sec('maximum', 6); if (t.maximum) g.appendChild(section(s6.libelle, s6.kanji, t.maximum));

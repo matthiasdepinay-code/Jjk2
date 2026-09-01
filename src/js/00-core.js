@@ -105,16 +105,28 @@
   }
 
   /* premières lettres capitales, en respectant les particules françaises */
-  const PARTICULES = { de: 1, du: 1, des: 1, la: 1, le: 1, les: 1, 'l\'': 1, d: 1, au: 1, aux: 1, et: 1, en: 1, par: 1, sans: 1, sur: 1, a: 1 };
+  /* Un titre français ne capitalise ni ses articles ni ses prépositions
+     à l'intérieur du syntagme : « Le Retour à la Matière », pas « À la ». */
+  const PARTICULES = {
+    de: 1, du: 1, des: 1, la: 1, le: 1, les: 1, "l'": 1, d: 1,
+    au: 1, aux: 1, et: 1, ou: 1, en: 1, par: 1, sans: 1, sur: 1, sous: 1,
+    a: 1, 'à': 1, pour: 1, contre: 1, dans: 1, vers: 1, avec: 1, entre: 1,
+    chez: 1, selon: 1, depuis: 1, jusqu: 1, que: 1, qui: 1, se: 1, ne: 1,
+  };
   function titre(s) {
     return String(s || '').split(' ').map((w, i) => {
       const low = w.toLowerCase();
       if (i > 0 && PARTICULES[low]) return low;
-      /* « l'attente » garde son article en minuscule : « de l'Attente » */
-      const ap = /^([ldjmtnscLDJMTNSC])['\u2019](.+)$/.exec(w);
+      /* « l'attente » garde son article en minuscule : « de l'Attente ».
+         Mais l'élision d'un pronom ou d'une conjonction — n', qu', s', j' —
+         n'introduit pas un nom : « On n'entre pas » ne devient pas
+         « On n'Entre Pas ». Seuls l' et d' commandent une capitale. */
+      const ap = /^(qu|[ldjmtnscLDJMTNSC])['\u2019](.+)$/i.exec(w);
       if (ap) {
-        const tete = i > 0 ? ap[1].toLowerCase() : ap[1].toUpperCase();
-        return tete + "'" + ap[2].charAt(0).toUpperCase() + ap[2].slice(1);
+        const lettre = ap[1].toLowerCase();
+        const tete = i > 0 ? lettre : (lettre.charAt(0).toUpperCase() + lettre.slice(1));
+        const nominal = lettre === 'l' || lettre === 'd';
+        return tete + "'" + (nominal ? ap[2].charAt(0).toUpperCase() + ap[2].slice(1) : ap[2].toLowerCase());
       }
       return w.charAt(0).toUpperCase() + w.slice(1);
     }).join(' ');

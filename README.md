@@ -5,12 +5,16 @@ Pas de dépendance, pas de serveur : une page qui s'ouvre et qui commence à vou
 
 > On n'attribue pas de technique. On enregistre celles qui existent déjà.
 
-Le produit fini est une **fiche** : une loi imposée au réel, sa clause d'énonciation, sa faille,
-son 反転術式, son 術式最大, son 術式拡張, son 簡易領域, son 領域展開 avec incantation et coup au
-but, son aptitude au 黒閃, et — pour un porteur sur cinq — une 天与呪縛 qu'il n'a pas choisie.
-Si la technique se manifeste par 式神, la fiche porte en plus sa meute : trois serviteurs nommés,
-leur ordre d'appel, l'épreuve de 調伏 par laquelle on les soumet, et ce qu'il en coûte de les
-perdre. Un duel est disponible pour s'en servir, mais c'est la fiche qui compte.
+Le produit fini est une **fiche** : une loi imposée au réel, sa provenance constatée, sa clause
+d'énonciation, sa faille, ses **applications nommées** — 第一式, 第二式… — chacune avec le signe
+qui la précède d'une demi-seconde, son 反転術式, son 術式最大, son 術式拡張, son 簡易領域, son
+領域展開 avec incantation et coup au but, son aptitude au 黒閃, et — pour un porteur sur cinq —
+une 天与呪縛 qu'il n'a pas choisie. Si la technique se manifeste par 式神, la fiche porte en plus
+sa meute : trois serviteurs nommés, leur ordre d'appel, l'épreuve de 調伏 par laquelle on les
+soumet, et ce qu'il en coûte de les perdre.
+
+**2 415 919 104 fiches distinctes** : 4¹² déclarations possibles, 144 variantes chacune. Un duel
+est disponible pour s'en servir, mais c'est la fiche qui compte.
 
 ---
 
@@ -21,17 +25,18 @@ adjoint, sans technique, celui qui pose le 帳 et relève les corps — vous ouv
 
 - **Tirage immédiat** — le greffe remplit le formulaire à votre place et vous rend une fiche
   complète en une seconde. Rien à répondre.
-- **Ouvrir une procédure** — le **術式開示調書**, procès-verbal d'ouverture de technique : onze
+- **Ouvrir une procédure** — le **術式開示調書**, procès-verbal d'ouverture de technique : douze
   rubriques, puis l'examen du corps.
 - **Reprendre un dossier** — un numéro de dossier, et la fiche ressort à l'identique.
 
 Le 術式開示 est canon : énoncer sa technique devant témoin est déjà un 縛り. Vous perdez le
 secret, et le réel vous rend en efficacité ce que vous cédez en surprise. C'est exactement ce que
-font les onze rubriques : le substrat sur lequel votre loi a prise,
+font les douze rubriques : le substrat sur lequel votre loi a prise,
 l'opération qu'elle fait au réel, sa portée, sa clause d'application, ce qu'elle vous prélève à
 chaque emploi, son délai d'obéissance, l'assiette de sa cible, son siège dans votre corps, la
 faille par laquelle on pourra vous détruire — que vous choisissez vous-même —, le paysage de
-votre extension du territoire, et la **voie de manifestation** : par où la loi sort de vous.
+votre extension du territoire, la **voie de manifestation** — par où la loi sort de vous — et sa
+**provenance** : par où elle est entrée dans votre corps.
 
 Puis huit questions sur **vous**, qui ne changent pas la technique : elles établissent seulement
 de quoi votre corps est capable en la portant. Il n'a pas de technique, lui ; c'est pour cela
@@ -43,13 +48,51 @@ Chaque rubrique **restreint réellement** le corpus et **modifie réellement** l
 substrat choisit la famille d'essences ; l'opérateur restreint les archétypes de loi ; la clause
 et la portée notent les vecteurs ; le territoire choisit la famille d'extensions ; le siège
 choisit l'organe ; la manifestation décide si vous frappez de votre main, par 式神, par 呪具 ou
-par le sol lui-même. Et en face, chaque réponse a un prix chiffré, écrit noir sur blanc sur la fiche
+par le sol lui-même ; la provenance décide qui, en face, a déjà lu votre fiche. Et en face, chaque
+réponse a un prix chiffré, écrit noir sur blanc sur la fiche
 finale : la portée de contact vaut +25 % de dégâts et +12 % de dégâts subis, le prélèvement sur
 la chair rend les techniques moins chères et vous coûte 4,5 % de vos points de vie à chaque
 énoncé, la cadence différée fait tomber la loi au battement suivant mais majorée de moitié.
 
-Un formulaire moyen vaut ×1,56 en dégâts. Les extrêmes vont de ×0,75 à ×3,17. Les fléaux sont
-calibrés sur la **moyenne** : un bon formulaire paie, un mauvais se sent.
+Un formulaire moyen vaut **×1,762** en dégâts — le produit, sur les douze rubriques, de la moyenne
+de leurs quatre multiplicateurs. Les fléaux sont calibrés sur cette moyenne : un bon formulaire
+paie, un mauvais se sent. Le nombre se recalcule en une ligne depuis la taxonomie, et toute
+rubrique nouvelle qui touche aux dégâts oblige à le reporter dans `50-combat.js`.
+
+## Les applications nommées
+
+Dans l'œuvre, une technique innée n'est pas une capacité floue : elle se décline en coups qui
+portent un nom et un numéro d'ordre. La fiche en attache **deux à quatre**, tirées dans
+l'archétype de votre loi, toujours une de rang 1 — celle de tous les jours — et jamais deux du
+même rang, pour que la liste se lise comme un apprentissage.
+
+Chacune porte un champ qui n'existe nulle part ailleurs dans le corpus : le **signe précurseur**.
+Ce que l'adversaire voit, entend ou sent dans la demi-seconde qui précède l'impact, et qui lui
+donne sa seule chance. Un ternissement de la largeur exacte d'une main. Un cordon de chaleur à
+41 °C sous le vêtement clair. Une voix qui passe au débit de guichet. Le signe désigne la parade
+en même temps que son insuffisance : on voit venir, on sait quoi faire, on n'a pas de quoi le
+faire.
+
+**66 dérivations**, huit à neuf par archétype, chacune avec son effet, son signe, son coût et la
+situation exacte où elle ne prend pas.
+
+## Par où la loi est entrée dans votre corps
+
+La douzième rubrique — 出自 — demande d'où vient la technique, et attache à la fiche un récit de
+provenance daté, situé, signé.
+
+- **相伝 · transmise** — une lignée, une maison, trois générations de relevés au dépôt. Le Bureau
+  a vos contre-mesures depuis longtemps : −6 % de dégâts, +6 % de critique, +1 de réserve.
+- **突然変異 · apparue seule** — premier cas constaté, le dossier commence à vous. Personne n'a de
+  contre-mesure écrite : +12 % de dégâts. Personne n'a écrit non plus comment s'en servir : la loi
+  vous refuse le service un coup sur seize.
+- **受肉 · venue d'un 呪物** — un objet avalé, greffé, inhalé, qui n'est jamais ressorti. +12 % de
+  structure, et 2 % de vos points de vie à chaque application : la chose se nourrit encore.
+- **縛り · achetée par un pacte** — que vous n'avez pas rédigé. +22 % de dégâts, −2 de réserve, et
+  votre 反転術式 ne rend plus que les trois quarts. Le contractant existe toujours.
+
+**26 provenances écrites** : maisons inventées, premiers cas datés, scellés manquants d'un dépôt,
+contrats de substitution en trois exemplaires.
 
 ## Par où la loi sort de vous
 
@@ -71,10 +114,10 @@ La onzième rubrique est celle qui change le plus la fiche.
 
 La déclaration fixe les **familles**, elle ne fixe pas tout. À l'intérieur — quelle essence de
 呪力 dans la famille, quelle loi dans l'archétype, quel territoire, quel organe — le réel a
-encore le choix, et ce choix porte un numéro : **36 variantes** par déclaration.
+encore le choix, et ce choix porte un numéro : **144 variantes** par déclaration.
 
 - **Retirer au sort** (`R`) rejoue la latitude sans toucher à vos réponses.
-- **Variante suivante** (`V`) avance d'un cran dans les 36.
+- **Variante suivante** (`V`) avance d'un cran dans les 144.
 - **La planche** (`G`) a deux onglets : **Variantes de votre déclaration** — six porteurs qui
   auraient rempli le même formulaire que vous, sceaux compris — et **Tirages entièrement neufs**,
   six déclarations tirées de bout en bout, avec leur voie de manifestation affichée. N'importe
@@ -85,11 +128,12 @@ encore le choix, et ce choix porte un numéro : **36 variantes** par déclaratio
 
 ## Le numéro de dossier
 
-Votre déclaration entière tient dans une quinzaine de caractères — `R2-1SX8N-0056T-M`. Onze
+Votre déclaration entière tient dans une quinzaine de caractères — `R3-7E8HN-02IKM-33`. Douze
 rubriques en base 4, cinq poids de corps en base 9, l'archétype dominant, la variante tirée.
 Donnez ce numéro, ou le lien `#d=<code>` : on ressortira exactement la fiche que vous portez,
-sceau compris. Les anciens codes `R1-…` restent lisibles — ils se relisent en manifestation
-directe.
+sceau compris. Les anciens codes restent lisibles : un `R2-…` se relit en provenance transmise,
+un `R1-…` en manifestation directe. Toute rubrique nouvelle s'ajoute en fin de liste, pour que
+les numéros déjà distribués gardent un sens.
 
 Ce n'est pas votre nom qui décide — votre nom ne sert qu'au dossier, aux convocations et, le cas
 échéant, à l'épitaphe.
@@ -151,7 +195,9 @@ d'inversion. La puissance passe alors par la couleur, l'encre et le son.
 
 | Pièce | Rôle |
 |---|---|
-| **Formulaire** | Onze rubriques, quatre réponses chacune. Chaque réponse porte une étiquette machine qui restreint le corpus et applique un modificateur chiffré. 4¹¹ ≈ 4,2 millions de déclarations, × 36 variantes. |
+| **Formulaire** | Douze rubriques, quatre réponses chacune. Chaque réponse porte une étiquette machine qui restreint le corpus et applique un modificateur chiffré. 4¹² = 16 777 216 déclarations, × 144 variantes = 2,4 milliards de fiches. |
+| **Nomenclature** | Les noms sont composés à partir de gabarits qui vivent dans le corpus — 40 communs, 10 par archétype, pour qu'une loi de mesure ne se nomme pas comme une loi de seuil. Les accords sont portés par des jetons explicites (`{ACCORD_MATIERE}`, `{SUFFIXE_ORGANE}`), et chaque banque déclare le genre de ses entrées plutôt que de le laisser deviner. Espace mesuré : ≈ 120 000 noms français, 23 000 noms japonais. |
+| **派生術式** | Deux à quatre applications nommées par fiche, tirées dans l'archétype de la loi, numérotées 第一式 à 第四式, chacune avec son signe précurseur. |
 | **Examen** | Huit questions sur douze, tirées. Chaque réponse pousse un des cinq axes du corps et révèle un archétype. Répartition vérifiée : chaque axe servi 9 à 10 fois, chaque archétype exactement 6 fois. |
 | **Réceptacle** | Cinq axes sur un budget fixe de 100 points. La déclaration incline, l'examen décide, une racine comprime les extrêmes : on spécialise sans produire un corps à un seul membre. |
 | **Duel** | Tour par tour à énergie maudite : 10 actions, 12 statuts qui interagissent, tension, technique maximale, extension du territoire, affrontement de territoires. Moteur pur — il n'émet que des événements, l'interface les met en scène. |
@@ -165,12 +211,14 @@ Mesuré en simulation (90 duels par case) :
 
 | | aucun serment | 1 | 2 | 3 | 4 | 5 |
 |---|---|---|---|---|---|---|
-| grade 2 · joueur avisé | 79 % | 88 % | 79 % | 92 % | — | — |
-| grade 1 · joueur avisé | 42 % | 72 % | 51 % | 79 % | 79 % | — |
-| semi-spécial · joueur avisé | **1 %** | 20 % | 23 % | 67 % | 86 % | — |
-| grade spécial · joueur avisé | **0 %** | 4 % | 17 % | 39 % | 62 % | 94 % |
-| grade 4 · joueur qui découvre | 80 % | 89 % | 82 % | 89 % | — | — |
-| grade 4 · qui martèle la frappe | 33 % | 68 % | 79 % | 98 % | — | — |
+| grade 2 · joueur avisé | 72 % | 94 % | 84 % | 91 % | — | — |
+| grade 1 · joueur avisé | 57 % | 76 % | 72 % | 80 % | 86 % | — |
+| semi-spécial · joueur avisé | **3 %** | 17 % | 27 % | 59 % | 89 % | — |
+| grade spécial · joueur avisé | **0 %** | 2 % | 3 % | 14 % | 46 % | 73 % |
+| grade 4 · joueur qui découvre | 81 % | 81 % | 93 % | 96 % | — | — |
+| grade 4 · qui martèle la frappe | 33 % | 74 % | 67 % | 84 % | — | — |
+
+Serments signés dans l'ordre : Œil scellé, Garde rendue, Silence, Journal fermé, Dette de chair.
 
 Marteler la frappe renforcée ne passe pas le grade 3, quels que soient les serments. Un grade
 spécial ne tombe que si vous avez tout rendu : la moitié de votre chair, votre garde, vos yeux,
@@ -178,13 +226,15 @@ votre délai, et la trace de votre passage.
 
 ## Le corpus
 
-469 entrées à la première écriture, 822 aujourd'hui, toutes écrites pour ce projet :
+469 entrées à la première écriture, **1 579** aujourd'hui, toutes écrites pour ce projet :
 
 | | |
 |---|---|
-| 40 essences de 呪力 | dix par famille de substrat |
-| 46 lois maudites | cinq à sept par archétype, chacune avec sa conséquence, sa faille, son 反転術式 et sa sortie maximale |
-| 24 vecteurs · 22 territoires innés | avec paysage, incantation, coup au but et faille |
+| 100 essences de 呪力 | vingt-quatre à vingt-six par famille de substrat, chacune avec son genre grammatical déclaré |
+| 46 lois maudites | cinq à sept par archétype, chacune avec sa conséquence, sa faille, son 反転術式, sa sortie maximale et son nom japonais |
+| 66 派生術式 | huit à neuf par archétype : effet, **signe précurseur**, coût, limite |
+| 26 provenances | 相伝, 突然変異, 受肉, 縛り — récit daté, témoin, prix, mention au dossier |
+| 64 vecteurs · 22 territoires innés | avec paysage, incantation, coup au but et faille |
 | 22 術式拡張 | appariées à l'archétype de votre loi, pour qu'elles en découlent vraiment |
 | 14 簡易領域 · 10 aptitudes au 黒閃 | |
 | 14 天与呪縛 | cinq formes mécaniques, habillées par le corpus |
@@ -192,7 +242,9 @@ votre délai, et la trace de votre passage.
 | 14 épreuves de 調伏 · 7 règles de soumission | dont celle qui interdit le retour d'un 式神 détruit |
 | 18 呪具 | outils chargés, nommés et situés |
 | 20 fléaux · 20 縛り · 16 affectations · 16 contres | |
-| 11 rubriques × 4 réponses, 12 questions d'examen | avec leurs conséquences écrites |
+| 12 rubriques × 4 réponses, 12 questions d'examen | avec leurs conséquences écrites |
+| 150 matières · 97 organes · 94 lieux · 71 nombres | les banques de composition des noms, genre déclaré |
+| 120 gabarits de nom | 40 communs, 10 par archétype |
 | 34 termes de lexique canon | français, kanji, romaji, définition |
 
 ## Structure
@@ -204,7 +256,7 @@ src/data/corpus.json   le contenu écrit : formulaire, examen, ambiance, essence
 src/js/00-core.js      générateur déterministe, grammaire, utilitaires
 src/js/10-audio.js     synthèse Web Audio, zéro fichier son
 src/js/20-fx.js        cinq calques de toile : champ, encre, territoire, entailles, sceaux, Voile
-src/js/25-taxonomie.js les familles, les effets des onze rubriques, le codage des dossiers
+src/js/25-taxonomie.js les familles, les effets des douze rubriques, le codage des dossiers
 src/js/30-forge.js     la forge des techniques et la grammaire française qui va avec
 src/js/40-serments.js  les serments et leurs amputations
 src/js/50-combat.js    le moteur de duel (pur, sans DOM)
@@ -214,7 +266,17 @@ src/js/75-ecrans.js    les trois portes, formulaire, examen, fiche et sommaire, 
 src/js/78-duel.js      mise en scène du duel et de l'extension du territoire
 src/js/80-boot.js      allumage
 build.mjs              assemble le tout en index.html (+ artifact.html)
+tools/verifier.mjs     tient les invariants que la forge suppose ; échoue fort
 ```
+
+```bash
+node tools/verifier.mjs --stats   # familles, planchers, sièges, couverture du formulaire
+```
+
+Le corpus est devenu trop gros pour se relire. Le vérificateur refuse une entrée sans famille, un
+archétype hors nomenclature, un siège anatomique sans organe, une rubrique sans question, un id
+en double, une reprise involontaire d'un nom canon. Il lit les expressions de siège directement
+dans `25-taxonomie.js` pour que les deux ne dérivent pas en silence.
 
 ```bash
 node build.mjs   # régénère index.html et artifact.html depuis src/

@@ -256,10 +256,13 @@
   const REGLAGE = {
     /* Dégâts moyens d'un tour de joueur, en multiples d'attaque. Mesuré,
        pas supposé : 3,4 pour la mécanique de base, multiplié par le gain
-       moyen d'une déclaration (×1,56 relevé sur 3000 formulaires tirés).
+       moyen d'une déclaration. Ce gain se recalcule exactement à partir de
+       la taxonomie — produit, sur les douze rubriques, de la moyenne de
+       leurs quatre multiplicateurs — et vaut ×1,762 depuis l'ajout du 出自.
        On calibre sur la déclaration MOYENNE : un bon formulaire doit payer,
-       un mauvais doit se sentir.                                         */
-    rendementJoueur: 5.0,
+       un mauvais doit se sentir. Toute rubrique nouvelle qui touche aux
+       dégâts déplace ce nombre : le relever et reporter ici.             */
+    rendementJoueur: 5.35,
     rendementFleau: 1.9,    /* idem côté fléau */
     expoAttaque: 0.40,      /* la courbe pèse à plein sur les PV du fléau, à peine sur sa frappe :
                                une descente doit s'allonger, pas se raccourcir brutalement */

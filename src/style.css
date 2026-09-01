@@ -925,3 +925,58 @@ body.en-kokusen #fx-ink {
   font-family: var(--serif); font-size: 1rem; letter-spacing: 0; line-height: 1.5;
 }
 .echange-long .perte, .echange-long .gain { max-width: 66ch; font-weight: 300; }
+
+/* ---- 派生術式 : les applications nommées -------------------------------
+   Une dérivation se lit comme un coup annoncé : son numéro d'ordre en tête,
+   son signe précurseur détaché — c'est la seule ligne que l'adversaire a le
+   temps de lire, elle ne doit pas se noyer dans le reste.               */
+.derives { display: flex; flex-direction: column; gap: 18px; }
+.derive {
+  border-left: 2px solid rgba(178, 18, 23, 0.5);
+  padding: 2px 0 2px 16px;
+}
+.derive .sous-nom { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.derive .ordinal {
+  font-size: 0.72rem; letter-spacing: .16em; color: var(--sang-vif);
+  border: 1px solid rgba(178, 18, 23, .45); padding: 2px 7px; border-radius: 2px;
+  white-space: nowrap;
+}
+.meta-derive {
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .1em;
+  color: var(--os-mort); margin-top: 4px; text-transform: uppercase;
+}
+.signe {
+  margin-top: 12px; padding: 10px 14px;
+  background: rgba(242, 193, 78, .05);
+  border: 1px solid rgba(242, 193, 78, .18);
+  border-radius: 2px;
+}
+.signe .etiquette { color: var(--or); font-size: .64rem; letter-spacing: .2em; }
+.signe p { margin: 6px 0 0; font-family: var(--serif); font-weight: 300; max-width: 66ch; }
+@media (max-width: 640px) { .derive { padding-left: 11px; } }
+
+/* ---- 出自 : la provenance de la technique -----------------------------
+   Quatre origines, quatre teintes de bordure : on doit voir d'un coup d'œil
+   si la loi vient d'une famille, d'un accident, d'un objet ou d'un pacte. */
+.provenance { border-left: 2px solid rgba(233, 226, 212, .22); padding: 2px 0 2px 16px; }
+.provenance.origine-soden    { border-left-color: rgba(242, 193, 78, .45); }
+.provenance.origine-mutation { border-left-color: rgba(127, 227, 255, .40); }
+.provenance.origine-jubutsu  { border-left-color: rgba(111, 143, 90, .55); }
+.provenance.origine-shibari  { border-left-color: rgba(178, 18, 23, .60); }
+.provenance .ordinal { color: var(--os-faible); border-color: rgba(233, 226, 212, .28); }
+.origine-soden    .ordinal { color: var(--or); border-color: rgba(242, 193, 78, .4); }
+.origine-mutation .ordinal { color: var(--inverse); border-color: rgba(127, 227, 255, .35); }
+.origine-jubutsu  .ordinal { color: var(--vert-mal); border-color: rgba(111, 143, 90, .45); }
+.origine-shibari  .ordinal { color: var(--sang-vif); border-color: rgba(178, 18, 23, .5); }
+.mention-dossier {
+  margin-top: 12px; padding: 9px 13px;
+  border: 1px dashed rgba(233, 226, 212, .16); border-radius: 2px;
+}
+.mention-dossier .etiquette { font-size: .62rem; letter-spacing: .2em; color: var(--os-mort); }
+.mention-dossier p { margin: 5px 0 0; font-family: var(--mono); font-size: .78rem; color: var(--os-faible); }
+@media (max-width: 640px) { .provenance { padding-left: 11px; } }
+/* Le témoin n'est pas la suite du récit : c'est qui l'a constaté. */
+.provenance .office {
+  margin-top: 10px; font-style: italic; color: var(--os-faible);
+  border-left: 1px solid rgba(233, 226, 212, .14); padding-left: 12px; max-width: 68ch;
+}
