@@ -1,0 +1,1075 @@
+/* =========================================================================
+   RITUEL — feuille de style
+   Un dossier d'autopsie qu'on aurait laissé trop longtemps dans le noir.
+   ========================================================================= */
+
+:root {
+  --nuit:      #07070a;
+  --nuit-2:    #0c0c11;
+  --nuit-3:    #131319;
+  --os:        #e9e2d4;
+  --os-faible: #9d968a;
+  --os-mort:   #5d574e;
+  --sang:      #b31217;
+  --sang-vif:  #ff2d1a;
+  --or:        #f2c14e;
+  --inverse:   #7fe3ff;
+  --vert-mal:  #6f8f5a;
+
+  --serif: "Cormorant Garamond", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --jp: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --hair: 1px solid rgba(233, 226, 212, 0.14);
+  --hair-fort: 1px solid rgba(233, 226, 212, 0.32);
+  --ease: cubic-bezier(.16,.84,.28,1);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--nuit);
+  color: var(--os);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.55;
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+/* Le débord horizontal se coupe sur la racine SEULEMENT. Le poser aussi sur
+   body en faisait un conteneur de défilement : les descendants en
+   « position: sticky » s'accrochaient alors à body, qui ne défile jamais,
+   et ne bougeaient plus. */
+html { overflow-x: hidden; }
+/* « clip » et non « hidden » : les deux coupent le débord horizontal — que
+   les secousses des calques d'effets provoquent —, mais « hidden » ferait de
+   body un conteneur de défilement, et les descendants en « position: sticky »
+   s'accrocheraient alors à body, qui ne défile jamais. */
+body { position: relative; overflow-x: clip; }
+
+html.is-inverted { filter: invert(1) hue-rotate(180deg); }
+html.is-inverted #fx-flash { filter: invert(1); }
+
+::selection { background: var(--sang); color: var(--os); }
+
+/* Le clavier doit voir où il est : personne ne joue à l'aveugle sans
+   l'avoir signé. */
+:focus-visible {
+  outline: 2px solid var(--sang-vif);
+  outline-offset: 3px;
+}
+.reponse:focus-visible, .contrat:focus-visible, .acte:focus-visible {
+  outline-offset: -2px;
+  color: var(--os);
+}
+
+/* ---- calques d'effets ---------------------------------------------- */
+.fx-layer {
+  position: fixed; inset: 0; pointer-events: none;
+  width: 100%; height: 100%;
+}
+#fx-ink { z-index: 76; mix-blend-mode: screen; opacity: .62; }
+#fx-dom.is-hidden { display: none; }
+#fx-flash {
+  position: fixed; inset: 0; z-index: 90; pointer-events: none;
+  opacity: 0; background: #fff; mix-blend-mode: screen;
+}
+
+/* grain : un vieux capteur qui chauffe */
+body::after {
+  content: ""; position: fixed; inset: -50%; z-index: 80; pointer-events: none;
+  opacity: .045; will-change: transform;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+  animation: grain 1.1s steps(4) infinite;
+}
+@keyframes grain {
+  0%   { transform: translate(0,0); }
+  25%  { transform: translate(-3%, 2%); }
+  50%  { transform: translate(2%, -3%); }
+  75%  { transform: translate(-2%, -2%); }
+  100% { transform: translate(3%, 1%); }
+}
+/* lignes de balayage */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: 79; pointer-events: none;
+  opacity: .25;
+  background: repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.35) 2px 3px);
+}
+
+/* ---- scène ----------------------------------------------------------- */
+#stage {
+  position: relative; z-index: 10;
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: clamp(18px, 4vw, 56px) clamp(14px, 4vw, 40px) 120px;
+  /* Pas de « will-change: transform » ici : il ferait de #stage un bloc
+     conteneur, et « position: sticky » cesserait alors d'accrocher la
+     colonne de droite. Les toiles d'effets sont des calques à part, ce
+     conteneur n'a rien à promouvoir. */
+}
+/* Pas de « both » : le mode de remplissage laisse une matrice de transformation
+   sur l'écran une fois l'animation finie, et un élément transformé devient un
+   bloc conteneur — « position: sticky » cesse alors d'accrocher. L'écran est
+   caché avant d'être actif : il n'a rien à remplir en amont. */
+.ecran { width: 100%; max-width: 1120px; display: none; animation: fadeUp .8s var(--ease); }
+.ecran.actif { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* ---- typographie ----------------------------------------------------- */
+.etiquette {
+  font-family: var(--mono); font-size: 10px; font-weight: 400;
+  letter-spacing: .34em; text-transform: uppercase;
+  color: var(--os-mort);
+}
+.etiquette.rouge { color: var(--sang); }
+.titre-rituel {
+  font-family: var(--serif); font-weight: 300; text-wrap: balance;
+  font-size: clamp(2.1rem, 7vw, 4.6rem); line-height: 1.02;
+  letter-spacing: -.02em; margin: .1em 0 .2em;
+}
+.titre-rituel em { font-style: italic; color: var(--sang); }
+.jp { font-family: var(--jp); letter-spacing: .18em; }
+.mono { font-family: var(--mono); }
+.faible { color: var(--os-faible); }
+.mort { color: var(--os-mort); }
+.sang { color: var(--sang); }
+.or { color: var(--or); }
+.serif-italique { font-style: italic; font-weight: 300; }
+
+hr.trait { border: 0; border-top: var(--hair); margin: 28px 0; }
+hr.trait.fort { border-top: var(--hair-fort); }
+
+.typing::after {
+  content: "▌"; margin-left: 2px; color: var(--sang);
+  animation: blink .7s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ---- boutons --------------------------------------------------------- */
+.btn {
+  appearance: none; -webkit-appearance: none;
+  background: transparent; color: var(--os);
+  border: var(--hair-fort); border-radius: 0;
+  padding: 13px 26px; cursor: pointer;
+  font-family: var(--mono); font-size: 11px; font-weight: 400;
+  letter-spacing: .26em; text-transform: uppercase;
+  position: relative; overflow: hidden;
+  transition: color .25s var(--ease), border-color .25s var(--ease), letter-spacing .35s var(--ease);
+}
+.btn::before {
+  content: ""; position: absolute; inset: 0;
+  background: var(--os); transform: scaleY(0); transform-origin: bottom;
+  transition: transform .34s var(--ease); z-index: -1;
+}
+.btn:hover:not(:disabled) { color: var(--nuit); border-color: var(--os); letter-spacing: .32em; }
+.btn:hover:not(:disabled)::before { transform: scaleY(1); }
+.btn:disabled { opacity: .28; cursor: not-allowed; }
+.btn.rouge { border-color: rgba(179,18,23,.6); color: var(--sang-vif); }
+.btn.rouge::before { background: var(--sang); }
+.btn.rouge:hover:not(:disabled) { color: #fff; border-color: var(--sang); }
+.btn.fantome { border-color: transparent; color: var(--os-mort); padding-left: 0; padding-right: 0; margin-right: 24px; }
+.btn.fantome:hover:not(:disabled) { color: var(--os); letter-spacing: .3em; }
+.btn.fantome::before { display: none; }
+.btn.large { display: block; width: 100%; padding: 18px 26px; }
+
+.btn-rangee { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+/* ---- champ de saisie -------------------------------------------------- */
+.champ {
+  width: 100%; background: transparent; border: 0;
+  border-bottom: var(--hair-fort);
+  color: var(--os); font-family: var(--serif); font-weight: 300;
+  font-size: clamp(1.6rem, 5vw, 2.8rem); padding: 10px 2px 12px;
+  outline: none; letter-spacing: .02em;
+  transition: border-color .3s var(--ease);
+}
+.champ::placeholder { color: rgba(233,226,212,.16); font-style: italic; }
+.champ:focus { border-color: var(--sang); }
+
+/* ---- rituel ---------------------------------------------------------- */
+.rituel-ligne {
+  font-size: clamp(1.05rem, 2.6vw, 1.5rem); font-weight: 300;
+  min-height: 1.6em; margin: 0 0 .55em; color: var(--os-faible);
+}
+.rituel-ligne.forte { color: var(--os); font-style: italic; }
+
+.question-bloc { margin-top: 40px; }
+.question-texte {
+  font-size: clamp(1.25rem, 3vw, 1.85rem); font-weight: 300; text-wrap: pretty;
+  line-height: 1.3; margin: 0 0 22px; max-width: 46ch;
+}
+.reponses { display: grid; gap: 10px; max-width: 780px; }
+.reponse {
+  text-align: left; background: transparent; cursor: pointer;
+  border: 0; border-left: 2px solid rgba(233,226,212,.14);
+  padding: 14px 20px; color: var(--os-faible);
+  font-family: var(--serif); font-size: 1.05rem; font-weight: 300; line-height: 1.4;
+  transition: all .3s var(--ease);
+}
+.reponse:hover {
+  border-left-color: var(--sang); color: var(--os);
+  background: linear-gradient(90deg, rgba(179,18,23,.10), transparent 70%);
+  padding-left: 30px;
+}
+.reponse .murmure {
+  display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--os-mort); margin-top: 8px;
+  opacity: 0; transform: translateY(-4px); transition: all .3s var(--ease);
+}
+.reponse:hover .murmure { opacity: 1; transform: none; color: var(--sang); }
+
+.jauge-rituel { display: flex; gap: 6px; margin: 34px 0 0; }
+.jauge-rituel i {
+  flex: 1; height: 2px; background: rgba(233,226,212,.12);
+  transition: background .5s var(--ease);
+}
+.jauge-rituel i.pleine { background: var(--sang); }
+
+/* ---- dossier de technique ------------------------------------------- */
+.dossier {
+  display: grid; grid-template-columns: minmax(0, 1fr) 340px;
+  gap: clamp(20px, 4vw, 56px); align-items: start;
+}
+@media (max-width: 860px) { .dossier { grid-template-columns: 1fr; } }
+
+.nom-technique {
+  font-size: clamp(2rem, 6.4vw, 4.2rem); font-weight: 300; line-height: 1.03; text-wrap: balance;
+  letter-spacing: -.025em; margin: 6px 0 10px;
+}
+.nom-jp { font-family: var(--jp); font-size: clamp(.95rem, 2.2vw, 1.3rem); color: var(--sang); letter-spacing: .3em; }
+
+.bloc { margin: 26px 0; }
+.bloc > .etiquette { display: block; margin-bottom: 9px; }
+.bloc p { margin: 0; font-weight: 300; font-size: 1.08rem; }
+.bloc .enonce {
+  font-size: clamp(1.15rem, 2.8vw, 1.55rem); font-style: italic; font-weight: 300;
+  border-left: 2px solid var(--sang); padding-left: 18px; margin-left: 0;
+}
+
+.grille-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1px; background: rgba(233,226,212,.12); border: var(--hair); margin: 26px 0;
+}
+.stat { background: var(--nuit); padding: 14px 16px; }
+.stat b { display: block; font-family: var(--mono); font-size: 1.45rem; font-weight: 400; color: var(--os); }
+.stat span { display: block; font-family: var(--mono); font-size: 9px; letter-spacing: .26em; text-transform: uppercase; color: var(--os-mort); margin-top: 4px; }
+
+.sceau-boite { position: relative; }
+.sceau-boite canvas { width: 100%; height: auto; display: block; filter: drop-shadow(0 0 24px rgba(179,18,23,.28)); }
+.sceau-rot { animation: rot 90s linear infinite; }
+@keyframes rot { to { transform: rotate(360deg); } }
+.sceau-legende { text-align: center; margin-top: 14px; }
+
+.tampon {
+  display: inline-block; border: 2px solid var(--sang); color: var(--sang);
+  font-family: var(--mono); font-size: 11px; letter-spacing: .3em; text-transform: uppercase;
+  padding: 7px 14px; transform: rotate(-3.5deg); opacity: .9;
+}
+
+/* ---- serments -------------------------------------------------------- */
+.contrat {
+  border: var(--hair); padding: 22px 24px; margin-bottom: 14px;
+  background: linear-gradient(180deg, rgba(233,226,212,.02), transparent);
+  cursor: pointer; transition: all .3s var(--ease); position: relative;
+}
+.contrat:hover { border-color: rgba(179,18,23,.55); background: linear-gradient(180deg, rgba(179,18,23,.07), transparent); }
+.contrat.signe { border-color: var(--sang); }
+.contrat.signe::after {
+  content: "SIGNÉ"; position: absolute; top: 14px; right: 16px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .3em; color: var(--sang);
+  border: 1px solid var(--sang); padding: 3px 8px; transform: rotate(-6deg);
+}
+.contrat h4 { margin: 0 0 8px; font-size: 1.35rem; font-weight: 400; }
+.contrat .clause { font-style: italic; color: var(--os-faible); font-weight: 300; margin: 0 0 14px; max-width: 62ch; }
+.echange { display: flex; flex-wrap: wrap; gap: 10px 26px; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; }
+.echange .perte { color: var(--sang-vif); }
+.echange .gain { color: var(--or); }
+.echange .perte::before { content: "− "; }
+.echange .gain::before { content: "+ "; }
+.danger { display: inline-flex; gap: 3px; margin-left: auto; }
+.danger i { width: 6px; height: 6px; background: var(--os-mort); border-radius: 50%; }
+.danger i.on { background: var(--sang); }
+
+/* ---- combat ---------------------------------------------------------- */
+.arene { display: grid; gap: 22px; }
+.combattants { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: center; }
+@media (max-width: 720px) { .combattants { grid-template-columns: 1fr; } .versus { display: none; } }
+.versus { font-family: var(--mono); font-size: 11px; letter-spacing: .3em; color: var(--os-mort); }
+
+.fiche { border: var(--hair); padding: 18px 20px; position: relative; overflow: hidden; }
+.fiche.ennemi { border-color: rgba(179,18,23,.35); }
+.fiche .nom { font-size: 1.5rem; font-weight: 300; line-height: 1.1; margin-bottom: 2px; }
+.fiche .sous { font-family: var(--mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--os-mort); }
+.fiche.frappe { animation: frappe .32s var(--ease); }
+@keyframes frappe {
+  0%,100% { transform: none; }
+  25% { transform: translateX(-9px) skewX(3deg); }
+  60% { transform: translateX(6px); }
+}
+
+.barre { height: 8px; background: rgba(233,226,212,.09); margin-top: 14px; position: relative; overflow: hidden; }
+.barre i { display: block; height: 100%; background: var(--os); transition: width .5s var(--ease); }
+.barre.pv i { background: linear-gradient(90deg, var(--sang), var(--sang-vif)); }
+.barre.pv .fantomatique {
+  position: absolute; top: 0; left: 0; height: 100%;
+  background: rgba(255,45,26,.28); transition: width 1.1s .25s var(--ease);
+}
+.barre.energie { height: 4px; }
+.barre.energie i { background: var(--inverse); }
+.chiffres { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--os-mort); margin-top: 6px; }
+
+.statuts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; min-height: 20px; }
+.puce {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+  border: 1px solid rgba(233,226,212,.25); padding: 2px 7px; color: var(--os-faible);
+}
+.puce.mauvais { border-color: rgba(179,18,23,.5); color: var(--sang-vif); }
+.puce.bon { border-color: rgba(242,193,78,.5); color: var(--or); }
+
+/* Le filtre porte sur les enfants, pas sur l'élément : sinon il s'applique
+   aussi aux pseudo-éléments et la cicatrice devient illisible. */
+.mutilated { position: relative; min-height: 42px; }
+.mutilated > * { opacity: .16; filter: grayscale(1) brightness(.5); }
+.mutilated::before {
+  content: ""; position: absolute; left: -4%; right: -4%; top: 50%; height: 2px;
+  background: var(--sang-vif); transform: rotate(-2.4deg); z-index: 2;
+  box-shadow: 0 0 12px rgba(255,45,26,.8);
+}
+.mutilated::after {
+  content: attr(data-scar); position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .28em; text-transform: uppercase;
+  color: #ff6f5e; background: rgba(30,4,6,.86); z-index: 3; filter: none;
+}
+
+.actions { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.acte {
+  text-align: left; background: transparent; border: var(--hair);
+  padding: 12px 14px; cursor: pointer; color: var(--os-faible);
+  font-family: var(--serif); transition: all .22s var(--ease);
+}
+.acte:hover:not(:disabled) { border-color: var(--os); color: var(--os); transform: translateY(-2px); }
+.acte:disabled { opacity: .26; cursor: not-allowed; }
+.acte b { display: block; font-size: 1.08rem; font-weight: 400; }
+.acte small { font-family: var(--mono); font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--os-mort); }
+.acte .cout { float: right; font-family: var(--mono); font-size: 10px; color: var(--inverse); letter-spacing: .1em; }
+.acte.ultime { border-color: rgba(179,18,23,.55); }
+.acte.ultime b { color: var(--sang-vif); }
+.acte.ultime:hover:not(:disabled) { border-color: var(--sang-vif); box-shadow: inset 0 0 40px rgba(179,18,23,.18); }
+
+.duel-bas { display: grid; grid-template-columns: minmax(0,1fr) minmax(280px, 34%); gap: 22px; align-items: start; }
+@media (max-width: 900px) { .duel-bas { grid-template-columns: 1fr; } }
+.journal {
+  border-top: var(--hair); padding-top: 14px; max-height: 340px; overflow-y: auto;
+  font-size: 1rem; font-weight: 300;
+}
+.journal .etiquette { display: block; margin-bottom: 10px; }
+.fiche .replique { font-style: italic; font-weight: 300; color: var(--os-mort); margin-top: 12px; font-size: .96rem; }
+.journal p { margin: 0 0 7px; color: var(--os-faible); animation: fadeUp .4s var(--ease) both; }
+.journal p.important { color: var(--os); font-style: italic; }
+.journal p.mal { color: var(--sang-vif); }
+.journal p.bien { color: var(--or); }
+.journal p .n { font-family: var(--mono); font-size: .92em; }
+.journal::-webkit-scrollbar { width: 3px; }
+.journal::-webkit-scrollbar-thumb { background: rgba(179,18,23,.5); }
+
+/* ---- territoire ------------------------------------------------------ */
+#territoire {
+  position: fixed; inset: 0; z-index: 65; display: none;
+  align-items: center; justify-content: center; flex-direction: column;
+  text-align: center; padding: 24px; pointer-events: none;
+}
+#territoire.actif { display: flex; }
+#territoire .incantation {
+  font-family: var(--jp); font-size: clamp(.95rem, 2.4vw, 1.35rem);
+  color: var(--sang-vif); letter-spacing: .34em; margin-bottom: 26px; opacity: .9;
+}
+#territoire .nom-dom {
+  font-size: clamp(2.2rem, 9vw, 6.4rem); font-weight: 300; line-height: .98; text-wrap: balance;
+  letter-spacing: -.03em; max-width: 16ch; margin: 0 auto;
+  text-shadow: 0 0 60px rgba(179,18,23,.6);
+}
+#territoire .vers { margin-top: 30px; max-width: 44ch; }
+#territoire .vers p { margin: .18em 0; font-style: italic; font-weight: 300; color: var(--os-faible); }
+#territoire .sur { margin-top: 34px; }
+body.in-domain #stage { filter: blur(3px) brightness(.35); }
+
+/* ---- épitaphe / mémoire ---------------------------------------------- */
+.tombe {
+  border: var(--hair); border-left: 2px solid var(--sang);
+  padding: 16px 20px; margin-bottom: 12px;
+  background: linear-gradient(90deg, rgba(179,18,23,.06), transparent 60%);
+}
+.tombe .nom { font-size: 1.25rem; font-weight: 300; }
+.tombe .det { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--os-mort); }
+
+/* ---- barre d'état ---------------------------------------------------- */
+#barre-etat {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: flex; align-items: center; gap: 18px;
+  padding: 9px clamp(14px, 4vw, 40px);
+  background: linear-gradient(180deg, rgba(7,7,10,0), rgba(7,7,10,.94) 40%);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--os-mort);
+}
+#barre-etat .sep { flex: 1; }
+#barre-etat button {
+  background: none; border: 0; color: var(--os-mort); cursor: pointer;
+  font: inherit; letter-spacing: .2em; padding: 4px 0;
+}
+#barre-etat button:hover { color: var(--sang); }
+
+/* ---- murmures -------------------------------------------------------- */
+.murmure-flottant {
+  position: fixed; z-index: 50; pointer-events: none;
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: clamp(1rem, 2.4vw, 1.5rem); color: rgba(233,226,212,.32);
+  white-space: nowrap;
+  animation: derive 13s linear forwards;
+}
+@keyframes derive {
+  0% { opacity: 0; transform: translateX(0) scale(1); }
+  12% { opacity: 1; }
+  85% { opacity: .5; }
+  100% { opacity: 0; transform: translateX(-16vw) scale(1.06); }
+}
+
+/* ---- divers ---------------------------------------------------------- */
+.deux-colonnes { columns: 2; column-gap: 40px; }
+@media (max-width: 700px) { .deux-colonnes { columns: 1; } }
+.centre { text-align: center; }
+.plein { width: 100%; }
+.pile > * + * { margin-top: 12px; }
+.discret { font-size: .92rem; color: var(--os-mort); }
+
+@media (prefers-reduced-motion: reduce) {
+  body::after, .sceau-rot, .murmure-flottant { animation: none !important; }
+  * { transition-duration: .01ms !important; }
+}
+
+/* ---- lisibilité pendant que le territoire est déployé ---------------- */
+/* Le territoire déployé recouvre la scène (calque 60). Tant qu'il dure,
+   la scène doit repasser au-dessus, sinon on joue sans voir ses boutons. */
+body.domaine-calme #stage { filter: none; position: relative; z-index: 62; }
+body.domaine-calme .fiche,
+body.domaine-calme .acte,
+body.domaine-calme .journal {
+  background: rgba(7, 7, 10, .74);
+  backdrop-filter: blur(2px);
+}
+body.domaine-calme .fiche { border-color: rgba(233, 226, 212, .3); }
+.etiquette.or { color: var(--or); }
+#territoire .etiquette { color: inherit; opacity: .7; }
+
+/* le titre de la page ne doit jamais dépasser sur mobile */
+@media (max-width: 520px) {
+  .btn { padding: 12px 18px; letter-spacing: .18em; }
+  .btn.fantome { margin-right: 14px; }
+  #barre-etat { font-size: 9px; gap: 10px; letter-spacing: .12em; }
+  #stage { padding-bottom: 96px; }
+}
+
+/* ---- téléphone : l'écran est petit, le rituel reste lisible ---------- */
+#barre-etat > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 620px) {
+  #be-registre, #be-grade { display: none; }
+  #barre-etat { gap: 12px; padding: 8px 14px; }
+  #stage { padding-bottom: 84px; }
+  .fiche { padding: 12px 14px; }
+  .fiche .nom { font-size: 1.2rem; }
+  .fiche .replique { font-size: .88rem; margin-top: 8px; }
+  .statuts { min-height: 0; }
+  .combattants { gap: 10px; }
+  .acte { padding: 10px 12px; }
+  .acte b { font-size: 1rem; }
+  .titre-rituel { font-size: clamp(1.9rem, 11vw, 3rem); }
+  .contrat { padding: 16px 16px; }
+  .grille-stats { grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); }
+  .stat { padding: 10px 12px; }
+  .stat b { font-size: 1.15rem; }
+}
+/* les murmures ne doivent jamais recouvrir une action */
+@media (max-width: 860px) { .murmure-flottant { display: none; } }
+
+/* ---- le Voile (帳) ----------------------------------------------------
+   Un rideau qu'on abaisse sur le secteur. Dehors, personne ne verra rien. */
+#fx-voile {
+  position: fixed; inset: 0; z-index: 88; pointer-events: none;
+  background: #040406;
+  transform: translateY(-101%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  will-change: transform;
+}
+#fx-voile.tombe {
+  transform: translateY(0);
+  transition: transform .78s cubic-bezier(.7,.02,.3,1);
+}
+#fx-voile.leve {
+  transform: translateY(101%);
+  transition: transform .62s cubic-bezier(.6,.02,.3,1);
+}
+#fx-voile .couture {
+  position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--sang-vif), var(--sang), var(--sang-vif), transparent);
+  box-shadow: 0 0 26px rgba(255, 45, 26, .85);
+}
+#fx-voile .kanji {
+  font-family: var(--jp); font-size: clamp(6rem, 26vw, 18rem);
+  color: rgba(233, 226, 212, .045); line-height: 1;
+  position: absolute; user-select: none;
+}
+#fx-voile .dit {
+  position: relative; z-index: 2; max-width: 34ch; text-align: center;
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: clamp(1.05rem, 3vw, 1.6rem); color: var(--os-faible);
+  padding: 0 24px; text-wrap: balance;
+}
+@media (prefers-reduced-motion: reduce) {
+  #fx-voile.tombe, #fx-voile.leve { transition-duration: .2s !important; }
+}
+
+/* ---- le formulaire de déclaration -------------------------------------
+   À gauche on interroge, à droite le dossier se remplit tout seul. */
+.formulaire {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: clamp(20px, 4vw, 52px); align-items: start; margin-top: 26px;
+}
+@media (max-width: 900px) { .formulaire { grid-template-columns: 1fr; } }
+
+.feuille {
+  border: var(--hair); padding: 20px 22px;
+  background: linear-gradient(180deg, rgba(233,226,212,.025), transparent 60%);
+  position: sticky; top: 24px;
+}
+@media (max-width: 900px) { .feuille { position: static; order: -1; } }
+
+.lignes-dossier { margin-top: 14px; display: flex; flex-direction: column; gap: 9px; }
+.ligne-dossier { display: flex; flex-direction: column; gap: 2px; padding-bottom: 8px; border-bottom: 1px dotted rgba(233,226,212,.12); }
+.ligne-dossier b {
+  font-family: var(--mono); font-size: 9px; font-weight: 400;
+  letter-spacing: .24em; text-transform: uppercase; color: var(--os-mort);
+}
+.ligne-dossier .valeur { font-weight: 300; font-size: .98rem; color: rgba(233,226,212,.2); font-style: italic; }
+.ligne-dossier .valeur.inscrite {
+  color: var(--os); font-style: normal;
+  animation: inscrire .5s var(--ease) both;
+}
+@keyframes inscrire {
+  from { opacity: 0; transform: translateX(-6px); filter: blur(2px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.code-dossier {
+  margin-top: 18px; font-family: var(--mono); font-size: 1.05rem;
+  letter-spacing: .3em; color: var(--or); text-align: center;
+  border-top: var(--hair); padding-top: 14px;
+}
+
+.precision {
+  font-style: italic; font-weight: 300; color: var(--os-mort);
+  max-width: 52ch; margin: -14px 0 22px; font-size: 1rem;
+}
+.consequence-inscrite {
+  margin-top: 20px; font-family: var(--mono); font-size: 11px;
+  letter-spacing: .1em; color: var(--sang-vif); max-width: 60ch; line-height: 1.7;
+}
+
+/* ---- conséquences de la déclaration, affichées sans euphémisme -------- */
+.notes-formulaire { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.note-formulaire {
+  display: grid; grid-template-columns: 106px 1fr; gap: 14px; align-items: baseline;
+  padding-bottom: 8px; border-bottom: 1px dotted rgba(233,226,212,.1);
+}
+.note-formulaire b {
+  font-family: var(--mono); font-size: 9px; font-weight: 400;
+  letter-spacing: .2em; text-transform: uppercase; color: var(--os-mort);
+}
+.note-formulaire span { font-weight: 300; font-size: .98rem; color: var(--os-faible); }
+@media (max-width: 560px) { .note-formulaire { grid-template-columns: 1fr; gap: 2px; } }
+
+/* ---- ordre de mission -------------------------------------------------- */
+.ordre-mission {
+  border-left: 2px solid var(--sang); padding: 4px 0 4px 20px; margin: 22px 0 26px;
+  max-width: 68ch;
+}
+.lieu-mission { font-size: 1.45rem; font-weight: 300; margin: 6px 0 8px; }
+.signalement { font-weight: 300; color: var(--os-faible); margin: 0 0 10px; }
+.consigne { font-style: italic; color: var(--sang-vif); margin: 0; font-weight: 300; }
+
+.journal p.troue { color: var(--os-mort); letter-spacing: .5em; }
+
+/* une réponse cochée ferme la rubrique : le reste s'efface, le choix reste */
+.reponse.retenue {
+  border-left-color: var(--sang); color: var(--os);
+  background: linear-gradient(90deg, rgba(179,18,23,.14), transparent 70%);
+  padding-left: 30px; opacity: 1;
+}
+.reponse.retenue .murmure { opacity: 1; color: var(--sang); transform: none; }
+.reponse.ecartee { opacity: .14; }
+/* la note d'une option écartée ne doit plus réserver sa place */
+.reponse.ecartee .murmure { display: none; }
+.reponse:disabled { cursor: default; }
+.reponse.ecartee:hover { border-left-color: rgba(233,226,212,.14); background: none; padding-left: 20px; color: var(--os-faible); }
+
+/* ---- ce dont le fléau était fait ------------------------------------- */
+.exorcisme {
+  border-left: 2px solid var(--or); padding: 6px 0 6px 20px;
+  margin: 24px 0 26px; max-width: 66ch;
+}
+.ligne-exorcisme {
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: clamp(1.05rem, 2.4vw, 1.35rem); color: var(--or); margin: 8px 0 0;
+}
+.ligne-exorcisme.faible { color: var(--os-faible); font-size: 1rem; }
+
+/* Sur téléphone, la feuille passe SOUS la question et ne montre que ce qui
+   est déjà inscrit : dix rubriques vides repoussaient la question hors de
+   l'écran, et c'est la question qu'on est venu lire. */
+@media (max-width: 900px) {
+  .feuille { position: static; order: 1; padding: 16px 18px; }
+  .formulaire > div:first-child { order: 0; }
+  .ligne-dossier:not(.remplie) { display: none; }
+  .feuille .lignes-dossier:empty + .code-dossier { margin-top: 10px; }
+  .code-dossier { margin-top: 14px; padding-top: 12px; font-size: .95rem; }
+}
+
+/* Sans souris, il n'y a pas de survol : la conséquence d'une réponse doit
+   être lisible d'emblée, sinon elle réserve sa place sans jamais s'afficher. */
+@media (hover: none) {
+  .reponse .murmure { opacity: .75; transform: none; color: var(--sang); }
+  .reponse { padding: 12px 16px; }
+}
+
+/* ---- la fiche : c'est le produit -------------------------------------- */
+.bandeau-section {
+  display: flex; align-items: baseline; gap: 12px;
+  border-bottom: 1px dotted rgba(233, 226, 212, .14);
+  padding-bottom: 6px; margin-bottom: 10px;
+}
+.kanji-section {
+  margin-left: auto; font-size: 12px; letter-spacing: .3em;
+  color: var(--os-mort); opacity: .8;
+}
+.sous-nom { font-size: 1.3rem; font-weight: 300; margin: 0 0 2px; }
+.sous-nom.grand { font-size: 1.55rem; }
+.sous-nom.or { color: var(--or); }
+/* Le monospace convient à une mention de coût, pas à un paragraphe : ces
+   lignes-là sont parfois longues et devenaient des pavés illisibles. */
+.cout-ligne {
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: 1rem; color: var(--sang-vif); margin-top: 12px;
+  line-height: 1.55; max-width: 62ch;
+}
+.incantation-fiche {
+  margin-top: 14px; padding-left: 16px; border-left: 1px solid rgba(179, 18, 23, .4);
+}
+.incantation-fiche p {
+  margin: .1em 0; font-style: italic; font-weight: 300;
+  color: var(--os-faible); font-size: 1.02rem;
+}
+.jubaku { border-left: 2px solid var(--or); padding-left: 18px; }
+.jubaku .privation { margin-top: 12px; color: var(--sang-vif); font-weight: 300; }
+.jubaku .contrepartie { margin-top: 6px; color: var(--or); font-weight: 300; }
+.code-fiche {
+  font-size: 1.3rem; letter-spacing: .16em; color: var(--or);
+  -webkit-user-select: all; user-select: all; word-break: break-all;
+}
+
+/* ---- commandes du générateur ------------------------------------------ */
+.outils-generateur {
+  margin-top: 30px; border: var(--hair); padding: 18px 18px 20px;
+  background: linear-gradient(180deg, rgba(233, 226, 212, .025), transparent 70%);
+}
+.outils-generateur .btn { margin-top: 10px; }
+.outils-generateur > .discret { margin: 10px 0 4px; }
+
+/* ---- galerie de variantes --------------------------------------------- */
+.galerie {
+  display: grid; gap: 14px; margin-top: 26px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+.carte-variante {
+  border: var(--hair); padding: 18px 18px 16px; cursor: pointer;
+  transition: all .28s var(--ease); display: flex; flex-direction: column;
+}
+.carte-variante:hover { border-color: rgba(179, 18, 23, .6); transform: translateY(-3px); }
+.carte-variante.actuelle { border-color: var(--sang); }
+.carte-variante h4 { margin: 12px 0 3px; font-size: 1.15rem; font-weight: 400; line-height: 1.2; }
+.carte-variante .clause {
+  font-style: italic; font-weight: 300; color: var(--os-faible);
+  margin: 12px 0 0; font-size: .98rem; flex: 1;
+}
+.sceau-mini { width: 100%; max-width: 150px; height: auto; align-self: center; opacity: .9; }
+.meta-variante {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 14px;
+  font-family: var(--mono); font-size: 9px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--os-mort);
+}
+.meta-variante .or { color: var(--or); }
+.meta-variante .sang { color: var(--sang); }
+
+/* ---- correction d'une rubrique ---------------------------------------- */
+.liste-rubriques { margin-top: 24px; display: flex; flex-direction: column; gap: 2px; }
+.rubrique-ligne {
+  display: grid; grid-template-columns: 190px 1fr; gap: 18px; align-items: baseline;
+  text-align: left; background: transparent; border: 0;
+  border-bottom: 1px dotted rgba(233, 226, 212, .12);
+  padding: 14px 8px; cursor: pointer; color: var(--os-faible);
+  font-family: var(--serif); transition: all .24s var(--ease);
+}
+.rubrique-ligne:hover { background: rgba(179, 18, 23, .07); color: var(--os); padding-left: 18px; }
+.rubrique-ligne b {
+  font-family: var(--mono); font-size: 9px; font-weight: 400;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--os-mort);
+}
+.rubrique-ligne .valeur { font-weight: 300; font-size: 1.02rem; }
+.rubrique-ligne .effet {
+  grid-column: 2; font-family: var(--mono); font-size: 10px;
+  letter-spacing: .08em; color: var(--sang); opacity: .75; line-height: 1.6;
+}
+@media (max-width: 700px) {
+  .rubrique-ligne { grid-template-columns: 1fr; gap: 4px; }
+  .rubrique-ligne .effet { grid-column: 1; }
+}
+
+/* 黒閃 — pendant la fracture, l'image perd sa couleur et se durcit.
+   Le filtre porte sur body : sur <html>, Chromium calcule la règle mais
+   ne la peint pas. */
+body.en-kokusen #stage,
+body.en-kokusen #fx-veil,
+body.en-kokusen #fx-ink {
+  filter: grayscale(1) contrast(2.2) brightness(1.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  body.en-kokusen #stage { filter: grayscale(1) contrast(1.3); }
+}
+.journal .kokusen {
+  color: #fff; background: #000; padding: 1px 7px;
+  border: 1px solid var(--os); letter-spacing: .18em;
+}
+
+/* ---- archive des fiches ------------------------------------------------ */
+.liste-fiches { display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
+.fiche-archivee {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px;
+  text-align: left; background: transparent; border: 0;
+  border-bottom: 1px dotted rgba(233, 226, 212, .12);
+  padding: 11px 8px; cursor: pointer; color: var(--os-faible);
+  font-family: var(--serif); transition: all .22s var(--ease);
+}
+.fiche-archivee:hover { background: rgba(179, 18, 23, .07); color: var(--os); padding-left: 16px; }
+.fiche-archivee b { font-size: 1.05rem; font-weight: 400; }
+.fiche-archivee .det {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--os-mort);
+}
+.marque-jubaku {
+  font-family: var(--jp); font-size: 10px; letter-spacing: .2em;
+  color: var(--or); border: 1px solid rgba(242, 193, 78, .4); padding: 1px 6px;
+}
+
+/* ---- impression : la fiche est un document ---------------------------- */
+@media print {
+  body::before, body::after, .fx-layer, #fx-flash, #fx-voile,
+  #barre-etat, .btn-rangee, .outils-generateur, .murmure-flottant { display: none !important; }
+  html, body { background: #fff !important; color: #111 !important; }
+  #stage { padding: 0; display: block; transform: none !important; filter: none !important; }
+  .ecran { display: none !important; }
+  .ecran.actif { display: block !important; }
+  .dossier { grid-template-columns: 1fr; }
+  .sceau-boite canvas { max-width: 210px; filter: none !important; }
+  .etiquette, .etiquette.rouge { color: #666 !important; }
+  .nom-technique, .titre-rituel { color: #111 !important; }
+  .bloc .enonce { border-left-color: #b31217 !important; color: #111 !important; }
+  .bloc p, .note-formulaire span, .discret { color: #222 !important; }
+  .cout-ligne, .jubaku .privation { color: #8a1010 !important; }
+  .jubaku .contrepartie { color: #8a6a10 !important; }
+  .kanji-section, .nom-jp, .jp { color: #444 !important; }
+  a[href]::after { content: ""; }
+}
+
+/* ======================================================================
+   L'ENTRÉE — trois portes, le tirage d'abord
+   ====================================================================== */
+.entree-tete { max-width: 70ch; }
+.entree-tete .pitch {
+  font-size: clamp(1.05rem, 2.4vw, 1.3rem); font-weight: 300;
+  color: var(--os-faible); max-width: 62ch; margin: 14px 0 0; text-wrap: pretty;
+}
+.champ-nom { margin: 34px 0 30px; max-width: 520px; }
+.champ-nom .champ { font-size: clamp(1.3rem, 3.4vw, 1.9rem); }
+
+.portes {
+  display: grid; gap: 14px; margin-top: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+}
+.porte {
+  display: flex; flex-direction: column; align-items: flex-start;
+  text-align: left; background: transparent; cursor: pointer;
+  border: var(--hair); padding: 22px 22px 20px; color: var(--os-faible);
+  font-family: var(--serif); position: relative; overflow: hidden;
+  transition: border-color .3s var(--ease), transform .3s var(--ease), background .3s var(--ease);
+}
+.porte::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--sang); transform: scaleY(0); transform-origin: top;
+  transition: transform .34s var(--ease);
+}
+.porte:hover { border-color: rgba(233, 226, 212, .34); transform: translateY(-3px); color: var(--os); }
+.porte:hover::before { transform: scaleY(1); }
+.porte-accent { border-color: rgba(179, 18, 23, .55); background: linear-gradient(180deg, rgba(179, 18, 23, .09), transparent 70%); }
+.porte-accent:hover { border-color: var(--sang); }
+.porte-kanji {
+  font-size: 11px; letter-spacing: .34em; color: var(--os-mort);
+  margin-bottom: 14px;
+}
+.porte-accent .porte-kanji { color: var(--sang); }
+.porte h3 { margin: 0 0 10px; font-size: 1.45rem; font-weight: 300; line-height: 1.1; }
+.porte p { margin: 0; font-weight: 300; font-size: .99rem; line-height: 1.5; flex: 1; }
+.porte-pied {
+  margin-top: 16px; font-family: var(--mono); font-size: 9px;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--os-mort);
+}
+.porte-accent .porte-pied { color: var(--or); }
+
+/* ======================================================================
+   SOMMAIRE — la fiche se consulte
+   ====================================================================== */
+.sommaire {
+  margin-top: 28px; border: var(--hair); padding: 16px 14px 14px;
+  max-height: 46vh; overflow-y: auto;
+}
+.sommaire-liste { display: flex; flex-direction: column; gap: 1px; margin-top: 10px; }
+.sommaire-ligne {
+  display: grid; grid-template-columns: 88px 1fr; gap: 10px; align-items: baseline;
+  text-align: left; background: transparent; border: 0; cursor: pointer;
+  padding: 6px 6px; color: var(--os-mort);
+  font-family: var(--serif); font-size: .92rem; font-weight: 300;
+  transition: all .2s var(--ease);
+}
+.sommaire-ligne:hover { color: var(--os); background: rgba(179, 18, 23, .09); }
+.sommaire-ligne .sk { font-size: 10px; letter-spacing: .04em; color: var(--os-mort); white-space: nowrap; }
+.sommaire-ligne:hover .sk { color: var(--sang); }
+.sommaire::-webkit-scrollbar { width: 3px; }
+.sommaire::-webkit-scrollbar-thumb { background: rgba(179, 18, 23, .45); }
+
+.bloc.vise { animation: viser 1.1s var(--ease); }
+@keyframes viser {
+  0% { background: rgba(179, 18, 23, .17); }
+  100% { background: transparent; }
+}
+.raccourcis { margin-top: 14px; font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em; }
+.raccourcis b { color: var(--or); font-weight: 400; }
+
+@media (max-width: 860px) {
+  .sommaire { max-height: none; }
+  .sommaire-liste { display: grid; grid-template-columns: 1fr 1fr; }
+  .sommaire-ligne { grid-template-columns: 1fr; gap: 0; }
+  .sommaire-ligne .sk { display: none; }
+}
+
+/* ---- la déclaration en tête de fiche, modifiable d'un clic ------------ */
+.chips-declaration {
+  display: flex; flex-wrap: wrap; gap: 5px; margin-top: 18px;
+}
+.chip {
+  display: inline-flex; align-items: baseline; gap: 7px;
+  border: var(--hair); padding: 4px 9px; background: transparent;
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em;
+  color: var(--os-faible); text-transform: lowercase;
+}
+.chip b {
+  font-weight: 400; font-size: 8.5px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--os-mort);
+}
+.chip-actif { cursor: pointer; transition: all .2s var(--ease); }
+.chip-actif:hover {
+  border-color: var(--sang); color: var(--os);
+  background: rgba(179, 18, 23, .12);
+}
+.chip-actif:hover b { color: var(--sang); }
+@media (max-width: 620px) { .chip b { display: none; } }
+
+/* ---- 式神 : un inventaire, pas un arsenal ----------------------------- */
+.meute { display: flex; flex-direction: column; gap: 16px; }
+.shikigami {
+  border-left: 2px solid rgba(233, 226, 212, .2); padding-left: 18px;
+}
+.shikigami.rang-majeur { border-left-color: rgba(242, 193, 78, .55); }
+.shikigami.rang-pivot { border-left-color: var(--sang); }
+.meta-shikigami {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; margin-top: 2px;
+}
+.meta-shikigami .jp { font-size: 11px; letter-spacing: .16em; color: var(--sang); }
+.meta-shikigami .rang {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--os-mort);
+}
+.rang-pivot .meta-shikigami .rang { color: var(--sang); }
+.rang-majeur .meta-shikigami .rang { color: var(--or); }
+.shikigami .office { margin-top: 8px; color: var(--os-faible); font-weight: 300; }
+.shikigami .ordre {
+  margin-top: 10px; font-style: italic; font-weight: 300;
+  color: var(--or); font-size: 1.02rem;
+}
+.chobuku {
+  margin-top: 14px; padding: 12px 14px;
+  border: 1px dotted rgba(233, 226, 212, .16);
+  background: linear-gradient(180deg, rgba(233, 226, 212, .02), transparent);
+}
+.chobuku p { margin: 8px 0 0; font-weight: 300; font-size: .97rem; color: var(--os-faible); }
+.chobuku .cout-ligne { font-size: .95rem; }
+
+/* ---- onglets de planche ------------------------------------------------ */
+.onglets { display: flex; flex-wrap: wrap; gap: 2px; margin: 20px 0 18px; border-bottom: var(--hair); }
+.onglet {
+  background: transparent; border: 0; border-bottom: 2px solid transparent;
+  padding: 10px 16px; cursor: pointer; color: var(--os-mort);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+  transition: all .22s var(--ease);
+}
+.onglet:hover { color: var(--os-faible); }
+.onglet.actif { color: var(--sang-vif); border-bottom-color: var(--sang); }
+.meta-variante .manif { color: var(--inverse); }
+
+/* Un échange dont les deux membres sont des phrases se lit en serif : le
+   monospace convient à « −45 % de PV », pas à une conséquence de vie. */
+.echange-long {
+  display: flex; flex-direction: column; gap: 6px;
+  font-family: var(--serif); font-size: 1rem; letter-spacing: 0; line-height: 1.5;
+}
+.echange-long .perte, .echange-long .gain { max-width: 66ch; font-weight: 300; }
+
+/* ---- 派生術式 : les applications nommées -------------------------------
+   Une dérivation se lit comme un coup annoncé : son numéro d'ordre en tête,
+   son signe précurseur détaché — c'est la seule ligne que l'adversaire a le
+   temps de lire, elle ne doit pas se noyer dans le reste.               */
+.derives { display: flex; flex-direction: column; gap: 18px; }
+.derive {
+  border-left: 2px solid rgba(178, 18, 23, 0.5);
+  padding: 2px 0 2px 16px;
+}
+.derive .sous-nom { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.derive .ordinal {
+  font-size: 0.72rem; letter-spacing: .16em; color: var(--sang-vif);
+  border: 1px solid rgba(178, 18, 23, .45); padding: 2px 7px; border-radius: 2px;
+  white-space: nowrap;
+}
+.meta-derive {
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .1em;
+  color: var(--os-mort); margin-top: 4px; text-transform: uppercase;
+}
+.signe {
+  margin-top: 12px; padding: 10px 14px;
+  background: rgba(242, 193, 78, .05);
+  border: 1px solid rgba(242, 193, 78, .18);
+  border-radius: 2px;
+}
+.signe .etiquette { color: var(--or); font-size: .64rem; letter-spacing: .2em; }
+.signe p { margin: 6px 0 0; font-family: var(--serif); font-weight: 300; max-width: 66ch; }
+@media (max-width: 640px) { .derive { padding-left: 11px; } }
+
+/* ---- 出自 : la provenance de la technique -----------------------------
+   Quatre origines, quatre teintes de bordure : on doit voir d'un coup d'œil
+   si la loi vient d'une famille, d'un accident, d'un objet ou d'un pacte. */
+.provenance { border-left: 2px solid rgba(233, 226, 212, .22); padding: 2px 0 2px 16px; }
+.provenance.origine-soden    { border-left-color: rgba(242, 193, 78, .45); }
+.provenance.origine-mutation { border-left-color: rgba(127, 227, 255, .40); }
+.provenance.origine-jubutsu  { border-left-color: rgba(111, 143, 90, .55); }
+.provenance.origine-shibari  { border-left-color: rgba(178, 18, 23, .60); }
+.provenance .ordinal { color: var(--os-faible); border-color: rgba(233, 226, 212, .28); }
+.origine-soden    .ordinal { color: var(--or); border-color: rgba(242, 193, 78, .4); }
+.origine-mutation .ordinal { color: var(--inverse); border-color: rgba(127, 227, 255, .35); }
+.origine-jubutsu  .ordinal { color: var(--vert-mal); border-color: rgba(111, 143, 90, .45); }
+.origine-shibari  .ordinal { color: var(--sang-vif); border-color: rgba(178, 18, 23, .5); }
+.mention-dossier {
+  margin-top: 12px; padding: 9px 13px;
+  border: 1px dashed rgba(233, 226, 212, .16); border-radius: 2px;
+}
+.mention-dossier .etiquette { font-size: .62rem; letter-spacing: .2em; color: var(--os-mort); }
+.mention-dossier p { margin: 5px 0 0; font-family: var(--mono); font-size: .78rem; color: var(--os-faible); }
+@media (max-width: 640px) { .provenance { padding-left: 11px; } }
+/* Le témoin n'est pas la suite du récit : c'est qui l'a constaté. */
+.provenance .office {
+  margin-top: 10px; font-style: italic; color: var(--os-faible);
+  border-left: 1px solid rgba(233, 226, 212, .14); padding-left: 12px; max-width: 68ch;
+}
+
+/* ---- Le pli : recto et verso -------------------------------------------
+   Une fiche complète fait quinze mille caractères. Le recto tient en un
+   écran et dit ce qu'EST la technique ; le verso est le dossier entier.
+   Rien n'est retiré du DOM — le sommaire, l'impression et la recherche du
+   navigateur continuent de voir tout ce qui existe.                      */
+.fiche.sur-recto .bloc[data-face="verso"] { display: none; }
+.fiche.sur-recto .verso-seul { display: none; }
+.fiche.sur-verso .recto-seul { display: none; }
+/* la première application seule au recto : les suivantes attendent le verso.
+   Même règle pour la meute — un 式神 en tête, l'inventaire au dossier. */
+.fiche.sur-recto .derives .derive ~ .derive { display: none; }
+.fiche.sur-recto .meute .shikigami ~ .shikigami { display: none; }
+.fiche.sur-recto .meute .chobuku { display: none; }
+
+/* Au recto, la loi n'est pas une section parmi d'autres : c'est la fiche. */
+.fiche.sur-recto .bloc.loi .enonce {
+  font-size: 1.45rem; line-height: 1.42; font-weight: 300;
+  color: var(--os); max-width: 30ch;
+}
+.fiche.sur-recto .bloc.loi { margin-bottom: 30px; }
+
+.bascule-dossier {
+  margin: 34px 0 8px; padding-top: 22px;
+  border-top: 1px dashed rgba(233, 226, 212, .18);
+}
+.bascule-dossier .btn { width: 100%; }
+.bascule-dossier .discret {
+  margin-top: 9px; font-family: var(--mono); font-size: .7rem;
+  letter-spacing: .12em; color: var(--os-mort); line-height: 1.8;
+}
+/* imprimer, c'est archiver : la feuille porte toujours le dossier entier */
+@media print {
+  .fiche.sur-recto .bloc[data-face="verso"],
+  .fiche.sur-recto .verso-seul,
+  .fiche.sur-recto .derives .derive ~ .derive,
+  .fiche.sur-recto .meute .shikigami ~ .shikigami,
+  .fiche.sur-recto .meute .chobuku { display: block !important; }
+  .fiche .recto-seul, .bascule-dossier { display: none !important; }
+}
+
+/* Au recto, la déclaration se resserre : elle documente la loi, elle ne la
+   précède plus. Douze pastilles pleine taille tenaient quatre rangs. */
+.fiche.sur-recto .chips-declaration { margin: 4px 0 26px; gap: 5px; }
+.fiche.sur-recto .chips-declaration .chip { padding: 3px 8px; font-size: .62rem; }
+.fiche.sur-recto .chips-declaration .chip b { font-size: .56rem; letter-spacing: .1em; }
+/* Le sommaire dit ce qui est replié : ne pas le dire reviendrait à cacher. */
+.sommaire-ligne.au-verso .sl { opacity: .55; }
+.sommaire-ligne.au-verso .sl::after {
+  content: ' ▸'; color: var(--os-mort); font-size: .7em;
+}
+.fiche.sur-verso ~ * .sommaire-ligne.au-verso .sl { opacity: 1; }
+.fiche.sur-verso ~ * .sommaire-ligne.au-verso .sl::after { content: ''; }
+
+/* Rappel de repli sous le titre : le pli lui-même est en pied de fiche. */
+.repli-haut {
+  display: block; margin: -6px 0 18px; padding: 0;
+  background: none; border: 0; cursor: pointer;
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .16em;
+  color: var(--os-mort); text-transform: uppercase;
+}
+.repli-haut:hover { color: var(--or); }
+
+/* Un verso fait sept mille pixels : la colonne de droite doit suivre, sinon
+   le sceau, le grade et le sommaire disparaissent dès le premier écran.
+   Sur une colonne unique (mobile), on la laisse couler normalement. */
+@media (min-width: 861px) {
+  .dossier > .sceau-boite {
+    position: sticky; top: 18px; align-self: start;
+    max-height: calc(100vh - 36px); overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .dossier > .sceau-boite::-webkit-scrollbar { width: 5px; }
+  .dossier > .sceau-boite::-webkit-scrollbar-thumb { background: rgba(233,226,212,.14); }
+  /* le sommaire ne se limite plus lui-même : c'est la colonne qui défile */
+  .dossier > .sceau-boite .sommaire { max-height: none; overflow: visible; }
+}
+@media print { .dossier > .sceau-boite { position: static; max-height: none; } }
