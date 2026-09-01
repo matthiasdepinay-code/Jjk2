@@ -505,6 +505,7 @@
 
     /* le numéro de dossier, et de quoi le faire circuler */
     const part = el('div', 'bloc');
+    part.dataset.face = 'recto';
     part.appendChild(bandeau('Numéro de dossier', '整理番号'));
     const lien = el('p', 'mono code-fiche');
     lien.textContent = G.code;
@@ -520,7 +521,8 @@
     });
     cp.style.marginTop = '10px';
     part.appendChild(cp);
-    gauche.appendChild(part);
+    /* le pli reste en pied de fiche, quoi qu'on ajoute après coup */
+    gauche.insertBefore(part, gauche.querySelector('.bascule-dossier'));
     dossier.appendChild(gauche);
 
     /* colonne de droite : sceau, grade, et les commandes du générateur */
@@ -554,7 +556,7 @@
     outils.appendChild(U.bouton('Voir six variantes', 'large', galerie));
     outils.appendChild(U.bouton('Modifier une rubrique', 'large', rubriques));
     const aide = el('p', 'discret raccourcis');
-    aide.innerHTML = '<b>R</b> tout retirer · <b>V</b> variante · <b>G</b> galerie';
+    aide.innerHTML = '<b>R</b> tout retirer · <b>V</b> variante · <b>G</b> galerie · <b>D</b> dossier';
     outils.appendChild(aide);
     droite.appendChild(outils);
     dossier.appendChild(droite);
@@ -771,11 +773,16 @@
   }
 
   let compteurSection = 0;
-  function section(libelle, kanji, contenu, cls) {
+  /* Une fiche complète fait quinze mille caractères : personne ne lit ça d'un
+     trait. Chaque section déclare donc sa face — le RECTO tient en un écran et
+     dit ce qu'est la technique ; le VERSO est le dossier entier, déplié à la
+     demande. Rien n'est retiré, tout est rangé.                            */
+  function section(libelle, kanji, contenu, cls, face) {
     const b = el('div', 'bloc ' + (cls || ''));
     b.id = 'sec-' + (++compteurSection);
     b.dataset.titre = libelle;
     b.dataset.kanji = kanji || '';
+    b.dataset.face = face === 'recto' ? 'recto' : 'verso';
     b.appendChild(bandeau(libelle, kanji, cls === 'loi'));
     if (typeof contenu === 'string') {
       const p = el('p', cls === 'loi' ? 'enonce' : '');
@@ -809,18 +816,21 @@
   function corpsDeFiche(t, corps, opts) {
     const o = opts || {};
     compteurSection = 0;
-    const g = el('div');
+    const g = el('div', 'fiche ' + (o.face === 'verso' ? 'sur-verso' : 'sur-recto'));
     g.appendChild(el('span', 'etiquette rouge', '生得術式 · ' + (t.essence.emotion_source || 'origine non établie')));
     g.appendChild(el('h1', 'nom-technique', t.nom));
     const jl = el('div', 'nom-jp');
     jl.textContent = t.nomJp + ' · ' + t.romaji;
     g.appendChild(jl);
-    if (t.declaration) g.appendChild(chipsDeclaration(t.declaration, o.modifiable !== false));
     g.appendChild(el('hr', 'trait'));
 
-    const s0 = sec('loi', 0); g.appendChild(section(s0.libelle, s0.kanji, t.loi.enonce || t.loi.nom, 'loi'));
+    /* La loi d'abord. Les douze pastilles disent ce qu'on a répondu au
+       formulaire ; la loi dit ce qu'on EST. Les mettre avant repoussait la
+       seule phrase qui compte sous la ligne de flottaison.               */
+    const s0 = sec('loi', 0); g.appendChild(section(s0.libelle, s0.kanji, t.loi.enonce || t.loi.nom, 'loi', 'recto'));
+    if (t.declaration) g.appendChild(chipsDeclaration(t.declaration, o.modifiable !== false));
     const desc = JJK.forge.dossier(t);
-    const s1 = sec('constat', 1); if (desc) g.appendChild(section(s1.libelle, s1.kanji, desc));
+    const s1 = sec('constat', 1); if (desc) g.appendChild(section(s1.libelle, s1.kanji, desc, '', 'recto'));
     /* 出自 : d'où la loi est venue. Ce bloc arrive tôt dans la fiche parce
        qu'il ne dit pas ce que le porteur peut faire — il dit à qui il le doit. */
     if (t.provenance) {
@@ -844,7 +854,7 @@
       g.appendChild(section(sp.libelle, sp.kanji, d));
     }
 
-    const s2 = sec('junten', 2); if (t.junten) g.appendChild(section(s2.libelle, s2.kanji, t.junten));
+    const s2 = sec('junten', 2); if (t.junten) g.appendChild(section(s2.libelle, s2.kanji, t.junten, '', 'recto'));
     if (t.vecteur && t.vecteur.condition) {
       const s3 = sec('vecteur', 3, ' — ' + t.vecteur.nom);
       g.appendChild(section(s3.libelle, s3.kanji, t.vecteur.condition));
@@ -889,8 +899,15 @@
         c.appendChild(bas);
         d.appendChild(c);
       });
+      if (t.derivations.length > 1) {
+        const p2 = el('p', 'discret recto-seul');
+        p2.style.marginTop = '4px';
+        p2.textContent = '+ ' + (t.derivations.length - 1) + ' autre'
+          + (t.derivations.length > 2 ? 's' : '') + ' au dossier.';
+        d.appendChild(p2);
+      }
       const sd = sec('derivations', 12);
-      g.appendChild(section(sd.libelle, sd.kanji, d));
+      g.appendChild(section(sd.libelle, sd.kanji, d, '', 'recto'));
     }
 
     const s4 = sec('faille', 4); if (t.loi.limite) g.appendChild(section(s4.libelle, s4.kanji, t.loi.limite));
@@ -929,7 +946,7 @@
       d.appendChild(el('div', 'jp faible', (t.domaine.nom_jp || '') + ' · ' + (t.domaine.romaji || '')));
       if (t.domaine.paysage) { const p = el('p'); p.style.marginTop = '10px'; p.textContent = t.domaine.paysage; d.appendChild(p); }
       if (t.domaine.incantation) {
-        const inc = el('div', 'incantation-fiche');
+        const inc = el('div', 'incantation-fiche verso-seul');
         String(t.domaine.incantation).replace(/([.;])\s+/g, '$1\n').split(/\n|\s*\/\s*/).filter(Boolean)
           .forEach(v => inc.appendChild(el('p', '', v.trim())));
         d.appendChild(inc);
@@ -940,8 +957,8 @@
         e2.textContent = '↯ Coup au but — ' + t.domaine.effet_garanti;
         d.appendChild(e2);
       }
-      if (t.domaine.faille) { const p = el('p', 'cout-ligne'); p.textContent = '↳ ' + t.domaine.faille; d.appendChild(p); }
-      const s9 = sec('ryoiki', 9); g.appendChild(section(s9.libelle, s9.kanji, d));
+      if (t.domaine.faille) { const p = el('p', 'cout-ligne verso-seul'); p.textContent = '↳ ' + t.domaine.faille; d.appendChild(p); }
+      const s9 = sec('ryoiki', 9); g.appendChild(section(s9.libelle, s9.kanji, d, '', 'recto'));
     }
 
     /* 式神 : la loi a pris un corps, et ce corps a fallu le battre d'abord */
@@ -1029,7 +1046,7 @@
       mec.appendChild(el('span', 'perte', t.jubaku.perte));
       mec.appendChild(el('span', 'gain', t.jubaku.gain));
       d.appendChild(mec);
-      const s11 = sec('jubaku', 11); g.appendChild(section(s11.libelle, s11.kanji, d));
+      const s11 = sec('jubaku', 11); g.appendChild(section(s11.libelle, s11.kanji, d, '', 'recto'));
     }
 
     if (t.contre) {
@@ -1074,7 +1091,51 @@
         ]));
       }
     }
+    g.appendChild(basculeDossier(g));
     return g;
+  }
+
+  /* Le pli. Il annonce ce qu'il cache — combien de sections, lesquelles en
+     kanji — pour qu'on sache toujours ce qu'on ne lit pas. Sans cette
+     ligne, replier reviendrait à cacher.                                  */
+  function basculeDossier(fiche) {
+    const b = el('div', 'bascule-dossier');
+    const bouton = el('button', 'btn fantome large');
+    const detail = el('p', 'discret');
+    const majBascule = () => {
+      const caches = Array.prototype.filter.call(
+        fiche.querySelectorAll('.bloc[data-face="verso"]'), x => x.dataset.titre);
+      const recto = fiche.classList.contains('sur-recto');
+      bouton.textContent = recto
+        ? 'Ouvrir le dossier complet — ' + caches.length + ' sections'
+        : 'Replier au recto';
+      detail.textContent = recto
+        ? caches.map(x => x.dataset.kanji || x.dataset.titre).filter(Boolean).join(' · ')
+        : 'Le recto tient en un écran : la loi, le constat, son application, sa première dérivation, son territoire.';
+    };
+    bouton.addEventListener('click', () => {
+      const versVerso = fiche.classList.contains('sur-recto');
+      fiche.classList.toggle('sur-recto', !versVerso);
+      fiche.classList.toggle('sur-verso', versVerso);
+      majBascule();
+      JJK.audio.tick(versVerso ? 660 : 440, 0.03, 0.05);
+      if (!versVerso) fiche.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    b.appendChild(bouton); b.appendChild(detail);
+    fiche._majBascule = majBascule;
+    setTimeout(majBascule, 0);
+    return b;
+  }
+
+  /* Ouvrir le dossier depuis l'extérieur : le sommaire et le raccourci D
+     s'en servent, pour qu'un lien vers une section repliée ne tombe pas
+     dans le vide.                                                        */
+  function ouvrirDossier(fiche) {
+    if (!fiche || !fiche.classList.contains('sur-recto')) return false;
+    fiche.classList.remove('sur-recto');
+    fiche.classList.add('sur-verso');
+    if (fiche._majBascule) fiche._majBascule();
+    return true;
   }
 
   /* La fiche fait plusieurs milliers de pixels : elle se consulte par
@@ -1088,8 +1149,13 @@
       a.appendChild(el('span', 'sk jp', b.dataset.kanji || '—'));
       a.appendChild(el('span', 'sl', b.dataset.titre));
       a.addEventListener('click', () => {
-        b.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        b.classList.remove('vise'); void b.offsetWidth; b.classList.add('vise');
+        /* viser une section repliée doit ouvrir le dossier, pas rater la cible */
+        const ouvert = ouvrirDossier(b.closest('.fiche'));
+        const viser = () => {
+          b.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          b.classList.remove('vise'); void b.offsetWidth; b.classList.add('vise');
+        };
+        if (ouvert) setTimeout(viser, 60); else viser();
         JJK.audio.tick(900, 0.02, 0.03);
       });
       l.appendChild(a);
@@ -1142,7 +1208,8 @@
       dl.appendChild(li);
     });
     decl.appendChild(dl);
-    gauche.appendChild(decl);
+    decl.dataset.face = 'verso';
+    gauche.insertBefore(decl, gauche.querySelector('.bascule-dossier'));
     d.appendChild(gauche);
 
     const dr = el('div', 'sceau-boite');

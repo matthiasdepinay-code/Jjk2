@@ -980,3 +980,44 @@ body.en-kokusen #fx-ink {
   margin-top: 10px; font-style: italic; color: var(--os-faible);
   border-left: 1px solid rgba(233, 226, 212, .14); padding-left: 12px; max-width: 68ch;
 }
+
+/* ---- Le pli : recto et verso -------------------------------------------
+   Une fiche complète fait quinze mille caractères. Le recto tient en un
+   écran et dit ce qu'EST la technique ; le verso est le dossier entier.
+   Rien n'est retiré du DOM — le sommaire, l'impression et la recherche du
+   navigateur continuent de voir tout ce qui existe.                      */
+.fiche.sur-recto .bloc[data-face="verso"] { display: none; }
+.fiche.sur-recto .verso-seul { display: none; }
+.fiche.sur-verso .recto-seul { display: none; }
+/* la première application seule au recto : les suivantes attendent le verso */
+.fiche.sur-recto .derives .derive ~ .derive { display: none; }
+
+/* Au recto, la loi n'est pas une section parmi d'autres : c'est la fiche. */
+.fiche.sur-recto .bloc.loi .enonce {
+  font-size: 1.45rem; line-height: 1.42; font-weight: 300;
+  color: var(--os); max-width: 30ch;
+}
+.fiche.sur-recto .bloc.loi { margin-bottom: 30px; }
+
+.bascule-dossier {
+  margin: 34px 0 8px; padding-top: 22px;
+  border-top: 1px dashed rgba(233, 226, 212, .18);
+}
+.bascule-dossier .btn { width: 100%; }
+.bascule-dossier .discret {
+  margin-top: 9px; font-family: var(--mono); font-size: .7rem;
+  letter-spacing: .12em; color: var(--os-mort); line-height: 1.8;
+}
+/* imprimer, c'est archiver : la feuille porte toujours le dossier entier */
+@media print {
+  .fiche.sur-recto .bloc[data-face="verso"],
+  .fiche.sur-recto .verso-seul,
+  .fiche.sur-recto .derives .derive ~ .derive { display: block !important; }
+  .fiche .recto-seul, .bascule-dossier { display: none !important; }
+}
+
+/* Au recto, la déclaration se resserre : elle documente la loi, elle ne la
+   précède plus. Douze pastilles pleine taille tenaient quatre rangs. */
+.fiche.sur-recto .chips-declaration { margin: 4px 0 26px; gap: 5px; }
+.fiche.sur-recto .chips-declaration .chip { padding: 3px 8px; font-size: .62rem; }
+.fiche.sur-recto .chips-declaration .chip b { font-size: .56rem; letter-spacing: .1em; }

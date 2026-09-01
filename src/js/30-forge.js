@@ -80,6 +80,53 @@
     }
     return sansJointFinal(mots.slice(0, max).join(' '));
   }
+  /* Un lieu ne se raccourcit pas comme une matière. « salle des professeurs »
+     réduit à « salle » perd tout son sel, mais « laverie automatique ouverte
+     toute la nuit » coupé au quatrième mot donne « ouverte toute », qui ne
+     veut plus rien dire. On garde donc UN groupe prépositionnel s'il arrive
+     tout de suite, et on s'arrête avant un déterminant orphelin.          */
+  const PREP_NUE = /^(?:de|du|des|à|au|aux|en|sur|sous|dans|pour|par|avec|sans|entre|vers|après|avant|depuis)$/i;
+  /* « d'attente », « l'hôpital » : la préposition élidée porte déjà son nom.
+     La traiter comme une préposition nue faisait ramasser le mot suivant et
+     produisait « salle d'attente d'un ».                                  */
+  const PREP_ELIDEE = /^[dl]['\u2019]\S/i;
+  /* « d'un », « l'une » n'apportent pas de nom : ce sont des prépositions
+     déguisées, et les laisser passer donnait « salle d'attente d'un ». */
+  const ELIDEE_VIDE = /^[dl]['\u2019](?:un|une)$/i;
+  const ORPHELIN = /^(?:tout|toute|tous|toutes|le|la|les|un|une|son|sa|ses|leur|leurs)$/i;
+  function raccourcirLieu(txt) {
+    const mots = String(txt || '').replace(ARTICLE_INITIAL, '')
+      .split(/[,;(—–]| (?:où|dont|que|qui|quand|lorsque) /i)[0]
+      .trim().split(/\s+/).filter(Boolean);
+    const out = [];
+    for (let i = 0; i < mots.length && out.length < 3; i++) {
+      const m = mots[i];
+      if (PREP_ELIDEE.test(m) && !ELIDEE_VIDE.test(m)) { if (!out.length) break; out.push(m); continue; }
+      if (PREP_NUE.test(m) || ELIDEE_VIDE.test(m)) {
+        if (out.length === 1 && mots[i + 1]) { out.push(m, mots[i + 1]); i++; continue; }
+        break;
+      }
+      out.push(m);
+      if (out.length >= 2 && ORPHELIN.test(mots[i + 1] || '')) break;
+    }
+    return sansJointFinal(out.join(' ')) || (mots[0] || '');
+  }
+
+  /* Le genre d'un lieu est écrit dans le corpus : « une laverie », « le local ».
+     Le lire vaut mieux que le deviner — la terminaison en -e disait « la
+     vestiaire », et on ne rattrape pas ça avec une exception de plus.     */
+  function genreDuLieu(txt) {
+    /* l'ordre compte : « une » doit être essayé avant « un », sans quoi
+       « une salle » se lit masculin et le registre écrit « du Salle ». */
+    const m = /^\s*(les|des|une|un|la|le|l['\u2019])\b/i.exec(String(txt || ''));
+    if (!m) return genreMot(txt, 'f');
+    const a = m[1].toLowerCase();
+    if (a === 'les' || a === 'des') return 'p';
+    if (a === 'la' || a === 'une') return 'f';
+    if (a === 'le' || a === 'un') return 'm';
+    return genreMot(String(txt).replace(ARTICLE_INITIAL, ''), 'f');   /* l' : indécidable */
+  }
+
   /* Un nom ne se termine jamais sur une préposition en suspens. */
   function sansJointFinal(t) {
     let s2 = String(t || '').trim();
@@ -446,13 +493,7 @@
     const dl = decoupe(loi.nom || '');
     const g = genreEssence(essence, d);
     const matiereN = titre(plurielDe(matiere));
-    /* Un lieu ne se raccourcit pas comme une matière : « salle des
-       professeurs » perd tout son sel réduit à « salle ». On coupe à la
-       première virgule ou subordonnée, et on garde jusqu'à quatre mots. */
-    const lieuCourt = titre(sansJointFinal(String(lieu)
-      .replace(ARTICLE_INITIAL, '')
-      .split(/[,;(—–]| (?:où|dont|que|qui|quand|lorsque) /i)[0]
-      .trim().split(/\s+/).slice(0, 4).join(' ')));
+    const lieuCourt = titre(raccourcirLieu(lieu));
     const jetons = {
       ESSENCE: essence.nom, ESSENCE_NU: d.nu, ESSENCE_ART: avecArticle(essence.nom),
       GENRE: g,
@@ -473,7 +514,7 @@
       SUFFIXE_NEUTRE: accorder(suffixe, 'm'),
       MATIERE_ART: titre(articleDe(matiere, genreMatiere)),
       ORGANE_ART: titre(articleDe(organe, genreOrgane)),
-      LIEU_ART: titre(articleDe(lieuCourt, genreMot(lieuCourt, 'f'))),
+      LIEU_ART: titre(articleDe(lieuCourt, genreDuLieu(lieu))),
       ACCORD_ESSENCE: accordDe(g, d.pluriel),
       ACCORD_LOI: accordDe(dl.genre === 'e' ? 'm' : dl.genre, dl.pluriel),
       ACCORD_MATIERE: accordDe(genreMatiere, false),

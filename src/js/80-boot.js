@@ -53,6 +53,12 @@
         JJK.ecrans.assembler(); JJK.ecrans.revelation({ rapide: true }); return;
       }
       if (surFiche && (e.key === 'g' || e.key === 'G')) { JJK.ecrans.galerie(); return; }
+      /* D déplie et replie le dossier — sur la fiche comme en consultation :
+         une fiche est une fiche, d'où qu'on y arrive. */
+      if (e.key === 'd' || e.key === 'D') {
+        const b2 = document.querySelector('.ecran.actif .fiche .bascule-dossier button');
+        if (b2) { b2.click(); return; }
+      }
       if (e.key === 'Escape' && JJK.ui.actif() !== 'ecran-duel') JJK.ecrans.registre();
       if (e.key >= '1' && e.key <= '9' && JJK.ui.actif() === 'ecran-duel') {
         const b = document.querySelectorAll('#ecran-duel .acte');

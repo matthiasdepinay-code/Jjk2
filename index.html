@@ -993,6 +993,47 @@ body.en-kokusen #fx-ink {
   border-left: 1px solid rgba(233, 226, 212, .14); padding-left: 12px; max-width: 68ch;
 }
 
+/* ---- Le pli : recto et verso -------------------------------------------
+   Une fiche complète fait quinze mille caractères. Le recto tient en un
+   écran et dit ce qu'EST la technique ; le verso est le dossier entier.
+   Rien n'est retiré du DOM — le sommaire, l'impression et la recherche du
+   navigateur continuent de voir tout ce qui existe.                      */
+.fiche.sur-recto .bloc[data-face="verso"] { display: none; }
+.fiche.sur-recto .verso-seul { display: none; }
+.fiche.sur-verso .recto-seul { display: none; }
+/* la première application seule au recto : les suivantes attendent le verso */
+.fiche.sur-recto .derives .derive ~ .derive { display: none; }
+
+/* Au recto, la loi n'est pas une section parmi d'autres : c'est la fiche. */
+.fiche.sur-recto .bloc.loi .enonce {
+  font-size: 1.45rem; line-height: 1.42; font-weight: 300;
+  color: var(--os); max-width: 30ch;
+}
+.fiche.sur-recto .bloc.loi { margin-bottom: 30px; }
+
+.bascule-dossier {
+  margin: 34px 0 8px; padding-top: 22px;
+  border-top: 1px dashed rgba(233, 226, 212, .18);
+}
+.bascule-dossier .btn { width: 100%; }
+.bascule-dossier .discret {
+  margin-top: 9px; font-family: var(--mono); font-size: .7rem;
+  letter-spacing: .12em; color: var(--os-mort); line-height: 1.8;
+}
+/* imprimer, c'est archiver : la feuille porte toujours le dossier entier */
+@media print {
+  .fiche.sur-recto .bloc[data-face="verso"],
+  .fiche.sur-recto .verso-seul,
+  .fiche.sur-recto .derives .derive ~ .derive { display: block !important; }
+  .fiche .recto-seul, .bascule-dossier { display: none !important; }
+}
+
+/* Au recto, la déclaration se resserre : elle documente la loi, elle ne la
+   précède plus. Douze pastilles pleine taille tenaient quatre rangs. */
+.fiche.sur-recto .chips-declaration { margin: 4px 0 26px; gap: 5px; }
+.fiche.sur-recto .chips-declaration .chip { padding: 3px 8px; font-size: .62rem; }
+.fiche.sur-recto .chips-declaration .chip b { font-size: .56rem; letter-spacing: .1em; }
+
 </style>
 
 </head>
@@ -1132,7 +1173,10 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       if (ap) {
         const lettre = ap[1].toLowerCase();
         const tete = i > 0 ? lettre : (lettre.charAt(0).toUpperCase() + lettre.slice(1));
-        const nominal = lettre === 'l' || lettre === 'd';
+        /* « d'un restaurant » : l'élision porte un déterminant, pas un nom.
+           Le majuscule irait à « Un », qui n'est le titre de rien.       */
+        const determinant = /^(?:un|une|autre|autres|on|il|elle|ils|elles|y|en)$/i.test(ap[2]);
+        const nominal = (lettre === 'l' || lettre === 'd') && !determinant;
         return tete + "'" + (nominal ? ap[2].charAt(0).toUpperCase() + ap[2].slice(1) : ap[2].toLowerCase());
       }
       return w.charAt(0).toUpperCase() + w.slice(1);
@@ -2463,6 +2507,53 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     }
     return sansJointFinal(mots.slice(0, max).join(' '));
   }
+  /* Un lieu ne se raccourcit pas comme une matière. « salle des professeurs »
+     réduit à « salle » perd tout son sel, mais « laverie automatique ouverte
+     toute la nuit » coupé au quatrième mot donne « ouverte toute », qui ne
+     veut plus rien dire. On garde donc UN groupe prépositionnel s'il arrive
+     tout de suite, et on s'arrête avant un déterminant orphelin.          */
+  const PREP_NUE = /^(?:de|du|des|à|au|aux|en|sur|sous|dans|pour|par|avec|sans|entre|vers|après|avant|depuis)$/i;
+  /* « d'attente », « l'hôpital » : la préposition élidée porte déjà son nom.
+     La traiter comme une préposition nue faisait ramasser le mot suivant et
+     produisait « salle d'attente d'un ».                                  */
+  const PREP_ELIDEE = /^[dl]['\u2019]\S/i;
+  /* « d'un », « l'une » n'apportent pas de nom : ce sont des prépositions
+     déguisées, et les laisser passer donnait « salle d'attente d'un ». */
+  const ELIDEE_VIDE = /^[dl]['\u2019](?:un|une)$/i;
+  const ORPHELIN = /^(?:tout|toute|tous|toutes|le|la|les|un|une|son|sa|ses|leur|leurs)$/i;
+  function raccourcirLieu(txt) {
+    const mots = String(txt || '').replace(ARTICLE_INITIAL, '')
+      .split(/[,;(—–]| (?:où|dont|que|qui|quand|lorsque) /i)[0]
+      .trim().split(/\s+/).filter(Boolean);
+    const out = [];
+    for (let i = 0; i < mots.length && out.length < 3; i++) {
+      const m = mots[i];
+      if (PREP_ELIDEE.test(m) && !ELIDEE_VIDE.test(m)) { if (!out.length) break; out.push(m); continue; }
+      if (PREP_NUE.test(m) || ELIDEE_VIDE.test(m)) {
+        if (out.length === 1 && mots[i + 1]) { out.push(m, mots[i + 1]); i++; continue; }
+        break;
+      }
+      out.push(m);
+      if (out.length >= 2 && ORPHELIN.test(mots[i + 1] || '')) break;
+    }
+    return sansJointFinal(out.join(' ')) || (mots[0] || '');
+  }
+
+  /* Le genre d'un lieu est écrit dans le corpus : « une laverie », « le local ».
+     Le lire vaut mieux que le deviner — la terminaison en -e disait « la
+     vestiaire », et on ne rattrape pas ça avec une exception de plus.     */
+  function genreDuLieu(txt) {
+    /* l'ordre compte : « une » doit être essayé avant « un », sans quoi
+       « une salle » se lit masculin et le registre écrit « du Salle ». */
+    const m = /^\s*(les|des|une|un|la|le|l['\u2019])\b/i.exec(String(txt || ''));
+    if (!m) return genreMot(txt, 'f');
+    const a = m[1].toLowerCase();
+    if (a === 'les' || a === 'des') return 'p';
+    if (a === 'la' || a === 'une') return 'f';
+    if (a === 'le' || a === 'un') return 'm';
+    return genreMot(String(txt).replace(ARTICLE_INITIAL, ''), 'f');   /* l' : indécidable */
+  }
+
   /* Un nom ne se termine jamais sur une préposition en suspens. */
   function sansJointFinal(t) {
     let s2 = String(t || '').trim();
@@ -2829,13 +2920,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     const dl = decoupe(loi.nom || '');
     const g = genreEssence(essence, d);
     const matiereN = titre(plurielDe(matiere));
-    /* Un lieu ne se raccourcit pas comme une matière : « salle des
-       professeurs » perd tout son sel réduit à « salle ». On coupe à la
-       première virgule ou subordonnée, et on garde jusqu'à quatre mots. */
-    const lieuCourt = titre(sansJointFinal(String(lieu)
-      .replace(ARTICLE_INITIAL, '')
-      .split(/[,;(—–]| (?:où|dont|que|qui|quand|lorsque) /i)[0]
-      .trim().split(/\s+/).slice(0, 4).join(' ')));
+    const lieuCourt = titre(raccourcirLieu(lieu));
     const jetons = {
       ESSENCE: essence.nom, ESSENCE_NU: d.nu, ESSENCE_ART: avecArticle(essence.nom),
       GENRE: g,
@@ -2856,7 +2941,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       SUFFIXE_NEUTRE: accorder(suffixe, 'm'),
       MATIERE_ART: titre(articleDe(matiere, genreMatiere)),
       ORGANE_ART: titre(articleDe(organe, genreOrgane)),
-      LIEU_ART: titre(articleDe(lieuCourt, genreMot(lieuCourt, 'f'))),
+      LIEU_ART: titre(articleDe(lieuCourt, genreDuLieu(lieu))),
       ACCORD_ESSENCE: accordDe(g, d.pluriel),
       ACCORD_LOI: accordDe(dl.genre === 'e' ? 'm' : dl.genre, dl.pluriel),
       ACCORD_MATIERE: accordDe(genreMatiere, false),
@@ -4800,6 +4885,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
 
     /* le numéro de dossier, et de quoi le faire circuler */
     const part = el('div', 'bloc');
+    part.dataset.face = 'recto';
     part.appendChild(bandeau('Numéro de dossier', '整理番号'));
     const lien = el('p', 'mono code-fiche');
     lien.textContent = G.code;
@@ -4815,7 +4901,8 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     });
     cp.style.marginTop = '10px';
     part.appendChild(cp);
-    gauche.appendChild(part);
+    /* le pli reste en pied de fiche, quoi qu'on ajoute après coup */
+    gauche.insertBefore(part, gauche.querySelector('.bascule-dossier'));
     dossier.appendChild(gauche);
 
     /* colonne de droite : sceau, grade, et les commandes du générateur */
@@ -4849,7 +4936,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     outils.appendChild(U.bouton('Voir six variantes', 'large', galerie));
     outils.appendChild(U.bouton('Modifier une rubrique', 'large', rubriques));
     const aide = el('p', 'discret raccourcis');
-    aide.innerHTML = '<b>R</b> tout retirer · <b>V</b> variante · <b>G</b> galerie';
+    aide.innerHTML = '<b>R</b> tout retirer · <b>V</b> variante · <b>G</b> galerie · <b>D</b> dossier';
     outils.appendChild(aide);
     droite.appendChild(outils);
     dossier.appendChild(droite);
@@ -5066,11 +5153,16 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
   }
 
   let compteurSection = 0;
-  function section(libelle, kanji, contenu, cls) {
+  /* Une fiche complète fait quinze mille caractères : personne ne lit ça d'un
+     trait. Chaque section déclare donc sa face — le RECTO tient en un écran et
+     dit ce qu'est la technique ; le VERSO est le dossier entier, déplié à la
+     demande. Rien n'est retiré, tout est rangé.                            */
+  function section(libelle, kanji, contenu, cls, face) {
     const b = el('div', 'bloc ' + (cls || ''));
     b.id = 'sec-' + (++compteurSection);
     b.dataset.titre = libelle;
     b.dataset.kanji = kanji || '';
+    b.dataset.face = face === 'recto' ? 'recto' : 'verso';
     b.appendChild(bandeau(libelle, kanji, cls === 'loi'));
     if (typeof contenu === 'string') {
       const p = el('p', cls === 'loi' ? 'enonce' : '');
@@ -5104,18 +5196,21 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
   function corpsDeFiche(t, corps, opts) {
     const o = opts || {};
     compteurSection = 0;
-    const g = el('div');
+    const g = el('div', 'fiche ' + (o.face === 'verso' ? 'sur-verso' : 'sur-recto'));
     g.appendChild(el('span', 'etiquette rouge', '生得術式 · ' + (t.essence.emotion_source || 'origine non établie')));
     g.appendChild(el('h1', 'nom-technique', t.nom));
     const jl = el('div', 'nom-jp');
     jl.textContent = t.nomJp + ' · ' + t.romaji;
     g.appendChild(jl);
-    if (t.declaration) g.appendChild(chipsDeclaration(t.declaration, o.modifiable !== false));
     g.appendChild(el('hr', 'trait'));
 
-    const s0 = sec('loi', 0); g.appendChild(section(s0.libelle, s0.kanji, t.loi.enonce || t.loi.nom, 'loi'));
+    /* La loi d'abord. Les douze pastilles disent ce qu'on a répondu au
+       formulaire ; la loi dit ce qu'on EST. Les mettre avant repoussait la
+       seule phrase qui compte sous la ligne de flottaison.               */
+    const s0 = sec('loi', 0); g.appendChild(section(s0.libelle, s0.kanji, t.loi.enonce || t.loi.nom, 'loi', 'recto'));
+    if (t.declaration) g.appendChild(chipsDeclaration(t.declaration, o.modifiable !== false));
     const desc = JJK.forge.dossier(t);
-    const s1 = sec('constat', 1); if (desc) g.appendChild(section(s1.libelle, s1.kanji, desc));
+    const s1 = sec('constat', 1); if (desc) g.appendChild(section(s1.libelle, s1.kanji, desc, '', 'recto'));
     /* 出自 : d'où la loi est venue. Ce bloc arrive tôt dans la fiche parce
        qu'il ne dit pas ce que le porteur peut faire — il dit à qui il le doit. */
     if (t.provenance) {
@@ -5139,7 +5234,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       g.appendChild(section(sp.libelle, sp.kanji, d));
     }
 
-    const s2 = sec('junten', 2); if (t.junten) g.appendChild(section(s2.libelle, s2.kanji, t.junten));
+    const s2 = sec('junten', 2); if (t.junten) g.appendChild(section(s2.libelle, s2.kanji, t.junten, '', 'recto'));
     if (t.vecteur && t.vecteur.condition) {
       const s3 = sec('vecteur', 3, ' — ' + t.vecteur.nom);
       g.appendChild(section(s3.libelle, s3.kanji, t.vecteur.condition));
@@ -5184,8 +5279,15 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
         c.appendChild(bas);
         d.appendChild(c);
       });
+      if (t.derivations.length > 1) {
+        const p2 = el('p', 'discret recto-seul');
+        p2.style.marginTop = '4px';
+        p2.textContent = '+ ' + (t.derivations.length - 1) + ' autre'
+          + (t.derivations.length > 2 ? 's' : '') + ' au dossier.';
+        d.appendChild(p2);
+      }
       const sd = sec('derivations', 12);
-      g.appendChild(section(sd.libelle, sd.kanji, d));
+      g.appendChild(section(sd.libelle, sd.kanji, d, '', 'recto'));
     }
 
     const s4 = sec('faille', 4); if (t.loi.limite) g.appendChild(section(s4.libelle, s4.kanji, t.loi.limite));
@@ -5224,7 +5326,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       d.appendChild(el('div', 'jp faible', (t.domaine.nom_jp || '') + ' · ' + (t.domaine.romaji || '')));
       if (t.domaine.paysage) { const p = el('p'); p.style.marginTop = '10px'; p.textContent = t.domaine.paysage; d.appendChild(p); }
       if (t.domaine.incantation) {
-        const inc = el('div', 'incantation-fiche');
+        const inc = el('div', 'incantation-fiche verso-seul');
         String(t.domaine.incantation).replace(/([.;])\s+/g, '$1\n').split(/\n|\s*\/\s*/).filter(Boolean)
           .forEach(v => inc.appendChild(el('p', '', v.trim())));
         d.appendChild(inc);
@@ -5235,8 +5337,8 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
         e2.textContent = '↯ Coup au but — ' + t.domaine.effet_garanti;
         d.appendChild(e2);
       }
-      if (t.domaine.faille) { const p = el('p', 'cout-ligne'); p.textContent = '↳ ' + t.domaine.faille; d.appendChild(p); }
-      const s9 = sec('ryoiki', 9); g.appendChild(section(s9.libelle, s9.kanji, d));
+      if (t.domaine.faille) { const p = el('p', 'cout-ligne verso-seul'); p.textContent = '↳ ' + t.domaine.faille; d.appendChild(p); }
+      const s9 = sec('ryoiki', 9); g.appendChild(section(s9.libelle, s9.kanji, d, '', 'recto'));
     }
 
     /* 式神 : la loi a pris un corps, et ce corps a fallu le battre d'abord */
@@ -5324,7 +5426,7 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       mec.appendChild(el('span', 'perte', t.jubaku.perte));
       mec.appendChild(el('span', 'gain', t.jubaku.gain));
       d.appendChild(mec);
-      const s11 = sec('jubaku', 11); g.appendChild(section(s11.libelle, s11.kanji, d));
+      const s11 = sec('jubaku', 11); g.appendChild(section(s11.libelle, s11.kanji, d, '', 'recto'));
     }
 
     if (t.contre) {
@@ -5369,7 +5471,51 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
         ]));
       }
     }
+    g.appendChild(basculeDossier(g));
     return g;
+  }
+
+  /* Le pli. Il annonce ce qu'il cache — combien de sections, lesquelles en
+     kanji — pour qu'on sache toujours ce qu'on ne lit pas. Sans cette
+     ligne, replier reviendrait à cacher.                                  */
+  function basculeDossier(fiche) {
+    const b = el('div', 'bascule-dossier');
+    const bouton = el('button', 'btn fantome large');
+    const detail = el('p', 'discret');
+    const majBascule = () => {
+      const caches = Array.prototype.filter.call(
+        fiche.querySelectorAll('.bloc[data-face="verso"]'), x => x.dataset.titre);
+      const recto = fiche.classList.contains('sur-recto');
+      bouton.textContent = recto
+        ? 'Ouvrir le dossier complet — ' + caches.length + ' sections'
+        : 'Replier au recto';
+      detail.textContent = recto
+        ? caches.map(x => x.dataset.kanji || x.dataset.titre).filter(Boolean).join(' · ')
+        : 'Le recto tient en un écran : la loi, le constat, son application, sa première dérivation, son territoire.';
+    };
+    bouton.addEventListener('click', () => {
+      const versVerso = fiche.classList.contains('sur-recto');
+      fiche.classList.toggle('sur-recto', !versVerso);
+      fiche.classList.toggle('sur-verso', versVerso);
+      majBascule();
+      JJK.audio.tick(versVerso ? 660 : 440, 0.03, 0.05);
+      if (!versVerso) fiche.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    b.appendChild(bouton); b.appendChild(detail);
+    fiche._majBascule = majBascule;
+    setTimeout(majBascule, 0);
+    return b;
+  }
+
+  /* Ouvrir le dossier depuis l'extérieur : le sommaire et le raccourci D
+     s'en servent, pour qu'un lien vers une section repliée ne tombe pas
+     dans le vide.                                                        */
+  function ouvrirDossier(fiche) {
+    if (!fiche || !fiche.classList.contains('sur-recto')) return false;
+    fiche.classList.remove('sur-recto');
+    fiche.classList.add('sur-verso');
+    if (fiche._majBascule) fiche._majBascule();
+    return true;
   }
 
   /* La fiche fait plusieurs milliers de pixels : elle se consulte par
@@ -5383,8 +5529,13 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       a.appendChild(el('span', 'sk jp', b.dataset.kanji || '—'));
       a.appendChild(el('span', 'sl', b.dataset.titre));
       a.addEventListener('click', () => {
-        b.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        b.classList.remove('vise'); void b.offsetWidth; b.classList.add('vise');
+        /* viser une section repliée doit ouvrir le dossier, pas rater la cible */
+        const ouvert = ouvrirDossier(b.closest('.fiche'));
+        const viser = () => {
+          b.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          b.classList.remove('vise'); void b.offsetWidth; b.classList.add('vise');
+        };
+        if (ouvert) setTimeout(viser, 60); else viser();
         JJK.audio.tick(900, 0.02, 0.03);
       });
       l.appendChild(a);
@@ -5437,7 +5588,8 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
       dl.appendChild(li);
     });
     decl.appendChild(dl);
-    gauche.appendChild(decl);
+    decl.dataset.face = 'verso';
+    gauche.insertBefore(decl, gauche.querySelector('.bascule-dossier'));
     d.appendChild(gauche);
 
     const dr = el('div', 'sceau-boite');
@@ -6531,6 +6683,12 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
         JJK.ecrans.assembler(); JJK.ecrans.revelation({ rapide: true }); return;
       }
       if (surFiche && (e.key === 'g' || e.key === 'G')) { JJK.ecrans.galerie(); return; }
+      /* D déplie et replie le dossier — sur la fiche comme en consultation :
+         une fiche est une fiche, d'où qu'on y arrive. */
+      if (e.key === 'd' || e.key === 'D') {
+        const b2 = document.querySelector('.ecran.actif .fiche .bascule-dossier button');
+        if (b2) { b2.click(); return; }
+      }
       if (e.key === 'Escape' && JJK.ui.actif() !== 'ecran-duel') JJK.ecrans.registre();
       if (e.key >= '1' && e.key <= '9' && JJK.ui.actif() === 'ecran-duel') {
         const b = document.querySelectorAll('#ecran-duel .acte');

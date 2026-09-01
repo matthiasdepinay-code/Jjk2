@@ -125,7 +125,10 @@
       if (ap) {
         const lettre = ap[1].toLowerCase();
         const tete = i > 0 ? lettre : (lettre.charAt(0).toUpperCase() + lettre.slice(1));
-        const nominal = lettre === 'l' || lettre === 'd';
+        /* « d'un restaurant » : l'élision porte un déterminant, pas un nom.
+           Le majuscule irait à « Un », qui n'est le titre de rien.       */
+        const determinant = /^(?:un|une|autre|autres|on|il|elle|ils|elles|y|en)$/i.test(ap[2]);
+        const nominal = (lettre === 'l' || lettre === 'd') && !determinant;
         return tete + "'" + (nominal ? ap[2].charAt(0).toUpperCase() + ap[2].slice(1) : ap[2].toLowerCase());
       }
       return w.charAt(0).toUpperCase() + w.slice(1);
