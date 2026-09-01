@@ -1004,8 +1004,11 @@ body.en-kokusen #fx-ink {
 .fiche.sur-recto .bloc[data-face="verso"] { display: none; }
 .fiche.sur-recto .verso-seul { display: none; }
 .fiche.sur-verso .recto-seul { display: none; }
-/* la première application seule au recto : les suivantes attendent le verso */
+/* la première application seule au recto : les suivantes attendent le verso.
+   Même règle pour la meute — un 式神 en tête, l'inventaire au dossier. */
 .fiche.sur-recto .derives .derive ~ .derive { display: none; }
+.fiche.sur-recto .meute .shikigami ~ .shikigami { display: none; }
+.fiche.sur-recto .meute .chobuku { display: none; }
 
 /* Au recto, la loi n'est pas une section parmi d'autres : c'est la fiche. */
 .fiche.sur-recto .bloc.loi .enonce {
@@ -1027,7 +1030,9 @@ body.en-kokusen #fx-ink {
 @media print {
   .fiche.sur-recto .bloc[data-face="verso"],
   .fiche.sur-recto .verso-seul,
-  .fiche.sur-recto .derives .derive ~ .derive { display: block !important; }
+  .fiche.sur-recto .derives .derive ~ .derive,
+  .fiche.sur-recto .meute .shikigami ~ .shikigami,
+  .fiche.sur-recto .meute .chobuku { display: block !important; }
   .fiche .recto-seul, .bascule-dossier { display: none !important; }
 }
 
@@ -1037,7 +1042,6 @@ body.en-kokusen #fx-ink {
 .fiche.sur-recto .chips-declaration .chip { padding: 3px 8px; font-size: .62rem; }
 .fiche.sur-recto .chips-declaration .chip b { font-size: .56rem; letter-spacing: .1em; }
 /* Le sommaire dit ce qui est replié : ne pas le dire reviendrait à cacher. */
-.fiche.sur-recto ~ * .sommaire-ligne.au-verso .sl,
 .sommaire-ligne.au-verso .sl { opacity: .55; }
 .sommaire-ligne.au-verso .sl::after {
   content: ' ▸'; color: var(--os-mort); font-size: .7em;

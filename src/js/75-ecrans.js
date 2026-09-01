@@ -1011,7 +1011,16 @@
         }
         d.appendChild(c);
       });
-      g.appendChild(section('式神 attachés', '式神', d));
+      if (t.familiers.length > 1) {
+        const p3 = el('p', 'discret recto-seul');
+        p3.style.marginTop = '4px';
+        p3.textContent = '+ ' + (t.familiers.length - 1) + ' autre'
+          + (t.familiers.length > 2 ? 's' : '') + ' au dossier.';
+        d.appendChild(p3);
+      }
+      /* la meute EST la technique quand on a déclaré « familier » : le
+         premier 式神 reste au recto, les autres attendent le verso. */
+      g.appendChild(section('式神 attachés', '式神', d, '', 'recto'));
     }
 
     /* 呪具 : la loi passe par un objet, et un objet se prend */
@@ -1026,7 +1035,7 @@
       if (t.outil.charge) { const p3 = el('p', 'discret'); p3.textContent = t.outil.charge; d.appendChild(p3); }
       if (t.outil.usage) { const p4 = el('p'); p4.style.marginTop = '8px'; p4.textContent = t.outil.usage; d.appendChild(p4); }
       if (t.outil.defaut) { const p5 = el('p', 'cout-ligne'); p5.textContent = '↳ ' + t.outil.defaut; d.appendChild(p5); }
-      g.appendChild(section('Outil maudit attaché', '呪具', d));
+      g.appendChild(section('Outil maudit attaché', '呪具', d, '', 'recto'));
     }
 
     if (t.kokusen) {
