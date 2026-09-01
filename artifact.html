@@ -41,11 +41,19 @@ html, body {
   font-size: 17px;
   line-height: 1.55;
   min-height: 100%;
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-body { position: relative; overflow-y: auto; }
+/* Le débord horizontal se coupe sur la racine SEULEMENT. Le poser aussi sur
+   body en faisait un conteneur de défilement : les descendants en
+   « position: sticky » s'accrochaient alors à body, qui ne défile jamais,
+   et ne bougeaient plus. */
+html { overflow-x: hidden; }
+/* « clip » et non « hidden » : les deux coupent le débord horizontal — que
+   les secousses des calques d'effets provoquent —, mais « hidden » ferait de
+   body un conteneur de défilement, et les descendants en « position: sticky »
+   s'accrocheraient alors à body, qui ne défile jamais. */
+body { position: relative; overflow-x: clip; }
 
 html.is-inverted { filter: invert(1) hue-rotate(180deg); }
 html.is-inverted #fx-flash { filter: invert(1); }
@@ -102,9 +110,16 @@ body::before {
   min-height: 100vh;
   display: flex; flex-direction: column; align-items: center;
   padding: clamp(18px, 4vw, 56px) clamp(14px, 4vw, 40px) 120px;
-  will-change: transform;
+  /* Pas de « will-change: transform » ici : il ferait de #stage un bloc
+     conteneur, et « position: sticky » cesserait alors d'accrocher la
+     colonne de droite. Les toiles d'effets sont des calques à part, ce
+     conteneur n'a rien à promouvoir. */
 }
-.ecran { width: 100%; max-width: 1120px; display: none; animation: fadeUp .8s var(--ease) both; }
+/* Pas de « both » : le mode de remplissage laisse une matrice de transformation
+   sur l'écran une fois l'animation finie, et un élément transformé devient un
+   bloc conteneur — « position: sticky » cesse alors d'accrocher. L'écran est
+   caché avant d'être actif : il n'a rien à remplir en amont. */
+.ecran { width: 100%; max-width: 1120px; display: none; animation: fadeUp .8s var(--ease); }
 .ecran.actif { display: block; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
@@ -1027,6 +1042,39 @@ body.en-kokusen #fx-ink {
 .fiche.sur-recto .chips-declaration { margin: 4px 0 26px; gap: 5px; }
 .fiche.sur-recto .chips-declaration .chip { padding: 3px 8px; font-size: .62rem; }
 .fiche.sur-recto .chips-declaration .chip b { font-size: .56rem; letter-spacing: .1em; }
+/* Le sommaire dit ce qui est replié : ne pas le dire reviendrait à cacher. */
+.fiche.sur-recto ~ * .sommaire-ligne.au-verso .sl,
+.sommaire-ligne.au-verso .sl { opacity: .55; }
+.sommaire-ligne.au-verso .sl::after {
+  content: ' ▸'; color: var(--os-mort); font-size: .7em;
+}
+.fiche.sur-verso ~ * .sommaire-ligne.au-verso .sl { opacity: 1; }
+.fiche.sur-verso ~ * .sommaire-ligne.au-verso .sl::after { content: ''; }
+
+/* Rappel de repli sous le titre : le pli lui-même est en pied de fiche. */
+.repli-haut {
+  display: block; margin: -6px 0 18px; padding: 0;
+  background: none; border: 0; cursor: pointer;
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .16em;
+  color: var(--os-mort); text-transform: uppercase;
+}
+.repli-haut:hover { color: var(--or); }
+
+/* Un verso fait sept mille pixels : la colonne de droite doit suivre, sinon
+   le sceau, le grade et le sommaire disparaissent dès le premier écran.
+   Sur une colonne unique (mobile), on la laisse couler normalement. */
+@media (min-width: 861px) {
+  .dossier > .sceau-boite {
+    position: sticky; top: 18px; align-self: start;
+    max-height: calc(100vh - 36px); overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .dossier > .sceau-boite::-webkit-scrollbar { width: 5px; }
+  .dossier > .sceau-boite::-webkit-scrollbar-thumb { background: rgba(233,226,212,.14); }
+  /* le sommaire ne se limite plus lui-même : c'est la colonne qui défile */
+  .dossier > .sceau-boite .sommaire { max-height: none; overflow: visible; }
+}
+@media print { .dossier > .sceau-boite { position: static; max-height: none; } }
 
 </style>
 
@@ -5196,6 +5244,16 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     g.appendChild(jl);
     g.appendChild(el('hr', 'trait'));
 
+    /* Une fois le dossier ouvert, le pli est à sept mille pixels plus bas :
+       on en remet un sous le titre, qui ne s'affiche qu'au verso.        */
+    const repli = el('button', 'repli-haut verso-seul');
+    repli.textContent = '↑ replier au recto';
+    repli.addEventListener('click', () => {
+      const b3 = g.querySelector('.bascule-dossier button');
+      if (b3) b3.click();
+    });
+    g.appendChild(repli);
+
     /* La loi d'abord. Les douze pastilles disent ce qu'on a répondu au
        formulaire ; la loi dit ce qu'on EST. Les mettre avant repoussait la
        seule phrase qui compte sous la ligne de flottaison.               */
@@ -5517,7 +5575,9 @@ window.JJK.CORPUS = {"essences":{"essences":[{"id":"rouille","nom":"La Rouille",
     s2.appendChild(el('span', 'etiquette', '目次 · sommaire'));
     const l = el('div', 'sommaire-liste');
     Array.prototype.forEach.call(colonne.querySelectorAll('.bloc[data-titre]'), b => {
-      const a = el('button', 'sommaire-ligne');
+      /* une ligne du sommaire dit si sa section est repliée : sans ça, le
+         lecteur ne sait pas ce qu'il ne voit pas. */
+      const a = el('button', 'sommaire-ligne' + (b.dataset.face === 'verso' ? ' au-verso' : ''));
       a.appendChild(el('span', 'sk jp', b.dataset.kanji || '—'));
       a.appendChild(el('span', 'sl', b.dataset.titre));
       a.addEventListener('click', () => {

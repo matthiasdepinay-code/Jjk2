@@ -824,6 +824,16 @@
     g.appendChild(jl);
     g.appendChild(el('hr', 'trait'));
 
+    /* Une fois le dossier ouvert, le pli est à sept mille pixels plus bas :
+       on en remet un sous le titre, qui ne s'affiche qu'au verso.        */
+    const repli = el('button', 'repli-haut verso-seul');
+    repli.textContent = '↑ replier au recto';
+    repli.addEventListener('click', () => {
+      const b3 = g.querySelector('.bascule-dossier button');
+      if (b3) b3.click();
+    });
+    g.appendChild(repli);
+
     /* La loi d'abord. Les douze pastilles disent ce qu'on a répondu au
        formulaire ; la loi dit ce qu'on EST. Les mettre avant repoussait la
        seule phrase qui compte sous la ligne de flottaison.               */
@@ -1145,7 +1155,9 @@
     s2.appendChild(el('span', 'etiquette', '目次 · sommaire'));
     const l = el('div', 'sommaire-liste');
     Array.prototype.forEach.call(colonne.querySelectorAll('.bloc[data-titre]'), b => {
-      const a = el('button', 'sommaire-ligne');
+      /* une ligne du sommaire dit si sa section est repliée : sans ça, le
+         lecteur ne sait pas ce qu'il ne voit pas. */
+      const a = el('button', 'sommaire-ligne' + (b.dataset.face === 'verso' ? ' au-verso' : ''));
       a.appendChild(el('span', 'sk jp', b.dataset.kanji || '—'));
       a.appendChild(el('span', 'sl', b.dataset.titre));
       a.addEventListener('click', () => {
