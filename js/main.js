@@ -89,7 +89,7 @@
           else if (u.type === 'flag') this[u.item] = true;
           else if (u.type === 'filtres') for (const f of u.item) { if (!this.filtres.includes(f)) this.filtres.push(f); }
           else if (u.type === 'cible') { if (!this.cibles.includes(u.item)) this.cibles.push(u.item); }
-          else if (u.type === 'marque') { if (!this.cores.includes('marque')) this.cores.push('marque'); if (!this.cibles.includes('marque')) this.cibles.push('marque'); }
+          else if (u.type === 'marque') { if (!this.mods.includes('marque')) this.mods.push('marque'); if (!this.cibles.includes('marque')) this.cibles.push('marque'); }
           this.nouveau = true;
           game.toast('✦ Découverte : ' + u.titre, 'unlock');
           Son.sfx('unlock');
@@ -138,6 +138,7 @@
       if (first && P.don) {
         const d = P.don, p = this.progress;
         if (d.type === 'recette' && !p.recettes.includes(d.id)) { p.recettes.push(d.id); this.toast('Recette apprise : ' + DATA.POTIONS[d.id].nom + '.', 'unlock'); }
+        else if (d.type === 'core' && DATA.MIGRATION[d.id]) { const a = DATA.MIGRATION[d.id][1]; if (!p.mods.includes(a)) { p.mods.push(a); p.nouveau = true; this.toast('✦ Aspect appris : ' + DATA.MODS[a].nom, 'unlock'); } }
         else if (d.type === 'core' && !p.cores.includes(d.id)) { p.cores.push(d.id); p.nouveau = true; this.toast('✦ Glyphe appris : ' + DATA.CORES[d.id].nom, 'unlock'); }
         else if (d.type === 'fusion' && !p.fusion) { p.fusion = true; p.nouveau = true; this.toast('✦ La Fusion t\'est révélée.', 'unlock'); }
         else if (d.type === 'xp') this.addXp(d.n);
@@ -440,6 +441,12 @@
         if (d.courrier) this.courrier = Object.assign(this.courrier, d.courrier); if (d.bonus) this.bonus = Object.assign(this.bonus, d.bonus); if (d.trophees) this.trophees = d.trophees;
         if (d.progress) Object.assign(this.progress, d.progress);
         if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {};
+        { // refonte : les anciennes essences deviennent des aspects
+          const p = this.progress;
+          for (const c of p.cores.slice()) { const M2 = DATA.MIGRATION[c]; if (!M2) continue; p.cores = p.cores.filter((q) => q !== c); if (!p.mods.includes(M2[1])) p.mods.push(M2[1]); if (p.maitrise[c]) { p.maitrise[M2[0]] = (p.maitrise[M2[0]] || 0) + p.maitrise[c]; delete p.maitrise[c]; } }
+          p.cores = p.cores.filter((c) => DATA.CORES[c] && !DATA.CORES[c].interne);
+          p.mods = p.mods.map((m) => (m in DATA.MIGR_MODS ? DATA.MIGR_MODS[m] : m)).filter((m, i, a) => m && DATA.MODS[m] && a.indexOf(m) === i);
+        }
         if (typeof d.selectedL === 'number') this.selectedL = d.selectedL;
         if (!this.progress.pagesLues) this.progress.pagesLues = []; if (!this.progress.defisFaits) this.progress.defisFaits = [];
         if (!this.progress.bestiaire) this.progress.bestiaire = {}; if (!this.progress.especesVues) this.progress.especesVues = [];

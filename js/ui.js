@@ -194,11 +194,11 @@ const UI = (() => {
       if (i < 0) i = 0;
       if (i >= nb) { toast('Aucun emplacement de modificateur libre.', 'warn'); return; }
       if (id === 'sous') { subSlot = i; showSubList(); return; }
-      const lgEl = DATA.MODS[id] && DATA.MODS[id].langue;
+      const lgEl = DATA.MODS[id] && (DATA.MODS[id].langue || DATA.MODS[id].aspect);
       if (lgEl) {
-        const Lg = DATA.LANGAGES[lgEl], niv = DATA.niveauMaitrise((game.progress.maitrise || {})[lgEl] || 0);
+        const niv = DATA.niveauMaitrise((game.progress.maitrise || {})[lgEl] || 0);
         const deja = s.mods.filter((m, k) => m === id && k !== i).length;
-        if (deja >= Math.min(2, niv)) { toast(deja >= 2 ? 'Deux glyphes ' + Lg.nom + ' au plus.' : 'Pour redoubler la ' + Lg.nom.toLowerCase() + ', il faut parler mieux le langage ' + Lg.de + ' (Adepte).', 'warn'); return; }
+        if (deja >= Math.min(2, Math.max(1, niv))) { const nm = DATA.MODS[id].nom; toast(deja >= 2 ? 'Deux glyphes ' + nm + ' au plus.' : 'Pour redoubler ' + nm + ', il faut être Adepte de l\'essence ' + DATA.CORES[lgEl].nom + '.', 'warn'); return; }
       }
       s.mods[i] = id; selSlot = null;
     }
@@ -230,12 +230,14 @@ const UI = (() => {
     // palette
     const pal = (sel, dict, list, kind) => {
       const c = $(sel); c.innerHTML = '';
-      for (const id in dict) {
+      const ids = Object.keys(dict).filter((id) => !dict[id].interne);
+      if (kind === 'mod') ids.sort((a, b) => (dict[a].aspect ? 1 : 0) - (dict[b].aspect ? 1 : 0));
+      for (const id of ids) {
         const d = dict[id]; const unlocked = list.includes(id);
         const b = el('button', 'glyph-btn' + (unlocked ? '' : ' locked'));
         const cv = document.createElement('canvas'); cv.width = 44; cv.height = 44;
         const cx = cv.getContext('2d');
-        if (unlocked) Seal.glyph(cx, kind === 'filtre' ? 'f_' + id : kind === 'cible' ? 'c_' + id : id, 22, 22, 15, kind === 'core' || kind === 'filtre' ? d.couleur : U.INK, 1);
+        if (unlocked) Seal.glyph(cx, kind === 'filtre' ? 'f_' + id : kind === 'cible' ? 'c_' + id : id, 22, 22, 15, kind === 'core' || kind === 'filtre' ? d.couleur : kind === 'mod' && d.aspect ? DATA.CORES[d.aspect].couleur : U.INK, 1);
         else U.txt(cx, '?', 22, 22, 22, 'center', 'rgba(60,45,30,0.4)');
         b.appendChild(cv);
         b.appendChild(el('span', '', unlocked ? d.nom : '???'));
@@ -295,9 +297,9 @@ const UI = (() => {
     if (!s.core) return '<span class="muted">Pose un glyphe d\'effet au centre pour commencer.</span>';
     const T = Seal.taille(s), prm = Seal.params(s), trs = Seal.triggers(s);
     const nomG = (c) => (DATA.CORES[c] || DATA.PSEUDO[c] || { nom: c }).nom.toLowerCase();
-    let cores = [s.core]; if (s.core2 && s.taille !== 'petit') cores.push(s.core2);
+    let cores = Seal.effets(s);
     if (prm.inverse) cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c));
-    const combo = cores.length > 1 && !prm.inverse ? DATA.COMBOS[[s.core, s.core2].sort().join('|')] : null;
+    const combo = cores.length > 1 && !prm.inverse ? DATA.COMBOS[cores.slice().sort().join('|')] : null;
     const L = [];
     L.push('<b>' + T.nom + ' sceau</b> · ' + Seal.cost(s) + ' encre · tracé en ' + T.geste + ' s · maintenir le clic charge jusqu\'à +80 %.');
     let eff = 'Effet : ' + cores.map(nomG).join(' et ') + (combo ? ' (fusion : ' + combo.nom.toLowerCase() + ')' : '') + (prm.inverse ? (cores.includes('gravite') ? ', apesanteur' : ', inversé') : '') + '.';
@@ -318,7 +320,9 @@ const UI = (() => {
     const mv = [];
     if (prm.traj) mv.push({ boomerang: 'revient comme un boomerang', spirale: 'vole en spirale', rasesol: 'court au ras du sol' }[prm.traj]); if (prm.power > 1) mv.push('puissance ×' + prm.power.toFixed(1)); if (prm.range > 1) mv.push('portée ×' + prm.range.toFixed(1)); if (prm.size > 1) mv.push('taille ×' + prm.size.toFixed(1)); if (prm.duration > 1) mv.push('durée ×' + prm.duration.toFixed(1)); if (prm.speed > 1) mv.push('vitesse ×' + prm.speed.toFixed(1)); if (prm.bounces) mv.push(prm.bounces + ' rebonds'); if (prm.persist) mv.push('laisse une trace'); if (prm.echo) mv.push('écho ×' + prm.echo);
     if (mv.length) L.push('Réglages : ' + mv.join(', ') + '.');
-    for (const el in prm.lg) { const Lg = DATA.LANGAGES[el]; if (cores.includes(el) || [s.core, s.core2].includes(el)) L.push('Langage ' + Lg.de + ' : ' + Lg.nom + (prm.lg[el] > 1 ? ' ×2 — ' + Lg.paliers[1] : ' — ' + Lg.paliers[0])); else L.push('<span class="muted">' + Lg.nom + ' reste muet : il faut le glyphe ' + DATA.CORES[el].nom + '.</span>'); }
+    for (const e in prm.asp) { const A = prm.asp[e]; const M2 = DATA.MODS[A.id]; if ([s.core, s.core2].includes(e)) L.push('Aspect : ' + M2.nom + (A.n > 1 ? ' ×2' : '') + ' — ' + DATA.CORES[e].nom.toLowerCase() + ' devient ' + nomG(A.devient) + '.'); }
+    for (const m of s.mods) { if (typeof m !== 'string') continue; const M2 = DATA.MODS[m]; if (M2 && M2.aspect && ![s.core, s.core2].includes(M2.aspect)) L.push('<span class="muted">' + M2.nom + ' reste muet : il lui faut l\'essence ' + DATA.CORES[M2.aspect].nom + '.</span>'); }
+    for (const el in prm.lg) { const Lg = DATA.LANGAGES[el]; if (!Lg) continue; if (cores.includes(el) || [s.core, s.core2].includes(el)) L.push('Langage ' + Lg.de + ' : ' + Lg.nom + (prm.lg[el] > 1 ? ' ×2 — ' + Lg.paliers[1] : ' — ' + Lg.paliers[0])); }
     if (s.encre && DATA.ENCRES[s.encre]) { const E = DATA.ENCRES[s.encre]; L.push('Écrit à l\'' + E.nom.toLowerCase() + ' (' + ((game.inv.encres || {})[s.encre] || 0) + ' gouttes) : ' + E.effet); }
     const sb = Seal.subs(s); if (sb.length) L.push('Puis lance : ' + sb.map((q) => '« ' + Seal.nom(q) + ' »').join(', ') + '.');
     return L.map((l) => '<div>' + l + '</div>').join('');
@@ -505,20 +509,21 @@ const UI = (() => {
         }
         c.appendChild(g);
       };
-      // langages des éléments
-      c.appendChild(el('h3', '', 'Langages des éléments'));
-      c.appendChild(el('p', 'intro', 'Chaque élément a sa grammaire. À force de l\'employer, tu en apprends les mots : un glyphe de langage, qu\'on peut doubler une fois Adepte. Maître, ses sceaux coûtent moins cher.'));
+      // essences et aspects
+      c.appendChild(el('h3', '', 'Essences et aspects'));
+      c.appendChild(el('p', 'intro', 'Une essence est une force première. Ce qui en découle est un aspect : un glyphe du second anneau qui lui donne une autre nature (l\'Eau avec Gel devient le froid) ou la renforce (le Feu avec Chaleur). L\'usage d\'une essence t\'en apprend les aspects ; on peut doubler un aspect une fois Adepte, et un Maître paie ses sceaux moins cher.'));
       const lgBox = el('div', 'glyph-grid');
-      for (const elt in DATA.LANGAGES) {
+      for (const elt of DATA.ESSENCES) {
         if (!p.cores.includes(elt)) continue;
-        const Lg = DATA.LANGAGES[elt], pts = (p.maitrise || {})[elt] || 0, niv = DATA.niveauMaitrise(pts);
+        const pts = (p.maitrise || {})[elt] || 0, niv = DATA.niveauMaitrise(pts);
         const S = DATA.MAITRISE.seuils, haut = S[Math.min(2, niv)], bas = niv ? S[niv - 1] : 0, k = niv >= 3 ? 1 : Math.min(1, (pts - bas) / (haut - bas));
+        const asp = Object.keys(DATA.MODS).filter((m) => DATA.MODS[m].aspect === elt);
         const it = el('div', 'glyph-card');
         const cv = document.createElement('canvas'); cv.width = 48; cv.height = 48;
-        Seal.glyph(cv.getContext('2d'), niv ? Lg.glyphe : elt, 24, 24, 17, niv ? DATA.CORES[elt].couleur : 'rgba(60,45,30,0.35)', 1);
+        Seal.glyph(cv.getContext('2d'), elt, 24, 24, 17, DATA.CORES[elt].couleur, 1);
         it.appendChild(cv);
-        it.appendChild(el('div', '', '<b>' + DATA.CORES[elt].nom + '</b> — ' + DATA.MAITRISE.noms[niv] + '<div class="barre-maitrise"><i style="width:' + Math.round(k * 100) + '%;background:' + DATA.CORES[elt].couleur + '"></i></div>' +
-          (niv ? '<b>' + Lg.nom + '</b> ×1 : ' + Lg.paliers[0] + '<br>' + (niv >= 2 ? '×2 : ' + Lg.paliers[1] : '<span class="muted">×2 : il faut être Adepte.</span>') : '<span class="muted">Un mot de ce langage viendra avec l\'usage.</span>')));
+        const lst = asp.map((m) => p.mods.includes(m) ? '<b style="color:' + DATA.CORES[elt].couleur + '">' + DATA.MODS[m].nom + '</b>' : '<span class="muted">???</span>').join(' · ');
+        it.appendChild(el('div', '', '<b>' + DATA.CORES[elt].nom + '</b> — ' + DATA.MAITRISE.noms[niv] + '<div class="barre-maitrise"><i style="width:' + Math.round(k * 100) + '%;background:' + DATA.CORES[elt].couleur + '"></i></div>' + (asp.length ? 'Aspects : ' + lst : '<span class="muted">Pas d\'aspect.</span>')));
         lgBox.appendChild(it);
       }
       c.appendChild(lgBox);
@@ -561,7 +566,7 @@ const UI = (() => {
       c.appendChild(el('p', 'intro', 'L\'encyclopédie des réactions : chaque phénomène observé dehors s\'inscrit ici, et certains font germer des glyphes au bout de trois observations. Les orages, la lave, la glace et l\'acide sont de bons professeurs.'));
       for (const id in DATA.OBSERVATIONS) {
         const O = DATA.OBSERVATIONS[id]; const n = p.obs[id] || 0;
-        const g = O.glyphe ? DATA.CORES[O.glyphe] : null; const connu = g && p.cores.includes(O.glyphe);
+        const asO = O.glyphe && DATA.MIGRATION[O.glyphe] ? DATA.MIGRATION[O.glyphe][1] : null; const g = asO ? DATA.MODS[asO] : O.glyphe ? DATA.CORES[O.glyphe] : null; const connu = g && (asO ? p.mods.includes(asO) : p.cores.includes(O.glyphe));
         c.appendChild(el('div', 'decouverte' + (n > 0 ? ' ok' : ''), '<span class="check">' + (n >= 3 || connu ? '✓' : n > 0 ? n : '○') + '</span><div><b>' + (n > 0 ? O.nom : '???') + '</b> ' + (g ? '<small>→ glyphe ' + (connu ? g.nom : '???') + '</small>' : '<small>(expérience)</small>') + '<br><em>' + O.desc + '</em></div>'));
       }
     } else if (grimTab === 'carte') {

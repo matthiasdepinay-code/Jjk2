@@ -164,6 +164,7 @@ const World = (() => {
     }
     b.cadeauT = 0;
     if (c.hp !== undefined) b.hp = c.hp;
+    if (c.aff) { b.aff = c.aff; b.affJ = c.affJ; b.affDuJour = c.affDuJour; }
     return b;
   }
 
@@ -172,7 +173,7 @@ const World = (() => {
     return {
       mat: Sim.serialize(), tod: st.tod, jour: st.jour || 0, meteo: st.meteo, mecaV: 1,
       objs: st.objs.filter((o) => !o.mort).map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
-      crs: st.crs.map((c) => ({ t: c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.hp, tame: c.sta.tame })),
+      crs: st.crs.map((c) => ({ t: c.orig ? c.orig.t : c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.orig ? c.orig.hp : c.hp, tame: c.sta.tame, aff: c.aff ? Math.round(c.aff) : undefined, affJ: c.affJ, affDuJour: c.affDuJour })),
     };
   }
   function restore(d) {
@@ -529,6 +530,100 @@ const World = (() => {
 
   // ---------- Effets sur les entités ----------
   // mode : 'burst' (instantané) ou un nombre dt (continu)
+  // ---------- Effets nés des aspects ----------
+  function effetDerive(core, cx, cy, rad, prm, burst, k, mode, opts) {
+    const power = prm.power || 1, dur = prm.duration || 1;
+    const dans = (b) => U.circleRect(cx, cy, rad, b);
+    switch (core) {
+      case 'esprit': {
+        if (!burst) return true;
+        let best = null, bd = 1e9; for (const c of st.crs) if (c.hp > 0 && c.t !== 'familier' && !c.controlled && dans(c)) { const d = dist(cx, cy, c.x + c.w / 2, c.y + c.h / 2); if (d < bd) { bd = d; best = c; } }
+        if (best) { if (st.control) releaseControl(); controlCreature(best, 12 * dur); }
+        fxBurst('esprit', cx, cy, rad); return true;
+      }
+      case 'peur':
+        for (const c of st.crs) if (c.hp > 0 && c.t !== 'familier' && !c.sta.tame && dans(c)) { c.fuite = { x: cx, y: cy, t: 6 * dur }; c.sta.sleep = 0; c.dort = false; c.curieux = null; if (burst) part(c.x + c.w / 2, c.y - 6, '#8a5aa8', 5, 50, 0.6, 2, -40, 'glow'); }
+        if (burst) { fxBurst('ombre', cx, cy, rad); Son.sfx('burst', 'ombre'); } return true;
+      case 'repulsion': {
+        if (!opts.noGrid) gridEffect('vent', cx, cy, rad, prm, burst, k);
+        const pousse = (b, m = 1) => { const dx = b.x + b.w / 2 - cx, dy = b.y + b.h / 2 - cy, d = Math.hypot(dx, dy) || 1; b.vx += dx / d * 650 * power * k * m; b.vy += (dy / d * 450 - 120) * power * k * m; b.onGround = false; };
+        for (const c of st.crs) if (c.hp > 0 && !c.carried && dans(c)) pousse(c, c.t === 'golem' ? 0.5 : 1);
+        for (const o of st.objs) if (o.dyn && !o.carried && !o.mort && dans(o)) pousse(o);
+        if (!opts.noPlayer && dans(st.p)) pousse(st.p, 0.6);
+        if (burst) { fxBurst('gravite', cx, cy, rad); Son.sfx('burst', 'force'); } return true;
+      }
+      case 'fumee':
+        if (!opts.noGrid) Sim.forRadius(cx, cy, rad * (burst ? 0.9 : 0.5), (x, y, i, m) => { if (m === M.AIR && Math.random() < (burst ? 0.55 : 0.1 * k)) Sim.set(x, y, M.FUMEE, 140 + (Math.random() * 110) | 0); else if (FLAM(m) && Sim.aux[i] > 0 && Math.random() < 0.3) { Sim.aux[i] = 0; Sim.touch(i); } else if (m === M.FEU && Math.random() < 0.5) Sim.set(x, y, M.FUMEE, 80); });
+        for (const c of st.crs) if (c.hp > 0 && dans(c)) { c.sta.stun = Math.max(c.sta.stun, burst ? 2 * dur : 0.3); c.curieux = null; }
+        if (burst) { part(cx, cy, '#6e6660', 18, 60 + rad * 0.5, 1.6, 6, -40, 'fumee'); Son.sfx('burst', 'vent'); } return true;
+      case 'explosion': {
+        if (!burst) { applyEffect('feu', cx, cy, rad * 0.6, prm, mode, opts); return true; }
+        const R2 = rad * 0.5 * Math.sqrt(power);
+        if (!opts.noGrid) {
+          Sim.forRadius(cx, cy, R2, (x, y, i, m) => { if (!m || m === M.OBSIDIENNE || m === M.METAL || m === M.BULLE) return; if (Math.random() < 0.85) Sim.set(x, y, Math.random() < 0.25 ? M.FEU : M.AIR, 20); });
+          Sim.forRadius(cx, cy, rad, (x, y, i, m) => { if (FLAM(m) && Sim.aux[i] === 0 && Math.random() < 0.3) { Sim.aux[i] = P[m].burn; Sim.touch(i); } else if (m === M.POUDRE) Sim.set(x, y, M.FEU, 6); });
+        }
+        const souffle = (b, f) => { const dx = b.x + b.w / 2 - cx, dy = b.y + b.h / 2 - cy, d = Math.hypot(dx, dy) || 1; if (d > rad * 1.3) return 0; const g = (1 - d / (rad * 1.3)) * f; b.vx += dx / d * 800 * g * power; b.vy += dy / d * 650 * g * power - 250 * g; b.onGround = false; return g; };
+        for (const c of st.crs) if (c.hp > 0 && !c.carried) { const g = souffle(c, c.t === 'golem' ? 0.5 : 1); if (g) { hurt(c, 3 * g * power); c.sta.stun = Math.max(c.sta.stun, 1.2); } }
+        for (const o of st.objs) if (o.dyn && !o.carried && !o.mort) { const g = souffle(o, 1); if (g && o.t === 'caisse') { o.hp -= 2 * g; if (o.hp <= 0) o.mort = true; } if (g > 0.4 && o.t === 'rocher') { o.mort = true; dropPickup('poussiere', o.x + o.w / 2, o.y); } }
+        if (!opts.noPlayer) { const p = st.p; const g = souffle(p, 0.8); if (g && !(p.sta.stone > 0) && !(p.sta.armure > 0)) { p.hp -= 2 * g; msg('BOUM !', 'warn'); } }
+        st.shake = Math.max(st.shake || 0, 0.6); st.flash = 0.08; Son.sfx('burst', 'feu');
+        fxBurst('feu', cx, cy, rad * 1.4); part(cx, cy, '#5a524c', 20, 120, 1.4, 7, -60, 'fumee'); part(cx, cy, '#f0c060', 30, 400, 0.6, 2, 300, 'etincelle');
+        st.sp.push({ k: 'ring', core: 'feu', x: cx, y: cy, r: rad * 1.4, life: 0.5, max: 0.5, color: '#f0a040' });
+        game.observe('explosion');
+        return true;
+      }
+      case 'courant': {
+        const p = st.p; let dv = opts.dir; if (!dv) { const dx = cx - (p.x + p.w / 2); dv = { x: Math.sign(dx) || 1, y: 0 }; }
+        const L2 = Math.hypot(dv.x, dv.y) || 1, ux = dv.x / L2, uy = dv.y / L2;
+        if (!opts.noGrid) {
+          let n = 0; Sim.forRadius(cx, cy, rad, (x, y, i, m) => { if (P[m].liquid) n++; });
+          if (n < 30 && burst) gridEffect('eau', cx, cy, rad * 0.8, { ...prm, power: power * 1.2 }, true, 1);
+          for (let pass = 0; pass < (burst ? 6 : 1); pass++) Sim.forRadius(cx, cy, rad * 1.2, (x, y, i, m) => { if (!P[m].liquid || m === M.LAVE || Math.random() > 0.7) return; const nx = x + Math.round(ux * 2), ny = y + Math.round(uy * 2); if (Sim.get(nx, ny) === M.AIR) Sim.swap(i, ny * Sim.W + nx); });
+        }
+        const emporte = (b, m = 1) => { b.vx += ux * 700 * power * k * m; b.vy += uy * 500 * power * k * m - 60 * k * m; };
+        for (const c of st.crs) if (c.hp > 0 && !c.carried && dans(c)) { emporte(c, c.t === 'golem' ? 0.4 : 1); c.sta.wet = 6; c.sta.burn = 0; }
+        for (const o of st.objs) if (o.dyn && !o.carried && !o.mort && dans(o)) { emporte(o); o.burning = 0; }
+        if (burst) { fxBurst('eau', cx, cy, rad); for (let q = 0; q < 14; q++) st.parts.push({ x: cx - ux * rad * Math.random(), y: cy - uy * rad * Math.random() + (Math.random() - 0.5) * 20, vx: ux * 500, vy: uy * 500, life: 0.5, max: 0.5, color: '#5f9ad8', size: 2.4, grav: 300, type: 'goutte' }); }
+        return true;
+      }
+      case 'seisme': {
+        if (!burst) return true;
+        const R3 = rad * 1.5; st.shake = Math.max(st.shake || 0, 0.7); Son.sfx('burst', 'terre');
+        for (const c of st.crs) if (c.hp > 0 && !c.carried && dist(cx, cy, c.x + c.w / 2, c.y + c.h) < R3) { if (c.onGround) { c.vy -= 320 * power; c.onGround = false; } c.sta.stun = Math.max(c.sta.stun, 1.5 * dur); hurt(c, 0.5 * power); }
+        for (const o of st.objs) if (!o.mort && dist(cx, cy, o.x + o.w / 2, o.y + o.h) < R3) { if (o.dyn && !o.carried) { o.vy -= 280; o.vx += (Math.random() - 0.5) * 200; } if (o.t === 'rocher' && power >= 1.2) { o.mort = true; part(o.x + o.w / 2, o.y + o.h / 2, '#8a6b2f', 16, 120, 0.8, 4, 600); dropPickup('poussiere', o.x + o.w / 2, o.y - 10); } }
+        if (!opts.noGrid) Sim.forRadius(cx, cy, R3, (x, y, i, m) => { const r = Math.random(); if (m === M.VERRE && r < 0.5) Sim.set(x, y, M.SABLE); else if (m === M.GLACE && r < 0.3) Sim.set(x, y, M.NEIGE); else if (m === M.PIERRE && r < 0.04 * power && Sim.get(x, y + 1) === M.AIR) Sim.set(x, y, M.SABLE); else if (m && (P[m].powder || P[m].liquid)) Sim.touch(i); });
+        if (!opts.noPlayer && st.p.onGround && dist(cx, cy, st.p.x, st.p.y + st.p.h) < R3) { st.p.vy -= 200; st.p.onGround = false; }
+        for (let q = 0; q < 24; q++) st.parts.push({ x: cx + R3 * (Math.random() * 2 - 1), y: cy + 10, vx: (Math.random() - 0.5) * 80, vy: -120 - Math.random() * 160, life: 0.8, max: 0.8, color: '#a3844f', size: 3, grav: 900, type: 'eclat' });
+        st.sp.push({ k: 'ring', core: 'terre', x: cx, y: cy, r: R3, life: 0.6, max: 0.6, color: '#8a6b2f' });
+        return true;
+      }
+      case 'saut': {
+        if (!burst) return true;
+        const ailleurs = (b) => { for (let t = 0; t < 20; t++) { const a = Math.random() * TAU, d = 120 + Math.random() * 120; const nx = b.x + Math.cos(a) * d, ny = b.y + Math.sin(a) * d * 0.6 - 40; if (!Sim.rectBlocked({ x: nx, y: ny, w: b.w, h: b.h })) { part(b.x + b.w / 2, b.y + b.h / 2, '#4fb0a0', 10, 60, 0.5, 3, 0, 'glow'); b.x = nx; b.y = ny; b.vx = b.vy = 0; part(nx + b.w / 2, ny + b.h / 2, '#4fb0a0', 10, 60, 0.5, 3, 0, 'glow'); return; } } };
+        for (const c of st.crs) if (c.hp > 0 && !c.carried && c.t !== 'familier' && dans(c)) ailleurs(c);
+        for (const o of st.objs) if (o.dyn && !o.carried && !o.mort && dans(o)) ailleurs(o);
+        Son.sfx('cast', 'portail'); fxBurst('portail', cx, cy, rad); return true;
+      }
+    }
+    return false;
+  }
+  // ---------- Affinité : on gagne une créature avec le temps ----------
+  function affinite(c, f) {
+    if (c.sta.tame || c.t === 'familier' || c.controlled) return;
+    const A = DATA.AFFINITE[c.t] || {}; const sp = DATA.ESPECES[c.t];
+    let gain = (A.gain || (sp && !sp.hostile ? 34 : 20)) * f;
+    if (A.parJour) {
+      const j = st.jour || 0; if (c.affJ !== j) { c.affJ = j; c.affDuJour = 0; }
+      const reste = A.parJour - c.affDuJour;
+      if (reste <= 0) { if (f >= 1 && (!c.affMsgT || time - c.affMsgT > 6)) { c.affMsgT = time; msg(nomCreature(c.t) + ' en a assez pour aujourd\'hui. Reviens demain.'); } return; }
+      gain = Math.min(gain, reste); c.affDuJour += gain;
+    }
+    c.aff = Math.min(100, (c.aff || 0) + gain); c.affT = 3;
+    if (f >= 1) part(c.x + c.w / 2, c.y - 6, '#c45a8a', 3, 30, 0.8, 2.5, -50, 'coeur');
+    if (c.aff >= 100) tame(c);
+    else if (f >= 1 && (!c.affMsgT || time - c.affMsgT > 4)) { c.affMsgT = time; msg(nomCreature(c.t) + ' te regarde autrement (affinité ' + Math.round(c.aff) + ' %).'); }
+  }
   // ---------- Bulles de temps ----------
   function poserBulle(mode, cx, cy, rad, prm) {
     const dur = prm.duration || 1, r = Math.max(50, rad * 1.1);
@@ -576,6 +671,11 @@ const World = (() => {
       for (const s2 of st.sp) if (s2.k !== 'bulle' && s2.k !== 'ring' && s2.life > 0 && s2.x !== undefined && dist(cx, cy, s2.x, s2.y) < r && ['field', 'trap', 'totem', 'timer', 'attente', 'beamtimer', 'tornade', 'singularite'].includes(s2.k)) s2.life -= k;
       const p = st.p;
       if (dans(p)) { for (const s2 in p.sta) if (p.sta[s2] > 0 && s2 !== 'forme') p.sta[s2] = Math.max(0, p.sta[s2] - k * 0.5); p.ink = Math.min(p.inkMax, p.ink + dt * (p.inkRegen || 1) * 2); }
+    } else if (mode === 'fige') {
+      for (const c of st.crs) if (c.hp > 0 && dans(c)) { c.vx = 0; c.vy = 0; c.sta.stun = Math.max(c.sta.stun, 0.2); }
+      for (const o of st.objs) if (o.dyn && !o.carried && !o.mort && dans(o)) { o.vx = 0; o.vy = 0; }
+      for (const s2 of st.sp) if (s2.k === 'proj' && dist(cx, cy, s2.x, s2.y) < r) { if (!s2.gelV) s2.gelV = [s2.vx, s2.vy, s2.grav]; s2.vx = 0; s2.vy = 0; s2.grav = 0; s2.life += dt; }
+      for (const s2 of st.sp) if (s2.k !== 'bulle' && s2.k !== 'proj' && s2.life > 0 && s2.x !== undefined && dist(cx, cy, s2.x, s2.y) < r) s2.life += dt;
     } else {
       // temps lent : tout ce qui bouge s'englue
       for (const c of st.crs) if (c.hp > 0 && dans(c)) { c.sta.lent = Math.max(c.sta.lent || 0, 0.3); c.vx *= Math.max(0, 1 - 6 * dt); if (!c.vole) c.vy = Math.min(c.vy, 120); else c.vy *= Math.max(0, 1 - 6 * dt); }
@@ -728,12 +828,14 @@ const World = (() => {
     if (core === 'contre') { if (burst) dissiper(cx, cy, rad); return; }
     if (core === 'metamorphose') { if (burst) metamorphoser(cx, cy, rad, prm); return; }
     if (core === 'rembobinage') { if (burst) rembobiner(cx, cy, rad, prm); return; }
+    if (core === 'figer') { if (burst) poserBulle('fige', cx, cy, rad, prm); return; }
     if (core === 'temps' || core === 'ralentir') { if (burst) poserBulle(core === 'temps' ? 'vite' : 'lent', cx, cy, rad, prm); else vieillir(core === 'temps' ? 'vite' : 'lent', cx, cy, rad, mode); return; }
     const lgN = prm.lg ? prm.lg[core] || 0 : 0;
     if (lgN) prm = { ...prm, power: (prm.power || 1) * (1 + 0.3 * lgN), duration: (prm.duration || 1) * (core === 'ombre' ? 2 : 1) };
     const power = prm.power || 1, dur = prm.duration || 1;
     const C = colorOf(core);
     if (burst) st.sp.push({ k: 'ring', core, x: cx, y: cy, r: rad, life: 0.4, max: 0.4, color: C });
+    if (effetDerive(core, cx, cy, rad, prm, burst, k, mode, opts)) return;
     if (!opts.noGrid) gridEffect(core, cx, cy, rad, prm, burst, k);
 
     // --- créatures ---
@@ -745,9 +847,10 @@ const World = (() => {
       if (burst) evt('hit', 'creature:' + c.t);
       const sp = DATA.ESPECES[c.t];
       if (sp && burst) { if (core === sp.aime) evt('bestiaire', { t: c.t, k: 'aime' }); if (core === sp.craint) evt('bestiaire', { t: c.t, k: 'craint' }); }
+      if (sp && !c.generique && core === sp.aime) { affinite(c, burst ? 1 : k * 0.3); c.hp = Math.min(c.hpMax, c.hp + k); if (c.t === 'follet') c.size = Math.min(1.8, c.size + 0.15 * k); continue; }
       if (c.generique && sp) {
         const immune = (sp.immune || []).includes(core), faible = (sp.faible || []).includes(core) ? 2 : 1;
-        if (core === sp.aime) { c.hp = Math.min(c.hpMax, c.hp + 2 * k); if (!c.sta.tame && (burst || Math.random() < k)) tame(c); if (burst) part(ccx, ccy - 8, '#c45a8a', 6, 50, 0.8, 3, -60, 'coeur'); continue; }
+        if (core === sp.aime) { c.hp = Math.min(c.hpMax, c.hp + 2 * k); affinite(c, burst ? 1 : k * 0.3); continue; }
         if (core === sp.craint) { c.fuite = { x: cx, y: cy, t: 5 }; c.sta.stun = 0; c.dort = false; if (!immune) hurt(c, 1 * power * k * faible); c.vx += dx * 400 * k; c.vy -= 200 * k; if (burst) part(ccx, ccy, C, 6, 60); continue; }
         if (immune) { if (burst) part(ccx, ccy, '#aaa', 4, 40, 0.4); continue; }
         switch (core) {
@@ -756,8 +859,9 @@ const World = (() => {
           case 'vent': case 'son': c.vx += dx * 500 * power * k; c.vy += (dy * 300 - 150) * power * k; c.dort = false; break;
           case 'terre': if (burst) { hurt(c, 1 * power * faible); c.vy -= 200; } break;
           case 'lumiere': c.sta.stun = Math.max(c.sta.stun, (burst ? 2 : 0.4) * dur); break;
-          case 'ombre': case 'silence': c.sta.sleep = Math.max(c.sta.sleep, (burst ? 6 : 0.5) * dur); break;
-          case 'vie': c.hp = Math.min(c.hpMax, c.hp + 2 * k); if (!c.sta.tame && (burst || Math.random() < k * 0.5)) tame(c); break;
+          case 'silence': c.sta.sleep = Math.max(c.sta.sleep, (burst ? 6 : 0.5) * dur); break;
+          case 'ombre': c.sta.stun = Math.max(c.sta.stun, (burst ? 1.5 : 0.3) * dur); c.curieux = null; c.fuite = null; break;
+          case 'vie': c.hp = Math.min(c.hpMax, c.hp + 2 * k); break;
           case 'force': case 'metal': c.vx -= dx * 600 * power * k; c.vy -= dy * 400 * power * k; break;
           case 'froid': c.sta.stun = Math.max(c.sta.stun, (burst ? 3 : 0.5) * dur); c.sta.burn = 0; break;
           case 'foudre': hurt(c, 2 * power * k * faible); c.sta.stun = Math.max(c.sta.stun, 2 * dur); break;
@@ -785,10 +889,9 @@ const World = (() => {
           break;
         case 'terre': if (burst) { hurt(c, 1 * power); c.vx += dx * 200; c.vy -= 200; } break;
         case 'lumiere': c.sta.stun = Math.max(c.sta.stun, (burst ? 2.5 : 0.4) * dur * power); if (burst) part(ccx, ccy - 10, C, 6, 50, 0.5, 2, 0, 'spark'); break;
-        case 'ombre': c.sta.sleep = Math.max(c.sta.sleep, (burst ? 6 : 0.5) * dur); break;
+        case 'ombre': c.sta.stun = Math.max(c.sta.stun, (burst ? 1.5 : 0.3) * dur); c.curieux = null; break;
         case 'vie':
           c.hp = Math.min(c.hpMax, c.hp + 2 * k); c.sta.burn = 0;
-          if (!c.sta.tame && (burst || Math.random() < k * 0.5)) tame(c);
           break;
         case 'force': c.vx -= dx * 700 * power * k; c.vy -= dy * 500 * power * k; if (burst) hurt(c, 0.5 * power); break;
         case 'froid': c.sta.stun = Math.max(c.sta.stun, (burst ? 3 : 0.5) * dur); c.sta.burn = 0; if (c.t === 'follet') hurt(c, 1.5 * power * k, 'eau'); if (burst) part(ccx, ccy, C, 8, 50, 0.6, 2, 0, 'spark'); break;
@@ -833,7 +936,7 @@ const World = (() => {
           break;
         case 'torche':
           if ((core === 'feu' || core === 'foudre') && !o.lit) { o.lit = true; part(o.x + 7, o.y + 4, C, 10, 70); evt('torche'); }
-          if ((core === 'eau' || core === 'vent' || core === 'froid') && o.lit) { o.lit = false; part(o.x + 7, o.y + 4, '#999', 8, 40); }
+          if ((core === 'eau' || core === 'vent' || core === 'froid' || core === 'ombre') && o.lit) { o.lit = false; part(o.x + 7, o.y + 4, '#999', 8, 40); }
           break;
         case 'graine':
           if ((core === 'eau' || core === 'vie') && o.stage === 0) { growPlant(o); evt('graine'); }
@@ -909,7 +1012,7 @@ const World = (() => {
     msg('La graine s\'éveille et grimpe vers le ciel.');
   }
   function hurt(c, dmg, source) {
-    c.hp -= dmg; c.hurt = 0.25;
+    c.hp -= dmg; c.hurt = 0.25; if (!c.sta.tame && c.aff > 0) c.aff = Math.max(0, c.aff - (c.t === 'golem' ? 30 : 10));
     if (c.hp <= 0) {
       c.hp = 0; part(c.x + c.w / 2, c.y + c.h / 2, c.t === 'follet' ? '#3f9c9b' : '#1f1a16', 14, 90, 0.8);
       if (c.t === 'follet' && source === 'eau') { dropPickup('plume', c.x + c.w / 2, c.y); msg('Le feu follet se dissipe en laissant une plume.'); }
@@ -966,6 +1069,14 @@ const World = (() => {
       case 'marque': placeMarque(pcx, pcy, 0); st.marques[st.marques.length - 1] = { x: pcx, y: pcy, t: 0 }; msg('Une marque luit à tes pieds.'); break;
       case 'contre': dissiper(pcx, pcy, 60 * size); break;
       case 'metamorphose': morphSoi(spec || { cores: [core], prm }); break;
+      case 'saut': { let dx = aim.x - pcx, dy = aim.y - pcy; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d; let L3 = Math.min(d, 320 * (prm.range || 1)); while (L3 > 10 && Sim.rectBlocked({ x: pcx + dx * L3 - p.w / 2, y: pcy + dy * L3 - p.h / 2, w: p.w, h: p.h })) L3 -= 6; part(pcx, pcy, '#4fb0a0', 14, 80, 0.5, 3, 0, 'glow'); p.x = pcx + dx * L3 - p.w / 2; p.y = pcy + dy * L3 - p.h / 2; p.vx = p.vy = 0; unstick(p); part(p.x + p.w / 2, p.y + p.h / 2, '#4fb0a0', 14, 80, 0.5, 3, 0, 'glow'); msg('L\'espace se plie : tu y es.'); break; }
+      case 'peur': around(); msg('Une vague de peur part de toi.'); break;
+      case 'repulsion': around(); break;
+      case 'fumee': around(); p.sta.invisible = Math.max(p.sta.invisible || 0, 6 * dur); msg('Tu disparais dans la fumée.'); break;
+      case 'explosion': p.vy = -720 * Math.sqrt(power); p.onGround = false; if (!(p.sta.stone > 0) && !(p.sta.armure > 0)) p.hp -= 1; around(); msg('Un bond à la poudre !'); break;
+      case 'courant': { let dx = aim.x - pcx, dy = aim.y - pcy; const d = Math.hypot(dx, dy) || 1; const f = p.liq ? 1.5 : 1; p.vx = dx / d * 650 * f; p.vy = dy / d * 500 * f - 80; p.sta.wet = 8; part(pcx, pcy, '#5f9ad8', 14, 120, 0.6, 2.4, 300, 'goutte'); break; }
+      case 'seisme': around(); st.shake = 0.6; break;
+      case 'figer': poserBulle('fige', pcx, pcy, 110 * size, prm); msg('Le temps s\'arrête autour de toi.'); break;
       case 'rembobinage': rembobinerSoi(prm); break;
       case 'metal': p.sta.armure = 20 * dur; msg('Une armure de métal : rien ne te bouscule, la foudre glisse.'); break;
       case 'creuser': Sim.forRadius(pcx, p.y + p.h + 10, 40 * size, (x, y, i, m) => { if (P[m].solid && m !== M.OBSIDIENNE) Sim.set(x, y, M.AIR); }); msg('Le sol se dérobe sous tes pieds.'); break;
@@ -987,11 +1098,13 @@ const World = (() => {
   function makeSpec(seal, depth = 0, charge = 0) {
     const prm = Seal.params(seal);
     if (charge > 0) { prm.power *= 1 + 0.8 * charge; prm.range *= 1 + 0.5 * charge; prm.size *= 1 + 0.4 * charge; prm.duration *= 1 + 0.3 * charge; }
-    let cores = [seal.core]; if (seal.core2 && seal.taille !== 'petit') cores.push(seal.core2);
+    let cores = Seal.effets(seal);
+    for (const e in prm.asp) { const A = prm.asp[e]; if (A.n > 1) { prm.lg[A.devient] = 2; prm.power *= 1.3; } }
+    const effets0 = cores.slice();
     if (prm.inverse) { prm.gInv = cores.includes('gravite'); cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c)); }
     const lg = prm.lg || {};
     if (lg.gravite && cores.includes('gravite')) { prm.size *= 1 + 0.3 * lg.gravite; prm.power *= 1 + 0.4 * lg.gravite; }
-    const combo = cores.length > 1 && !prm.inverse ? [seal.core, seal.core2].sort().join('|') : null;
+    const combo = effets0.length > 1 && !prm.inverse ? effets0.slice().sort().join('|') : null;
     const trs = Seal.triggers(seal);
     const proj = seal.shape === 'projectile' || seal.shape === 'chaine';
     const trig = trs.find((t) => PRIM.includes(t)) || (trs.includes('repetition') && proj ? 'contact' : 'immediat');
@@ -1396,7 +1509,7 @@ const World = (() => {
     switch (id) {
       case 'flamme': applyEffect('feu', x, y, 70, { ...prm, persist: 1 }, 'burst'); break;
       case 'croissance': applyEffect('vie', x, y, 130, { ...prm, power: 1 }, 'burst', { noPlayer: true }); for (const c of st.crs) if (U.circleRect(x, y, 130, c) && c.t === 'limace') { c.size = Math.min(2.2, c.size + 0.3); c.w = 36 * c.size; c.h = 24 * c.size; } msg('Tout verdit alentour.'); break;
-      case 'calme': for (const c of st.crs) if (c.hp > 0 && U.circleRect(x, y, 140, c) && !c.sta.tame) tame(c); st.sp.push({ k: 'ring', core: 'vie', x, y, r: 140, life: 0.5, max: 0.5, color: Pn.couleur }); msg('Un calme rose se répand.'); break;
+      case 'calme': for (const c of st.crs) if (c.hp > 0 && U.circleRect(x, y, 140, c) && !c.sta.tame) affinite(c, 4); st.sp.push({ k: 'ring', core: 'vie', x, y, r: 140, life: 0.5, max: 0.5, color: Pn.couleur }); msg('Un calme rose se répand.'); break;
       case 'gel': applyEffect('froid', x, y, 80, prm, 'burst'); break;
       case 'orage': applyEffect('foudre', x, y, 80, prm, 'burst'); break;
       case 'vitriol': applyEffect('acide', x, y, 60, { ...prm, size: 1.6 }, 'burst'); break;
@@ -1881,6 +1994,7 @@ const World = (() => {
       if (c.carried) { c.sta.burn = 0; continue; }
       for (const k of ['burn', 'stun', 'sleep', 'wet', 'glisse', 'lent', 'gele']) if (c.sta[k] > 0) c.sta[k] = Math.max(0, c.sta[k] - dt);
       if (c.morphT > 0) { c.morphT -= dt; if (c.morphT <= 0) finMorph(c); }
+      if (c.affT > 0) c.affT -= dt;
       if (c.bebe > 0 && c.hp > 0) { c.bebe -= dt; const k = c.bebe > 0 ? 0.55 + 0.45 * (1 - c.bebe / 90) : 1; const bas = c.y + c.h, mil = c.x + c.w / 2; c.w = Math.round(c.wPlein * k); c.h = Math.round(c.hPlein * k); c.y = bas - c.h; c.x = mil - c.w / 2; }
       if (c.curieux) { c.curieux.t -= dt; if (c.curieux.t <= 0) c.curieux = null; }
       if (c.ench) { c.ench.t -= dt; c.ench.tick += dt; if (c.ench.t <= 0) c.ench = null; else { doContinuous(c.ench.spec, c.x + c.w / 2, c.y + c.h / 2, 50 * (c.ench.spec.prm.size || 1), dt, { noPlayer: true, noField: true }); if (Math.random() < 0.3) part(c.x + Math.random() * c.w, c.y + Math.random() * c.h, c.ench.spec.color, 1, 20, 0.5, 2, -40, 'spark'); } }
@@ -2078,14 +2192,14 @@ const World = (() => {
   // ---------- Prise : saisir et lancer la matière ----------
   const PRISE_EFFET = { [M.EAU]: 'eau', [M.SAUMURE]: 'eau', [M.LAVE]: 'feu', [M.ACIDE]: 'acide', [M.SABLE]: 'terre', [M.TERRE]: 'terre', [M.BOUE]: 'terre', [M.NEIGE]: 'froid', [M.CENDRE]: 'terre', [M.POUDRE]: 'feu', [M.MIEL]: 'vie' };
   function saisir(spec, x, y, joueur) {
-    const prm = spec.prm, R = 62 * prm.size, cap = Math.round(240 * prm.power * prm.size * (spec.cores.includes('gravite') ? 1.3 : 1));
+    const prm = spec.prm, R = 62 * prm.size, cap = Math.round(240 * prm.power * prm.size * (spec.cores.some((q) => q === 'gravite' || q === 'force') ? 1.3 : 1));
     const mats = {}; let n = 0;
     // on aspire d'abord vers le centre (les cases les plus proches d'abord)
     const cells = []; Sim.forRadius(x, y, R, (cx, cy, i, m) => { const q = P[m]; if ((q.liquid || q.powder || q.gas) && m !== M.BULLE) cells.push([Math.hypot((cx + 0.5) * CS - x, (cy + 0.5) * CS - y), cx, cy, m]); });
     cells.sort((a, b) => a[0] - b[0]);
     for (const [, cx, cy, m] of cells) { if (n >= cap) break; if (P[m].gas) { Sim.set(cx, cy, M.AIR); continue; } mats[m] = (mats[m] || 0) + 1; n++; Sim.set(cx, cy, M.AIR); }
     const ents = [];
-    for (const c of st.crs) if (c.hp > 0 && !c.carried && c.t !== 'familier' && U.circleRect(x, y, R, c) && (c.t !== 'golem' || prm.power >= 1.5 || spec.cores.includes('gravite'))) { c.carried = true; c.prise = true; ents.push(c); }
+    for (const c of st.crs) if (c.hp > 0 && !c.carried && c.t !== 'familier' && U.circleRect(x, y, R, c) && (c.t !== 'golem' || prm.power >= 1.5 || spec.cores.some((q) => q === 'gravite' || q === 'force'))) { c.carried = true; c.prise = true; ents.push(c); }
     for (const o of st.objs) if (o.dyn && !o.carried && !o.mort && o !== st.p.carry && U.circleRect(x, y, R, o)) { o.carried = true; o.prise = true; ents.push(o); }
     if (!n && !ents.length) { msg('La prise se referme sur du vide.'); part(x, y, spec.color, 10, 60, 0.5, 3, 0, 'glow'); return; }
     for (const e of ents) { e.ox = e.x + e.w / 2 - x; e.oy = e.y + e.h / 2 - y; }
@@ -2108,7 +2222,7 @@ const World = (() => {
       p.ink -= dt * (1 + s.n / 300); if (p.ink <= 0) { p.ink = 0; s.tenue = false; msg('Plus d\'encre : la prise t\'échappe.', 'warn'); }
       if (s.life <= 0) { s.tenue = false; msg('La prise se relâche.'); }
     } else {
-      const g = s.spec.cores.includes('gravite') ? 450 : 900;
+      const g = s.spec.cores.some((q) => q === 'gravite' || q === 'force') ? 450 : 900;
       s.vy += g * dt; s.x += s.vx * dt; s.y += s.vy * dt;
       const R = rayonPrise(s) * 0.6;
       const touche = Sim.solidAt(s.x + Math.sign(s.vx) * R * 0.5, s.y + Math.sign(s.vy) * R * 0.5) || st.crs.some((c) => c.hp > 0 && !c.carried && U.circleRect(s.x, s.y, R, c)) || s.y > L.h - 10 || s.x < 0 || s.x > L.w;
@@ -2343,7 +2457,7 @@ const World = (() => {
         }
         case 'label': s.life -= dt; s.y -= 20 * dt; if (s.life <= 0) s.mort = true; break;
         case 'bulle': {
-          s.life -= dt; if (s.life <= 0) { s.mort = true; break; }
+          s.life -= dt; if (s.life <= 0) { s.mort = true; if (s.mode === 'fige') for (const q of st.sp) if (q.gelV) { [q.vx, q.vy, q.grav] = q.gelV; q.gelV = null; } break; }
           vieillir(s.mode, s.x, s.y, s.r, dt, s.f);
           if (Math.random() < 0.5) { const a = Math.random() * TAU, rr = s.r * (0.3 + Math.random() * 0.7); st.parts.push({ x: s.x + Math.cos(a) * rr, y: s.y + Math.sin(a) * rr, vx: s.mode === 'vite' ? -Math.sin(a) * 160 : -Math.sin(a) * 12, vy: s.mode === 'vite' ? Math.cos(a) * 160 : Math.cos(a) * 12, life: 0.6, max: 0.6, color: s.mode === 'vite' ? '#c8ccd8' : '#8aa0d8', size: 2, grav: 0, type: 'glow' }); }
           break;
@@ -2776,6 +2890,7 @@ const World = (() => {
     if (c.sta.sleep > 0 || c.dort) U.txt(ctx, 'z z', cx + 14, c.y - 10 + Math.sin(time * 3) * 3, 14, 'left', '#5a4a7d', 'IM Fell English', 'italic');
     if (c.sta.gele > 0) { ctx.save(); ctx.globalAlpha = 0.45 * Math.min(1, c.sta.gele); ctx.fillStyle = '#cfe8f6'; ctx.fillRect(c.x - 4, c.y - 6, c.w + 8, c.h + 8); ctx.globalAlpha = Math.min(1, c.sta.gele); ctx.strokeStyle = '#7fb4d8'; ctx.lineWidth = 1.4; ctx.strokeRect(c.x - 4, c.y - 6, c.w + 8, c.h + 8); ctx.beginPath(); ctx.moveTo(c.x + 2, c.y); ctx.lineTo(c.x + c.w * 0.4, c.y + c.h * 0.3); ctx.stroke(); ctx.restore(); }
     if (c.sta.stun > 0) { ctx.strokeStyle = '#d8a63a'; ctx.lineWidth = 1.5; for (let i = 0; i < 3; i++) { const a = time * 5 + (i / 3) * TAU; ctx.beginPath(); ctx.arc(cx + Math.cos(a) * 14, c.y - 8 + Math.sin(a) * 4, 2, 0, TAU); ctx.stroke(); } }
+    if (!c.sta.tame && c.aff > 0 && (c.affT > 0 || dist(st.p.x, st.p.y, c.x, c.y) < 150)) { ctx.save(); const w = Math.max(24, c.w), bx = cx - w / 2, by2 = c.y - 16; ctx.fillStyle = 'rgba(239,227,196,0.85)'; ctx.fillRect(bx, by2, w, 5); ctx.fillStyle = '#c45a8a'; ctx.fillRect(bx, by2, w * c.aff / 100, 5); ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.strokeRect(bx, by2, w, 5); ctx.fillStyle = '#c45a8a'; ctx.font = '11px serif'; ctx.textAlign = 'right'; ctx.fillText('♥', bx - 2, by2 + 5); ctx.restore(); }
     if (c.sta.tame && c.t !== 'familier' && !c.controlled) { ctx.fillStyle = '#c45a8a'; ctx.font = '14px serif'; ctx.textAlign = 'center'; ctx.fillText('♥', cx, c.y - 8 + Math.sin(time * 3) * 2); }
     if (c.sta.lent > 0) { ctx.strokeStyle = '#8a8f9a'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); U.inkCircle(ctx, cx, c.y + c.h / 2, Math.max(c.w, c.h) * 0.7, 1, 1); ctx.setLineDash([]); }
     if (c.sta.wet > 0 && Math.random() < 0.05) part(cx, by - 4, '#6aa0d8', 1, 10, 0.6, 2, 300);
@@ -2912,7 +3027,7 @@ const World = (() => {
         ctx.save(); ctx.globalAlpha = 0.12 * kk; ctx.fillStyle = vite ? '#e8e4d8' : '#a8b8e8'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill();
         ctx.globalAlpha = 0.75 * kk; ctx.strokeStyle = C; ctx.lineWidth = 2; U.inkCircle(ctx, s.x, s.y, s.r, 4, 1.2); ctx.lineWidth = 1; U.inkCircle(ctx, s.x, s.y, s.r * 0.88, 5, 1);
         for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; ctx.beginPath(); ctx.moveTo(s.x + Math.cos(a) * s.r * 0.88, s.y + Math.sin(a) * s.r * 0.88); ctx.lineTo(s.x + Math.cos(a) * s.r * (i % 3 ? 0.82 : 0.76), s.y + Math.sin(a) * s.r * (i % 3 ? 0.82 : 0.76)); ctx.stroke(); }
-        const t = vite ? time * 9 : time * 0.15; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x + Math.cos(t - Math.PI / 2) * s.r * 0.6, s.y + Math.sin(t - Math.PI / 2) * s.r * 0.6); ctx.stroke();
+        const t = vite ? time * 9 : s.mode === 'fige' ? 0.6 : time * 0.15; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x + Math.cos(t - Math.PI / 2) * s.r * 0.6, s.y + Math.sin(t - Math.PI / 2) * s.r * 0.6); ctx.stroke();
         ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x + Math.cos(t / 12 - Math.PI / 2) * s.r * 0.38, s.y + Math.sin(t / 12 - Math.PI / 2) * s.r * 0.38); ctx.stroke();
         if (!vite) { ctx.lineWidth = 1; ctx.globalAlpha = 0.35 * kk; for (let w = 1; w <= 2; w++) { ctx.beginPath(); for (let i = 0; i <= 40; i++) { const a = i / 40 * TAU; const rr = s.r * (0.5 + w * 0.15) + Math.sin(a * 6 + time * 0.8) * 3; if (i) ctx.lineTo(s.x + Math.cos(a) * rr, s.y + Math.sin(a) * rr); else ctx.moveTo(s.x + Math.cos(a) * rr, s.y + Math.sin(a) * rr); } ctx.stroke(); } }
         ctx.restore(); break; }

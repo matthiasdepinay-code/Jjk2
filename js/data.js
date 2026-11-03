@@ -38,7 +38,7 @@ const DATA = (() => {
     silence:     { id: 'silence',     nom: 'Silence',     couleur: '#6a5a7a' },
     rouille:     { id: 'rouille',     nom: 'Rouille',     couleur: '#9a5a3a' },
   };
-  const INVERSE = { marque: 'marque', contre: 'contre', feu: 'froid', froid: 'feu', force: 'vent', vent: 'force', lumiere: 'ombre', ombre: 'lumiere', terre: 'creuser', vie: 'fanaison', acide: 'neutraliser', foudre: 'neutraliser', gravite: 'poids', eau: 'secheresse', temps: 'ralentir', son: 'silence', metal: 'rouille', transmutation: 'transmutation', esprit: 'esprit', lien: 'lien', portail: 'portail', metamorphose: 'metamorphose', rembobinage: 'temps' };
+  const INVERSE = { marque: 'marque', contre: 'contre', feu: 'froid', froid: 'feu', force: 'repulsion', vent: 'force', lumiere: 'ombre', ombre: 'lumiere', terre: 'creuser', vie: 'fanaison', acide: 'neutraliser', foudre: 'neutraliser', gravite: 'poids', eau: 'secheresse', temps: 'ralentir', son: 'silence', metal: 'rouille', transmutation: 'transmutation', esprit: 'esprit', lien: 'lien', portail: 'portail', metamorphose: 'metamorphose', rembobinage: 'temps' };
   // Fusions nommées (clé : deux glyphes triés)
   const COMBOS = {
     'feu|vent': { nom: 'Tornade de feu', desc: 'Des flammes qui tourbillonnent et se déplacent.' },
@@ -117,6 +117,7 @@ const DATA = (() => {
     acide:   { glyphe: 'mordant',    nom: 'Mordant',    de: 'de l\'acide',   paliers: ['L\'acide ronge trois fois plus vite et blesse le golem.', 'Dissolution : même le métal et l\'obsidienne cèdent.'] },
     gravite: { glyphe: 'masse',      nom: 'Masse',      de: 'de la gravité', paliers: ['Champ plus large et plus lourd.', 'Effondrement : le champ se creuse en un puits qui avale puis recrache ce qui l\'entoure.'] },
   };
+  delete LANGAGES.froid; delete LANGAGES.acide; delete LANGAGES.ombre;
   for (const el in LANGAGES) { const Lg = LANGAGES[el]; MODS[Lg.glyphe] = { id: Lg.glyphe, nom: Lg.nom, cout: 2, langue: el, desc: 'Langage ' + Lg.de + '. ×1 : ' + Lg.paliers[0] + ' ×2 (Adepte) : ' + Lg.paliers[1] + ' Muet sans le glyphe ' + CORES[el].nom + '.' }; }
   // Déclencheurs (pointes)
   const TRIGGERS = {
@@ -542,5 +543,99 @@ const DATA = (() => {
   const ACCESSOIRES = ['Bâton', 'Plume', 'Grimoire'];
 
   Object.assign(POTIONS, BIZARRES, ENCRES);
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES };
+
+  // ================= Refonte : des essences, et leurs aspects =================
+  // Une essence est une force première. Ce qui en découle n'est pas une essence : c'est un aspect,
+  // un glyphe du second anneau qui donne une autre nature à son essence (Eau + Gel = le froid).
+  const ESSENCES = ['feu', 'eau', 'terre', 'vent', 'vie', 'lumiere', 'foudre', 'gravite', 'temps', 'portail', 'esprit', 'transmutation', 'contre', 'metamorphose'];
+  for (const id in CORES) if (!ESSENCES.includes(id)) CORES[id].interne = true;
+  const DA = {
+    feu: ['#d9622b', 'Braise et flamme : le feu transforme ce qu\'il touche par la chaleur. Il brûle le bois et l\'herbe, fond la glace et la neige, évapore l\'eau, vitrifie le sable. Sur soi : il te sèche, ou il te brûle.'],
+    eau: ['#3b6fb6', 'Ce qui coule et prend la forme de tout : l\'eau jaillit, éteint, arrose, fait de la boue, dissipe les follets. Ses aspects la font geler, jaillir en jet, ou courir comme un torrent. Sur soi : trempé(e), et l\'on respire sous l\'eau.'],
+    terre: ['#8a6b2f', 'Ce qui est lourd et qui reste : la terre surgit, bâtit, bouche, porte. Ses aspects la tassent en pierre ou en cristal, en tirent le métal, la font trembler. Sur soi : peau de pierre.'],
+    vent: ['#3f9c9b', 'Le mouvement libre : le vent souffle les gaz, le sable, l\'eau et les flammes, repousse les créatures. Ses aspects en font une tornade ou une onde de son. Sur soi : un bond et un vol plané.'],
+    vie: ['#5c8f3e', 'La croissance : soigner, faire pousser l\'herbe, les plantes et les vignes, rendre la cendre à la terre. La vie n\'apprivoise pas : une créature se gagne avec le temps. Sur soi : soin.'],
+    lumiere: ['#d8a63a', 'Révéler : la lumière éclaire, révèle les runes, éblouit, effraie les limaces. Inversée, elle devient l\'ombre : tu disparais, les créatures se perdent dans le noir. Sur soi : tu rayonnes comme une lanterne.'],
+    foudre: ['#e0c43a', 'L\'énergie : la foudre court dans l\'eau et le métal, embrase l\'huile, vitrifie le sable, secoue les créatures et allume ce qu\'elle touche. Sur soi : vitesse.'],
+    gravite: ['#6c5ab8', 'La pesanteur : un champ orienté dans le sens du lancer, où tout tombe de ce côté. Ses aspects attirent, repoussent, alourdissent ou tendent un fil. Inverser : apesanteur. Sur soi : marcher aux murs, au plafond, voler, devenir une enclume.'],
+    temps: ['#8a8f9a', CORES.temps.desc + ' Aspects : Rembobiner (remonter le temps), Figer (arrêter tout dans la bulle).'],
+    portail: ['#4fb0a0', 'L\'espace se plie : deux lancers posent deux portails, et tout ce qui entre dans l\'un sort par l\'autre, même les liquides. Ses aspects font sauter d\'un point à un autre, ou posent des repères. Sur soi : rejoindre ton dernier portail.'],
+    esprit: ['#b08ad8', 'La conscience : prendre la tête d\'une créature et voir par ses yeux (E pour revenir). Ses aspects endorment, ou font fuir.'],
+    transmutation: ['#c08a3a', 'L\'alchimie : changer une matière en une autre (pierre en sable, sable en terre, eau en huile, glace en verre...). Son aspect Corrosion en fait un acide qui ronge. Sur soi : peau de pierre.'],
+    contre: ['#a8a29a', 'Défaire la magie : dissipe les champs, pièges, totems, bulles, sorts en attente, portails, pesanteurs et marques.'],
+    metamorphose: ['#c06aa0', CORES.metamorphose.desc],
+  };
+  for (const id in DA) { CORES[id].couleur = DA[id][0]; CORES[id].desc = DA[id][1]; }
+  CORES.portail.nom = 'Espace';
+  Object.assign(PSEUDO, {
+    repulsion: { id: 'repulsion', nom: 'Répulsion', couleur: '#8a6ad8' },
+    fumee:     { id: 'fumee',     nom: 'Fumée',     couleur: '#6e6660' },
+    explosion: { id: 'explosion', nom: 'Explosion', couleur: '#e0622b' },
+    courant:   { id: 'courant',   nom: 'Courant',   couleur: '#2f6fb0' },
+    seisme:    { id: 'seisme',    nom: 'Séisme',    couleur: '#7a5a2a' },
+    figer:     { id: 'figer',     nom: 'Figer',     couleur: '#9aa8c8' },
+    saut:      { id: 'saut',      nom: 'Saut',      couleur: '#4fb0a0' },
+    peur:      { id: 'peur',      nom: 'Peur',      couleur: '#8a5aa8' },
+  });
+  PSEUDO.silence.nom = 'Sommeil';
+  Object.assign(INVERSE, { repulsion: 'force', fumee: 'vent', explosion: 'force', courant: 'secheresse', seisme: 'seisme', figer: 'temps', saut: 'saut', peur: 'esprit' });
+  // aspects qui changent la nature de l'essence : { parent, devient (effet) }
+  const ASPECTS = {
+    fumee:      { aspect: 'feu',           devient: 'fumee',      nom: 'Fumée',      desc: 'Le feu sans flamme : un épais nuage de fumée qui cache, étouffe et fait tousser les créatures.' },
+    explosion:  { aspect: 'feu',           devient: 'explosion',  nom: 'Explosion',  desc: 'Le feu d\'un coup : un souffle qui creuse un cratère, projette tout et enflamme alentour.' },
+    gel:        { aspect: 'eau',           devient: 'froid',      nom: 'Gel',        desc: 'L\'eau qui se fige : geler l\'eau, faire neiger, figer la lave, engourdir les créatures. Sur soi : des patins pour marcher sur l\'eau. ×2 (Adepte) : gel profond, les créatures restent prises dans la glace.' },
+    courant:    { aspect: 'eau',           devient: 'courant',    nom: 'Courant',    desc: 'L\'eau qui court : un torrent dans le sens du lancer, qui emporte créatures, caisses et liquides.' },
+    minerai:    { aspect: 'terre',         devient: 'metal',      nom: 'Minerai',    desc: 'La terre en tire son métal : il surgit, conduit la foudre, résiste à l\'acide, attire caisses et golems. Sur soi : une armure.' },
+    seisme:     { aspect: 'terre',         devient: 'seisme',     nom: 'Séisme',     desc: 'La terre qui tremble : tout ce qui est debout tombe, les rochers fissurés éclatent, le verre se brise.' },
+    son:        { aspect: 'vent',          devient: 'son',        nom: 'Son',        desc: 'Le vent devenu onde : brise le verre, réveille, repousse, attire les curieux.' },
+    attraction: { aspect: 'gravite',       devient: 'force',      nom: 'Attraction', desc: 'Tout est attiré vers le point d\'impact : créatures, caisses, liquides et sable. Sur soi : un élan vers la souris.' },
+    repulsion:  { aspect: 'gravite',       devient: 'repulsion',  nom: 'Répulsion',  desc: 'Tout est chassé loin du point d\'impact. Sur soi : une onde qui écarte tout autour de toi.' },
+    fil:        { aspect: 'gravite',       devient: 'lien',       nom: 'Fil',        desc: 'Un fil de pesanteur vers ce que le sort touche : on s\'y hisse, on s\'y balance (Espace pour lâcher).' },
+    rembobiner: { aspect: 'temps',         devient: 'rembobinage', nom: 'Rembobiner', desc: 'Remonter le temps de quelques secondes : la matière revient, les créatures reculent et se relèvent. Sur soi : tu reviens sur tes pas.' },
+    figer:      { aspect: 'temps',         devient: 'figer',      nom: 'Figer',      desc: 'Une bulle où le temps s\'arrête : créatures et projectiles y restent suspendus, puis repartent.' },
+    saut:       { aspect: 'portail',       devient: 'saut',       nom: 'Saut',       desc: 'Plier l\'espace d\'un coup : ce qui est touché est projeté ailleurs. Sur soi : tu te téléportes là où tu vises.' },
+    marque:     { aspect: 'portail',       devient: 'marque',     nom: 'Marque',     desc: 'Un repère dans l\'espace (trois au plus) ; sur une créature, il la suit. Les sorts ciblés « Marque » le visent, même hors de vue.' },
+    sommeil:    { aspect: 'esprit',        devient: 'silence',    nom: 'Sommeil',    desc: 'Plonger les esprits dans le sommeil : les créatures s\'endorment et oublient de te chercher.' },
+    peur:       { aspect: 'esprit',        devient: 'peur',       nom: 'Peur',       desc: 'Une terreur soudaine : les créatures fuient loin du point d\'impact.' },
+    corrosion:  { aspect: 'transmutation', devient: 'acide',      nom: 'Corrosion',  desc: 'La matière se défait : un acide qui ronge pierre, terre, bois et métal. ×2 (Adepte) : même le métal et l\'obsidienne cèdent.' },
+  };
+  const DE = { feu: 'du Feu', eau: 'de l\'Eau', terre: 'de la Terre', vent: 'du Vent', vie: 'de la Vie', lumiere: 'de la Lumière', foudre: 'de la Foudre', gravite: 'de la Gravité', temps: 'du Temps', portail: 'de l\'Espace', esprit: 'de l\'Esprit', transmutation: 'de la Transmutation' };
+  for (const id in ASPECTS) MODS[id] = Object.assign({ id, cout: 2 }, ASPECTS[id], { desc: 'Aspect ' + DE[ASPECTS[id].aspect] + '. ' + ASPECTS[id].desc + ' Muet sans son essence.' });
+  // les glyphes de langage sont des aspects qui renforcent leur essence
+  for (const el in LANGAGES) MODS[LANGAGES[el].glyphe].aspect = el;
+  MODS.inverser.desc = 'Retourne l\'effet : le feu refroidit, la terre creuse, la vie fane, l\'eau assèche, la lumière devient ombre, l\'attraction repousse...';
+  // migrations : ancienne essence → [essence, aspect]
+  const MIGRATION = { froid: ['eau', 'gel'], acide: ['transmutation', 'corrosion'], metal: ['terre', 'minerai'], son: ['vent', 'son'], force: ['gravite', 'attraction'], lien: ['gravite', 'fil'], rembobinage: ['temps', 'rembobiner'], marque: ['portail', 'marque'], ombre: ['lumiere', 'inverser'] };
+  const MIGR_MODS = { givre: 'gel', mordant: 'corrosion', tenebres: null };
+  // déblocages : les anciennes essences deviennent des aspects
+  const DEB = (id) => UNLOCKS.find((u) => u.id === id);
+  const enAspect = (id, mods, titre) => { const u = DEB(id); if (u) { u.type = 'mods'; u.item = mods; u.titre = titre; } };
+  enAspect('ombre', ['sommeil'], 'Aspect de l\'Esprit : Sommeil');
+  enAspect('force', ['attraction', 'repulsion'], 'Aspects de la Gravité : Attraction et Répulsion');
+  enAspect('froid', ['gel'], 'Aspect de l\'Eau : Gel');
+  enAspect('acide', ['corrosion'], 'Aspect de la Transmutation : Corrosion');
+  enAspect('son', ['son'], 'Aspect du Vent : Son');
+  enAspect('lien', ['fil'], 'Aspect de la Gravité : Fil');
+  enAspect('metal', ['minerai'], 'Aspect de la Terre : Minerai');
+  enAspect('rembobinage', ['rembobiner'], 'Aspect du Temps : Rembobiner');
+  DEB('rembobinage').indice = 'Emploie souvent le Temps.'; DEB('rembobinage').cond = (p) => ((p.maitrise || {}).temps || 0) >= 25 || (p.cores.includes('temps') && p.compteurs.niveau >= 6);
+  DEB('marque').titre = 'Aspect de l\'Espace et cible : Marque';
+  DEB('portail').titre = 'Glyphe : Espace';
+  DEB('contre').indice = 'Possède 10 glyphes d\'effet.'; DEB('contre').cond = (p) => p.cores.length >= 10;
+  DEB('slot3').indice = 'Possède 9 glyphes d\'effet.'; DEB('slot3').cond = (p) => p.cores.length >= 9;
+  DEB('inverser').indice = 'Possède le Feu et l\'aspect Gel de l\'Eau.'; DEB('inverser').cond = (p) => p.mods.includes('gel');
+  DEB('prise').indice = 'Possède la Gravité.'; DEB('prise').cond = (p) => p.cores.includes('gravite');
+  UNLOCKS.push(
+    { id: 'a_fumee', type: 'mods', item: ['fumee'], titre: 'Aspect du Feu : Fumée', indice: 'Brûle beaucoup de choses.', cond: (p) => (p.compteurs.brule || 0) >= 15 },
+    { id: 'a_explosion', type: 'mods', item: ['explosion'], titre: 'Aspect du Feu : Explosion', indice: 'Fais sauter de la poudre.', cond: (p) => (p.obs.explosion || 0) >= 1 },
+    { id: 'a_courant', type: 'mods', item: ['courant'], titre: 'Aspect de l\'Eau : Courant', indice: 'Emploie souvent l\'Eau.', cond: (p) => ((p.maitrise || {}).eau || 0) >= 25 },
+    { id: 'a_seisme', type: 'mods', item: ['seisme'], titre: 'Aspect de la Terre : Séisme', indice: 'Emploie souvent la Terre.', cond: (p) => ((p.maitrise || {}).terre || 0) >= 25 },
+    { id: 'a_figer', type: 'mods', item: ['figer'], titre: 'Aspect du Temps : Figer', indice: 'Emploie souvent le Temps.', cond: (p) => ((p.maitrise || {}).temps || 0) >= 15 },
+    { id: 'a_saut', type: 'mods', item: ['saut'], titre: 'Aspect de l\'Espace : Saut', indice: 'Emploie souvent l\'Espace.', cond: (p) => ((p.maitrise || {}).portail || 0) >= 12 },
+    { id: 'a_peur', type: 'mods', item: ['peur'], titre: 'Aspect de l\'Esprit : Peur', indice: 'Emploie souvent l\'Esprit.', cond: (p) => ((p.maitrise || {}).esprit || 0) >= 12 },
+  );
+  // affinité : combien un geste aimé rapproche (sur 100)
+  const AFFINITE = { golem: { gain: 4, parJour: 20 }, follet: { gain: 12 }, limace: { gain: 15 }, salamandre: { gain: 14 }, chauve: { gain: 15 } };
+
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE };
 })();

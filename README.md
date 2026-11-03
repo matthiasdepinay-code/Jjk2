@@ -42,7 +42,12 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 - **Éditeur** : fiche lisible du sceau et aperçu animé de son effet.
 - **Temps** : une bulle où le temps file (plantes, feu, glace, lave, cendre, métal, petits, effets en cours, sorts posés vieillissent à toute allure) ; inversé, une bulle de temps lent où créatures et projectiles avancent au ralenti.
 - **Gravité** : pose un champ de pesanteur orienté dans le sens du lancer (l'eau, le sable, les créatures et les caisses y tombent de ce côté) ; Puissance l'alourdit, Inverser donne l'apesanteur. Sur soi : marcher sur le mur ou le plafond visé, voler en visant le vide, devenir une enclume avec Puissance.
-- **Effets** (21) : Feu, Vent, Eau, Terre au départ. Lumière, Ombre, Vie, Force, Froid, Foudre, Acide, Gravité, Temps, Transmutation, Son, Esprit, Lien, Portail, Métal, Marque et Contre-sort se découvrent (par exploits ou par observation de phénomènes).
+- **Essences** (14) : Feu, Eau, Terre, Vent au départ ; Vie, Lumière, Foudre, Gravité, Temps, Espace, Esprit, Transmutation, Contre-sort et Métamorphose se découvrent. Chacune a sa nature propre ; ce qui en découle n'est pas une essence mais un **aspect** du second anneau :
+  - Feu : Chaleur (flamme blanche puis bleue), Fumée, Explosion · Eau : Pression, Gel (le froid), Courant · Terre : Densité, Minerai (le métal), Séisme · Vent : Tourbillon, Son.
+  - Vie : Floraison · Lumière : Focale ; inversée, elle devient l'ombre · Foudre : Tension · Gravité : Masse, Attraction, Répulsion, Fil.
+  - Temps : la bulle de temps accéléré, Rembobiner, Figer · Espace : Portail, Saut, Marque · Esprit : contrôle, Sommeil, Peur · Transmutation : Corrosion (l'acide).
+  - Un aspect se découvre par l'usage de son essence et par les découvertes ; doublé (Adepte), il se renforce.
+- **Apprivoiser** : chaque créature se gagne par affinité (l'élément qu'elle aime, les soins, le calme) ; la blesser la fait reculer. Les petites bêtes en quelques gestes, le golem en plusieurs jours (20 % au plus par jour).
 - **Fusion** : deux glyphes d'effet dans un sceau, avec des combos nommés (tornade de feu, banquise, lave, orage, blizzard...).
 - **Sous-sceaux** : un emplacement de modificateur peut contenir un sceau consigné entier, lancé là où le premier éclate (deux niveaux).
 - **Formes** : Projectile, Sur soi, puis Zone, Trait, Aura, Mur, Totem, Chaîne, Pluie, Sur objet, Bouclier, Prise, Invocation.

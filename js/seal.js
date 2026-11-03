@@ -8,9 +8,14 @@ const Seal = (() => {
     return { nom: '', taille, core: null, core2: null, shape: null, mods: [null, null, null, null, null], trigger: null, trigger2: null, filtre: null, cible: null, delai: 2, periode: 2, encre: null };
   }
   function clone(s) {
-    const mods = (s.mods || []).map((m) => (m && typeof m === 'object' && m.sub ? { sub: clone(m.sub) } : typeof m === 'string' ? m : null));
+    let mods = (s.mods || []).map((m) => (m && typeof m === 'object' && m.sub ? { sub: clone(m.sub) } : typeof m === 'string' ? (m in DATA.MIGR_MODS ? DATA.MIGR_MODS[m] : DATA.MODS[m] ? m : null) : null));
     while (mods.length < NMODS) mods.push(null);
-    return { nom: s.nom || '', taille: s.taille || 'moyen', core: s.core || null, core2: s.core2 || null, shape: s.shape || null, mods: mods.slice(0, NMODS),
+    mods = mods.slice(0, NMODS);
+    // anciennes essences devenues aspects : l'essence mère au centre, l'aspect sur l'anneau
+    let core = s.core || null, core2 = s.core2 || null;
+    const migrer = (c) => { const M2 = DATA.MIGRATION[c]; if (!M2) return c; if (!mods.includes(M2[1])) { let i = mods.findIndex((m, k) => !m && k < nbSlots({ taille: s.taille || 'moyen' }, 3)); if (i < 0) i = 0; mods[i] = M2[1]; } return M2[0]; };
+    core = migrer(core); core2 = migrer(core2);
+    return { nom: s.nom || '', taille: s.taille || 'moyen', core, core2, shape: s.shape || null, mods,
       trigger: s.trigger || null, trigger2: s.trigger2 || null, filtre: s.filtre || null, cible: s.cible || null, delai: s.delai || 2, periode: s.periode || 2, encre: s.encre || null };
   }
   const isSub = (m) => !!(m && typeof m === 'object' && m.sub);
@@ -43,8 +48,8 @@ const Seal = (() => {
     return { ok: true, raison: s.trigger ? '' : 'Pas de déclencheur : l\'effet sera immédiat.' };
   }
   function comboName(s) {
-    if (!s.core || !s.core2) return null;
-    const k = [s.core, s.core2].sort().join('|');
+    const ef = effets(s); if (ef.length < 2) return null;
+    const k = ef.slice().sort().join('|');
     return DATA.COMBOS[k] ? DATA.COMBOS[k].nom : null;
   }
   function autoNom(s) {
@@ -61,6 +66,10 @@ const Seal = (() => {
     return s.nom || autoNom(s);
   }
   // niveau de langage par élément (deux glyphes au plus)
+  // aspects qui changent la nature d'une essence : { essence: { id, devient, n } } (le premier posé l'emporte)
+  function aspects(s) { const o = {}; for (const m of s.mods) { if (typeof m !== 'string') continue; const A = DATA.MODS[m]; if (!A || !A.devient) continue; if (!o[A.aspect]) o[A.aspect] = { id: m, devient: A.devient, n: 0 }; if (o[A.aspect].id === m) o[A.aspect].n = Math.min(2, o[A.aspect].n + 1); } return o; }
+  // effets réels du sceau : chaque essence, avec son aspect
+  function effets(s) { const a = aspects(s); const cores = [s.core]; if (s.core2 && s.taille !== 'petit') cores.push(s.core2); return cores.filter(Boolean).map((c, k, L) => (a[c] && k === L.lastIndexOf(c) ? a[c].devient : c)); }
   function langues(s) { const o = {}; for (const el in DATA.LANGAGES) { const k = count(s, DATA.LANGAGES[el].glyphe); if (k) o[el] = Math.min(2, k); } return o; }
   function params(s) {
     const n = (m) => count(s, m);
@@ -79,12 +88,15 @@ const Seal = (() => {
       orbite: n('orbite') > 0,
       canalise: n('canalise') > 0,
       lg: langues(s),
+      asp: aspects(s),
       traj: n('boomerang') ? 'boomerang' : n('spirale') ? 'spirale' : n('rasesol') ? 'rasesol' : null,
     };
   }
 
   // ---------- Dessin des glyphes (icônes vectorielles) ----------
+  const ALIAS = { gel: 'froid', corrosion: 'acide', minerai: 'metal', attraction: 'force', fil: 'lien', rembobiner: 'rembobinage' };
   function glyph(ctx, id, x, y, r, color = INK, seed = 1) {
+    id = ALIAS[id] || id;
     ctx.save();
     ctx.translate(x, y);
     ctx.strokeStyle = color;
@@ -141,6 +153,16 @@ const Seal = (() => {
       // --- nouveaux effets ---
       case 'metamorphose': ctx.beginPath(); ctx.ellipse(-r * 0.42, -r * 0.2, r * 0.4, r * 0.55, -0.5, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.ellipse(r * 0.42, -r * 0.2, r * 0.4, r * 0.55, 0.5, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.ellipse(-r * 0.3, r * 0.5, r * 0.25, r * 0.3, 0.4, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.ellipse(r * 0.3, r * 0.5, r * 0.25, r * 0.3, -0.4, 0, TAU); ctx.stroke(); L(0, -r * 0.6, 0, r * 0.75); break;
       case 'rembobinage': ctx.beginPath(); ctx.arc(0, 0, r * 0.8, -Math.PI * 0.35, Math.PI * 1.45); ctx.stroke(); P([[r * 0.48, -r * 0.92], [r * 0.5, -r * 0.55], [r * 0.85, -r * 0.62]], false); L(0, 0, 0, -r * 0.45); L(0, 0, -r * 0.35, r * 0.2); break;
+      // --- aspects ---
+      case 'sommeil': U.txt(ctx, 'z', -r * 0.35, r * 0.25, r * 1.1, 'center', color, 'IM Fell English', 'italic'); U.txt(ctx, 'z', r * 0.35, -r * 0.3, r * 0.8, 'center', color, 'IM Fell English', 'italic'); break;
+      case 'repulsion': C(0, 0, r * 0.22); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; L(Math.cos(a) * r * 0.4, Math.sin(a) * r * 0.4, Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9); P([[Math.cos(a + 0.25) * r * 0.72, Math.sin(a + 0.25) * r * 0.72], [Math.cos(a) * r * 0.92, Math.sin(a) * r * 0.92], [Math.cos(a - 0.25) * r * 0.72, Math.sin(a - 0.25) * r * 0.72]], false); } break;
+      case 'fumee': for (const [ax, ay, rr] of [[-r * 0.4, r * 0.2, 0.38], [r * 0.15, -r * 0.1, 0.45], [r * 0.5, r * 0.35, 0.3], [-r * 0.1, -r * 0.55, 0.28]]) C(ax, ay, r * rr); break;
+      case 'explosion': P([[0, -r * 0.95], [r * 0.22, -r * 0.3], [r * 0.9, -r * 0.35], [r * 0.35, r * 0.1], [r * 0.6, r * 0.85], [0, r * 0.38], [-r * 0.6, r * 0.85], [-r * 0.35, r * 0.1], [-r * 0.9, -r * 0.35], [-r * 0.22, -r * 0.3]]); break;
+      case 'courant': for (let i = -1; i <= 1; i++) { const yy = i * r * 0.45; ctx.beginPath(); ctx.moveTo(-r * 0.9, yy); ctx.bezierCurveTo(-r * 0.4, yy - r * 0.3, 0, yy + r * 0.3, r * 0.5, yy); ctx.stroke(); P([[r * 0.35, yy - r * 0.18], [r * 0.7, yy], [r * 0.35, yy + r * 0.18]], false); } break;
+      case 'seisme': P([[-r * 0.95, r * 0.6], [-r * 0.5, r * 0.2], [-r * 0.2, r * 0.7], [r * 0.15, r * 0.1], [r * 0.45, r * 0.6], [r * 0.95, r * 0.15]], false); L(-r * 0.6, -r * 0.6, -r * 0.4, -r * 0.2); L(0, -r * 0.8, 0, -r * 0.35); L(r * 0.6, -r * 0.6, r * 0.4, -r * 0.2); break;
+      case 'figer': C(0, 0, r * 0.85); L(0, 0, 0, -r * 0.55); L(0, 0, r * 0.4, 0); L(-r * 0.8, -r * 0.8, r * 0.8, r * 0.8); break;
+      case 'saut': ctx.setLineDash([r * 0.18, r * 0.14]); ctx.beginPath(); ctx.arc(0, r * 0.4, r * 0.8, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke(); ctx.setLineDash([]); C(-r * 0.78, r * 0.35, r * 0.15); P([[r * 0.55, r * 0.05], [r * 0.8, r * 0.4], [r * 0.45, r * 0.45]], false); break;
+      case 'peur': ctx.beginPath(); ctx.ellipse(0, 0, r * 0.85, r * 0.5, 0, 0, TAU); ctx.stroke(); C(0, 0, r * 0.32); dot(0, 0, r * 0.12); L(-r * 0.6, -r * 0.65, -r * 0.3, -r * 0.5); L(r * 0.6, -r * 0.65, r * 0.3, -r * 0.5); break;
       // --- trajectoires ---
       case 'boomerang': P([[-r * 0.8, -r * 0.5], [0, r * 0.45], [r * 0.8, -r * 0.5]], false); ctx.beginPath(); ctx.arc(0, -r * 0.3, r * 0.75, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke(); break;
       case 'spirale': ctx.beginPath(); for (let i = 0; i <= 40; i++) { const t = i / 40; const x = -r * 0.9 + t * r * 1.8, y = Math.sin(t * TAU * 2.2) * r * 0.5 * Math.min(1, t * 3); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke(); dot(r * 0.9, Math.sin(TAU * 2.2) * r * 0.5, r * 0.12); break;
@@ -314,5 +336,5 @@ const Seal = (() => {
     ctx.restore();
   }
 
-  return { create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, slotList, draw, drawMini, isSub, subs, depth, modId, comboName, taille, nbSlots, triggers, NMODS };
+  return { aspects, effets, create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, slotList, draw, drawMini, isSub, subs, depth, modId, comboName, taille, nbSlots, triggers, NMODS };
 })();
