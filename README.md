@@ -44,10 +44,15 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 - **Effets** (21) : Feu, Vent, Eau, Terre au départ. Lumière, Ombre, Vie, Force, Froid, Foudre, Acide, Gravité, Temps, Transmutation, Son, Esprit, Lien, Portail, Métal, Marque et Contre-sort se découvrent (par exploits ou par observation de phénomènes).
 - **Fusion** : deux glyphes d'effet dans un sceau, avec des combos nommés (tornade de feu, banquise, lave, orage, blizzard...).
 - **Sous-sceaux** : un emplacement de modificateur peut contenir un sceau consigné entier, lancé là où le premier éclate (deux niveaux).
-- **Formes** : Projectile, Sur soi, puis Zone, Trait, Aura, Mur, Totem, Chaîne, Pluie, Sur objet, Bouclier, Invocation.
-- **Modificateurs** : Puissance, Portée, Durée, Taille, Rebond, Persistance, Vitesse, Double, Inverser, Écho, Téléguidé, Orbite, Canalisé. Un à trois emplacements.
+- **Formes** : Projectile, Sur soi, puis Zone, Trait, Aura, Mur, Totem, Chaîne, Pluie, Sur objet, Bouclier, Prise, Invocation.
+- **Modificateurs** : Puissance, Portée, Durée, Taille, Rebond, Persistance, Vitesse, Double, Inverser, Écho, Téléguidé, Orbite, Canalisé, Boomerang, Spirale, Rase-sol, et les onze glyphes de langage. Un à cinq emplacements selon la taille.
 - **Déclencheurs** : Immédiat, Au contact, Retardé.
 - Chaque glyphe coûte de l'encre. L'expérience de découverte augmente l'encre et sa régénération.
+- **Langages des éléments** : à force d'employer un élément, on en apprend la grammaire (Initié, Adepte, Maître). Chaque langage donne un glyphe qu'on peut doubler une fois Adepte : Chaleur (flamme blanche, puis bleue qui fond la pierre et le métal), Pression (jet qui creuse, lame d'eau), Givre (gel profond, zéro absolu), Densité (pierre, cristal), Tourbillon (soulève, tornade), Tension (arcs vers 3 puis 6 cibles), Floraison (arbre qui jaillit), Focale, Ténèbres, Mordant, Masse. Maître : sceaux 20 % moins chers.
+- **Trajectoires** : Boomerang (traverse, éclate, revient dans la main), Spirale, Rase-sol (épouse le terrain).
+- **Métamorphose** : un golem en grenouille, une caisse en rocher ; sur soi, une forme animale choisie par le glyphe fusionné (eau : grenouille, vent : chauve-souris, vie : lapin, terre : golem). **Rembobinage** : le monde garde six secondes de mémoire ; la matière revient, les créatures reculent et se relèvent, on revient sur ses pas.
+- **Prise** : saisir de la matière (l'eau d'un lac, du sable, des créatures), la promener, puis la lancer d'un geste sur un golem.
+- **Encres spéciales** : sept ingrédients ne se trouvent qu'en creusant (X) dans leur région (cœur de braise au volcan, nacre au fond du lac, ambre en forêt, givre bleu en montagne, poudre d'or aux ruines, sable chantant au désert, pollen à la clairière). Brassées au chaudron, elles donnent huit gouttes ; on choisit l'encre d'un sceau à la table, une goutte par lancer.
 
 ## Dehors
 
@@ -56,6 +61,12 @@ Onze espèces peuplent le monde (limaces d'encre, feux follets, golems, grenouil
 Treize pages déchirées du grimoire du maître sont cachées aux endroits difficiles (îles, fond du lac, sommet, volcan, grottes, fond du monde) : chacune apprend une recette ou un glyphe. Quinze défis facultatifs rapportent de l'expérience.
 
 Nouvelles matières : poudre explosive, mousse sur la pierre humide, miel des ruches (à enfumer), sel des salines (saumure qui ne gèle pas, fait fondre la glace), boue. La carte du grimoire se dévoile en explorant ; la musique change selon le lieu et l'heure.
+
+**Énigmes** : leviers, plaques de pression, brasiers, roue à aubes, moulin à vent, lampe d'éclair, grilles et coffres scellés, reliés par des circuits (des fils d'encre visibles de près). Sept coffres à ouvrir : le levier du jardin, la plaque de la forêt, la roue à sec au bord du lac, les deux brasiers du volcan, la combinaison de la clairière, la lampe et la plaque des ruines, la cave du désert sous la trappe du moulin.
+
+**Monde vivant** : quatre saisons de deux jours chacune (teintes, neige et lacs gelés l'hiver, feuilles d'automne, fonte au printemps), l'herbe et les arbres brûlés repoussent hors de vue, deux bêtes de la même espèce font des petits qui grandissent.
+
+**Personnage** : redessiné et animé (marche, saut, bras qui trace le sort), personnalisable : teint, coiffure, cheveux, chapeau et sa couleur, cape, robe, écharpe, objet à la main.
 
 Un seul grand monde : jardin, forêt, lac, montagne enneigée, volcan, clairière, ruines de métal, désert ; des îles volantes dans le ciel ; des grottes à cristaux, un lac souterrain, une poche d'acide et une nappe d'huile sous terre. Le monde est une grille de matières : on creuse, on inonde, on gèle, on brûle, et le tout persiste.
 
@@ -70,6 +81,8 @@ index.html      page, styles, panneaux DOM
 js/util.js      maths, aléatoire déterministe, dessin « encre »
 js/data.js      glyphes, ingrédients, recettes, découvertes, observations
 js/seal.js      modèle de sceau, icônes de glyphes, rendu du cercle
+js/perso.js     dessin et personnalisation de l'apprenti(e)
+js/fx.js        effets visuels : halos, flammes, traînées, ondes, éclairs
 js/audio.js     sons génératifs (WebAudio)
 js/sim.js       simulation de matières (grille) et rendu encre par morceaux
 js/gen.js       génération du grand monde

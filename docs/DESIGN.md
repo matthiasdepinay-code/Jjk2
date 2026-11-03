@@ -60,3 +60,17 @@ Un vrai bac à sable de magie, style encre & parchemin, ambiance cosy. On compos
 | Interactions | Collisions entre projectiles = fusion forcée au point de rencontre. Forme Bouclier élémentaire (arc orienté vers la souris). Glyphe Contre-sort qui dissipe champs, pièges, totems, portails. |
 | Déblocage | Par la progression habituelle (découvertes, niveaux), avec indices. |
 | Éditeur | Aperçu animé de l'effet et fiche lisible du sceau. |
+
+## Quatrième vague : buts, monde vivant, langages (décisions de l'auteur)
+
+| Sujet | Choix |
+| --- | --- |
+| Buts du bac à sable | Leviers, grilles, moulins, mécanismes et énigmes, avec des coffres à la clé. |
+| Monde vivant | Saisons, repousse, naissances. |
+| Effets | De beaux effets visuels ; des gestes de gravité spectaculaires (prendre l'eau d'un lac et la lancer sur un golem : forme Prise). |
+| Maîtrise | Par l'usage, langage par langage : maîtriser le feu donne le glyphe Chaleur, qui blanchit puis bleuit la flamme. Pas de saut direct. |
+| Encres | Encres spéciales tirées d'ingrédients propres à une région. |
+| Trajectoires | Boomerang, spirale, rase-sol. |
+| Nouveaux glyphes | Métamorphose et Rembobinage. |
+| Personnage | Plus beau, animé, personnalisable. |
+| Plus tard | Runes posées de façon permanente ; partage de sceaux (on reste en local pour l'instant). |
