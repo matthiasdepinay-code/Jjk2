@@ -663,6 +663,7 @@ const World = (() => {
   // ---------- Contre-sort ----------
   function dissiper(x, y, rad) {
     const R = rad * 1.5; let n = 0; const p = st.p; const pin = dist(x, y, p.x + p.w / 2, p.y + p.h / 2) < R;
+    for (const q of st.sp) if (q.k === 'prise' && !q.mort && dist(x, y, q.x, q.y) < R + 60) { q.tenue = false; ecraserPrise(q); n++; }
     const KINDS = ['field', 'trap', 'totem', 'timer', 'attente', 'repeat', 'expire', 'rain', 'orbit', 'canal', 'bouclier', 'beamtimer', 'echo', 'singularite'];
     for (const q of st.sp) { if (!KINDS.includes(q.k)) continue; const attached = q.follow || q.k === 'bouclier' || q.k === 'orbit' || q.k === 'canal' || q.self; if ((attached && pin) || (q.x != null && dist(x, y, q.x, q.y) < R)) { q.mort = true; if (q.k === 'bouclier') finBouclier(q); n++; } }
     const avant = st.gz.length; st.gz = st.gz.filter((z) => dist(x, y, z.x, z.y) >= R + z.r * 0.5); n += avant - st.gz.length;
@@ -784,7 +785,7 @@ const World = (() => {
     }
     if (o.player) Son.sfx('cast', spec.core);
     const canal = prm.canalise && o.player;
-    if (canal && seal.shape !== 'projectile' && seal.shape !== 'soi' && seal.shape !== 'chaine') {
+    if (canal && seal.shape !== 'projectile' && seal.shape !== 'soi' && seal.shape !== 'chaine' && seal.shape !== 'prise') {
       st.sp.push({ k: 'canal', spec, t: 0, tick: 0, range: 260 * prm.range, r: 50 * prm.size, cost: Math.max(1, Seal.cost(seal) * 0.25) });
       msg('Maintiens le clic pour canaliser.');
       return;
@@ -839,6 +840,11 @@ const World = (() => {
         else fireBeam(spec, ox, oy, dx, dy, trig);
         break;
       case 'aura': st.sp.push({ k: 'field', spec, core: spec.core, x: ox, y: oy, r: 70 * prm.size, life: 6 * prm.duration, max: 6 * prm.duration, prm, follow: true }); if (o.player) msg('L\'effet t\'enveloppe un moment.'); break;
+      case 'prise': {
+        const dd = portee(300 * prm.range); const tx = ox + dx * dd, ty = oy + dy * dd;
+        saisir(spec, tx, ty, !!o.player);
+        break;
+      }
       case 'bouclier': st.sp.push({ k: 'bouclier', spec, self: !!o.player, x: ox, y: oy, a: Math.atan2(dy, dx), life: 4 * prm.duration, max: 4 * prm.duration, r: 46 * prm.size, color: C }); if (o.player) msg('Un bouclier de ' + (DATA.CORES[spec.core] || DATA.PSEUDO[spec.core]).nom.toLowerCase() + ' se lève devant toi.'); break;
       case 'totem': { const range = 260 * prm.range; const dd = portee(range); const tx = ox + dx * dd, ty = oy + dy * dd; const g = groundBelow(tx, ty); st.sp.push({ k: 'totem', spec, x: tx, y: g != null ? g : ty, r: 60 * prm.size, life: 20 * prm.duration, max: 20 * prm.duration, t: 0.5, color: C }); break; }
       case 'pluie': { const range = 320 * prm.range; const dd = portee(range); const tx = ox + dx * dd; st.sp.push({ k: 'rain', spec, x: tx, w: 120 * prm.size, yTop: Math.max(30, oy - 320), life: 3 * prm.duration, t: 0, color: C }); break; }
@@ -1600,6 +1606,86 @@ const World = (() => {
       if (vr < f * 0.5) { b.vx += dx / d * (f * 0.5 - vr); b.vy += dy / d * (f * 0.5 - vr) - (core === 'vent' ? 120 : 0); }
     }
   }
+  // ---------- Prise : saisir et lancer la matière ----------
+  const PRISE_EFFET = { [M.EAU]: 'eau', [M.SAUMURE]: 'eau', [M.LAVE]: 'feu', [M.ACIDE]: 'acide', [M.SABLE]: 'terre', [M.TERRE]: 'terre', [M.BOUE]: 'terre', [M.NEIGE]: 'froid', [M.CENDRE]: 'terre', [M.POUDRE]: 'feu', [M.MIEL]: 'vie' };
+  function saisir(spec, x, y, joueur) {
+    const prm = spec.prm, R = 62 * prm.size, cap = Math.round(240 * prm.power * prm.size * (spec.cores.includes('gravite') ? 1.3 : 1));
+    const mats = {}; let n = 0;
+    // on aspire d'abord vers le centre (les cases les plus proches d'abord)
+    const cells = []; Sim.forRadius(x, y, R, (cx, cy, i, m) => { const q = P[m]; if ((q.liquid || q.powder || q.gas) && m !== M.BULLE) cells.push([Math.hypot((cx + 0.5) * CS - x, (cy + 0.5) * CS - y), cx, cy, m]); });
+    cells.sort((a, b) => a[0] - b[0]);
+    for (const [, cx, cy, m] of cells) { if (n >= cap) break; if (P[m].gas) { Sim.set(cx, cy, M.AIR); continue; } mats[m] = (mats[m] || 0) + 1; n++; Sim.set(cx, cy, M.AIR); }
+    const ents = [];
+    for (const c of st.crs) if (c.hp > 0 && !c.carried && c.t !== 'familier' && U.circleRect(x, y, R, c) && (c.t !== 'golem' || prm.power >= 1.5 || spec.cores.includes('gravite'))) { c.carried = true; c.prise = true; ents.push(c); }
+    for (const o of st.objs) if (o.dyn && !o.carried && !o.mort && o !== st.p.carry && U.circleRect(x, y, R, o)) { o.carried = true; o.prise = true; ents.push(o); }
+    if (!n && !ents.length) { msg('La prise se referme sur du vide.'); part(x, y, spec.color, 10, 60, 0.5, 3, 0, 'glow'); return; }
+    for (const e of ents) { e.ox = e.x + e.w / 2 - x; e.oy = e.y + e.h / 2 - y; }
+    st.sp.push({ k: 'prise', spec, x, y, vx: 0, vy: 0, mats, n, ents, tenue: joueur, life: 10 * prm.duration, t: 0, color: spec.color, hist: [] });
+    Son.sfx('cast', 'force'); st.shake = Math.min(0.4, 0.1 + n / 800);
+    for (let k = 0; k < 18; k++) { const a = Math.random() * TAU, rr = R * (0.6 + Math.random() * 0.6); st.parts.push({ x: x + Math.cos(a) * rr, y: y + Math.sin(a) * rr, vx: -Math.cos(a) * rr * 2.5, vy: -Math.sin(a) * rr * 2.5, life: 0.4, max: 0.4, color: spec.color, size: 3, grav: 0, type: 'glow' }); }
+    if (joueur) msg('Tu tiens ' + (n ? n + ' grains de matière' : '') + (n && ents.length ? ' et ' : '') + (ents.length ? ents.length + ' prise(s)' : '') + '. Clique pour lancer.');
+  }
+  function rayonPrise(s) { return Math.max(10, Math.sqrt(s.n) * CS * 0.55 + s.ents.length * 6); }
+  function majPrise(s, dt) {
+    const p = st.p; s.t += dt; s.life -= dt;
+    if (s.tenue) {
+      const aim = toWorld(game.inp.mouse.x, game.inp.mouse.y);
+      // laisse : pas plus loin que 380 px de toi
+      let tx = aim.x, ty = aim.y; const pcx = p.x + p.w / 2, pcy = p.y + p.h / 2; const d = dist(pcx, pcy, tx, ty); if (d > 380) { tx = pcx + (tx - pcx) / d * 380; ty = pcy + (ty - pcy) / d * 380; }
+      const nvx = (tx - s.x) * 9, nvy = (ty - s.y) * 9;
+      s.vx = clamp(nvx, -1400, 1400); s.vy = clamp(nvy, -1400, 1400);
+      s.x += s.vx * dt; s.y += s.vy * dt;
+      s.hist.push([s.vx, s.vy]); if (s.hist.length > 6) s.hist.shift();
+      p.ink -= dt * (1 + s.n / 300); if (p.ink <= 0) { p.ink = 0; s.tenue = false; msg('Plus d\'encre : la prise t\'échappe.', 'warn'); }
+      if (s.life <= 0) { s.tenue = false; msg('La prise se relâche.'); }
+    } else {
+      const g = s.spec.cores.includes('gravite') ? 450 : 900;
+      s.vy += g * dt; s.x += s.vx * dt; s.y += s.vy * dt;
+      const R = rayonPrise(s) * 0.6;
+      const touche = Sim.solidAt(s.x + Math.sign(s.vx) * R * 0.5, s.y + Math.sign(s.vy) * R * 0.5) || st.crs.some((c) => c.hp > 0 && !c.carried && U.circleRect(s.x, s.y, R, c)) || s.y > L.h - 10 || s.x < 0 || s.x > L.w;
+      if (touche || s.t > 6) { ecraserPrise(s); return; }
+    }
+    // la matière portée suit
+    for (const e of s.ents) { if (e.mort || (e.hp !== undefined && e.hp <= 0)) continue; const a = s.t * 2 + (e.seed || 0); const ox = e.ox * 0.4 + Math.cos(a) * 6, oy = e.oy * 0.4 + Math.sin(a) * 6; e.x = s.x + ox - e.w / 2; e.y = s.y + oy - e.h / 2; e.vx = s.vx; e.vy = s.vy; }
+    if (Math.random() < 0.5) { const m = +Object.keys(s.mats)[0]; if (!isNaN(m)) part(s.x + (Math.random() - 0.5) * rayonPrise(s), s.y + (Math.random() - 0.5) * rayonPrise(s), P[m].color, 1, 20, 0.5, 2, 300, P[m].liquid ? 'goutte' : 'dot'); }
+  }
+  function lacherEntites(s, vx, vy) {
+    for (const e of s.ents) { e.carried = false; e.prise = false; e.vx = vx; e.vy = vy; unstick(e); }
+    s.ents = [];
+  }
+  function ecraserPrise(s) {
+    s.mort = true;
+    const R = rayonPrise(s); const v = Math.hypot(s.vx, s.vy);
+    // remonter légèrement hors du solide
+    let x = s.x - s.vx / (v || 1) * R * 0.4, y = s.y - s.vy / (v || 1) * R * 0.4;
+    const force = 1 + s.n / 120 + v / 600;
+    for (const c of st.crs) if (c.hp > 0 && !c.carried && dist(x, y, c.x + c.w / 2, c.y + c.h / 2) < R + 60 + Math.max(c.w, c.h) / 2) {
+      hurt(c, Math.min(7, 1 + s.n / 70 + v / 500)); c.sta.stun = Math.max(c.sta.stun, 1.5);
+      const dx = c.x + c.w / 2 - x, dy = c.y + c.h / 2 - y, d = Math.hypot(dx, dy) || 1; c.vx += dx / d * 300 * force + s.vx * 0.3; c.vy += dy / d * 200 * force - 150;
+    }
+    // l'effet de la matière dominante
+    let dom = null, dn = 0; for (const m in s.mats) if (s.mats[m] > dn) { dn = s.mats[m]; dom = +m; }
+    if (dom != null && PRISE_EFFET[dom]) applyEffect(PRISE_EFFET[dom], x, y, R + 30, { power: Math.min(3, force), size: 1, duration: 1, persist: 0 }, 'burst', { noGrid: true, noField: true, noPlayer: true });
+    for (const core of s.spec.cores) if (core !== 'force' && core !== 'gravite') applyEffect(core, x, y, R + 20, s.spec.prm, 'burst', { noField: true });
+    lacherEntites(s, s.vx * 0.6, s.vy * 0.6 - 150);
+    for (const m in s.mats) { spawnLiquid(+m, x, y, s.mats[m], 300); part(x, y, P[m].color, Math.min(40, 8 + s.mats[m] / 8), 260 + v * 0.3, 0.9, 2.4, 900, P[m].liquid ? 'goutte' : 'eclat'); }
+    st.sp.push({ k: 'ring', core: 'force', x, y, r: R + 40, life: 0.5, max: 0.5, color: s.color });
+    st.shake = Math.min(0.7, 0.2 + s.n / 400); Son.sfx('burst', 'terre');
+    if (s.n > 150) msg('SPLASH !');
+    evt('prise', s.n);
+  }
+  // un clic pendant qu'on tient une prise la lance
+  function lancerPrise() {
+    const s = st.sp.find((q) => q.k === 'prise' && q.tenue && !q.mort);
+    if (!s) return false;
+    s.tenue = false;
+    let vx = 0, vy = 0; for (const [a, b] of s.hist) { vx += a; vy += b; } vx /= s.hist.length || 1; vy /= s.hist.length || 1;
+    const p = st.p; const pcx = p.x + p.w / 2, pcy = p.y + p.h / 2;
+    if (Math.hypot(vx, vy) < 260) { const d = dist(pcx, pcy, s.x, s.y) || 1; vx = (s.x - pcx) / d * 700; vy = (s.y - pcy) / d * 700 - 120; }
+    const k = Math.min(1.4, 1100 / Math.max(1, Math.hypot(vx, vy))); s.vx = vx * Math.max(1, k); s.vy = vy * Math.max(1, k);
+    s.t = 0; Son.sfx('cast', 'vent');
+    return true;
+  }
   function finBouclier(s) {
     if (s.ring) for (const i of s.ring) if (Sim.mat[i] === M.BULLE) { Sim.mat[i] = M.AIR; Sim.touch(i); }
     if (s.stash) for (const m in s.stash) spawnLiquid(+m, s.x, s.y, s.stash[m], 400);
@@ -1728,6 +1814,7 @@ const World = (() => {
         }
         case 'expire': s.t -= dt; if (s.t <= 0) { doBurst(s.spec, s.x, s.y, s.r, { noExpire: true, noRepeat: true, noEcho: true, noCombo: true }); st.sp.push({ k: 'label', x: s.x, y: s.y - 30, txt: 'Dernier éclat', life: 1, max: 1 }); s.mort = true; } break;
         case 'bouclier': majBouclier(s, dt); break;
+        case 'prise': majPrise(s, dt); break;
         case 'canal': {
           s.t += dt; s.tick -= dt;
           if (!game.inp.mouse.down || s.t > 6 || st.p.ink < s.cost) { s.mort = true; break; }
@@ -2218,6 +2305,20 @@ const World = (() => {
       case 'orbit': ctx.fillStyle = s.color; ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill(); ctx.stroke(); Seal.glyph(ctx, s.spec.core, s.x, s.y, s.r * 0.6, '#efe3c4', 1); break;
       case 'totem': { ctx.strokeStyle = INK; ctx.lineWidth = 2.5; U.inkLine(ctx, s.x, s.y, s.x, s.y - 44, 3, 0.8); ctx.fillStyle = s.color; ctx.strokeStyle = INK; U.inkPolyPath(ctx, [[s.x - 10, s.y - 44], [s.x + 10, s.y - 44], [s.x, s.y - 60]], 4, 0.6); ctx.fill(); ctx.stroke(); Seal.glyph(ctx, s.spec.core, s.x, s.y - 30, 7, s.color, 2); const pulse = 1 - s.t / 2; ctx.globalAlpha = 0.35 * (1 - pulse); ctx.strokeStyle = s.color; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(s.x, s.y - 20, s.r * pulse, s.r * 0.5 * pulse, 0, 0, TAU); ctx.stroke(); break; }
       case 'rain': ctx.strokeStyle = s.color; ctx.lineWidth = 1.2; ctx.globalAlpha = 0.5; for (let k = 0; k < 5; k++) U.inkCircle(ctx, s.x - s.w / 2 + k * s.w / 4, s.yTop - 10 + (k % 2) * 6, 14, k, 1.2); break;
+      case 'prise': {
+        const R = rayonPrise(s);
+        FX.glow(ctx, s.x, s.y, R * 1.8, s.color, 0.35);
+        let k = 0;
+        for (const m in s.mats) {
+          const c = P[m].color, nb = Math.min(14, 2 + Math.round(s.mats[m] / 25));
+          for (let i = 0; i < nb; i++) { const a = (i / nb) * TAU + time * (1.2 + k * 0.4) + k; const rr = R * (0.25 + 0.55 * U.hash2(i, k + 3)); const bx = s.x + Math.cos(a) * rr, by = s.y + Math.sin(a) * rr * 0.85; ctx.fillStyle = c; ctx.globalAlpha = P[m].liquid ? 0.75 : 0.9; ctx.beginPath(); ctx.arc(bx, by, R * 0.32 + Math.sin(time * 6 + i) * 1.5, 0, TAU); ctx.fill(); }
+          k++;
+        }
+        ctx.globalAlpha = 0.9; ctx.strokeStyle = INK; ctx.lineWidth = 1.6; U.inkCircle(ctx, s.x, s.y, R * 0.95 + Math.sin(time * 5) * 2, Math.floor(time * 6), 2);
+        ctx.strokeStyle = s.color; ctx.lineWidth = 2; ctx.setLineDash([5, 7]); ctx.beginPath(); ctx.arc(s.x, s.y, R * 1.15, time * 2, time * 2 + TAU); ctx.stroke(); ctx.setLineDash([]);
+        if (s.tenue) { const p = st.p; ctx.globalAlpha = 0.45; ctx.strokeStyle = s.color; ctx.lineWidth = 2; U.inkLine(ctx, p.x + p.w / 2, p.y + p.h * 0.4, s.x, s.y, Math.floor(time * 8), 3); }
+        break;
+      }
       case 'attente': { const x = s.x != null ? s.x : st.p.x, y = s.y != null ? s.y : st.p.y; ctx.strokeStyle = s.spec.color; ctx.lineWidth = 2; ctx.globalAlpha = 0.6 + Math.sin(time * 6) * 0.3; U.inkCircle(ctx, x, y, s.self ? 34 : 14, 3, 1); ctx.globalAlpha = 1; if (!s.self) Seal.glyph(ctx, s.spec.core, x, y, 7, s.spec.color, 1); U.txt(ctx, 'F', x + (s.self ? 26 : 14), y - (s.self ? 26 : 14), 12, 'center', INK); break; }
       case 'repeat': { const k = 1 - s.t / s.max; ctx.strokeStyle = s.spec.color; ctx.globalAlpha = 0.5; ctx.lineWidth = 1.5; const x = s.self ? st.p.x + st.p.w / 2 : s.x, y = s.self ? st.p.y + st.p.h / 2 : s.y; ctx.beginPath(); ctx.arc(x, y, 16, -Math.PI / 2, -Math.PI / 2 + TAU * k); ctx.stroke(); U.txt(ctx, '×' + s.left, x + 18, y - 16, 10, 'left', '#6b4f2a'); break; }
       case 'expire': { ctx.globalAlpha = 0.35; Seal.glyph(ctx, 'expiration', s.x, s.y - 22, 6, s.spec.color, 2); break; }
@@ -2270,5 +2371,5 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner };
+  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise };
 })();

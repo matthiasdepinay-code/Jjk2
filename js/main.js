@@ -368,6 +368,7 @@
     itemMain(hand) { return this.hotbar[hand === 'L' ? this.selectedL : this.selected]; },
     // appui : les sceaux se chargent tant qu'on maintient (sauf Canalisé), le reste part tout de suite
     presserMain(hand) {
+      if (this.state === 'world' && World.lancerPrise()) return;
       if (hand === 'L' && !this.progress.deuxMains) { this.toast('La main gauche n\'est pas encore maîtrisée (voir le grimoire).', 'warn'); return; }
       const e = this.itemMain(hand);
       const seal = e && (e.type === 'seal' ? e.seal : e.type === 'parchemin' && this.inv.parchemins[e.nom] ? this.inv.parchemins[e.nom].seal : null);

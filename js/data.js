@@ -75,6 +75,7 @@ const DATA = (() => {
     chaine:     { id: 'chaine',     nom: 'Chaîne',     cout: 4, desc: 'Un projectile qui saute de cible en cible.' },
     pluie:      { id: 'pluie',      nom: 'Pluie',      cout: 5, desc: 'L\'effet tombe du ciel sur la zone visée pendant un moment.' },
     objet:      { id: 'objet',      nom: 'Sur objet',  cout: 3, desc: 'Enchante la caisse ou la créature la plus proche du point visé : elle porte l\'effet.' },
+    prise:      { id: 'prise',      nom: 'Prise',      cout: 4, desc: 'Saisit tout ce qui se trouve au point visé : eau, sable, lave, créatures, caisses. La masse suit ta souris ; clique à nouveau pour la lancer (secoue la souris pour viser). Elle s\'écrase et rend ce qu\'elle porte.' },
     bouclier:   { id: 'bouclier',   nom: 'Bouclier',   cout: 3, desc: 'Un arc devant toi, tourné vers la souris, qui porte l\'élément : le feu brûle ce qui le touche, le froid gèle l\'eau, le vent renvoie, la terre bloque. Il repousse aussi l\'eau et le sable : marche au fond du lac.' },
     invocation: { id: 'invocation', nom: 'Invocation', cout: 6, desc: 'Un petit familier de l\'élément te suit et attaque ce qui t\'attaque.' },
   };
@@ -440,6 +441,7 @@ const DATA = (() => {
     { id: 'filtres2',   type: 'filtres', item: ['pierre', 'terre', 'bois', 'metal', 'glace'], titre: 'Filtres : Pierre, Terre, Bois, Métal, Glace', indice: 'Observe 9 réactions différentes.', cond: (p) => Object.keys(p.obs || {}).length >= 9 },
     { id: 'cible_creature', type: 'cible', item: 'creature', titre: 'Cible : Créature proche', indice: 'Touche 15 créatures avec des projectiles.', cond: (p) => p.compteurs.creaturesTouchees >= 15 },
     { id: 'marque',     type: 'marque', item: 'marque', titre: 'Glyphe et cible : Marque', indice: 'Retrouve 2 pages déchirées.', cond: (p) => (p.pagesLues || []).length >= 2 },
+    { id: 'prise',      type: 'shape', item: 'prise', titre: 'Forme : Prise', indice: 'Possède le glyphe Force ou Gravité.', cond: (p) => p.cores.includes('force') || p.cores.includes('gravite') },
     { id: 'bouclier',   type: 'shape', item: 'bouclier', titre: 'Forme : Bouclier', indice: 'Fais-toi bousculer 5 fois par des créatures.', cond: (p) => (p.compteurs.bouscule || 0) >= 5 },
     { id: 'contre',     type: 'core', item: 'contre', titre: 'Glyphe : Contre-sort', indice: 'Possède 12 glyphes d\'effet.', cond: (p) => p.cores.length >= 12 },
     // --- étape 6 : le labo grandit ---
