@@ -20,7 +20,7 @@ Ushk ne se leva pas tout de suite. Il demanda, parce qu'il demandait toujours :
 > **Kâvôr ?**
 > « Pourquoi ? »
 
-> **Lômôl. Khâr ûrg lôm.**
+> **Lômol. Khâr ûrg lôm.**
 > « Pour chanter. Le seigneur veut un chant. »
 
 > **Lômagh nargortar.**
