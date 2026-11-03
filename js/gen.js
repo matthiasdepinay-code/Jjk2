@@ -38,8 +38,9 @@ const Gen = (() => {
       fillEllipse(x, y, r, r * 0.8, M.AIR);
     }
   }
+  let ARBRES = [];
   function tree(x, h, rx = 5, ry = 4) {
-    const s = Math.floor(surfaceAt(x));
+    const s = Math.floor(surfaceAt(x)); ARBRES.push({ x, h, rx, ry });
     fillRect(x, s - h, 2, h + 1, M.BOIS);
     blob(x + 1, s - h - ry + 1, rx, ry, M.PLANTE, 0.35);
   }
@@ -55,6 +56,7 @@ const Gen = (() => {
   const onGround = (x, h) => ({ x: px(x), y: py(surfaceTop(x)) - h });
 
   function generate(seed = 7) {
+    ARBRES = [];
     R = U.mulberry32(seed);
     Sim.init(W, H);
     const surf = new Int16Array(W);
@@ -230,7 +232,7 @@ const Gen = (() => {
     ].map((z) => ({ nom: z.nom, x: z.x * CS, w: z.w * CS }));
     Sim.surf = surf;
     Sim.dirtyAll();
-    return { w: W * CS, h: H * CS, spawn: { x: px(12), y: py(surf[12]) - 60 }, zones, objs, crs, surf };
+    return { w: W * CS, h: H * CS, spawn: { x: px(12), y: py(surf[12]) - 60 }, zones, objs, crs, surf, arbres: ARBRES.slice() };
   }
   return { generate, W, H };
 })();

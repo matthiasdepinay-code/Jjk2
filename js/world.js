@@ -21,7 +21,7 @@ const World = (() => {
       p: makePlayer(L.spawn.x, L.spawn.y),
       objs: [], crs: [], sp: [], parts: [], pickups: [], eclairs: [],
       cam: { x: 0, y: 0 }, shake: 0, lastZone: '', flash: 0,
-      tod: 0.32, meteo: { type: 'clair', t: 120 }, foudreT: 4, rainT: 0, obsT: {}, ileT: 0, pluieT: 0,
+      tod: 0.32, jour: 0, meteo: { type: 'clair', t: 120 }, foudreT: 4, rainT: 0, obsT: {}, ileT: 0, pluieT: 0,
       control: null, lien: null, portails: [], gz: [], marques: [], lastBurst: null, defiT: 0, lac: null, lacSec: false, vuSommet: false, maxDepth: 0,
     };
     for (const o of L.objs) st.objs.push(makeObj(o));
@@ -51,7 +51,7 @@ const World = (() => {
       case 'levier': return o.voulu !== undefined ? o.etat === o.voulu : o.etat;
       case 'plaque': return o.actif;
       case 'brasier': return o.feu > 0;
-      case 'roue': return o.eau > 0.3;
+      case 'roue': return o.eau > 0.75;
       case 'moulin': return o.spin > 0;
       case 'lampe': return o.charge > 0;
     }
@@ -70,7 +70,7 @@ const World = (() => {
           const zone = { x: o.x + 2, y: o.y - 6, w: o.w - 4, h: 10 };
           let poids = U.rectsOverlap(zone, st.p) && !st.p.sta.vol;
           if (!poids) poids = st.crs.some((c) => c.hp > 0 && U.rectsOverlap(zone, c)) || st.objs.some((q) => q.dyn && !q.carried && !q.mort && U.rectsOverlap(zone, q));
-          if (!poids) { let n = 0; const x0 = Math.floor(o.x / CS), x1 = Math.floor((o.x + o.w) / CS), y0 = Math.floor((o.y - 18) / CS), y1 = Math.floor(o.y / CS); for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const m = Sim.get(x, y); if (m && !P[m].gas && m !== M.BULLE) n++; } poids = n >= 8; }
+          if (!poids) { let n = 0; const x0 = Math.floor(o.x / CS), x1 = Math.floor((o.x + o.w) / CS), y0 = Math.floor((o.y - 18) / CS), y1 = Math.floor(o.y / CS); for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const m = Sim.get(x, y); if (m && !P[m].gas && m !== M.BULLE && m !== M.NEIGE && m !== M.EAU) n++; } poids = n >= 8; }
           if (poids && !o.actif) Son.sfx('click');
           o.actif = poids; o.press += ((poids ? 1 : 0) - o.press) * Math.min(1, dt * 12);
           break;
@@ -170,7 +170,7 @@ const World = (() => {
   // ---------- Sauvegarde du monde ----------
   function serialize() {
     return {
-      mat: Sim.serialize(), tod: st.tod, meteo: st.meteo, mecaV: 1,
+      mat: Sim.serialize(), tod: st.tod, jour: st.jour || 0, meteo: st.meteo, mecaV: 1,
       objs: st.objs.filter((o) => !o.mort).map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
       crs: st.crs.map((c) => ({ t: c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.hp, tame: c.sta.tame })),
     };
@@ -182,6 +182,7 @@ const World = (() => {
       if (d.objs && !d.mecaV) for (const q of L.objs) if (MECA.includes(q.t)) st.objs.push(makeObj(q));
       if (d.crs) st.crs = d.crs.map(makeCreature);
       if (d.tod != null) st.tod = d.tod;
+      if (d.jour != null) st.jour = d.jour;
       if (d.meteo) st.meteo = d.meteo;
     } catch (e) { console.warn('monde illisible, régénéré', e); }
   }
@@ -1665,8 +1666,73 @@ const World = (() => {
   }
   function setPG(gx, gy, mag, t, extra = {}) { st.p.pg = Object.assign({ gx, gy, mag, t }, extra); st.p.onGround = false; }
 
+  // ---------- Monde vivant : saisons, repousse, naissances ----------
+  const JOURS_SAISON = 2;
+  const SAISONS = ['printemps', 'ete', 'automne', 'hiver'];
+  const NOM_SAISON = { printemps: 'Le printemps', ete: 'L\'été', automne: 'L\'automne', hiver: 'L\'hiver' };
+  const TEINTES = {
+    printemps: { herbe: '#78a24a', plante: '#6a9a45', mousse: '#7a9a4a' },
+    ete:       { herbe: '#8aa840', plante: '#5a8a35', mousse: '#7a9a3a' },
+    automne:   { herbe: '#b0943a', plante: '#c0702a', mousse: '#8a8a3a' },
+    hiver:     { herbe: '#a0aa92', plante: '#7f8f78', mousse: '#8a9a88' },
+  };
+  function saison() { return SAISONS[Math.floor((st.jour || 0) / JOURS_SAISON) % 4]; }
+  function teinterSaison() {
+    const T = TEINTES[saison()]; Sim.P[M.HERBE].color = T.herbe; Sim.P[M.PLANTE].color = T.plante; Sim.P[M.MOUSSE].color = T.mousse; Sim.dirtyAll(); st.saisonVue = saison();
+  }
+  function surfaceY(x) { for (let y = 0; y < Sim.H; y++) { const m = Sim.get(x, y); if (m !== M.AIR && !P[m].gas) return y; } return -1; }
+  function zoneDe(px) { return (L.zones.find((z) => px >= z.x && px < z.x + z.w) || {}).nom; }
+  function repousseArbre(a) {
+    const sy = surfaceY(a.x); if (sy < 0) return false;
+    let bois = 0; for (let y = sy - a.h; y <= sy; y++) for (const x of [a.x, a.x + 1]) if (Sim.get(x, y) === M.BOIS) bois++;
+    if (bois >= a.h) return false;
+    const base = Sim.get(a.x, sy); if (base !== M.TERRE && base !== M.HERBE && base !== M.BOIS && base !== M.CENDRE) return false;
+    const h = Math.max(5, Math.round(a.h * 0.7));
+    for (let k = 1; k <= h; k++) for (const x of [a.x, a.x + 1]) { const m = Sim.get(x, sy - k); if (m === M.AIR || m === M.HERBE || m === M.PLANTE || m === M.CENDRE) Sim.set(x, sy - k, M.BOIS); }
+    const rx = Math.max(3, a.rx - 1), ry = Math.max(2, a.ry - 1);
+    for (let yy = -ry; yy <= ry; yy++) for (let xx = -rx; xx <= rx; xx++) { if ((xx * xx) / (rx * rx) + (yy * yy) / (ry * ry) > 1) continue; const X = a.x + 1 + xx, Y = sy - h - ry + 1 + yy; if (Sim.get(X, Y) === M.AIR && Math.random() < 0.85) Sim.set(X, Y, M.PLANTE); }
+    return true;
+  }
+  function vivant(dt) {
+    if (st.saisonVue !== saison()) { const premiere = !st.saisonVue; teinterSaison(); if (!premiere) { game.zoneChange(NOM_SAISON[saison()]); msg({ printemps: 'Le printemps revient : tout repousse, les bêtes font des petits.', ete: 'L\'été : l\'herbe est haute et le soleil sèche les mares.', automne: 'L\'automne : les feuilles tombent, la forêt rougit.', hiver: 'L\'hiver : la neige tombe, les lacs gèlent en surface.' }[saison()]); evt('saison', saison()); } }
+    const S = saison();
+    // feuilles d'automne
+    if (S === 'automne' && L.arbres && Math.random() < dt * 6) { const a = L.arbres[(Math.random() * L.arbres.length) | 0]; const x = (a.x + 1) * CS; if (inView(x, st.cam.y + 300)) { const sy = surfaceY(a.x); st.parts.push({ x: x + (Math.random() - 0.5) * a.rx * CS * 2, y: (sy - a.h - a.ry) * CS, vx: 20 + Math.random() * 30, vy: 20, life: 3, max: 3, color: Math.random() < 0.5 ? '#c0702a' : '#d8a03a', size: 3, grav: 30, type: 'feuille' }); } }
+    st.vivT = (st.vivT || 0) + dt; if (st.vivT < 1.5) return; st.vivT = 0;
+    const pousse = { printemps: 0.5, ete: 0.25, automne: 0.08, hiver: 0 }[S];
+    for (let k = 0; k < 40; k++) {
+      const x = 1 + ((Math.random() * (Sim.W - 2)) | 0), y = surfaceY(x); if (y <= 1) continue;
+      const m = Sim.get(x, y), zn = zoneDe(x * CS), r = Math.random();
+      if (inView(x * CS, y * CS) && S !== 'hiver' && m !== M.EAU) continue; // la repousse se fait hors de vue
+      if (m === M.TERRE && zn !== 'Le Désert' && Sim.get(x, y - 1) === M.AIR && r < pousse) Sim.set(x, y - 1, M.HERBE);
+      else if (m === M.CENDRE && S !== 'hiver' && r < 0.3) Sim.set(x, y, M.TERRE);
+      else if (S === 'hiver' && (m === M.EAU) && r < 0.3) { Sim.set(x, y, M.GLACE); if (Math.random() < 0.1 && inView(x * CS, y * CS)) onSimEvent('gel', x * CS, y * CS); }
+      else if (S !== 'hiver' && (m === M.GLACE || (m === M.NEIGE && zn !== 'La Montagne')) && r < (S === 'printemps' ? 0.35 : 0.2)) Sim.set(x, y, M.EAU);
+      else if (S === 'hiver' && (m === M.HERBE) && r < 0.1 && Sim.get(x, y - 1) === M.AIR) Sim.set(x, y - 1, M.NEIGE);
+    }
+    // les arbres brûlés repoussent, hors de vue
+    if (S !== 'hiver' && L.arbres && L.arbres.length && Math.random() < (S === 'printemps' ? 0.5 : 0.2)) { const a = L.arbres[(Math.random() * L.arbres.length) | 0]; if (!inView((a.x + 1) * CS, (surfaceY(a.x) - a.h) * CS)) repousseArbre(a); }
+    // naissances : deux bêtes de la même espèce, en bonne santé, côte à côte
+    st.naisT = (st.naisT || 0) + 1.5;
+    if (st.naisT > 20 && S !== 'hiver') {
+      st.naisT = 0;
+      const comptes = {}; for (const c of st.crs) if (c.hp > 0) comptes[c.t] = (comptes[c.t] || 0) + 1;
+      for (const c of st.crs) {
+        if (!c.generique || c.hp < c.hpMax || c.bebe > 0 || (c.pondT || 0) > time || (comptes[c.t] || 0) >= 6 || c.t === 'familier' || c.orig || c.controlled) continue;
+        const q = st.crs.find((o) => o !== c && o.t === c.t && o.hp >= o.hpMax && !(o.bebe > 0) && !o.orig && dist(c.x, c.y, o.x, o.y) < 220);
+        if (!q || Math.random() > (S === 'printemps' ? 0.8 : 0.4)) continue;
+        const b = makeCreature({ t: c.t, x: (c.x + q.x) / 2, y: Math.min(c.y, q.y), tame: c.sta.tame && q.sta.tame });
+        b.wPlein = b.w; b.hPlein = b.h; b.bebe = 90; b.w = Math.round(b.wPlein * 0.55); b.h = Math.round(b.hPlein * 0.55); b.y = Math.min(c.y + c.h, q.y + q.h) - b.h; b.filDonne = true;
+        st.crs.push(b); c.pondT = q.pondT = time + 120;
+        if (inView(b.x, b.y)) { part(b.x + b.w / 2, b.y, '#c45a8a', 6, 40, 1, 3, -60, 'coeur'); msg('Un petit ' + (DATA.ESPECES[c.t].nom || c.t).toLowerCase() + ' est né !'); }
+        evt('naissance', c.t);
+        break;
+      }
+    }
+  }
   function updateMeteo(dt) {
-    st.tod = (st.tod + dt / DAY) % 1;
+    { const t0 = st.tod; st.tod = (st.tod + dt / DAY) % 1; if (st.tod < t0) st.jour = (st.jour || 0) + 1; }
+    vivant(dt);
     const m = st.meteo; m.t -= dt;
     if (m.t <= 0) {
       const r = Math.random();
@@ -1681,7 +1747,7 @@ const World = (() => {
       const n = m.type === 'orage' ? 2 : 1;
       for (let k = 0; k < n; k++) {
         const x = Math.floor((st.cam.x - 300 + Math.random() * (VW + 600)) / CS);
-        if (x > 0 && x < Sim.W - 1 && Sim.get(x, 1) === M.AIR) Sim.set(x, 1, M.EAU);
+        if (x > 0 && x < Sim.W - 1 && Sim.get(x, 1) === M.AIR && (saison() !== 'hiver' || Math.random() < 0.35)) Sim.set(x, 1, saison() === 'hiver' ? M.NEIGE : M.EAU);
       }
     }
     if (m.type === 'orage') {
@@ -1759,6 +1825,7 @@ const World = (() => {
       if (c.carried) { c.sta.burn = 0; continue; }
       for (const k of ['burn', 'stun', 'sleep', 'wet', 'glisse', 'lent', 'gele']) if (c.sta[k] > 0) c.sta[k] = Math.max(0, c.sta[k] - dt);
       if (c.morphT > 0) { c.morphT -= dt; if (c.morphT <= 0) finMorph(c); }
+      if (c.bebe > 0 && c.hp > 0) { c.bebe -= dt; const k = c.bebe > 0 ? 0.55 + 0.45 * (1 - c.bebe / 90) : 1; const bas = c.y + c.h, mil = c.x + c.w / 2; c.w = Math.round(c.wPlein * k); c.h = Math.round(c.hPlein * k); c.y = bas - c.h; c.x = mil - c.w / 2; }
       if (c.curieux) { c.curieux.t -= dt; if (c.curieux.t <= 0) c.curieux = null; }
       if (c.ench) { c.ench.t -= dt; c.ench.tick += dt; if (c.ench.t <= 0) c.ench = null; else { doContinuous(c.ench.spec, c.x + c.w / 2, c.y + c.h / 2, 50 * (c.ench.spec.prm.size || 1), dt, { noPlayer: true, noField: true }); if (Math.random() < 0.3) part(c.x + Math.random() * c.w, c.y + Math.random() * c.h, c.ench.spec.color, 1, 20, 0.5, 2, -40, 'spark'); } }
       if (c.t === 'familier') { updateFamilier(c, dt, p); continue; }
@@ -2310,6 +2377,7 @@ const World = (() => {
     drawRain(ctx);
     drawDark(ctx, camI);
     FX.vignette(ctx, VW, VH);
+    { const S = saison(); U.txt(ctx, { printemps: '❀ Printemps', ete: '☀ Été', automne: '❧ Automne', hiver: '❄ Hiver' }[S] + ' · jour ' + ((st.jour || 0) + 1), VW - 20, 62, 15, 'right', 'rgba(31,26,22,0.7)', 'IM Fell English', 'italic'); }
     if (st.flash > 0) { ctx.fillStyle = 'rgba(255,250,220,' + (st.flash * 4) + ')'; ctx.fillRect(0, 0, VW, VH); }
     // réticule
     ctx.save();
@@ -2394,6 +2462,7 @@ const World = (() => {
   }
   function drawRain(ctx) {
     if (st.meteo.type !== 'pluie' && st.meteo.type !== 'orage') return;
+    if (saison() === 'hiver') { ctx.save(); ctx.fillStyle = '#ffffff'; ctx.strokeStyle = 'rgba(31,26,22,0.25)'; ctx.lineWidth = 0.6; const n = st.meteo.type === 'orage' ? 140 : 90; for (let i = 0; i < n; i++) { const x = (U.hash2(i, 9) * VW + Math.sin(time * 0.8 + i) * 30 + time * 40) % VW, y = (U.hash2(i, 4) * VH + time * 70 * (0.6 + U.hash2(i, 6) * 0.6)) % VH; const r = 1.4 + U.hash2(i, 3) * 1.6; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); ctx.stroke(); } ctx.restore(); return; }
     ctx.save(); ctx.strokeStyle = '#3b6fb6'; ctx.globalAlpha = 0.35; ctx.lineWidth = 1;
     const n = st.meteo.type === 'orage' ? 120 : 70;
     ctx.beginPath();
@@ -2835,5 +2904,5 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig };
+  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison };
 })();
