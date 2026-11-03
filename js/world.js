@@ -7,7 +7,7 @@ const World = (() => {
   const CS = Sim.CS, M = Sim.M, P = Sim.P;
   let L = null, st = null, game = null, darkCv = null, time = 0;
   const DAY = 420; // secondes par jour
-  const LIQ_ING = { [M.EAU]: 'eau', [M.HUILE]: 'huile', [M.ACIDE]: 'acide', [M.LAVE]: 'lave', [M.SEVE]: 'seve' };
+  const LIQ_ING = { [M.EAU]: 'eau', [M.SAUMURE]: 'eau', [M.HUILE]: 'huile', [M.ACIDE]: 'acide', [M.LAVE]: 'lave', [M.SEVE]: 'seve', [M.MIEL]: 'miel' };
   const MainSim = Sim;
   const colorOf = (core) => (DATA.CORES[core] || DATA.PSEUDO[core] || { couleur: '#8a7a5a' }).couleur;
   const FLAM = (m) => m === M.BOIS || m === M.PLANTE || m === M.HERBE;
@@ -41,7 +41,7 @@ const World = (() => {
   function makePlayer(x, y) {
     return { x, y, w: 26, h: 50, vx: 0, vy: 0, face: 1, onGround: false, coyote: 0, jumpBuf: 0, anim: 0, canStep: true,
       hp: 10, hpMax: 10, ink: 40, inkMax: 40, inkRegen: 1.8, inv: 0, climbing: false, liq: 0,
-      sta: { wet: 0, stone: 0, invisible: 0, lowgrav: 0, jump: 0, small: 0, vision: 0, burning: 0, glide: 0, lumiere: 0, patins: 0, vitesse: 0, dissous: 0, vol: 0, branchies: 0, geant: 0, glisse: 0, hate: 0, lent: 0, armure: 0, hoquet: 0, glouglou: 0, boussole: 0, phenix: 0 },
+      sta: { wet: 0, stone: 0, invisible: 0, lowgrav: 0, jump: 0, small: 0, vision: 0, burning: 0, glide: 0, lumiere: 0, patins: 0, vitesse: 0, dissous: 0, vol: 0, branchies: 0, geant: 0, glisse: 0, hate: 0, lent: 0, armure: 0, hoquet: 0, glouglou: 0, boussole: 0, phenix: 0, regen: 0, garde: 0 },
       trap: null, selfTimer: null, carry: null, digT: 0 };
   }
   function makeObj(o) {
@@ -57,6 +57,7 @@ const World = (() => {
       case 'champignon': Object.assign(b, { w: 22, h: 26, pris: false }); break;
       case 'rune': Object.assign(b, { w: 40, h: 60, revele: 0, lu: false, cooldown: 0 }); break;
       case 'page': Object.assign(b, { w: 20, h: 24, page: o.page, lue: false }); break;
+      case 'ruche': Object.assign(b, { w: 22, h: 30, drip: 4, enfume: 0 }); break;
     }
     for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page']) if (o[k] !== undefined) b[k] = o[k];
     return b;
@@ -155,6 +156,14 @@ const World = (() => {
   function onSimEvent(kind, x, y) {
     if (!st) return;
     if (kind === 'brule') { evt('brule'); return; }
+    if (kind === 'explosion') {
+      const R = 90;
+      const souffle = (b, dmg) => { const bx = b.x + b.w / 2, by = b.y + b.h / 2; const dx = bx - x, dy = by - y; const d = Math.hypot(dx, dy) || 1; if (d > R) return false; const f = 1 - d / R; b.vx += dx / d * 700 * f; b.vy += dy / d * 600 * f - 200 * f; return f; };
+      for (const c of st.crs) if (c.hp > 0) { const f = souffle(c); if (f) { hurt(c, 3 * f); c.sta.stun = Math.max(c.sta.stun, 1.5); } }
+      for (const o of st.objs) if (o.dyn && !o.carried && !o.mort) { const f = souffle(o); if (f && o.t === 'caisse') { o.hp -= 2 * f; if (o.hp <= 0) o.mort = true; } if (f && o.t === 'rocher' && f > 0.4) { o.mort = true; dropPickup('poussiere', o.x + o.w / 2, o.y); } }
+      const p = st.p; const f = souffle(p); if (f && p.sta.stone <= 0 && p.sta.armure <= 0) { p.hp -= 3 * f; msg('BOUM !', 'warn'); }
+      if (inView(x, y)) { st.shake = 0.5; st.flash = 0.06; Son.sfx('burst', 'feu'); part(x, y, '#e8842a', 24, 220, 0.7, 4, 200); }
+    }
     if (!inView(x, y)) return;
     const t = st.obsT[kind] || -9;
     if (time - t < (kind === 'incendie' ? 3 : 0.8)) return;
@@ -218,6 +227,8 @@ const World = (() => {
           else if ((m === M.BOIS || m === M.PLANTE || m === M.HERBE) && Sim.aux[i] > 0) { Sim.aux[i] = 0; Sim.touch(i); }
           else if (m === M.LAVE) { if (r < pr) Sim.set(x, y, M.OBSIDIENNE); }
           else if (m === M.ACIDE) { if (r < pr * 0.4) Sim.set(x, y, M.EAU); }
+          else if (m === M.TERRE && burst && r < pr * 0.12) Sim.set(x, y, M.BOUE, 160);
+          else if (m === M.POUDRE && r < pr * 0.6) Sim.set(x, y, M.CENDRE);
         });
         break;
       case 'vent':
@@ -625,7 +636,7 @@ const World = (() => {
       case 'feu|froid': Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (m === M.PIERRE && Math.random() < 0.5) Sim.set(cx, cy, M.SABLE); else if (m === M.AIR && Math.random() < 0.3) Sim.set(cx, cy, M.VAPEUR, 40); }); break;
       case 'acide|feu': Sim.forRadius(x, y, r * 1.3, (cx, cy, i, m) => { if (m === M.AIR && Math.random() < 0.5) Sim.set(cx, cy, M.FUMEE, 120); }); for (const c of st.crs) if (c.hp > 0 && dist(x, y, c.x, c.y) < r * 1.5) c.sta.sleep = Math.max(c.sta.sleep, 8 * dur); break;
       case 'ombre|vie': { const g = groundBelow(x, y); if (g != null) { for (let k = 0; k < 2; k++) st.objs.push(makeObj({ t: 'champignon', x: x - 20 + k * 30, y: g - 26 })); } break; }
-      case 'eau|terre': Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (m === M.TERRE && Math.random() < 0.8) Sim.set(cx, cy, M.SABLE); }); break;
+      case 'eau|terre': Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (m === M.TERRE && Math.random() < 0.8) Sim.set(cx, cy, M.BOUE, 200); }); break;
       case 'feu|lumiere': st.sp.push({ k: 'field', core: 'lumiere', x, y, r: r * 3, life: 12 * dur, max: 12 * dur, prm, faible: true }); break;
       case 'foudre|metal': Sim.forRadius(x, y, r * 2, (cx, cy, i, m) => { if (m === M.METAL) { Sim.elec[i] = 250; Sim.touch(i); } }); break;
       case 'temps|vie': for (let k = 0; k < 4; k++) gridEffect('vie', x, y, r * 1.5, prm, true, 1); for (let k = 0; k < 3; k++) gridEffect('temps', x, y, r * 1.5, prm, true, 1); break;
@@ -637,6 +648,7 @@ const World = (() => {
   // ---------- Lancer un sceau ----------
   function castSeal(seal, aim, gratuit) {
     const p = st.p;
+    if (p.geste) return false;
     const cost = gratuit ? 0 : Seal.cost(seal);
     if (p.ink < cost) { msg('Plus assez d\'encre (' + Math.floor(p.ink) + '/' + cost + ').', 'warn'); Son.sfx('fail'); return false; }
     p.ink -= cost;
@@ -645,7 +657,7 @@ const World = (() => {
     if (!seal.core) { part(pcx, pcy - 20, '#777', 14, 50, 1, 4); Son.sfx('fizzle'); msg('Pfft. Un pétard de fumée grise. Il manque un glyphe d\'effet.'); p.ink = Math.min(p.inkMax, p.ink + cost - 1); return true; }
     if (!seal.shape) { applyEffect(seal.core, pcx, pcy, 45, { ...Seal.params(seal), power: 0.5 }, 'burst', { noPlayer: seal.core !== 'feu' }); msg('Sans forme, l\'effet se répand mollement autour de toi.'); return true; }
     if (seal.core === 'terre' || seal.core2 === 'terre') evt('terre');
-    launch(seal, { x: pcx, y: pcy }, aim, { depth: 0, player: true });
+    p.geste = { seal, aim: { x: aim.x, y: aim.y }, t: 0.2, max: 0.2, color: colorOf(seal.core) };
     return true;
   }
   // Lance un sceau depuis un point (joueur ou sous-sceau)
@@ -827,6 +839,9 @@ const World = (() => {
         case 'respiration': p.sta.branchies = 60 * F; msg('Des branchies ! L\'eau devient ton élément.'); break;
         case 'geant': p.sta.geant = 25 * F; p.sta.small = 0; msg('Tu grandis, tu grandis...'); break;
         case 'hoquet': p.sta.hoquet = 30 * F; msg('Hic. Hic. De la fumée ?'); break;
+        case 'baume_mousse': p.sta.regen = 40 * F; msg('Une chaleur verte te parcourt.'); break;
+        case 'hydromel': p.hp = Math.min(p.hpMax, p.hp + 4 * F); p.sta.regen = 40 * F; msg('Doux et sucré.'); break;
+        case 'sel_garde': p.sta.garde = 45 * F; p.sta.burning = 0; msg('Une croûte de sel te protège des flammes.'); break;
         case 'encre_eternelle': game.bonusPermanent('encre', 6 * F); p.ink = p.inkMax; msg('L\'encre s\'approfondit en toi, pour toujours.'); break;
         case 'vitalite': game.bonusPermanent('vie', 2 * F); p.hp = p.hpMax; msg('Ton cœur bat plus fort, pour toujours.'); break;
         case 'sablier': p.sta.hate = 30 * F; msg('Les secondes s\'étirent autour de toi.'); break;
@@ -868,6 +883,7 @@ const World = (() => {
       case 'orage': applyEffect('foudre', x, y, 80, prm, 'burst'); break;
       case 'vitriol': applyEffect('acide', x, y, 60, { ...prm, size: 1.6 }, 'burst'); break;
       case 'gregeois': spawnLiquid(M.HUILE, x, y, 40); setTimeout(() => {}, 0); Sim.forRadius(x, y - 10, 30, (cx, cy, i, q) => { if (q === M.AIR && Math.random() < 0.3) Sim.set(cx, cy, M.FEU, 30); }); applyEffect('feu', x, y, 50, { ...prm, power: 1 }, 'burst', { noGrid: true }); break;
+      case 'poudre': spawnLiquid(M.POUDRE, x, y, 34); msg('Un tas de poudre. Recule avant d\'y mettre le feu.'); break;
       case 'glu': spawnLiquid(M.SEVE, x, y, 30); msg('Une flaque de sève. Qui va marcher dedans ?'); break;
       case 'petard': Sim.forRadius(x, y, 60, (cx, cy, i, q) => { if (q === M.AIR && Math.random() < 0.5) Sim.set(cx, cy, M.FUMEE, 90); }); Son.sfx('fizzle'); for (const c of st.crs) if (U.circleRect(x, y, 160, c)) { c.sta.sleep = 0; c.curieux = { x, y, t: 6 }; } msg('Pof. Un bruit ridicule, et beaucoup de fumée.'); break;
       case 'savon': { const ps = st.p; if (U.circleRect(x, y, 120, ps)) ps.sta.glisse = 15; for (const c of st.crs) if (U.circleRect(x, y, 120, c)) c.sta.glisse = 15; part(x, y, '#ffffff', 30, 90, 1.2, 4, -80); st.sp.push({ k: 'ring', core: 'eau', x, y, r: 120, life: 0.5, max: 0.5, color: '#e8e0c0' }); msg('Tout glisse ! Même toi.'); break; }
@@ -888,6 +904,7 @@ const World = (() => {
     if (o.t === 'graine') return o.stage === 1 && o.racine && o.hauteur >= o.hMax;
     if (o.t === 'rune') return o.revele >= 1 && o.cooldown <= 0;
     if (o.t === 'page') return !o.lue;
+    if (o.t === 'ruche') return true;
     return false;
   }
   function findInteraction() {
@@ -908,6 +925,7 @@ const World = (() => {
       case 'graine': return 'Cueillir une racine';
       case 'rune': return 'Lire la rune';
       case 'page': return 'Lire la page déchirée';
+      case 'ruche': return it.o.enfume > 0 ? 'Prendre du miel (les abeilles dorment)' : 'Prendre du miel (attention aux abeilles)';
       case 'liquide': return 'Remplir une fiole (' + P[it.liq.m].nom + ')';
       case 'poser': return 'Poser (clic droit : lancer)';
       case 'porter': return 'Porter';
@@ -922,6 +940,7 @@ const World = (() => {
       case 'porte': Son.sfx('door'); if (p.carry && p.carry.hp !== undefined && game.progress.labo && game.progress.labo.terrarium) { const c = p.carry; p.carry = null; c.carried = false; c.hp = 0; c.respawn = 1e9; c.mort = true; game.terrariumAjoute(c.t); } game.goLab(); break;
       case 'champignon': it.o.pris = true; it.o.mort = true; game.gainIngredient('champignon'); part(it.o.x + 11, it.o.y, '#5a4a7d', 8, 40); break;
       case 'graine': it.o.racine = false; it.o.regrow = 0; game.gainIngredient('racine'); part(it.o.x + 10, it.o.y - it.o.hauteur * CS, '#5c8f3e', 8, 40, 0.6, 3, 0, 'feuille'); break;
+      case 'ruche': if (it.o.enfume > 0) { game.gainIngredient('miel'); part(it.o.x + 11, it.o.y + 20, '#d8a03a', 8, 40); } else { if (p.sta.stone <= 0 && p.sta.armure <= 0) p.hp -= 1.5; p.vx = -p.face * 300; p.vy = -200; Son.sfx('hurt'); msg('Les abeilles n\'apprécient pas. Enfume-les d\'abord.', 'warn'); } break;
       case 'page': it.o.lue = true; game.lirePage(it.o.page); part(it.o.x + 10, it.o.y, '#efe3c4', 10, 50, 0.8, 3, -40); break;
       case 'rune': { const o = it.o; o.cooldown = 30; if (!o.lu) { o.lu = true; evt('rune'); msg('Tu déchiffres la rune. Elle te confie une lueur captive.'); } game.gainIngredient('lueur'); part(o.x + 20, o.y + 30, '#d8a63a', 12, 60, 0.9, 2, 0, 'spark'); break; }
       case 'liquide': {
@@ -958,6 +977,9 @@ const World = (() => {
       if (m === M.NEIGE && r < 0.12) got.push('flocon');
       else if (m === M.CRISTAL && r < 0.6) got.push('eclat');
       else if ((m === M.HERBE || m === M.PLANTE) && r < 0.12) got.push('rosee');
+      else if (m === M.MOUSSE && r < 0.35) got.push('mousse');
+      else if (m === M.SEL && r < 0.3) got.push('sel');
+      else if (m === M.POUDRE && r < 0.4) got.push('poudre');
       part((x + 0.5) * CS, (y + 0.5) * CS, P[m].color, 1, 40, 0.5, 2, 300);
     });
     for (const g of got) game.gainIngredient(g);
@@ -999,9 +1021,12 @@ const World = (() => {
     if (p.sta.vol > 0) { p.ink -= dt * 1.2; if (p.ink <= 0) { p.ink = 0; p.sta.vol = 0; msg('Plus d\'encre : tu retombes.', 'warn'); } if (Math.random() < 0.3) part(p.x + p.w / 2, p.y + p.h, '#6c5ab8', 1, 30, 0.6, 2, 60, 'spark'); }
     // liquide où l'on se trouve
     p.liq = liquidOf(p);
-    const inWater = p.liq === M.EAU || p.liq === M.HUILE || p.liq === M.ACIDE || p.liq === M.SEVE;
-    if (p.liq === M.EAU) { p.sta.wet = 8; p.sta.burning = 0; }
-    if (p.liq === M.LAVE && !p.sta.stone) { p.hp -= dt * 3; p.sta.burning = 2; if (Math.random() < 0.5) part(p.x + p.w / 2, p.y + p.h, '#e0622b', 2, 60, 0.5, 3, -200); }
+    const inWater = p.liq === M.EAU || p.liq === M.SAUMURE || p.liq === M.HUILE || p.liq === M.ACIDE || p.liq === M.SEVE || p.liq === M.MIEL || p.liq === M.BOUE;
+    if (p.liq === M.MIEL) p.hp = Math.min(p.hpMax, p.hp + dt * 0.4);
+    if (p.sta.regen > 0) p.hp = Math.min(p.hpMax, p.hp + dt * 0.35);
+    if (p.liq === M.EAU || p.liq === M.SAUMURE) { p.sta.wet = 8; p.sta.burning = 0; }
+    if (p.sta.garde > 0) p.sta.burning = 0;
+    if (p.liq === M.LAVE && !p.sta.stone) { p.hp -= dt * (p.sta.garde > 0 ? 0.4 : 3); p.sta.burning = 2; if (Math.random() < 0.5) part(p.x + p.w / 2, p.y + p.h, '#e0622b', 2, 60, 0.5, 3, -200); }
     if (p.liq === M.ACIDE && !p.sta.stone && !p.sta.dissous) { p.hp -= dt * 1.2; if (Math.random() < 0.3) part(p.x + p.w / 2, p.y + p.h * 0.6, '#8fbf2a', 1, 40, 0.5, 3, -100); }
     if (p.liq === M.EAU && p.sta.branchies <= 0 && Sim.matAt(p.x + p.w / 2, p.y + 4) === M.EAU) { p.air = (p.air || 8) - dt; if (p.air <= 0) { p.hp -= dt * 1.5; if (Math.random() < 0.05) msg('Tu manques d\'air !', 'warn'); } } else p.air = 8;
     // patins de givre : geler l'eau sous les pieds
@@ -1010,7 +1035,7 @@ const World = (() => {
     if (p.sta.dissous > 0) { Sim.forRadius(p.x + p.w / 2, p.y + p.h / 2, p.h * 0.7, (x, y, i, m) => { const q = P[m]; if (q.corrode > 0 && !q.liquid && Math.random() < q.corrode * 0.6) Sim.set(x, y, Math.random() < 0.5 ? M.FUMEE : M.AIR, 15); }); }
 
     // --- déplacement ---
-    const speedMul = (p.sta.vitesse > 0 || p.sta.hate > 0 ? 1.7 : 1) * (p.sta.lent > 0 ? 0.4 : 1) * (p.sta.small > 0 ? 0.8 : 1) * (p.liq === M.SEVE ? 0.25 : 1);
+    const speedMul = (p.sta.vitesse > 0 || p.sta.hate > 0 ? 1.7 : 1) * (p.sta.lent > 0 ? 0.4 : 1) * (p.sta.small > 0 ? 0.8 : 1) * (p.liq === M.SEVE || p.liq === M.MIEL ? 0.25 : p.liq === M.BOUE ? 0.4 : 1);
     if (p.sta.hate > 0) { p.ink = Math.min(p.inkMax, p.ink + dt * p.inkRegen * 2); st.tod = (st.tod + dt / DAY * 3) % 1; }
     const speed = (inWater ? (p.sta.branchies > 0 ? 220 : 130) : 250) * speedMul;
     const dirX = ((inp.right ? 1 : 0) - (inp.left ? 1 : 0)) * (p.sta.boussole > 0 ? -1 : 1);
@@ -1078,6 +1103,7 @@ const World = (() => {
     if (dirX !== 0) for (const o of st.objs) if (o.t === 'caisse' && !o.mort && !o.carried) { const probe = { x: p.x + dirX * 2, y: p.y, w: p.w, h: p.h }; if (U.rectsOverlap(probe, o)) o.vx = dirX * (p.sta.geant > 0 ? 160 : 70); }
     if (p.y > L.h + 50) { msg('Tu tombes dans l\'encre noire... et te réveilles devant ta porte.'); respawn(); }
     if (p.onGround && Math.abs(p.vx) > 30 && Math.random() < dt * 6) Son.sfx('step', 'terre');
+    if (p.geste) { p.geste.t -= dt; if (p.geste.t <= 0) { const g = p.geste; p.geste = null; launch(g.seal, { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, g.aim, { depth: 0, player: true }); } }
     if (p.selfTimer) { p.selfTimer.t -= dt; if (p.selfTimer.t <= 0) { const q = p.selfTimer; p.selfTimer = null; selfCast(q.spec, q.aim); } }
     if (p.hp <= 0 && p.sta.phenix > 0) { p.sta.phenix = 0; p.hp = p.hpMax; p.inv = 2; p.sta.burning = 0; part(p.x + p.w / 2, p.y + p.h / 2, '#e8842a', 30, 140, 1, 4, -120); Son.sfx('unlock'); msg('Tu te relèves dans un battement d\'ailes de feu.'); }
     if (p.hp <= 0) { msg('Tu t\'évanouis... et te réveilles devant ta porte, un peu honteux(se).', 'warn'); Son.sfx('hurt'); respawn(); }
@@ -1227,6 +1253,14 @@ const World = (() => {
           if (o.stage === 1 && !o.racine) { o.regrow += dt; if (o.regrow > 30) { o.racine = true; o.regrow = 0; } }
           if (o.stage === 1 && o.hauteur >= 4 && Sim.get(o.cx, o.cy - 1) !== M.PLANTE && Sim.get(o.cx, o.cy - 2) !== M.PLANTE) { o.stage = 0; o.hauteur = 0; msg('La vigne a disparu. La graine attend de nouveau.'); }
           break;
+        case 'ruche': {
+          o.drip -= dt; if (o.enfume > 0) o.enfume -= dt;
+          if (Sim.rectHas({ x: o.x - 20, y: o.y - 20, w: o.w + 40, h: o.h + 40 }, (m) => m === M.FUMEE)) o.enfume = 12;
+          if (Sim.rectHas(o, (m) => m === M.FEU)) { o.mort = true; part(o.x + 11, o.y + 15, '#d8a03a', 14, 60, 0.8, 3, 200); spawnLiquid(M.MIEL, o.x + 11, o.y + o.h, 12); msg('La ruche tombe en flammes. Les abeilles ne te le pardonneront pas.'); break; }
+          if (o.drip <= 0) { o.drip = 7 + Math.random() * 6; const cx = Math.floor((o.x + o.w / 2) / CS), cy = Math.floor((o.y + o.h) / CS) + 1; if (Sim.get(cx, cy) === M.AIR) Sim.set(cx, cy, M.MIEL); }
+          if (Math.random() < 0.3 && o.enfume <= 0) part(o.x + o.w / 2 + (Math.random() - 0.5) * 40, o.y + o.h / 2 + (Math.random() - 0.5) * 30, '#1f1a16', 1, 20, 0.4, 1.2, 0, 'dot');
+          break;
+        }
         case 'rune': if (st.p.sta.vision > 0 && dist(o.x + 20, o.y + 30, st.p.x, st.p.y) < 500) o.revele = Math.min(1, o.revele + dt); if (o.cooldown > 0) o.cooldown -= dt; break;
       }
     }
@@ -1573,11 +1607,30 @@ const World = (() => {
     ctx.setLineDash([3, 5]); ctx.globalAlpha = 0.35;
     U.inkLine(ctx, p.x + p.w / 2 - camI.x, p.y + p.h * 0.45 - camI.y, mx, my, 2, 0.5);
     if (inp.dig) { ctx.setLineDash([]); ctx.globalAlpha = 0.7; ctx.strokeStyle = '#8a6b2f'; U.inkCircle(ctx, mx, my, 16, 6, 1); }
+    // trajectoire en pointillés courts
+    { const tr = trajectoire(selected, mx + camI.x, my + camI.y); if (tr) { ctx.setLineDash([]); ctx.fillStyle = col; for (let i = 0; i < tr.length; i++) { ctx.globalAlpha = 0.75 * (1 - i / tr.length); ctx.beginPath(); ctx.arc(tr[i][0] - camI.x, tr[i][1] - camI.y, 2.6, 0, TAU); ctx.fill(); } } }
     ctx.restore();
     for (const o of st.objs) if (o.t === 'pancarte' && dist(o.x, o.y, p.x, p.y) < 120) drawBubble(ctx, o.x + o.w / 2 - camI.x, o.y - 20 - camI.y, o.texte);
     const ni = labelInteraction(findInteraction());
     if (ni) drawBubble(ctx, p.x + p.w / 2 - camI.x, p.y - 26 - camI.y, '[E] ' + ni);
     ctx.restore();
+  }
+  function trajectoire(sel, ax, ay) {
+    if (!sel) return null;
+    let v = 0, grav = 0, dvy = 0;
+    if (sel.type === 'seal') {
+      const s = sel.seal; if (!s.core || (s.shape !== 'projectile' && s.shape !== 'chaine')) return null;
+      const prm = Seal.params(s); if (prm.orbite) return null;
+      v = (s.core === 'foudre' ? 800 : 520) * prm.speed;
+      grav = ['lumiere', 'vent', 'ombre', 'foudre', 'gravite', 'son', 'esprit', 'temps'].includes(s.core) ? 40 : 420 / prm.speed;
+    } else if (sel.type === 'potion') { if (DATA.POTIONS[sel.id].usage !== 'lancer') return null; v = 460; grav = 700; dvy = -80; }
+    else if (sel.type === 'liquide') { v = 440; grav = 700; dvy = -80; }
+    else if (sel.type === 'parchemin') { const q = game.inv.parchemins[sel.nom]; return q ? trajectoire({ type: 'seal', seal: q.seal }, ax, ay) : null; }
+    else return null;
+    const p = st.p; let x = p.x + p.w / 2, y = p.y + p.h * 0.45; let dx = ax - x, dy = ay - y; const d = Math.hypot(dx, dy) || 1;
+    let vx = dx / d * v, vy = dy / d * v + dvy; const pts = [];
+    for (let i = 0; i < 9; i++) { for (let k = 0; k < 3; k++) { const h = 0.014; vy += grav * h; x += vx * h; y += vy * h; } if (Sim.solidAt(x, y)) break; if (i > 0) pts.push([x, y]); }
+    return pts;
   }
   function drawBubble(ctx, x, y, text) {
     ctx.save();
@@ -1739,6 +1792,14 @@ const World = (() => {
         if (Math.random() < 0.05) part(cx, o.y, '#5a4a7d', 1, 15, 0.8, 2, -20);
         break;
       }
+      case 'ruche': {
+        U.inkLine(ctx, cx, o.y - 10, cx, o.y, o.seed, 0.4);
+        ctx.fillStyle = '#d8a03a';
+        for (let k = 0; k < 4; k++) { const ww = o.w * (0.6 + 0.4 * Math.sin((k + 0.5) / 4 * Math.PI)); ctx.beginPath(); ctx.ellipse(cx, o.y + 4 + k * 7, ww / 2, 4.5, 0, 0, TAU); ctx.fill(); ctx.stroke(); }
+        ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(cx, o.y + 22, 2.5, 0, TAU); ctx.fill();
+        if (o.enfume > 0) U.txt(ctx, 'z', cx + 14, o.y, 12, 'left', '#5a4a7d', 'IM Fell English', 'italic');
+        break;
+      }
       case 'page': {
         if (o.lue) break;
         const fl = Math.sin(time * 3 + o.seed) * 3;
@@ -1876,6 +1937,15 @@ const World = (() => {
     } else {
       if (p.pg && p.pg.enclume) { ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = '#4a4a55'; ctx.beginPath(); ctx.ellipse(p.x + p.w / 2, p.y + p.h, p.w * 0.9, 4, 0, 0, TAU); ctx.fill(); ctx.restore(); }
       drawApprenti(ctx, p.x + p.w / 2, p.y + p.h, p.h, game.look, p.face, p.anim, p.sta, moving);
+    }
+    if (p.geste) {
+      const g = p.geste, k = 1 - g.t / g.max; const aim = g.aim;
+      const cx = p.x + p.w / 2, cy = p.y + p.h * 0.45; let dx = aim.x - cx, dy = aim.y - cy; const d = Math.hypot(dx, dy) || 1;
+      const gx = cx + dx / d * 30, gy = cy + dy / d * 30;
+      ctx.save(); ctx.globalAlpha = 0.4 + k * 0.6; ctx.translate(gx, gy); ctx.rotate(k * 3);
+      Seal.drawMini(ctx, g.seal, 0, 0, 6 + k * 12, time);
+      ctx.strokeStyle = g.color; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 8 + k * 14, -Math.PI / 2, -Math.PI / 2 + TAU * k); ctx.stroke();
+      ctx.restore();
     }
     if (p.trap) { ctx.save(); ctx.strokeStyle = p.trap.spec.color; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(p.x + p.w / 2, p.y + p.h / 2, 30, time * 2, time * 2 + TAU); ctx.stroke(); ctx.restore(); }
     if (p.selfTimer) { ctx.save(); ctx.strokeStyle = p.selfTimer.spec.color; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x + p.w / 2, p.y + p.h / 2, 34, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - p.selfTimer.t / 2)); ctx.stroke(); ctx.restore(); }

@@ -119,7 +119,8 @@ const Gen = (() => {
     { const s = surf[766]; fillRect(762, s - 10, 10, 6, M.VERRE); fillRect(764, s - 9, 6, 4, M.AIR); }
     // ---- Désert (820-900) ----
     for (let x = 820; x < W - 1; x++) { const s = surf[x]; for (let y = s - 2; y < s + 8; y++) Sim.set(x, y, M.SABLE); if (Sim.get(x, s - 3) === M.HERBE) Sim.set(x, s - 3, M.AIR); if (Sim.get(x, s - 1) === M.HERBE) Sim.set(x, s - 1, M.AIR); }
-    blob(862, surf[862] - 2, 4, 3, M.CRISTAL, 0.3);
+    for (let x = 864; x < 892; x++) { const s0 = surfaceTop(x); for (let k = 0; k < 2; k++) if (Sim.get(x, s0 + k) === M.SABLE) Sim.set(x, s0 + k, M.SEL); }
+    blob(856, surf[856] - 2, 4, 3, M.CRISTAL, 0.3);
     blob(885, surf[885] - 1, 3, 2, M.CRISTAL, 0.3);
     // ---- Souterrains ----
     // A : grotte de la forêt, cristaux au plafond
@@ -140,6 +141,10 @@ const Gen = (() => {
     fillEllipse(650, 190, 36, 10, M.AIR); tunnel(560, 170, 616, 188, 3); tunnel(540, surf[540] + 3, 560, 170, 3);
     tunnel(684, 190, 760, 210, 3); fillEllipse(790, 212, 30, 12, M.AIR); for (let k = 0; k < 8; k++) blob(768 + Math.floor(R() * 44), 202 + Math.floor(R() * 3), 2, 2, M.CRISTAL, 0.4);
     tunnel(818, 210, 850, surf[850] + 4, 3);
+    // poche de poudre oubliée sous les ruines
+    fillEllipse(745, 226, 7, 3, M.AIR); fillEllipse(745, 228, 6, 2, M.POUDRE); tunnel(745, 222, 742, 210, 2);
+    // mousse sur les pierres humides du lac souterrain
+    for (let x = 240; x < 312; x++) for (let y = 196; y < 222; y++) if (Sim.get(x, y) === M.PIERRE && Sim.get(x, y - 1) === M.AIR && U.hash2(x, y) < 0.35) Sim.set(x, y - 1, M.MOUSSE);
     // ---- Îles volantes ----
     island(110, 48, 15, 6);
     island(300, 36, 22, 8); fillEllipse(300, 30, 7, 3, M.AIR); fillEllipse(300, 30, 6, 2, M.EAU); Sim.set(300, 33, M.AIR); Sim.set(300, 34, M.AIR);
@@ -169,6 +174,7 @@ const Gen = (() => {
     ];
     // objets placés dans les grottes / îles (positions explicites)
     const at = (t, x, y, extra = {}) => Object.assign({ t, x: px(x), y: py(y) }, extra);
+    objs.push(at('ruche', 137, surfaceTop(137) - 14), at('ruche', 181.5, surfaceTop(182) - 11), at('ruche', 660, surfaceTop(661) - 12), o('pancarte', 738, 70, { texte: 'Sous les ruines dort une vieille réserve de poudre. Pas de torche !' }));
     objs.push(at('champignon', 134, 189 - 4.5), at('champignon', 158, 189 - 4.5), at('champignon', 172, 189 - 4.5), at('rune', 150, 171), at('torche', 270, 205 - 13.3));
     objs.push(at('champignon', 640, 198 - 4.5), at('champignon', 660, 198 - 4.5), at('champignon', 785, 221 - 4.5), at('champignon', 800, 221 - 4.5), at('rune', 790, 203));
     objs.push(at('graine', 104, 41 - 1.7), at('torche', 522, 50 - 13.3), at('rune', 515, 44), at('champignon', 730, 37 - 4.5), at('graine', 736, 37 - 1.7));

@@ -15,7 +15,7 @@ function createSim() {
   let gzones = [];  // champs de gravité locaux : {x, y, r (px), gx, gy, mag}
   let feuMul = 1;   // option : vitesse de propagation du feu
 
-  const M = { AIR: 0, PIERRE: 1, TERRE: 2, SABLE: 3, BOIS: 4, PLANTE: 5, HERBE: 6, EAU: 7, HUILE: 8, ACIDE: 9, LAVE: 10, GLACE: 11, NEIGE: 12, VAPEUR: 13, FUMEE: 14, FEU: 15, SEVE: 16, VERRE: 17, METAL: 18, OBSIDIENNE: 19, CENDRE: 20, CRISTAL: 21 };
+  const M = { AIR: 0, PIERRE: 1, TERRE: 2, SABLE: 3, BOIS: 4, PLANTE: 5, HERBE: 6, EAU: 7, HUILE: 8, ACIDE: 9, LAVE: 10, GLACE: 11, NEIGE: 12, VAPEUR: 13, FUMEE: 14, FEU: 15, SEVE: 16, VERRE: 17, METAL: 18, OBSIDIENNE: 19, CENDRE: 20, CRISTAL: 21, POUDRE: 22, MOUSSE: 23, MIEL: 24, SEL: 25, SAUMURE: 26, BOUE: 27 };
   const P = [];
   const def = (id, p) => { P[id] = Object.assign({ solid: 0, powder: 0, liquid: 0, gas: 0, pass: 0, climb: 0, dig: 0, flam: 0, burn: 0, corrode: 0, dens: 0, flow: 0, hot: 0, light: 0, cond: 0, hatch: 0, alpha: 0.6 }, p); };
   def(M.AIR, { nom: 'air' });
@@ -40,6 +40,12 @@ function createSim() {
   def(M.OBSIDIENNE, { nom: 'obsidienne', solid: 1, color: '#2d2830', hatch: 1, alpha: 0.85 });
   def(M.CENDRE, { nom: 'cendre', solid: 1, powder: 1, dig: 1, color: '#7a736b', corrode: 0.3, alpha: 0.7 });
   def(M.CRISTAL, { nom: 'cristal', solid: 1, color: '#b58fd8', light: 1, dig: 1, alpha: 0.6 });
+  def(M.POUDRE, { nom: 'poudre', solid: 1, powder: 1, dig: 1, color: '#3a3430', corrode: 0.2, alpha: 0.85 });
+  def(M.MOUSSE, { nom: 'mousse', pass: 1, dig: 1, color: '#7a9a4a', flam: 0.02, burn: 30, corrode: 0.2, alpha: 0.75 });
+  def(M.MIEL, { nom: 'miel', liquid: 1, dens: 4, flow: 0, color: '#d8a03a', alpha: 0.8 });
+  def(M.SEL, { nom: 'sel', solid: 1, powder: 1, dig: 1, color: '#f2efe6', corrode: 0.3, alpha: 0.9 });
+  def(M.SAUMURE, { nom: 'saumure', liquid: 1, dens: 2.5, flow: 5, color: '#5f8fb8', cond: 1, alpha: 0.55 });
+  def(M.BOUE, { nom: 'boue', liquid: 1, dens: 4.5, flow: 1, color: '#6b5330', alpha: 0.85 });
   const FLAMMABLE_SOLID = (m) => m === M.BOIS || m === M.PLANTE || m === M.HERBE;
   // gravité locale d'une cellule : [dx, dy, mag] ; mag 0 = apesanteur
   function gravAt(x, y) {
@@ -84,6 +90,7 @@ function createSim() {
   // ---------- Pas de simulation ----------
   function step(camCells) {
     frame++;
+    explosions = 0;
     const f = frame & 255;
     // réveils aléatoires (processus lents loin de l'action)
     for (let k = 0; k < 6; k++) { const c = (rnd() * CW * CHn) | 0; if (chunkActive[c] <= frame) chunkActive[c] = frame + 1; }
@@ -122,6 +129,8 @@ function createSim() {
 
   function stepPowder(x, y, i, m, p) {
     if (m === M.NEIGE && hotNear(i)) { setI(i, M.EAU); evt('fonte', x, y); return; }
+    if (m === M.POUDRE && (hotNear(i) || elec[i] > 0)) { explode(x, y, 5); return; }
+    if (m === M.SEL) { const d = [1, -1, W, -W][(rnd() * 4) | 0]; const j = i + d; if (j >= 0 && j < W * H && mat[j] === M.EAU && rnd() < 0.08) { setI(j, M.SAUMURE); setI(i, rnd() < 0.5 ? M.SAUMURE : M.AIR); evt('sel', x, y); return; } if (j >= 0 && j < W * H && (mat[j] === M.GLACE || mat[j] === M.NEIGE) && rnd() < 0.1) { setI(j, M.SAUMURE); evt('fonte', x, y); if (rnd() < 0.3) { setI(i, M.SAUMURE); return; } } }
     const [gx, gy, mag] = gzones.length ? gravAt(x, y) : [0, 1, 1];
     if (mag === 0) { if (rnd() < 0.15) { const d = [[1, 0], [-1, 0], [0, 1], [0, -1]][(rnd() * 4) | 0]; const nx = x + d[0], ny = y + d[1]; if (cellIn(nx, ny) && canEnter(ny * W + nx, 9)) swap(i, ny * W + nx); } return; }
     const bx = x + gx, by = y + gy; if (!cellIn(bx, by)) return;
@@ -135,6 +144,19 @@ function createSim() {
       if (!P[mat[ny * W + nx]].solid && canEnter(dy2 * W + dx2, 9)) { swap(i, dy2 * W + dx2); return; }
     }
   }
+  let explosions = 0;
+  function explode(cx, cy, r) {
+    if (explosions > 6) return; explosions++;
+    for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) {
+      if (!cellIn(x, y)) continue; const d2 = (x - cx) * (x - cx) + (y - cy) * (y - cy); if (d2 > r * r) continue;
+      const j = y * W + x, m = mat[j];
+      if (m === M.OBSIDIENNE || m === M.METAL) continue;
+      if (m === M.POUDRE) { setI(j, M.FEU, 6); continue; }
+      if (m !== M.AIR && rnd() < (P[m].liquid ? 0.4 : 0.85)) setI(j, d2 < r * r * 0.3 ? M.FEU : rnd() < 0.5 ? M.FUMEE : M.AIR, 20 + (rnd() * 20) | 0);
+      else if (m === M.AIR && rnd() < 0.3) setI(j, M.FUMEE, 30);
+    }
+    if (onEvent) onEvent('explosion', (cx + 0.5) * CS, (cy + 0.5) * CS);
+  }
   function hotNear(i) {
     for (const d of [1, -1, W, -W]) { const j = i + d; if (j >= 0 && j < W * H && P[mat[j]].hot) return true; }
     return false;
@@ -146,8 +168,18 @@ function createSim() {
         const j = i + d; if (j < 0 || j >= W * H) continue; const n = mat[j];
         if (n === M.LAVE) { setI(j, M.OBSIDIENNE); setI(i, M.VAPEUR, 60); evt('obsidienne', x, y); return; }
         if (n === M.ACIDE && rnd() < 0.02) { setI(j, M.EAU); evt('dilution', x, y); }
+        if (n === M.TERRE && d === W && rnd() < 0.0003) { setI(j, M.BOUE, 160); evt('boue', x, y); }
       }
       if (sunny && y > 0 && mat[i - W] === M.AIR && rnd() < 0.00012) { setI(i, M.VAPEUR, 120); return; }
+    } else if (m === M.BOUE) {
+      if (aux[i] === 0) aux[i] = 120 + ((rnd() * 80) | 0);
+      let mouille = false; for (const d of [1, -1, W, -W]) { const j = i + d; if (j >= 0 && j < W * H && (mat[j] === M.EAU || mat[j] === M.SAUMURE)) mouille = true; }
+      if (!mouille && sunny && rnd() < 0.05) { aux[i]--; touch(i); if (aux[i] <= 1) { setI(i, M.TERRE); evt('boue_seche', x, y); return; } }
+      if (hotNear(i) && rnd() < 0.05) { setI(i, M.TERRE); return; }
+      if (rnd() < 0.6) return; // très lente
+    } else if (m === M.MIEL) {
+      if (hotNear(i) && rnd() < 0.02) { setI(i, M.FUMEE, 30); return; }
+      if (rnd() < 0.85) return; // coule à peine
     } else if (m === M.HUILE || m === M.SEVE) {
       if (hotNear(i) && rnd() < p.flam) { setI(i, M.FEU, p.burn); evt(m === M.HUILE ? 'huile_feu' : 'incendie', x, y); return; }
       if (m === M.HUILE && y > 0 && mat[i - W] === M.EAU && rnd() < 0.05) evt('flottaison', x, y);
@@ -233,6 +265,13 @@ function createSim() {
       return;
     }
     if (m === M.GLACE) { if (hotNear(i) && rnd() < 0.25) { setI(i, M.EAU); evt('fonte', x, y); } return; }
+    if (m === M.PIERRE && rnd() < 0.002) {
+      // pierre humide et à l'air : la mousse s'y installe
+      let eau = false, air = -1;
+      for (const d of [1, -1, W, -W]) { const j = i + d; if (j < 0 || j >= W * H) continue; const n = mat[j]; if (n === M.EAU || n === M.SAUMURE || n === M.MOUSSE) eau = true; if (n === M.AIR) air = j; }
+      if (eau && air >= 0) { setI(air, M.MOUSSE); evt('mousse', x, y); }
+    }
+    if (m === M.MOUSSE) { if (aux[i] > 0) { aux[i]--; touch(i); if (aux[i] === 0) setI(i, M.AIR); else if (rnd() < 0.3) { const j = i - W; if (j >= 0 && mat[j] === M.AIR) setI(j, M.FEU, 10); } return; } if (hotNear(i) && rnd() < 0.02 * feuMul) { aux[i] = 20; touch(i); } }
   }
 
   // ---------- Requêtes pour les entités (coordonnées pixels) ----------
@@ -323,6 +362,9 @@ function createSim() {
         else if (m === M.HERBE) { g.beginPath(); g.moveTo(lx + 2, ly + CS); g.lineTo(lx + 1, ly + 1); g.moveTo(lx + 4, ly + CS); g.lineTo(lx + 5, ly + 2); g.stroke(); }
         else if (m === M.SABLE || m === M.CENDRE || m === M.NEIGE) { if (U.hash2(x, y) < 0.35) { g.fillStyle = U.INK; g.globalAlpha = m === M.NEIGE ? 0.08 : 0.25; g.fillRect(lx + 1 + ((x * 7 + y * 3) % 4), ly + 1 + ((x * 3 + y * 5) % 4), 1, 1); g.globalAlpha = 0.3; } }
         else if (m === M.GLACE && U.hash2(x, y) < 0.15) { g.strokeStyle = '#7fb4d8'; g.beginPath(); g.moveTo(lx, ly + CS); g.lineTo(lx + CS, ly); g.stroke(); g.strokeStyle = U.INK; }
+        else if (m === M.MOUSSE && U.hash2(x, y) < 0.6) { g.fillStyle = '#4e6b2a'; g.globalAlpha = 0.5; g.fillRect(lx + 1 + ((x * 3) % 3), ly + 1 + ((y * 5) % 3), 2, 2); g.globalAlpha = 0.3; }
+        else if (m === M.POUDRE && U.hash2(x, y) < 0.5) { g.fillStyle = '#9a4a3a'; g.globalAlpha = 0.5; g.fillRect(lx + 2, ly + 2, 1.5, 1.5); g.globalAlpha = 0.3; }
+        else if (m === M.SEL && U.hash2(x, y) < 0.3) { g.strokeStyle = '#a8a29a'; g.beginPath(); g.moveTo(lx + 1, ly + 1); g.lineTo(lx + 3, ly + 3); g.stroke(); g.strokeStyle = U.INK; }
         else if (m === M.CRISTAL) { g.strokeStyle = '#efe3c4'; g.beginPath(); g.moveTo(lx + 1, ly + CS - 1); g.lineTo(lx + CS - 1, ly + 1); g.stroke(); g.strokeStyle = U.INK; }
       }
       g.restore();

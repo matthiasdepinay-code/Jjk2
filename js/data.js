@@ -118,6 +118,10 @@ const DATA = (() => {
     acide:      { id: 'acide',      nom: 'Fiole d\'acide', couleur: '#8fbf2a', liquide: 'ACIDE', desc: 'Puisée dans une mare d\'acide (E). Ronge presque tout.' },
     lave:       { id: 'lave',       nom: 'Fiole de lave',  couleur: '#d9622b', liquide: 'LAVE', desc: 'Puisée dans la lave (E). Ne pas boire.' },
     seve:       { id: 'seve',       nom: 'Fiole de sève',  couleur: '#c9a63a', liquide: 'SEVE', desc: 'Puisée dans une flaque de sève collante (E).' },
+    miel:       { id: 'miel',       nom: 'Fiole de miel',  couleur: '#d8a03a', liquide: 'MIEL', desc: 'Pris dans une ruche enfumée (E), ou puisé dans une coulée de miel.' },
+    sel:        { id: 'sel',        nom: 'Sel',            couleur: '#f2efe6', liquide: 'SEL', desc: 'Gratté dans les salines du désert (X). Fond dans l\'eau, fait fondre la glace.' },
+    mousse:     { id: 'mousse',     nom: 'Mousse',         couleur: '#7a9a4a', desc: 'Grattée sur la pierre humide (X).' },
+    poudre:     { id: 'poudre',     nom: 'Sac de poudre',  couleur: '#3a3430', liquide: 'POUDRE', desc: 'Se jette en tas. Une étincelle, et boum.' },
     // rares : offerts par le maître
     larme_lune:   { id: 'larme_lune',   nom: 'Larme de lune',   couleur: '#cfd8e8', rare: true, desc: 'Offerte par le maître. Une goutte qui luit faiblement.' },
     coeur_chene:  { id: 'coeur_chene',  nom: 'Cœur de chêne',   couleur: '#7a5a2a', rare: true, desc: 'Offert par le maître. Un nœud de bois qui bat lentement.' },
@@ -132,6 +136,7 @@ const DATA = (() => {
     plume: 'aérien', lueur: 'aérien', eclat: 'minéral', poussiere: 'minéral',
     racine: 'vivant', fil: 'vivant', champignon: 'sombre',
     huile: 'visqueux', seve: 'visqueux', acide: 'acide',
+    miel: 'visqueux', sel: 'minéral', mousse: 'vivant', poudre: 'chaud',
     larme_lune: 'frais', coeur_chene: 'vivant', sable_temps: 'minéral', plume_phenix: 'chaud',
   };
   const ODEURS = { frais: 'ça sent la pluie', chaud: 'ça sent la fumée', 'aérien': 'ça sent l\'orage', 'minéral': 'ça sent la pierre mouillée', vivant: 'ça sent la forêt', sombre: 'ça sent la cave', visqueux: 'ça sent le vieux bois', acide: 'ça pique le nez' };
@@ -190,6 +195,14 @@ const DATA = (() => {
                   desc: 'Tu grandis pendant 25 s : rien ne te bouscule, tu pousses les caisses du pied.', enigme: 'Racine, poussière et braise, chauffées et remuées : on voit loin.' },
     gregeois:   { id: 'gregeois',   nom: 'Feu grégeois',       couleur: '#b84a1b', usage: 'lancer', ingr: ['huile', 'braise'], etapes: ['chauffer'],
                   desc: 'Se jette : une nappe d\'huile enflammée.', enigme: 'De l\'huile puisée et une braise, simplement chauffées. Ça brûle même sur l\'eau.' },
+    poudre:     { id: 'poudre',     nom: 'Poudre de sorcier',  couleur: '#3a3430', usage: 'lancer', ingr: ['sel', 'cendre', 'braise'], etapes: ['remuer', 'remuer'],
+                  desc: 'Se jette : un tas de poudre. Allume-le de loin.', enigme: 'Du sel, de la cendre et une braise, remués deux fois, sans jamais chauffer. Surtout sans chauffer.' },
+    baume_mousse: { id: 'baume_mousse', nom: 'Baume de mousse', couleur: '#7a9a4a', usage: 'boire', ingr: ['mousse', 'eau_source'], etapes: ['chauffer', 'infuser'],
+                  desc: 'Tu te soignes lentement pendant 40 s.', enigme: 'De la mousse dans l\'eau, chauffée puis infusée : une tisane de grand-mère.' },
+    hydromel:   { id: 'hydromel',   nom: 'Hydromel',           couleur: '#d8a03a', usage: 'boire', ingr: ['miel', 'eau_source'], etapes: ['infuser'],
+                  desc: 'Soigne, puis te soigne encore pendant 40 s.', enigme: 'Du miel dans l\'eau, longuement infusé.' },
+    sel_garde:  { id: 'sel_garde',  nom: 'Sel de garde',       couleur: '#f2efe6', usage: 'boire', ingr: ['sel', 'braise'], etapes: ['chauffer', 'remuer'],
+                  desc: 'Pendant 45 s, le feu ne te brûle plus et la lave te mord à peine.', enigme: 'Du sel et une braise, chauffés puis remués.' },
     encre_eternelle: { id: 'encre_eternelle', nom: 'Encre éternelle', couleur: '#2f2a4a', usage: 'boire', ingr: ['larme_lune', 'cendre', 'eau_source'], etapes: ['chauffer', 'infuser', 'refroidir'],
                   desc: 'À boire : +6 points d\'encre maximum, pour toujours.', enigme: 'Une larme de lune, de la cendre et de l\'eau : chauffer, infuser, refroidir. L\'encre ne s\'épuise plus tout à fait.' },
     vitalite:   { id: 'vitalite',   nom: 'Sève de vigueur',    couleur: '#7a5a2a', usage: 'boire', ingr: ['coeur_chene', 'racine'], etapes: ['infuser', 'infuser'],
@@ -221,6 +234,10 @@ const DATA = (() => {
     cendre:     { id: 'cendre',     nom: 'Le bois devient cendre',    glyphe: null,      desc: 'Du bois finit de brûler.' },
     huile_feu:  { id: 'huile_feu',  nom: 'L\'huile s\'embrase',      glyphe: null,      desc: 'De l\'huile prend feu.' },
     flottaison: { id: 'flottaison', nom: 'L\'huile flotte',          glyphe: null,      desc: 'De l\'huile remonte au-dessus de l\'eau.' },
+    explosion:  { id: 'explosion',  nom: 'La poudre explose',         glyphe: null,      desc: 'Une étincelle sur de la poudre.' },
+    sel:        { id: 'sel',        nom: 'Le sel fond dans l\'eau',   glyphe: null,      desc: 'Le sel se dissout en saumure, qui ne gèle pas.' },
+    mousse:     { id: 'mousse',     nom: 'La mousse pousse',          glyphe: null,      desc: 'La mousse gagne la pierre humide.' },
+    boue:       { id: 'boue',       nom: 'La terre devient boue',     glyphe: null,      desc: 'L\'eau détrempe la terre, qui se met à couler.' },
     fulgurite:  { id: 'fulgurite',  nom: 'La foudre vitrifie',        glyphe: null,      desc: 'Un éclair change le sable en verre.' },
   };
 
