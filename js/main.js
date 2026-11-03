@@ -19,7 +19,7 @@
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
       tailles: DATA.DEBUT.tailles.slice(), filtres: DATA.DEBUT.filtres.slice(), cibles: DATA.DEBUT.cibles.slice(), deuxMains: false, enchainements: [],
-      recettes: [], ingredientsVus: [], done: [], nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
+      recettes: [], ingredientsVus: [], done: [], maitrise: {}, nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
       compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0, terre: 0, creaturesTouchees: 0, vols: 0, portes: 0, lancers: 0, niveau: 1, sceaux: 0 },
       event(name, data) {
         const k = this.compteurs;
@@ -32,7 +32,7 @@
           case 'glace': k.glace++; break;
           case 'rune': k.runes++; break;
           case 'tame': k.tames++; break;
-          case 'sort': k.sorts++; break;
+          case 'sort': k.sorts++; if (data) this.maitriser(data); break;
           case 'terre': k.terre++; break;
           case 'creatureTouchee': k.creaturesTouchees++; break;
           case 'vol': k.vols++; break;
@@ -53,6 +53,22 @@
           case 'recette': if (!this.recettes.includes(data)) { this.recettes.push(data); game.addXp(DATA.XP.recette); } k.potions++; break;
         }
         this.check();
+      },
+      // chaque lancer enseigne un peu le langage de ses éléments
+      maitriser(seal) {
+        if (!this.maitrise) this.maitrise = {};
+        const els = [seal.core, seal.taille !== 'petit' ? seal.core2 : null].filter((c) => c && DATA.LANGAGES[c]);
+        for (const el of els) {
+          const avant = DATA.niveauMaitrise(this.maitrise[el] || 0);
+          const lg = Seal.params(seal).lg[el] || 0;
+          this.maitrise[el] = (this.maitrise[el] || 0) + 1 + lg * 0.5;
+          const apres = DATA.niveauMaitrise(this.maitrise[el]);
+          if (apres > avant && apres >= 2) {
+            const L = DATA.LANGAGES[el];
+            game.toast(apres === 2 ? '✦ Langage ' + L.de + ' : Adepte. Tu peux doubler le glyphe ' + L.nom + ' (' + L.paliers[1].split(' :')[0].toLowerCase() + ').' : '✦ Langage ' + L.de + ' : Maître ! Les sceaux ' + L.de + ' te coûtent 20 % d\'encre en moins.', 'unlock');
+            Son.sfx('unlock'); game.addXp(DATA.XP.decouverte);
+          }
+        }
       },
       check() {
         for (const u of DATA.UNLOCKS) {
@@ -385,11 +401,11 @@
       const e = this.itemMain(hand);
       if (!e) { this.toast('Emplacement vide. Prépare un sceau ou une potion au labo.', 'warn'); return; }
       const aim = World.toWorld(inp.mouse.x, inp.mouse.y);
-      if (e.type === 'seal') { if (World.castSeal(e.seal, aim, false, charge, hand)) this.progress.event('sort'); }
+      if (e.type === 'seal') { if (World.castSeal(e.seal, aim, false, charge, hand)) this.progress.event('sort', e.seal); }
       else if (e.type === 'parchemin') {
         const q = this.inv.parchemins[e.nom];
         if (!q || q.n <= 0) { this.toast('Plus de parchemin « ' + e.nom + ' ». Retourne à la presse.', 'warn'); Son.sfx('fail'); return; }
-        if (World.castSeal(q.seal, aim, true, charge, hand)) { q.n--; this.progress.event('sort'); UI.refreshHotbar(); this.save(); }
+        if (World.castSeal(q.seal, aim, true, charge, hand)) { q.n--; this.progress.event('sort', q.seal); UI.refreshHotbar(); this.save(); }
       }
       else if (e.type === 'potion') {
         const store = e.forte ? this.inv.fortes : this.inv.potions;
@@ -419,7 +435,7 @@
         if (d.carte) this.carte = d.carte;
         if (d.courrier) this.courrier = Object.assign(this.courrier, d.courrier); if (d.bonus) this.bonus = Object.assign(this.bonus, d.bonus); if (d.trophees) this.trophees = d.trophees;
         if (d.progress) Object.assign(this.progress, d.progress);
-        if (!this.progress.obs) this.progress.obs = {};
+        if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {};
         if (typeof d.selectedL === 'number') this.selectedL = d.selectedL;
         if (!this.progress.pagesLues) this.progress.pagesLues = []; if (!this.progress.defisFaits) this.progress.defisFaits = [];
         if (!this.progress.bestiaire) this.progress.bestiaire = {}; if (!this.progress.especesVues) this.progress.especesVues = [];

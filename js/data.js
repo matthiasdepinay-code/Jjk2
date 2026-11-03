@@ -96,6 +96,23 @@ const DATA = (() => {
     canalise:    { id: 'canalise',    nom: 'Canalisé',    cout: 2, desc: 'Tant que tu maintiens le clic, l\'effet suit la souris et consomme de l\'encre.' },
     sous:        { id: 'sous',        nom: 'Sous-sceau',  cout: 0, desc: 'Un sceau consigné entier, lancé là où celui-ci éclate.' },
   };
+  // Langages des éléments : à force d'employer un élément, on en apprend la grammaire
+  const MAITRISE = { seuils: [12, 40, 100], noms: ['Novice', 'Initié(e)', 'Adepte', 'Maître'] };
+  const niveauMaitrise = (pts) => (pts >= 100 ? 3 : pts >= 40 ? 2 : pts >= 12 ? 1 : 0);
+  const LANGAGES = {
+    feu:     { glyphe: 'chaleur',    nom: 'Chaleur',    de: 'du feu',        paliers: ['Flamme blanche : brûle plus fort, vitrifie le sable, fond glace et neige d\'un coup.', 'Flamme bleue : si chaude qu\'elle fond la pierre et le métal en lave, et entame le golem.'] },
+    eau:     { glyphe: 'pression',   nom: 'Pression',   de: 'de l\'eau',     paliers: ['Jet : l\'eau frappe fort, repousse et creuse terre, sable et boue.', 'Lame d\'eau : elle entaille le bois, use la pierre et brise la glace.'] },
+    froid:   { glyphe: 'givre',      nom: 'Givre',      de: 'du froid',      paliers: ['Gel profond : les créatures restent prises dans la glace ; la lave se fige d\'un coup.', 'Zéro absolu : l\'air lui-même tombe en neige, l\'acide cristallise, la saumure rend son sel.'] },
+    terre:   { glyphe: 'densite',    nom: 'Densité',    de: 'de la terre',   paliers: ['La terre surgit déjà tassée en pierre.', 'La pierre se serre jusqu\'au cristal, qui luit dans le noir.'] },
+    vent:    { glyphe: 'tourbillon', nom: 'Tourbillon', de: 'du vent',       paliers: ['Le vent tourne et soulève : créatures, eau et sable montent.', 'Tornade : une colonne tournoyante reste quelques secondes et aspire tout ce qui passe.'] },
+    foudre:  { glyphe: 'tension',    nom: 'Tension',    de: 'de la foudre',  paliers: ['Arc : l\'éclair saute vers trois cibles proches.', 'Foudre violette : six cibles, et tout ce qui brûle s\'embrase.'] },
+    vie:     { glyphe: 'floraison',  nom: 'Floraison',  de: 'de la vie',     paliers: ['L\'herbe et les plantes poussent deux fois plus, le soin est doublé.', 'Croissance : un arbre jaillit du sol.'] },
+    lumiere: { glyphe: 'focale',     nom: 'Focale',     de: 'de la lumière', paliers: ['Loupe : la lumière concentrée enflamme le bois et l\'herbe, et éblouit plus longtemps.', 'Soleil : elle vitrifie le sable, fond la neige et aveugle longuement.'] },
+    ombre:   { glyphe: 'tenebres',   nom: 'Ténèbres',   de: 'de l\'ombre',   paliers: ['Nuit noire : le sommeil dure le double.', 'Rêve : les créatures endormies se réveillent dociles.'] },
+    acide:   { glyphe: 'mordant',    nom: 'Mordant',    de: 'de l\'acide',   paliers: ['L\'acide ronge trois fois plus vite et blesse le golem.', 'Dissolution : même le métal et l\'obsidienne cèdent.'] },
+    gravite: { glyphe: 'masse',      nom: 'Masse',      de: 'de la gravité', paliers: ['Champ plus large et plus lourd.', 'Effondrement : le champ se creuse en un puits qui avale puis recrache ce qui l\'entoure.'] },
+  };
+  for (const el in LANGAGES) { const Lg = LANGAGES[el]; MODS[Lg.glyphe] = { id: Lg.glyphe, nom: Lg.nom, cout: 2, langue: el, desc: 'Langage ' + Lg.de + '. ×1 : ' + Lg.paliers[0] + ' ×2 (Adepte) : ' + Lg.paliers[1] + ' Muet sans le glyphe ' + CORES[el].nom + '.' }; }
   // Déclencheurs (pointes)
   const TRIGGERS = {
     immediat: { id: 'immediat', nom: 'Immédiat', cout: 0, desc: 'L\'effet agit tout de suite, en continu sur ce qu\'il touche.' },
@@ -265,6 +282,7 @@ const DATA = (() => {
     foudre:     { id: 'foudre',     nom: 'La foudre frappe',        glyphe: 'foudre',  desc: 'Un éclair touche le sol ou l\'eau. Les orages en apportent.' },
     corrosion:  { id: 'corrosion',  nom: 'L\'acide ronge',          glyphe: 'acide',   desc: 'De l\'acide dissout de la matière.' },
     ile:        { id: 'ile',        nom: 'Une île dans le ciel',    glyphe: 'gravite', desc: 'Poser le pied sur une île volante.' },
+    magma:      { id: 'magma',      nom: 'La pierre fond',          glyphe: null,      desc: 'Une flamme bleue liquéfie la pierre ou le métal.' },
     vapeur:     { id: 'vapeur',     nom: 'L\'eau et le feu',        glyphe: null,      desc: 'Le feu rencontre l\'eau : vapeur.' },
     obsidienne: { id: 'obsidienne', nom: 'La lave et l\'eau',       glyphe: null,      desc: 'La lave touche l\'eau et se fige en pierre noire.' },
     verre:      { id: 'verre',      nom: 'Le sable et la lave',     glyphe: null,      desc: 'Le sable chauffé par la lave devient verre.' },
@@ -444,6 +462,8 @@ const DATA = (() => {
     { id: 'prise',      type: 'shape', item: 'prise', titre: 'Forme : Prise', indice: 'Possède le glyphe Force ou Gravité.', cond: (p) => p.cores.includes('force') || p.cores.includes('gravite') },
     { id: 'bouclier',   type: 'shape', item: 'bouclier', titre: 'Forme : Bouclier', indice: 'Fais-toi bousculer 5 fois par des créatures.', cond: (p) => (p.compteurs.bouscule || 0) >= 5 },
     { id: 'contre',     type: 'core', item: 'contre', titre: 'Glyphe : Contre-sort', indice: 'Possède 12 glyphes d\'effet.', cond: (p) => p.cores.length >= 12 },
+    // --- langages des éléments ---
+    ...Object.keys(LANGAGES).map((el) => ({ id: 'lg_' + el, type: 'mods', item: [LANGAGES[el].glyphe], titre: 'Tu commences à parler le langage ' + LANGAGES[el].de + ' : glyphe ' + LANGAGES[el].nom, indice: 'Emploie souvent le glyphe ' + CORES[el].nom + ' (maîtrise : Initié(e)).', cond: (p) => ((p.maitrise || {})[el] || 0) >= MAITRISE.seuils[0] })),
     // --- étape 6 : le labo grandit ---
     { id: 'bac',       type: 'labo', item: 'bac',       titre: 'Labo : le bac d\'essai', indice: 'Atteins le niveau 2.', cond: (p) => p.compteurs.niveau >= 2 },
     { id: 'alambic',   type: 'labo', item: 'alambic',   titre: 'Labo : l\'alambic', indice: 'Atteins le niveau 3.', cond: (p) => p.compteurs.niveau >= 3 },
@@ -476,5 +496,5 @@ const DATA = (() => {
   const ACCESSOIRES = ['Bâton', 'Plume', 'Grimoire'];
 
   Object.assign(POTIONS, BIZARRES);
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise };
 })();

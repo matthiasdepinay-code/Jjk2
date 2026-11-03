@@ -194,6 +194,12 @@ const UI = (() => {
       if (i < 0) i = 0;
       if (i >= nb) { toast('Aucun emplacement de modificateur libre.', 'warn'); return; }
       if (id === 'sous') { subSlot = i; showSubList(); return; }
+      const lgEl = DATA.MODS[id] && DATA.MODS[id].langue;
+      if (lgEl) {
+        const Lg = DATA.LANGAGES[lgEl], niv = DATA.niveauMaitrise((game.progress.maitrise || {})[lgEl] || 0);
+        const deja = s.mods.filter((m, k) => m === id && k !== i).length;
+        if (deja >= Math.min(2, niv)) { toast(deja >= 2 ? 'Deux glyphes ' + Lg.nom + ' au plus.' : 'Pour redoubler la ' + Lg.nom.toLowerCase() + ', il faut parler mieux le langage ' + Lg.de + ' (Adepte).', 'warn'); return; }
+      }
       s.mods[i] = id; selSlot = null;
     }
     Son.sfx('cast', s.core || 'vent');
@@ -304,6 +310,7 @@ const UI = (() => {
     const mv = [];
     if (prm.power > 1) mv.push('puissance ×' + prm.power.toFixed(1)); if (prm.range > 1) mv.push('portée ×' + prm.range.toFixed(1)); if (prm.size > 1) mv.push('taille ×' + prm.size.toFixed(1)); if (prm.duration > 1) mv.push('durée ×' + prm.duration.toFixed(1)); if (prm.speed > 1) mv.push('vitesse ×' + prm.speed.toFixed(1)); if (prm.bounces) mv.push(prm.bounces + ' rebonds'); if (prm.persist) mv.push('laisse une trace'); if (prm.echo) mv.push('écho ×' + prm.echo);
     if (mv.length) L.push('Réglages : ' + mv.join(', ') + '.');
+    for (const el in prm.lg) { const Lg = DATA.LANGAGES[el]; if (cores.includes(el) || [s.core, s.core2].includes(el)) L.push('Langage ' + Lg.de + ' : ' + Lg.nom + (prm.lg[el] > 1 ? ' ×2 — ' + Lg.paliers[1] : ' — ' + Lg.paliers[0])); else L.push('<span class="muted">' + Lg.nom + ' reste muet : il faut le glyphe ' + DATA.CORES[el].nom + '.</span>'); }
     const sb = Seal.subs(s); if (sb.length) L.push('Puis lance : ' + sb.map((q) => '« ' + Seal.nom(q) + ' »').join(', ') + '.');
     return L.map((l) => '<div>' + l + '</div>').join('');
   }
@@ -485,6 +492,23 @@ const UI = (() => {
         }
         c.appendChild(g);
       };
+      // langages des éléments
+      c.appendChild(el('h3', '', 'Langages des éléments'));
+      c.appendChild(el('p', 'intro', 'Chaque élément a sa grammaire. À force de l\'employer, tu en apprends les mots : un glyphe de langage, qu\'on peut doubler une fois Adepte. Maître, ses sceaux coûtent moins cher.'));
+      const lgBox = el('div', 'glyph-grid');
+      for (const elt in DATA.LANGAGES) {
+        if (!p.cores.includes(elt)) continue;
+        const Lg = DATA.LANGAGES[elt], pts = (p.maitrise || {})[elt] || 0, niv = DATA.niveauMaitrise(pts);
+        const S = DATA.MAITRISE.seuils, haut = S[Math.min(2, niv)], bas = niv ? S[niv - 1] : 0, k = niv >= 3 ? 1 : Math.min(1, (pts - bas) / (haut - bas));
+        const it = el('div', 'glyph-card');
+        const cv = document.createElement('canvas'); cv.width = 48; cv.height = 48;
+        Seal.glyph(cv.getContext('2d'), niv ? Lg.glyphe : elt, 24, 24, 17, niv ? DATA.CORES[elt].couleur : 'rgba(60,45,30,0.35)', 1);
+        it.appendChild(cv);
+        it.appendChild(el('div', '', '<b>' + DATA.CORES[elt].nom + '</b> — ' + DATA.MAITRISE.noms[niv] + '<div class="barre-maitrise"><i style="width:' + Math.round(k * 100) + '%;background:' + DATA.CORES[elt].couleur + '"></i></div>' +
+          (niv ? '<b>' + Lg.nom + '</b> ×1 : ' + Lg.paliers[0] + '<br>' + (niv >= 2 ? '×2 : ' + Lg.paliers[1] : '<span class="muted">×2 : il faut être Adepte.</span>') : '<span class="muted">Un mot de ce langage viendra avec l\'usage.</span>')));
+        lgBox.appendChild(it);
+      }
+      c.appendChild(lgBox);
       grp('Glyphes d\'effet (centre)', DATA.CORES, p.cores, 'core');
       grp('Formes (premier anneau)', DATA.SHAPES, p.shapes, 'shape');
       grp('Modificateurs (second anneau) — ' + p.slots + ' emplacement(s)', DATA.MODS, p.mods, 'mod');

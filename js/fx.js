@@ -58,12 +58,12 @@ const FX = (() => {
     pts.push([x2, y2]);
     return pts;
   }
-  function eclair(ctx, pts, color, w, alpha = 1, branches = null) {
+  function eclair(ctx, pts, color, w, alpha = 1, branches = null, coeur = '#fffbe8') {
     const trace = (P, lw, col, a) => { ctx.globalAlpha = a; ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath(); P.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke(); };
     ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.globalCompositeOperation = 'lighter';
     trace(pts, w * 3.5, color, alpha * 0.25); if (branches) for (const b of branches) trace(b, w * 2, color, alpha * 0.18);
-    trace(pts, w, '#fffbe8', alpha); if (branches) for (const b of branches) trace(b, w * 0.55, '#fffbe8', alpha * 0.8);
+    trace(pts, w, coeur, alpha); if (branches) for (const b of branches) trace(b, w * 0.55, coeur, alpha * 0.8);
     ctx.restore();
   }
   // cercle magique au sol (ellipse aplatie) pendant le tracé d'un sort

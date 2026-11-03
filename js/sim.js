@@ -6,7 +6,7 @@ function createSim() {
   const CH = 32;       // cellules par côté de morceau (chunk)
   const CPX = CS * CH; // pixels par morceau
   let W = 0, H = 0, CW = 0, CHn = 0;
-  let mat, aux, elec, upd;
+  let mat, aux, elec, upd, chaud;
   let chunkActive, chunkDirty, chunkCv, chunkLights, chunkHasLiquid;
   let frame = 0;
   let onEvent = null;
@@ -57,7 +57,7 @@ function createSim() {
 
   function init(w, h) {
     W = w; H = h; CW = Math.ceil(W / CH); CHn = Math.ceil(H / CH);
-    mat = new Uint8Array(W * H); aux = new Uint8Array(W * H); elec = new Uint8Array(W * H); upd = new Uint8Array(W * H);
+    mat = new Uint8Array(W * H); aux = new Uint8Array(W * H); elec = new Uint8Array(W * H); upd = new Uint8Array(W * H); chaud = new Uint8Array(W * H);
     chunkActive = new Int32Array(CW * CHn); chunkDirty = new Uint8Array(CW * CHn).fill(1); chunkHasLiquid = new Uint8Array(CW * CHn);
     chunkCv = new Array(CW * CHn).fill(null); chunkLights = new Array(CW * CHn).fill(null);
     frame = 0;
@@ -75,12 +75,14 @@ function createSim() {
     if (lx === 0) mark(cx - 1, cy); else if (lx === 31) mark(cx + 1, cy);
     if (ly === 0) mark(cx, cy - 1); else if (ly === 31) mark(cx, cy + 1);
   }
-  function set(x, y, m, a = 0) { if (!inB(x, y)) return; const i = y * W + x; mat[i] = m; aux[i] = a; elec[i] = 0; touch(i); }
-  function setI(i, m, a = 0) { mat[i] = m; aux[i] = a; elec[i] = 0; touch(i); }
+  function set(x, y, m, a = 0) { if (!inB(x, y)) return; const i = y * W + x; mat[i] = m; aux[i] = a; elec[i] = 0; chaud[i] = 0; touch(i); }
+  function setI(i, m, a = 0) { mat[i] = m; aux[i] = a; elec[i] = 0; chaud[i] = 0; touch(i); }
+  // flamme chauffée : 1 blanche, 2 bleue
+  function setFeu(x, y, a, c) { if (!inB(x, y)) return; set(x, y, M.FEU, a); chaud[y * W + x] = c; }
   function swap(i, j) {
-    const m = mat[i], a = aux[i], e = elec[i];
-    mat[i] = mat[j]; aux[i] = aux[j]; elec[i] = elec[j];
-    mat[j] = m; aux[j] = a; elec[j] = e;
+    const m = mat[i], a = aux[i], e = elec[i], c = chaud[i];
+    mat[i] = mat[j]; aux[i] = aux[j]; elec[i] = elec[j]; chaud[i] = chaud[j];
+    mat[j] = m; aux[j] = a; elec[j] = e; chaud[j] = c;
     upd[i] = frame & 255; upd[j] = frame & 255;
     touch(i); touch(j);
   }
@@ -236,6 +238,12 @@ function createSim() {
         if (FLAMMABLE_SOLID(n) && aux[j] === 0 && rnd() < q.flam * feuMul) { aux[j] = q.burn; touch(j); evt('incendie', x, y); }
         else if ((n === M.HUILE || n === M.SEVE) && rnd() < q.flam) { setI(j, M.FEU, q.burn); evt('incendie', x, y); }
         else if ((n === M.GLACE || n === M.NEIGE) && rnd() < 0.15) { setI(j, M.EAU); evt('fonte', x, y); }
+        if (chaud[i]) {
+          const c = chaud[i];
+          if ((n === M.GLACE || n === M.NEIGE) && rnd() < 0.6) setI(j, M.EAU);
+          else if (n === M.SABLE && rnd() < 0.06 * c) { setI(j, M.VERRE); evt('verre', x, y); }
+          else if (c >= 2 && (n === M.PIERRE || n === M.TERRE || n === M.METAL || n === M.VERRE || n === M.SABLE || n === M.CRISTAL || n === M.OBSIDIENNE || n === M.SEL) && rnd() < (n === M.OBSIDIENNE ? 0.01 : n === M.METAL ? 0.035 : 0.06)) { setI(j, M.LAVE); evt('magma', x, y); }
+        }
       }
       if (rnd() < 0.45) return; // le feu reste près de son combustible
     }
@@ -323,7 +331,7 @@ function createSim() {
         if (p.solid && !p.powder) anySolid = true;
         if (m === M.FEU) {
           const hh = CS * (1.4 + U.hash2(x + (frame >> 1), y) * 1.2) * Math.min(1, 0.5 + aux[i] / 30);
-          FX.flamme(g, lx + CS / 2, ly + CS, hh, CS * 0.95, frame / 30 + x, 0, 0.85);
+          FX.flamme(g, lx + CS / 2, ly + CS, hh, CS * 0.95, frame / 30 + x, chaud[i], 0.85);
           if (((x & 3) === 0) && ((y & 3) === 0)) lights.push({ x: (x + 0.5) * CS, y: (y + 0.5) * CS, r: 70 });
           continue;
         }
@@ -440,7 +448,7 @@ function createSim() {
   }
 
   return { CS, CH, M, P, init, get, set, swap, wake, touch, idx, step, matAt, solidAt, rectBlocked, rectHas, forRadius, raycast, countAround, countRect, draw, lights, dirtyAll, serialize, deserialize,
-    get W() { return W; }, get H() { return H; }, get mat() { return mat; }, get aux() { return aux; }, get elec() { return elec; },
+    get W() { return W; }, get H() { return H; }, get mat() { return mat; }, get aux() { return aux; }, get elec() { return elec; }, get chaud() { return chaud; }, setFeu,
     set onEvent(f) { onEvent = f; }, set sunny(v) { sunny = v; }, get gzones() { return gzones; }, set gzones(v) { gzones = v; }, gravAt, set feuMul(v) { feuMul = v; }, set surf(v) { surf = v; }, get surf() { return surf; }, get frame() { return frame; } };
 })();
 }

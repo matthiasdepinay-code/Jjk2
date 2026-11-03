@@ -60,6 +60,8 @@ const Seal = (() => {
   function nom(s) {
     return s.nom || autoNom(s);
   }
+  // niveau de langage par élément (deux glyphes au plus)
+  function langues(s) { const o = {}; for (const el in DATA.LANGAGES) { const k = count(s, DATA.LANGAGES[el].glyphe); if (k) o[el] = Math.min(2, k); } return o; }
   function params(s) {
     const n = (m) => count(s, m);
     return {
@@ -76,6 +78,7 @@ const Seal = (() => {
       teleguide: n('teleguide') > 0,
       orbite: n('orbite') > 0,
       canalise: n('canalise') > 0,
+      lg: langues(s),
     };
   }
 
@@ -134,6 +137,18 @@ const Seal = (() => {
       case 'pluie': ctx.beginPath(); for (let k = 0; k < 4; k++) U.inkCircle(ctx, -r * 0.5 + k * r * 0.33, -r * 0.45, r * 0.25, seed + k, r * 0.02); for (let k = 0; k < 3; k++) L(-r * 0.4 + k * r * 0.4, -r * 0.05, -r * 0.5 + k * r * 0.4, r * 0.6); break;
       case 'objet': U.inkRect(ctx, -r * 0.5, -r * 0.2, r, r, seed, r * 0.03); for (let i = 0; i < 4; i++) { const a = (i / 4) * TAU + 0.4; L(Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.8 - r * 0.3, Math.cos(a) * r * 1.0, Math.sin(a) * r * 1.0 - r * 0.3); } break;
       case 'invocation': C(0, r * 0.1, r * 0.4); dot(-r * 0.12, 0, r * 0.07); dot(r * 0.12, 0, r * 0.07); L(0, -r * 0.3, 0, -r * 0.8); L(-r * 0.3, -r * 0.6, 0, -r * 0.8); L(r * 0.3, -r * 0.6, 0, -r * 0.8); break;
+      // --- langages ---
+      case 'chaleur': P([[0, -r * 0.55], [r * 0.5, r * 0.75], [-r * 0.5, r * 0.75]]); for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(i * r * 0.4, -r * 0.65); ctx.quadraticCurveTo(i * r * 0.4 + r * 0.15, -r * 0.8, i * r * 0.4, -r * 0.98); ctx.stroke(); } break;
+      case 'pression': for (let i = 0; i < 3; i++) L(-r * 0.85 + i * r * 0.22, -r * 0.5, -r * 0.85 + i * r * 0.22, r * 0.5); L(-r * 0.2, 0, r * 0.85, 0); P([[r * 0.85, 0], [r * 0.45, -r * 0.35]], false); P([[r * 0.85, 0], [r * 0.45, r * 0.35]], false); break;
+      case 'givre': C(0, 0, r * 0.85); for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; L(0, 0, Math.cos(a) * r * 0.6, Math.sin(a) * r * 0.6); } dot(0, 0, r * 0.14); break;
+      case 'densite': U.inkRect(ctx, -r * 0.8, -r * 0.8, r * 1.6, r * 1.6, seed, r * 0.03); U.inkRect(ctx, -r * 0.45, -r * 0.45, r * 0.9, r * 0.9, seed + 1, r * 0.03); ctx.fillRect(-r * 0.18, -r * 0.18, r * 0.36, r * 0.36); break;
+      case 'tourbillon': ctx.beginPath(); for (let i = 0; i <= 30; i++) { const t = i / 30; const a = t * TAU * 1.6; const rr = r * 0.9 * t; const px = Math.cos(a) * rr, py = Math.sin(a) * rr * 0.5 + r * 0.6 - t * r * 1.2; if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); } ctx.stroke(); break;
+      case 'tension': P([[-r * 0.9, 0], [-r * 0.5, -r * 0.4], [-r * 0.1, r * 0.4], [r * 0.3, -r * 0.4], [r * 0.7, r * 0.2]], false); dot(-r * 0.9, 0, r * 0.13); dot(r * 0.8, r * 0.25, r * 0.13); break;
+      case 'floraison': for (let i = 0; i < 5; i++) { const a = (i / 5) * TAU - Math.PI / 2; C(Math.cos(a) * r * 0.45, Math.sin(a) * r * 0.45, r * 0.3); } dot(0, 0, r * 0.18); break;
+      case 'focale': ctx.beginPath(); ctx.ellipse(-r * 0.35, 0, r * 0.22, r * 0.8, 0, 0, TAU); ctx.stroke(); L(-r * 0.95, -r * 0.6, -r * 0.35, -r * 0.6); L(-r * 0.95, r * 0.6, -r * 0.35, r * 0.6); L(-r * 0.35, -r * 0.6, r * 0.6, 0); L(-r * 0.35, r * 0.6, r * 0.6, 0); dot(r * 0.65, 0, r * 0.14); break;
+      case 'tenebres': ctx.beginPath(); ctx.arc(0, 0, r * 0.8, Math.PI * 0.25, Math.PI * 1.75); ctx.arc(r * 0.3, 0, r * 0.55, Math.PI * 1.6, Math.PI * 0.4, true); ctx.closePath(); ctx.fill(); dot(r * 0.6, -r * 0.6, r * 0.08); dot(r * 0.8, r * 0.1, r * 0.06); break;
+      case 'mordant': ctx.beginPath(); ctx.moveTo(0, -r * 0.9); ctx.bezierCurveTo(r * 0.8, 0, r * 0.55, r * 0.8, 0, r * 0.8); ctx.bezierCurveTo(-r * 0.55, r * 0.8, -r * 0.8, 0, 0, -r * 0.9); ctx.stroke(); P([[-r * 0.4, r * 0.15], [-r * 0.2, r * 0.45], [0, r * 0.15], [r * 0.2, r * 0.45], [r * 0.4, r * 0.15]], false); break;
+      case 'masse': dot(0, 0, r * 0.4); for (let i = 0; i < 4; i++) { const a = (i / 4) * TAU + Math.PI / 4; const x1 = Math.cos(a) * r * 0.95, y1 = Math.sin(a) * r * 0.95, x2 = Math.cos(a) * r * 0.6, y2 = Math.sin(a) * r * 0.6; L(x1, y1, x2, y2); } break;
       // --- modificateurs ---
       case 'puissance': L(-r * 0.7, 0, r * 0.7, 0); L(0, -r * 0.7, 0, r * 0.7); dot(r * 0.75, -r * 0.75, r * 0.12); dot(-r * 0.75, r * 0.75, r * 0.12); break;
       case 'portee': L(-r * 0.9, 0, r * 0.9, 0); P([[r * 0.9, 0], [r * 0.4, -r * 0.4]], false); P([[r * 0.9, 0], [r * 0.4, r * 0.4]], false); dot(-r * 0.9, 0, r * 0.15); break;

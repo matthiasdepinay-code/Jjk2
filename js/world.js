@@ -151,14 +151,14 @@ const World = (() => {
     if (st.parts.length > 1400) st.parts.splice(0, st.parts.length - 1400);
   }
   // éclatement visuel d'un élément
-  function fxBurst(core, x, y, rad) {
+  function fxBurst(core, x, y, rad, lg = 0) {
     const C = colorOf(core), n = Math.round(8 + rad / 7);
     const P2 = (col, k, spd, life, size, grav, type) => part(x, y, col, Math.round(n * k), spd, life, size, grav, type);
     switch (core) {
-      case 'feu': P2('#f08a30', 1, 70 + rad, 0.6, 3.2, -260, 'flamme'); P2('#6e6660', 0.4, 40, 1.2, 4, -60, 'fumee'); P2('#f0c060', 0.5, 160 + rad, 0.5, 2, 200, 'etincelle'); break;
+      case 'feu': { const b0 = st.parts.length; P2(lg >= 2 ? '#5a90e0' : lg ? '#f6e0a0' : '#f08a30', 1 + lg * 0.4, 70 + rad, 0.6, 3.2, -260, 'flamme'); if (lg) { for (let i = b0; i < st.parts.length; i++) st.parts[i].chaud = lg; P2(lg >= 2 ? '#8ab8f0' : '#fff0b0', 0.6, 40, 0.5, 6, 0, 'glow'); } } P2('#6e6660', 0.4, 40, 1.2, 4, -60, 'fumee'); P2('#f0c060', 0.5, 160 + rad, 0.5, 2, 200, 'etincelle'); break;
       case 'eau': P2('#5f9ad8', 1.4, 160 + rad * 1.2, 0.8, 2.2, 700, 'goutte'); P2('#bfe0ff', 0.4, 60, 0.4, 4, 0, 'glow'); break;
       case 'froid': P2('#dff0ff', 1, 70 + rad * 0.6, 1.2, 3, 40, 'flocon'); P2('#bfe0ff', 0.5, 40, 0.5, 5, 0, 'glow'); break;
-      case 'foudre': P2('#fff2a0', 1.4, 320 + rad * 2, 0.35, 2, 0, 'etincelle'); for (let k = 0; k < 3; k++) { const a = Math.random() * TAU; st.sp.push({ k: 'zap', pts: FX.eclairPts(x, y, x + Math.cos(a) * rad * 1.2, y + Math.sin(a) * rad * 1.2, 0.3), life: 0.18, max: 0.18 }); } break;
+      case 'foudre': P2('#fff2a0', 1.4, 320 + rad * 2, 0.35, 2, 0, 'etincelle'); for (let k = 0; k < 3; k++) { const a = Math.random() * TAU; st.sp.push({ k: 'zap', pts: FX.eclairPts(x, y, x + Math.cos(a) * rad * 1.2, y + Math.sin(a) * rad * 1.2, 0.3), life: 0.18, max: 0.18, color: lg >= 2 ? '#b070e0' : null }); } break;
       case 'terre': case 'metal': P2(core === 'metal' ? '#9aa4ac' : '#a3844f', 1, 140 + rad, 0.9, 3, 900, 'eclat'); P2('#a3844f', 0.5, 40, 1, 5, -30, 'fumee'); break;
       case 'vent': P2('#bfe8e8', 1, 220 + rad, 0.5, 2, 0, 'vent'); break;
       case 'lumiere': P2('#ffe7a0', 1, 120 + rad, 0.7, 4, -20, 'glow'); P2('#fff6d8', 0.7, 200 + rad, 0.45, 1.8, 0, 'etincelle'); break;
@@ -215,6 +215,8 @@ const World = (() => {
   // ---------- Effets sur la grille ----------
   function gridEffect(core, cx, cy, rad, prm, burst, k) { return gridEffectOn(Sim, core, cx, cy, rad, prm, burst, k); }
   function gridEffectOn(Sim, core, cx, cy, rad, prm, burst, k) {
+    const lgN = prm.lg ? prm.lg[core] || 0 : 0;
+    if (lgN) prm = { ...prm, power: (prm.power || 1) * (1 + 0.3 * lgN) };
     const power = prm.power || 1;
     const pr = burst ? Math.min(1, 0.8 * power) : Math.min(1, 0.4 * power * k);
     const pcell = (b) => Sim === MainSim && st ? (U.rectsOverlap(b, st.p) || st.crs.some((c) => c.hp > 0 && U.rectsOverlap(b, c))) : false;
@@ -227,21 +229,63 @@ const World = (() => {
       if (ax > ay) nx += Math.sign(dx) * sign; else ny += Math.sign(dy) * sign;
       return [nx, ny];
     };
+    const dC = (x, y) => dist(cx, cy, (x + 0.5) * CS, (y + 0.5) * CS);
+    // langages : chaque élément a ses mots
+    const feuLg = (x, y, i, m) => {
+      const r = Math.random();
+      if (m === M.GLACE || m === M.NEIGE) { Sim.set(x, y, r < 0.3 ? M.VAPEUR : M.EAU, 40); return true; }
+      if (m === M.SABLE) { if (r < pr * 0.3 * lgN) Sim.set(x, y, M.VERRE); return true; }
+      if (m === M.EAU) { if (r < pr * 0.4 * lgN) Sim.set(x, y, M.VAPEUR, 50); return true; }
+      if (lgN >= 2 && dC(x, y) < rad * 0.75 && (m === M.PIERRE || m === M.TERRE || m === M.METAL || m === M.VERRE || m === M.CRISTAL || m === M.SEL || m === M.OBSIDIENNE)) {
+        if (r < pr * (m === M.OBSIDIENNE ? 0.05 : m === M.METAL ? 0.2 : 0.3)) { Sim.set(x, y, M.LAVE); if (r < 0.02 && Sim === MainSim) onSimEvent('magma', (x + 0.5) * CS, (y + 0.5) * CS); }
+        return true;
+      }
+      return false;
+    };
+    const eauLg = (x, y, i, m) => {
+      if (dC(x, y) > rad * 0.8) return false; const r = Math.random();
+      if (m === M.TERRE || m === M.SABLE || m === M.BOUE || m === M.NEIGE || m === M.CENDRE || m === M.POUDRE || m === M.SEL || m === M.HERBE || m === M.MOUSSE) { if (r < pr * 0.55) Sim.set(x, y, r < pr * 0.15 ? M.EAU : M.AIR); return true; }
+      if (lgN >= 2 && (m === M.BOIS || m === M.PIERRE || m === M.GLACE || m === M.PLANTE)) { if (r < pr * (m === M.PIERRE ? 0.12 : 0.3)) Sim.set(x, y, M.AIR); return true; }
+      return false;
+    };
+    const froidLg = (x, y, i, m) => {
+      const r = Math.random();
+      if (m === M.LAVE) { Sim.set(x, y, M.OBSIDIENNE); return true; }
+      if (m === M.EAU) { Sim.set(x, y, M.GLACE); return true; }
+      if (lgN >= 2) {
+        if (m === M.ACIDE) { if (r < pr) Sim.set(x, y, M.CRISTAL); return true; }
+        if (m === M.SAUMURE) { Sim.set(x, y, r < 0.5 ? M.SEL : M.GLACE); return true; }
+        if (m === M.VAPEUR || m === M.FUMEE) { Sim.set(x, y, M.NEIGE); return true; }
+        if (m === M.AIR && burst && r < 0.22 && dC(x, y) < rad * 0.8 && !pcell(cellRect(x, y))) { Sim.set(x, y, M.NEIGE); return true; }
+      }
+      return false;
+    };
+    const arbre = () => {
+      const gx = Math.floor(cx / CS); let gy = Math.floor(cy / CS);
+      for (let t = 0; t < 40 && gy < Sim.H - 1 && !P[Sim.get(gx, gy + 1)].solid; t++) gy++;
+      if (gy >= Sim.H - 1) return;
+      const h = 10 + ((Math.random() * 6) | 0);
+      for (let q = 1; q <= h; q++) for (const xx of [gx, gx + 1]) { const m = Sim.get(xx, gy + 1 - q); if ((m === M.AIR || m === M.HERBE || m === M.PLANTE) && !pcell(cellRect(xx, gy + 1 - q))) Sim.set(xx, gy + 1 - q, M.BOIS); }
+      const R2 = 5; for (let yy = -R2; yy <= R2; yy++) for (let xx = -R2 - 1; xx <= R2 + 1; xx++) { if (xx * xx * 0.7 + yy * yy > R2 * R2) continue; const X = gx + xx, Y = gy - h + yy; if (Sim.get(X, Y) === M.AIR && Math.random() < 0.85 && !pcell(cellRect(X, Y))) Sim.set(X, Y, M.PLANTE); }
+      if (Sim === MainSim) { evt('pousse'); msg('Un arbre jaillit du sol !'); }
+    };
     switch (core) {
       case 'feu':
         Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
           const q = P[m]; const r = Math.random();
+          if (lgN && feuLg(x, y, i, m)) return;
           if ((m === M.BOIS || m === M.PLANTE || m === M.HERBE) && Sim.aux[i] === 0) { if (r < pr * q.flam * 10) { Sim.aux[i] = q.burn; Sim.touch(i); } }
           else if (m === M.HUILE || m === M.SEVE) { if (r < pr) Sim.set(x, y, M.FEU, 30); }
           else if (m === M.EAU) { if (r < pr * 0.25) { Sim.set(x, y, M.VAPEUR, 50); } }
           else if (m === M.GLACE || m === M.NEIGE) { if (r < pr * 0.8) { Sim.set(x, y, M.EAU); } }
           else if (m === M.SABLE && power >= 1.6) { if (r < pr * 0.15) Sim.set(x, y, M.VERRE); }
-          else if (m === M.AIR && burst) { const d = dist(cx, cy, (x + 0.5) * CS, (y + 0.5) * CS); if (d < rad * 0.6 && r < 0.35) Sim.set(x, y, M.FEU, 15 + (Math.random() * 15) | 0); }
+          else if (m === M.AIR && burst) { const d = dist(cx, cy, (x + 0.5) * CS, (y + 0.5) * CS); if (d < rad * 0.6 && r < 0.35) { if (lgN) Sim.setFeu(x, y, 25 + (Math.random() * 20) | 0, lgN); else Sim.set(x, y, M.FEU, 15 + (Math.random() * 15) | 0); } }
         });
         break;
       case 'eau':
         Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
           const r = Math.random();
+          if (lgN && burst && eauLg(x, y, i, m)) return;
           if (m === M.AIR) { const d = dist(cx, cy, (x + 0.5) * CS, (y + 0.5) * CS); if (d < rad * 0.75 && cap > 0 && r < pr * 0.6 && !pcell(cellRect(x, y))) { Sim.set(x, y, M.EAU); cap--; } }
           else if (m === M.FEU) Sim.set(x, y, M.VAPEUR, 30);
           else if ((m === M.BOIS || m === M.PLANTE || m === M.HERBE) && Sim.aux[i] > 0) { Sim.aux[i] = 0; Sim.touch(i); }
@@ -255,6 +299,7 @@ const World = (() => {
         Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
           const q = P[m]; if (m === M.AIR) return;
           if (m === M.FEU) { if (Math.random() < pr * 0.7) Sim.set(x, y, M.AIR); return; }
+          if (lgN && (q.gas || q.powder || (q.liquid && m !== M.LAVE))) { if (Math.random() < pr * 0.7 && y > 0 && Sim.get(x, y - 1) === M.AIR) Sim.swap(i, (y - 1) * Sim.W + x); return; }
           if (q.gas || q.powder || (q.liquid && m !== M.LAVE)) { if (Math.random() < pr * 0.6) { const [nx, ny] = towards(x, y, -1); if (Sim.get(nx, ny) === M.AIR) Sim.swap(i, ny * Sim.W + nx); } }
         });
         break;
@@ -262,19 +307,22 @@ const World = (() => {
         if (!burst) break;
         Sim.forRadius(cx, cy, rad * 0.85, (x, y, i, m) => {
           const q = P[m]; if (q.solid) return;
-          if (Math.random() < pr && !pcell(cellRect(x, y))) Sim.set(x, y, prm.persist > 0 ? M.PIERRE : M.TERRE);
+          if (Math.random() < pr && !pcell(cellRect(x, y))) Sim.set(x, y, lgN >= 2 ? M.CRISTAL : prm.persist > 0 || lgN ? M.PIERRE : M.TERRE);
         });
         break;
-      case 'vie':
+      case 'vie': {
+        const prv = Math.min(1, pr * (1 + lgN));
         Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
           const r = Math.random();
-          if (m === M.TERRE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.5) { Sim.set(x, y - 1, M.HERBE); evt('pousse'); } }
-          else if (m === M.PLANTE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.5) { Sim.set(x, y - 1, M.PLANTE); evt('pousse'); } }
-          else if (m === M.HERBE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.25) { Sim.set(x, y, M.PLANTE); evt('pousse'); } }
-          else if (m === M.CENDRE) { if (r < pr * 0.4) Sim.set(x, y, M.TERRE); }
+          if (m === M.TERRE && Sim.get(x, y - 1) === M.AIR) { if (r < prv * 0.5) { Sim.set(x, y - 1, M.HERBE); evt('pousse'); } }
+          else if (m === M.PLANTE && Sim.get(x, y - 1) === M.AIR) { if (r < prv * 0.5) { Sim.set(x, y - 1, M.PLANTE); evt('pousse'); } }
+          else if (m === M.HERBE && Sim.get(x, y - 1) === M.AIR) { if (r < prv * 0.25) { Sim.set(x, y, M.PLANTE); evt('pousse'); } }
+          else if (m === M.CENDRE) { if (r < prv * 0.4) Sim.set(x, y, M.TERRE); }
           if ((m === M.BOIS || m === M.PLANTE || m === M.HERBE) && Sim.aux[i] > 0) { Sim.aux[i] = 0; Sim.touch(i); }
         });
+        if (lgN >= 2 && burst) arbre();
         break;
+      }
       case 'force':
         Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
           const q = P[m]; if (m === M.AIR || q.solid && !q.powder) return;
@@ -284,6 +332,7 @@ const World = (() => {
       case 'froid':
         Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
           const r = Math.random();
+          if (lgN && froidLg(x, y, i, m)) return;
           if (m === M.EAU) { if (r < pr * 0.9) { Sim.set(x, y, M.GLACE); if (r < 0.02) onSimEvent('gel', (x + 0.5) * CS, (y + 0.5) * CS); } }
           else if (m === M.LAVE) { if (r < pr * 0.7) Sim.set(x, y, M.OBSIDIENNE); }
           else if (m === M.VAPEUR) Sim.set(x, y, M.EAU);
@@ -305,7 +354,17 @@ const World = (() => {
         Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
           const q = P[m]; const r = Math.random();
           if (m === M.AIR) { const d = dist(cx, cy, (x + 0.5) * CS, (y + 0.5) * CS); if (d < rad * 0.7 && cap > 0 && r < pr * 0.5 && !pcell(cellRect(x, y))) { Sim.set(x, y, M.ACIDE); cap--; } }
-          else if (q.corrode > 0 && !q.liquid) { if (r < pr * q.corrode * 3) { Sim.set(x, y, r < 0.5 ? M.FUMEE : M.AIR, 20); if (r < 0.03) onSimEvent('corrosion', (x + 0.5) * CS, (y + 0.5) * CS); } }
+          else if (lgN >= 2 && (m === M.OBSIDIENNE || m === M.METAL || m === M.VERRE || m === M.CRISTAL)) { if (r < pr * 0.2) Sim.set(x, y, M.FUMEE, 20); }
+          else if (q.corrode > 0 && !q.liquid) { if (r < pr * q.corrode * 3 * (lgN ? 3 : 1)) { Sim.set(x, y, r < 0.5 ? M.FUMEE : M.AIR, 20); if (r < 0.03) onSimEvent('corrosion', (x + 0.5) * CS, (y + 0.5) * CS); } }
+        });
+        break;
+      case 'lumiere':
+        if (!lgN) break;
+        Sim.forRadius(cx, cy, rad * 0.6, (x, y, i, m) => {
+          const q = P[m], r = Math.random();
+          if (FLAM(m) && Sim.aux[i] === 0) { if (r < pr * 0.25 * lgN) { Sim.aux[i] = q.burn; Sim.touch(i); } }
+          else if (lgN >= 2 && m === M.SABLE) { if (r < pr * 0.2) Sim.set(x, y, M.VERRE); }
+          else if (lgN >= 2 && (m === M.NEIGE || m === M.GLACE)) { if (r < pr * 0.5) Sim.set(x, y, M.EAU); }
         });
         break;
       case 'gravite':
@@ -374,11 +433,51 @@ const World = (() => {
 
   // ---------- Effets sur les entités ----------
   // mode : 'burst' (instantané) ou un nombre dt (continu)
+  // ---------- Langages : effets propres aux créatures ----------
+  function effetLangage(core, n, cx, cy, rad, prm, burst, k) {
+    const power = prm.power || 1, dur = prm.duration || 1;
+    const dans = (c) => c.hp > 0 && c.t !== 'familier' && U.circleRect(cx, cy, rad, c);
+    switch (core) {
+      case 'eau': for (const c of st.crs) if (dans(c)) { const dx = c.x + c.w / 2 - cx, dy = c.y + c.h / 2 - cy, d = Math.hypot(dx, dy) || 1; const m = c.t === 'golem' ? 0.35 : 1; c.vx += dx / d * 420 * n * k * m; c.vy += (dy / d * 200 - 160) * n * k * m; if (burst && n >= 2) hurt(c, 1 * power); } break;
+      case 'froid': if (burst) for (const c of st.crs) if (dans(c) && !c.sta.tame) { c.sta.gele = Math.max(c.sta.gele || 0, 4 * n * dur); c.sta.stun = Math.max(c.sta.stun, c.sta.gele); c.vx = 0; c.sta.burn = 0; } break;
+      case 'vent':
+        for (const c of st.crs) if (dans(c)) { c.vy -= 380 * n * k * (c.t === 'golem' ? 0.4 : 1); c.onGround = false; }
+        for (const o of st.objs) if (o.dyn && !o.carried && !o.mort && U.circleRect(cx, cy, rad, o)) o.vy -= 380 * n * k;
+        if (burst && n >= 2) tornade(cx, cy, rad, dur);
+        break;
+      case 'foudre': if (burst) arcsTension(cx, cy, rad, n >= 2 ? 6 : 3, power, n >= 2); break;
+      case 'vie': for (const c of st.crs) if (c.hp > 0 && U.circleRect(cx, cy, rad, c)) c.hp = Math.min(c.hpMax, c.hp + 2 * k); if (burst) part(cx, cy, '#e8a0c0', 10, 70 + rad, 1.2, 3, 60, 'feuille'); break;
+      case 'lumiere': for (const c of st.crs) if (dans(c)) c.sta.stun = Math.max(c.sta.stun, (burst ? 2.5 : 0.4) * (1 + n) * dur); break;
+      case 'ombre': if (burst && n >= 2) for (const c of st.crs) if (dans(c) && (c.sta.sleep > 0 || c.dort) && !c.sta.tame && c.t !== 'golem') { tame(c); part(c.x + c.w / 2, c.y, '#c45a8a', 4, 40, 0.8, 3, -60, 'coeur'); } break;
+      case 'acide': if (burst) for (const c of st.crs) if (dans(c) && c.t === 'golem') hurt(c, 1.5 * n * power); break;
+      case 'gravite': if (burst && n >= 2) st.sp.push({ k: 'singularite', x: cx, y: cy, r: rad * 1.8, life: 2.6 * dur, max: 2.6 * dur }); break;
+    }
+  }
+  function tornade(cx, cy, rad, dur) {
+    const g = groundBelow(cx, cy);
+    st.sp.push({ k: 'tornade', x: cx, y: g != null ? Math.min(g, cy + 220) : cy + 40, r: Math.max(42, rad * 0.9), h: 270, life: 4 * dur, max: 4 * dur, ph: Math.random() * 9 });
+    msg('Une tornade se lève !');
+  }
+  function arcsTension(cx, cy, rad, n, power, violet) {
+    const col = violet ? '#b070e0' : '#e0c43a';
+    const cand = st.crs.filter((c) => c.hp > 0 && c.t !== 'familier' && !c.sta.tame).map((c) => [dist(cx, cy, c.x + c.w / 2, c.y + c.h / 2), c]).filter((q) => q[0] < rad + 320).sort((a, b) => a[0] - b[0]).slice(0, n);
+    let fx = cx, fy = cy;
+    for (const [, c] of cand) {
+      const tx = c.x + c.w / 2, ty = c.y + c.h / 2;
+      st.sp.push({ k: 'zap', pts: FX.eclairPts(fx, fy, tx, ty, 0.22), life: 0.35, max: 0.35, color: col });
+      hurt(c, 1.5 * power); c.sta.stun = Math.max(c.sta.stun, 1.5); if (violet && !c.sta.wet) c.sta.burn = Math.max(c.sta.burn, 3);
+      part(tx, ty, col, 6, 120, 0.3, 2, 0, 'etincelle'); fx = tx; fy = ty;
+    }
+    if (!cand.length) for (let q = 0; q < 2; q++) { const a = Math.random() * TAU; st.sp.push({ k: 'zap', pts: FX.eclairPts(cx, cy, cx + Math.cos(a) * (rad + 80), cy + Math.sin(a) * (rad + 80), 0.3), life: 0.25, max: 0.25, color: col }); }
+    if (violet) Sim.forRadius(cx, cy, rad * 1.5, (x, y, i, m) => { const q = P[m]; if (FLAM(m) && Sim.aux[i] === 0 && Math.random() < 0.25) { Sim.aux[i] = q.burn; Sim.touch(i); } else if ((m === M.HUILE || m === M.POUDRE || m === M.SEVE) && Math.random() < 0.4) Sim.set(x, y, M.FEU, 30); });
+  }
   function applyEffect(core, cx, cy, rad, prm, mode, opts = {}) {
     const burst = mode === 'burst';
     const k = burst ? 1 : mode * 2.2;
     if (core === 'marque') { if (burst) placeMarque(cx, cy, rad); return; }
     if (core === 'contre') { if (burst) dissiper(cx, cy, rad); return; }
+    const lgN = prm.lg ? prm.lg[core] || 0 : 0;
+    if (lgN) prm = { ...prm, power: (prm.power || 1) * (1 + 0.3 * lgN), duration: (prm.duration || 1) * (core === 'ombre' ? 2 : 1) };
     const power = prm.power || 1, dur = prm.duration || 1;
     const C = colorOf(core);
     if (burst) st.sp.push({ k: 'ring', core, x: cx, y: cy, r: rad, life: 0.4, max: 0.4, color: C });
@@ -420,7 +519,7 @@ const World = (() => {
       }
       switch (core) {
         case 'feu':
-          if (c.t === 'golem') { if (burst) part(ccx, ccy, '#aaa', 4, 40, 0.4); }
+          if (c.t === 'golem') { if (lgN >= 2) { hurt(c, 1.5 * power * k); if (burst) part(ccx, ccy, '#5a90e0', 8, 80, 0.5, 2, 0, 'etincelle'); } else if (burst) part(ccx, ccy, '#aaa', 4, 40, 0.4); }
           else if (c.t === 'follet') { c.hp = Math.min(c.hpMax + 2, c.hp + 1 * k); c.size = Math.min(1.8, c.size + 0.15 * k); if (burst) part(ccx, ccy, C, 8, 90); }
           else { if (!c.sta.wet) { hurt(c, 2 * power * k); c.sta.burn = Math.max(c.sta.burn, 3 * dur); } else if (burst) part(ccx, ccy, '#ccc', 6, 60); }
           break;
@@ -456,6 +555,7 @@ const World = (() => {
         case 'rouille': if (c.t === 'golem') hurt(c, 1.5 * power * k); break;
       }
     }
+    if (lgN) effetLangage(core, lgN, cx, cy, rad, prm, burst, k);
     // --- objets ---
     for (const o of st.objs) {
       if (o.mort || !U.circleRect(cx, cy, rad, o)) continue;
@@ -517,7 +617,7 @@ const World = (() => {
     }
     // --- décor ---
     if (burst) {
-      fxBurst(core, cx, cy, rad);
+      fxBurst(core, cx, cy, rad, lgN);
       Son.sfx('burst', core);
       if (prm.persist > 0 && core !== 'terre' && core !== 'gravite' && core !== 'metal' && core !== 'esprit' && core !== 'lien' && core !== 'portail') st.sp.push({ k: 'field', core, x: cx, y: cy, r: rad * 0.8, life: 4 * prm.persist * dur, max: 4 * prm.persist * dur, prm });
       else if (core === 'lumiere' && !opts.noField) st.sp.push({ k: 'field', core, x: cx, y: cy, r: rad * 0.8, life: 5 * dur, max: 5 * dur, prm, faible: true });
@@ -620,17 +720,22 @@ const World = (() => {
   // ---------- Spécification d'un sceau au lancer ----------
   let castSeq = 0;
   const PRIM = ['immediat', 'contact', 'retarde', 'commande'];
+  function couleurLg(core, lg) { if (core === 'feu' && lg.feu) return lg.feu >= 2 ? '#4a86e0' : '#f0d070'; if (core === 'foudre' && lg.foudre >= 2) return '#b070e0'; return colorOf(core); }
+  // le Maître d'un élément paie moins cher ses sceaux
+  function maitreMul(seal) { const M2 = (game && game.progress.maitrise) || {}; const els = [seal.core, seal.taille !== 'petit' ? seal.core2 : null].filter(Boolean); return els.length && els.every((e) => DATA.LANGAGES[e] && DATA.niveauMaitrise(M2[e] || 0) >= 3) ? 0.8 : 1; }
   function makeSpec(seal, depth = 0, charge = 0) {
     const prm = Seal.params(seal);
     if (charge > 0) { prm.power *= 1 + 0.8 * charge; prm.range *= 1 + 0.5 * charge; prm.size *= 1 + 0.4 * charge; prm.duration *= 1 + 0.3 * charge; }
     let cores = [seal.core]; if (seal.core2 && seal.taille !== 'petit') cores.push(seal.core2);
     if (prm.inverse) { prm.gInv = cores.includes('gravite'); cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c)); }
+    const lg = prm.lg || {};
+    if (lg.gravite && cores.includes('gravite')) { prm.size *= 1 + 0.3 * lg.gravite; prm.power *= 1 + 0.4 * lg.gravite; }
     const combo = cores.length > 1 && !prm.inverse ? [seal.core, seal.core2].sort().join('|') : null;
     const trs = Seal.triggers(seal);
     const proj = seal.shape === 'projectile' || seal.shape === 'chaine';
     const trig = trs.find((t) => PRIM.includes(t)) || (trs.includes('repetition') && proj ? 'contact' : 'immediat');
     const big = seal.taille !== 'petit';
-    return { cores, prm, trig, subs: depth < 2 ? Seal.subs(seal) : [], combo, color: colorOf(cores[0]), core: cores[0], depth, nom: Seal.nom(seal),
+    return { cores, prm, trig, subs: depth < 2 ? Seal.subs(seal) : [], combo, color: couleurLg(cores[0], lg), chaud: cores.includes('feu') ? lg.feu || 0 : 0, core: cores[0], depth, nom: Seal.nom(seal),
       repeat: trs.includes('repetition') ? (seal.periode || 2) : 0, expire: trs.includes('expiration'), delai: seal.delai || 2,
       filtre: big ? seal.filtre || null : null, cible: big ? seal.cible || 'souris' : 'souris', castId: ++castSeq, shape: seal.shape, seal, charge };
   }
@@ -750,7 +855,7 @@ const World = (() => {
     const p = st.p;
     if (!p.gestes) p.gestes = { R: null, L: null };
     if (p.gestes[hand]) return false;
-    const cost = gratuit ? 0 : Math.max(1, Math.round(Seal.cost(seal) * (game.opt ? game.opt.cout : 1) * (1 + charge)));
+    const cost = gratuit ? 0 : Math.max(1, Math.round(Seal.cost(seal) * (game.opt ? game.opt.cout : 1) * (1 + charge) * maitreMul(seal)));
     if (p.ink < cost) { msg('Plus assez d\'encre (' + Math.floor(p.ink) + '/' + cost + ').', 'warn'); Son.sfx('fail'); return false; }
     p.ink -= cost;
     if (gratuit) part(p.x + p.w / 2, p.y + p.h * 0.4, '#efe3c4', 8, 40, 0.6, 3, 60);
@@ -803,7 +908,7 @@ const World = (() => {
           const sp = (spec.core === 'foudre' ? 800 : 520) * prm.speed;
           const floats = ['lumiere', 'vent', 'ombre', 'foudre', 'gravite', 'son', 'esprit', 'temps'].includes(spec.core);
           st.sp.push({ k: 'proj', spec, core: spec.core, x: ox + Math.cos(a) * 20, y: oy + Math.sin(a) * 20, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
-            r: 8 * prm.size, prm, trig, bounces: prm.bounces, life: 1.1 * prm.range, grav: floats ? 40 : 420 / prm.speed, hits: new Set(), color: C, trail: 0,
+            r: 8 * prm.size, prm, trig, bounces: prm.bounces, life: 1.1 * prm.range, grav: floats ? 40 : 420 / prm.speed, hits: new Set(), color: C, trail: 0, chaud: spec.chaud || 0,
             chain: seal.shape === 'chaine' ? 3 + (prm.extra ? 2 : 0) : 0, guide: prm.teleguide && o.player && !homing, homing });
           if (homing) { const q = st.sp[st.sp.length - 1]; q.life *= spec.cible === 'marque' ? 4 : 2; q.grav = 0; }
         }
@@ -1412,7 +1517,7 @@ const World = (() => {
     for (const c of st.crs) {
       if (c.hp <= 0) { c.respawn -= dt; if (c.respawn <= 0) { c.hp = c.hpMax; c.x = c.x0; c.y = c.y0; c.vx = 0; c.vy = 0; c.size = 1; c.sta.tame = false; if (c.t === 'limace') { c.w = 36; c.h = 24; } } continue; }
       if (c.carried) { c.sta.burn = 0; continue; }
-      for (const k of ['burn', 'stun', 'sleep', 'wet', 'glisse', 'lent']) if (c.sta[k] > 0) c.sta[k] = Math.max(0, c.sta[k] - dt);
+      for (const k of ['burn', 'stun', 'sleep', 'wet', 'glisse', 'lent', 'gele']) if (c.sta[k] > 0) c.sta[k] = Math.max(0, c.sta[k] - dt);
       if (c.curieux) { c.curieux.t -= dt; if (c.curieux.t <= 0) c.curieux = null; }
       if (c.ench) { c.ench.t -= dt; c.ench.tick += dt; if (c.ench.t <= 0) c.ench = null; else { doContinuous(c.ench.spec, c.x + c.w / 2, c.y + c.h / 2, 50 * (c.ench.spec.prm.size || 1), dt, { noPlayer: true, noField: true }); if (Math.random() < 0.3) part(c.x + Math.random() * c.w, c.y + Math.random() * c.h, c.ench.spec.color, 1, 20, 0.5, 2, -40, 'spark'); } }
       if (c.t === 'familier') { updateFamilier(c, dt, p); continue; }
@@ -1783,7 +1888,7 @@ const World = (() => {
           }
           if (s.trig === 'immediat' && !s.potion && !s.liquide && Math.random() < 0.5) for (const c of s.spec.cores) gridEffect(c, s.x, s.y, s.r + 4, { ...s.prm, power: s.prm.power * 0.5 }, false, dt * 3);
           (s.tr || (s.tr = [])).push([s.x, s.y]); if (s.tr.length > 14) s.tr.shift();
-          s.trail += dt; if (s.trail > 0.035) { s.trail = 0; if (s.core === 'feu') part(s.x, s.y, '#f08a30', 1, 20, 0.35, s.r * 0.35, -200, 'flamme'); else if (s.core === 'foudre' || s.core === 'lumiere') part(s.x, s.y, s.color, 1, 60, 0.3, 1.4, 0, 'etincelle'); else if (s.core === 'eau' || s.core === 'acide') part(s.x, s.y, s.color, 1, 30, 0.5, 1.6, 600, 'goutte'); else if (s.core === 'froid') part(s.x, s.y, '#dff0ff', 1, 20, 0.8, 2.2, 30, 'flocon'); else part(s.x, s.y, s.color, 1, 10, 0.35, s.r * 0.5, 0, 'glow'); }
+          s.trail += dt; if (s.trail > 0.035) { s.trail = 0; if (s.core === 'feu') { part(s.x, s.y, s.chaud >= 2 ? '#5a90e0' : s.chaud ? '#f6e0a0' : '#f08a30', 1, 20, 0.35, s.r * 0.35, -200, 'flamme'); if (s.chaud) st.parts[st.parts.length - 1].chaud = s.chaud; } else if (s.core === 'foudre' || s.core === 'lumiere') part(s.x, s.y, s.color, 1, 60, 0.3, 1.4, 0, 'etincelle'); else if (s.core === 'eau' || s.core === 'acide') part(s.x, s.y, s.color, 1, 30, 0.5, 1.6, 600, 'goutte'); else if (s.core === 'froid') part(s.x, s.y, '#dff0ff', 1, 20, 0.8, 2.2, 30, 'flocon'); else part(s.x, s.y, s.color, 1, 10, 0.35, s.r * 0.5, 0, 'glow'); }
           if (s.y > L.h + 50 || s.y < -50) s.mort = true;
           break;
         }
@@ -1850,6 +1955,20 @@ const World = (() => {
           break;
         }
         case 'label': s.life -= dt; s.y -= 20 * dt; if (s.life <= 0) s.mort = true; break;
+        case 'tornade': {
+          s.life -= dt; if (s.life <= 0) { s.mort = true; break; }
+          s.x += Math.sin(time * 0.9 + s.ph) * 50 * dt;
+          const g2 = groundBelow(s.x, s.y - 40); if (g2 != null) s.y += (g2 - s.y) * Math.min(1, dt * 4);
+          const kk = Math.min(1, s.life / 0.6);
+          const lift = (b, f) => { const bx = b.x + b.w / 2, by = b.y + b.h / 2; if (Math.abs(bx - s.x) > s.r + b.w / 2 || by > s.y + 10 || by < s.y - s.h) return; const dx = s.x - bx; b.vx += dx * 5 * dt * f + Math.cos(time * 6 + by * 0.05) * 600 * dt * f; b.vy -= 1700 * dt * f * kk; if (b.vy < -380) b.vy = -380; b.onGround = false; };
+          for (const c of st.crs) if (c.hp > 0 && !c.carried) lift(c, c.t === 'golem' ? 0.45 : 1);
+          for (const o of st.objs) if (o.dyn && !o.carried && !o.mort) lift(o, 1);
+          lift(st.p, 0.55);
+          const x0 = Math.floor((s.x - s.r) / CS), x1 = Math.floor((s.x + s.r) / CS), y0 = Math.max(1, Math.floor((s.y - s.h) / CS)), y1 = Math.floor(s.y / CS);
+          for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const m = Sim.get(x, y); if (!m) continue; const q = P[m]; if (!(q.liquid || q.powder || q.gas) || m === M.BULLE || m === M.LAVE) continue; if (Math.random() < 0.35 * kk) { const nx = x + (Math.random() < 0.4 ? (Math.random() < 0.5 ? -1 : 1) : 0); if (Sim.get(nx, y - 1) === M.AIR) Sim.swap(y * Sim.W + x, (y - 1) * Sim.W + nx); } }
+          if (Math.random() < 0.7) { const f = Math.random(); st.parts.push({ x: s.x + (Math.random() - 0.5) * s.r * (0.4 + f), y: s.y - f * s.h, vx: (Math.random() - 0.5) * 200, vy: -120, life: 0.5, max: 0.5, color: '#bfe8e8', size: 2, grav: 0, type: 'vent' }); }
+          break;
+        }
         case 'singularite': {
           s.life -= dt; const ph = s.life > 0.6;
           const pull = (b, k) => { const bx = b.x + b.w / 2, by = b.y + b.h / 2; const dx = s.x - bx, dy = s.y - by; const d = Math.hypot(dx, dy) || 1; if (d > s.r) return; if (ph) { b.vx += dx / d * 1800 * dt * k; b.vy += dy / d * 1800 * dt * k; } else { b.vx -= dx / d * 900 * k; b.vy -= dy / d * 900 * k - 200; } };
@@ -2199,6 +2318,7 @@ const World = (() => {
       }
     }
     if (c.sta.sleep > 0 || c.dort) U.txt(ctx, 'z z', cx + 14, c.y - 10 + Math.sin(time * 3) * 3, 14, 'left', '#5a4a7d', 'IM Fell English', 'italic');
+    if (c.sta.gele > 0) { ctx.save(); ctx.globalAlpha = 0.45 * Math.min(1, c.sta.gele); ctx.fillStyle = '#cfe8f6'; ctx.fillRect(c.x - 4, c.y - 6, c.w + 8, c.h + 8); ctx.globalAlpha = Math.min(1, c.sta.gele); ctx.strokeStyle = '#7fb4d8'; ctx.lineWidth = 1.4; ctx.strokeRect(c.x - 4, c.y - 6, c.w + 8, c.h + 8); ctx.beginPath(); ctx.moveTo(c.x + 2, c.y); ctx.lineTo(c.x + c.w * 0.4, c.y + c.h * 0.3); ctx.stroke(); ctx.restore(); }
     if (c.sta.stun > 0) { ctx.strokeStyle = '#d8a63a'; ctx.lineWidth = 1.5; for (let i = 0; i < 3; i++) { const a = time * 5 + (i / 3) * TAU; ctx.beginPath(); ctx.arc(cx + Math.cos(a) * 14, c.y - 8 + Math.sin(a) * 4, 2, 0, TAU); ctx.stroke(); } }
     if (c.sta.tame && c.t !== 'familier' && !c.controlled) { ctx.fillStyle = '#c45a8a'; ctx.font = '14px serif'; ctx.textAlign = 'center'; ctx.fillText('♥', cx, c.y - 8 + Math.sin(time * 3) * 2); }
     if (c.sta.lent > 0) { ctx.strokeStyle = '#8a8f9a'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); U.inkCircle(ctx, cx, c.y + c.h / 2, Math.max(c.w, c.h) * 0.7, 1, 1); ctx.setLineDash([]); }
@@ -2323,10 +2443,15 @@ const World = (() => {
       case 'repeat': { const k = 1 - s.t / s.max; ctx.strokeStyle = s.spec.color; ctx.globalAlpha = 0.5; ctx.lineWidth = 1.5; const x = s.self ? st.p.x + st.p.w / 2 : s.x, y = s.self ? st.p.y + st.p.h / 2 : s.y; ctx.beginPath(); ctx.arc(x, y, 16, -Math.PI / 2, -Math.PI / 2 + TAU * k); ctx.stroke(); U.txt(ctx, '×' + s.left, x + 18, y - 16, 10, 'left', '#6b4f2a'); break; }
       case 'expire': { ctx.globalAlpha = 0.35; Seal.glyph(ctx, 'expiration', s.x, s.y - 22, 6, s.spec.color, 2); break; }
       case 'bouclier': { const span = 1.05; ctx.lineCap = 'round'; ctx.strokeStyle = s.spec.color; ctx.globalAlpha = 0.35 + 0.5 * Math.min(1, s.life / 0.5); ctx.lineWidth = 9 * s.spec.prm.size; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, s.a - span, s.a + span); ctx.stroke(); ctx.globalAlpha = 0.9; ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(s.x, s.y, s.r + 5 * s.spec.prm.size, s.a - span, s.a + span); ctx.stroke(); ctx.beginPath(); ctx.arc(s.x, s.y, s.r - 5 * s.spec.prm.size, s.a - span, s.a + span); ctx.stroke(); Seal.glyph(ctx, s.spec.core, s.x + Math.cos(s.a) * s.r, s.y + Math.sin(s.a) * s.r, 7, '#efe3c4', 2); break; }
+      case 'tornade': { const kk = Math.min(1, s.life / 0.6, (s.max - s.life) / 0.4); ctx.lineCap = 'round';
+        for (let i = 0; i < 16; i++) { const f = i / 16; const yy = s.y - f * s.h; const w = s.r * (0.22 + f * 0.95); const ph = time * 8 + i * 0.55; const ox = Math.sin(time * 2 + f * 4 + s.ph) * 10 * f;
+          ctx.globalAlpha = (0.25 + 0.45 * (1 - f)) * kk; ctx.strokeStyle = i % 3 ? '#9fd0cc' : '#3f9c9b'; ctx.lineWidth = 1.2 + (1 - f) * 1.5;
+          ctx.beginPath(); ctx.ellipse(s.x + ox, yy, w, w * 0.2, 0, ph % TAU, ph % TAU + 3.8); ctx.stroke(); }
+        break; }
       case 'singularite': { const t = 1 - s.life / s.max; ctx.strokeStyle = '#9a4a8c'; ctx.lineWidth = 2; for (let k = 0; k < 4; k++) { ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(s.x, s.y, (s.r * 0.6) * (1 - ((t * 3 + k * 0.25) % 1)), 0, TAU); ctx.stroke(); } ctx.fillStyle = '#1f1a16'; ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(s.x, s.y, 6 + Math.sin(time * 20) * 2, 0, TAU); ctx.fill(); break; }
       case 'label': ctx.globalAlpha = Math.min(1, s.life * 2); U.txt(ctx, s.txt, s.x, s.y, 20, 'center', INK, 'IM Fell English SC'); break;
       case 'ring': FX.onde(ctx, s.x, s.y, s.r, 1 - s.life / s.max, s.color); break;
-      case 'zap': FX.eclair(ctx, s.pts, '#e0c43a', 1.4, s.life / s.max); break;
+      case 'zap': FX.eclair(ctx, s.pts, s.color || '#e0c43a', s.color ? 2.2 : 1.4, s.life / s.max, null, s.color === '#b070e0' ? '#ead2ff' : '#fffbe8'); break;
       case 'beam': { const t = s.life / s.max;
         if (s.core === 'foudre') { FX.eclair(ctx, FX.eclairPts(s.x1, s.y1, s.x2, s.y2, 0.12), '#e0c43a', s.w * 0.45 * t + 1, t); break; }
         ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.strokeStyle = s.color; ctx.globalAlpha = t * 0.35; ctx.lineWidth = s.w * 3 * t + 2; ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke();
