@@ -114,7 +114,9 @@
   .glyph-btn small { opacity: 0.6; font-size: calc(11px * var(--s)); }
   .glyph-btn.locked { opacity: 0.5; cursor: help; background: transparent; box-shadow: none; border-style: dashed; }
   #pal-desc { min-height: 3em; margin-top: 10px; padding: 8px 10px; background: rgba(255,255,255,0.3); border-left: 3px solid var(--gold); font-style: italic; }
-  #seal-tailles { align-items: center; margin: 0 0 4px; }
+  #seal-tailles, #seal-encres { align-items: center; margin: 0 0 4px; }
+  #seal-encres .choice i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; border: 1px solid rgba(31,26,22,0.6); }
+  #seal-encres .label { margin-right: 6px; }
   #seal-tailles .label, #seal-params .label { margin-right: 6px; }
   #seal-params .choices { align-items: center; margin: 2px 0; }
   .choice.locked { opacity: 0.4; }
@@ -234,6 +236,7 @@
       <div class="cols">
         <div>
           <div id="seal-tailles" class="choices"></div>
+          <div id="seal-encres" class="choices"></div>
           <canvas id="seal-canvas" width="380" height="380"></canvas>
           <input id="seal-nom" type="text" maxlength="32" placeholder="Nom du sceau">
           <div class="seal-info"><span class="label">Coût en encre</span><span class="cost" id="seal-cost">0</span><span id="seal-etat"></span></div>

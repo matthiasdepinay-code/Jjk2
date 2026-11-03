@@ -187,6 +187,14 @@ const DATA = (() => {
     sel:        { id: 'sel',        nom: 'Sel',            couleur: '#f2efe6', liquide: 'SEL', desc: 'Gratté dans les salines du désert (X). Fond dans l\'eau, fait fondre la glace.' },
     mousse:     { id: 'mousse',     nom: 'Mousse',         couleur: '#7a9a4a', desc: 'Grattée sur la pierre humide (X).' },
     poudre:     { id: 'poudre',     nom: 'Sac de poudre',  couleur: '#3a3430', liquide: 'POUDRE', desc: 'Se jette en tas. Une étincelle, et boum.' },
+    // ingrédients d'encre : chacun ne se trouve que dans sa région, en creusant (X)
+    coeur_braise:   { id: 'coeur_braise',   nom: 'Cœur de braise',   couleur: '#e0622b', zone: 'Le Volcan',    desc: 'Une braise qui ne s\'éteint jamais. Se trouve en creusant (X) les cendres et la terre du Volcan.' },
+    nacre:          { id: 'nacre',          nom: 'Éclat de nacre',   couleur: '#e6eef2', zone: 'Le Lac',       desc: 'Irisé comme une bulle. Se trouve en creusant (X) le fond du Lac, sous l\'eau.' },
+    ambre:          { id: 'ambre',          nom: 'Larme d\'ambre',   couleur: '#d89a3a', zone: 'La Forêt',     desc: 'De la résine très ancienne. Se trouve en creusant (X) l\'humus de la Forêt.' },
+    givre_bleu:     { id: 'givre_bleu',     nom: 'Givre bleu',       couleur: '#8ab8f0', zone: 'La Montagne',  desc: 'Une glace qui ne fond pas. Se trouve en creusant (X) la neige et la terre de la Montagne.' },
+    poudre_or:      { id: 'poudre_or',      nom: 'Poudre d\'or',     couleur: '#e0b050', zone: 'Les Ruines',   desc: 'Ce qui reste des anciens sceaux dorés. Se trouve en creusant (X) le sol des Ruines.' },
+    sable_chantant: { id: 'sable_chantant', nom: 'Sable chantant',   couleur: '#e8cf8a', zone: 'Le Désert',    desc: 'Il fredonne quand on le verse. Se trouve en creusant (X) les dunes du Désert.' },
+    pollen:         { id: 'pollen',         nom: 'Pollen lumineux',  couleur: '#e8e070', zone: 'La Clairière', desc: 'Une poussière qui luit doucement. Se trouve en arrachant (X) l\'herbe de la Clairière.' },
     // rares : offerts par le maître
     larme_lune:   { id: 'larme_lune',   nom: 'Larme de lune',   couleur: '#cfd8e8', rare: true, desc: 'Offerte par le maître. Une goutte qui luit faiblement.' },
     coeur_chene:  { id: 'coeur_chene',  nom: 'Cœur de chêne',   couleur: '#7a5a2a', rare: true, desc: 'Offert par le maître. Un nœud de bois qui bat lentement.' },
@@ -202,6 +210,7 @@ const DATA = (() => {
     racine: 'vivant', fil: 'vivant', champignon: 'sombre',
     huile: 'visqueux', seve: 'visqueux', acide: 'acide',
     miel: 'visqueux', sel: 'minéral', mousse: 'vivant', poudre: 'chaud',
+    coeur_braise: 'chaud', nacre: 'frais', ambre: 'visqueux', givre_bleu: 'frais', poudre_or: 'minéral', sable_chantant: 'aérien', pollen: 'vivant',
     larme_lune: 'frais', coeur_chene: 'vivant', sable_temps: 'minéral', plume_phenix: 'chaud',
   };
   const ODEURS = { frais: 'ça sent la pluie', chaud: 'ça sent la fumée', 'aérien': 'ça sent l\'orage', 'minéral': 'ça sent la pierre mouillée', vivant: 'ça sent la forêt', sombre: 'ça sent la cave', visqueux: 'ça sent le vieux bois', acide: 'ça pique le nez' };
@@ -225,6 +234,32 @@ const DATA = (() => {
   };
 
   // Potions : ingrédients (ensemble non ordonné) + étapes (ordonnées)
+  // Encres spéciales : brassées au chaudron, elles changent la nature des sceaux qu'on écrit avec
+  const ENCRES = {
+    encre_braise:    { id: 'encre_braise',    nom: 'Encre de braise',  couleur: '#d9622b', encre: true, usage: 'encre', ingr: ['coeur_braise', 'cendre'], etapes: ['chauffer', 'chauffer'],
+                       effet: 'Chaque éclat enflamme un peu ce qui l\'entoure ; le feu y gagne 30 % de puissance.', desc: 'Huit gouttes d\'une encre qui fume encore.', enigme: 'Un cœur qui ne s\'éteint pas, dans ce qui reste du feu, chauffé deux fois.' },
+    encre_nacre:     { id: 'encre_nacre',     nom: 'Encre de nacre',   couleur: '#dfe8ee', encre: true, usage: 'encre', ingr: ['nacre', 'eau_source'], etapes: ['remuer', 'infuser'],
+                       effet: 'Le sort ricoche : deux rebonds de plus, et 30 % de durée.', desc: 'Huit gouttes irisées.', enigme: 'La nacre du fond du lac, remuée puis infusée dans l\'eau claire.' },
+    encre_ambre:     { id: 'encre_ambre',     nom: 'Encre d\'ambre',   couleur: '#c88a2a', encre: true, usage: 'encre', ingr: ['ambre', 'seve'], etapes: ['chauffer', 'refroidir'],
+                       effet: 'Ce que le sort touche s\'englue : ralenti et figé un instant. Durée +50 %.', desc: 'Huit gouttes épaisses et dorées.', enigme: 'La larme d\'un arbre ancien, fondue dans la sève, puis refroidie.' },
+    encre_givre:     { id: 'encre_givre',     nom: 'Encre de givre',   couleur: '#8ab8f0', encre: true, usage: 'encre', ingr: ['givre_bleu', 'eau_source'], etapes: ['refroidir', 'refroidir'],
+                       effet: 'Chaque éclat laisse une morsure de froid : l\'eau gèle, les créatures s\'engourdissent.', desc: 'Huit gouttes qui givrent la plume.', enigme: 'Le givre qui ne fond pas, dans l\'eau de source, refroidi encore et encore.' },
+    encre_or:        { id: 'encre_or',        nom: 'Encre d\'or',      couleur: '#e0b050', encre: true, usage: 'encre', ingr: ['poudre_or', 'miel'], etapes: ['chauffer', 'remuer'],
+                       effet: 'Le sceau coûte 40 % d\'encre en moins.', desc: 'Huit gouttes précieuses.', enigme: 'L\'or des vieux sceaux, lié au miel, chauffé puis remué.' },
+    encre_chantante: { id: 'encre_chantante', nom: 'Encre chantante',  couleur: '#e8cf8a', encre: true, usage: 'encre', ingr: ['sable_chantant', 'plume'], etapes: ['remuer', 'remuer', 'infuser'],
+                       effet: 'Le sort résonne : un écho de plus, et une onde qui attire les curieux.', desc: 'Huit gouttes qui fredonnent.', enigme: 'Le sable qui chante et une plume de vent, remués deux fois puis laissés à infuser.' },
+    encre_pollen:    { id: 'encre_pollen',    nom: 'Encre de pollen',  couleur: '#d8d060', encre: true, usage: 'encre', ingr: ['pollen', 'rosee'], etapes: ['infuser', 'remuer'],
+                       effet: 'Chaque éclat fait pousser l\'herbe et te rend un peu de vitalité.', desc: 'Huit gouttes qui sentent le printemps.', enigme: 'Le pollen qui luit, dans la rosée du matin, infusé puis remué.' },
+  };
+  const ENCRE_ZONES = {
+    'Le Volcan':    { ing: 'coeur_braise',   mats: ['CENDRE', 'TERRE', 'SABLE'], p: 0.035 },
+    'Le Lac':       { ing: 'nacre',          mats: ['SABLE', 'TERRE'], p: 0.06, eau: true },
+    'La Forêt':     { ing: 'ambre',          mats: ['TERRE', 'PLANTE', 'HERBE'], p: 0.03 },
+    'La Montagne':  { ing: 'givre_bleu',     mats: ['NEIGE', 'TERRE'], p: 0.035 },
+    'Les Ruines':   { ing: 'poudre_or',      mats: ['TERRE', 'SABLE'], p: 0.035 },
+    'Le Désert':    { ing: 'sable_chantant', mats: ['SABLE', 'SEL'], p: 0.03 },
+    'La Clairière': { ing: 'pollen',         mats: ['HERBE', 'PLANTE', 'MOUSSE'], p: 0.05 },
+  };
   const POTIONS = {
     encre:      { id: 'encre',      nom: 'Potion d\'encre',    couleur: '#1f1a16', usage: 'boire', ingr: ['cendre', 'eau_source'], etapes: ['chauffer', 'remuer'],
                   desc: 'Restaure 25 points d\'encre.', enigme: 'Ce qui reste du feu, noyé dans l\'eau claire, chauffé puis remué : l\'encre revient.' },
@@ -506,6 +541,6 @@ const DATA = (() => {
   ];
   const ACCESSOIRES = ['Bâton', 'Plume', 'Grimoire'];
 
-  Object.assign(POTIONS, BIZARRES);
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise };
+  Object.assign(POTIONS, BIZARRES, ENCRES);
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES };
 })();

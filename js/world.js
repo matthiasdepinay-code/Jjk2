@@ -910,12 +910,32 @@ const World = (() => {
     }
   }
   // Éclatement complet : chaque effet, la fusion, l'écho, les sous-sceaux
+  // ---------- Encres spéciales ----------
+  function appliquerEncre(spec, id) {
+    const prm = spec.prm; spec.encre = id; spec.encreC = DATA.ENCRES[id].couleur;
+    if (id === 'encre_braise' && spec.cores.includes('feu')) prm.power *= 1.3;
+    else if (id === 'encre_nacre') { prm.bounces = (prm.bounces || 0) + 2; prm.duration *= 1.3; }
+    else if (id === 'encre_ambre') prm.duration *= 1.5;
+    else if (id === 'encre_chantante') prm.echo = (prm.echo || 0) + 1;
+  }
+  function encreBurst(spec, x, y, r) {
+    const pr = { power: 0.55, size: 1, duration: 1, persist: 0 }, o2 = { noPlayer: true, noField: true };
+    switch (spec.encre) {
+      case 'encre_braise': applyEffect('feu', x, y, r * 0.8, pr, 'burst', o2); break;
+      case 'encre_givre': applyEffect('froid', x, y, r * 0.9, pr, 'burst', o2); for (const c of st.crs) if (c.hp > 0 && U.circleRect(x, y, r, c)) c.sta.lent = Math.max(c.sta.lent || 0, 4); break;
+      case 'encre_ambre': for (const c of st.crs) if (c.hp > 0 && c.t !== 'familier' && U.circleRect(x, y, r, c)) { c.sta.lent = Math.max(c.sta.lent || 0, 6); c.sta.stun = Math.max(c.sta.stun, 1); } part(x, y, '#d8a03a', 12, 80, 0.9, 3, 300, 'goutte'); break;
+      case 'encre_chantante': applyEffect('son', x, y, r * 1.2, pr, 'burst', o2); break;
+      case 'encre_pollen': applyEffect('vie', x, y, r, pr, 'burst', o2); { const p = st.p; p.hp = Math.min(p.hpMax, p.hp + 0.5); } break;
+    }
+    part(x, y, spec.encreC || '#e0b050', 10, 130, 0.6, 2, 0, 'etincelle');
+  }
   function doBurst(spec, x, y, r, opts = {}, dir = null) {
     const pm = spec.cores.length > 1 ? 0.85 : 1;
     if (spec.player && !opts.noCombo && spec.depth === 0) enchainement(spec, x, y, r);
     if (spec.repeat && !opts.noRepeat) st.sp.push({ k: 'repeat', spec, x, y, r, ent: opts.ent || null, opts: { ...opts, noRepeat: true, noExpire: true, noEcho: true, noCombo: true }, t: spec.repeat, max: spec.repeat, left: clamp(Math.round(8 * spec.prm.duration / spec.repeat), 2, 8) });
     if (spec.expire && !opts.noExpire) { const T = (spec.repeat ? spec.repeat * clamp(Math.round(8 * spec.prm.duration / spec.repeat), 2, 8) : 0) + 4 * spec.prm.duration * (1 + (spec.prm.persist || 0)); st.sp.push({ k: 'expire', spec, x, y, r, t: T, max: T }); }
     for (const core of spec.cores) applyEffect(core, x, y, r, { ...spec.prm, power: spec.prm.power * pm }, 'burst', opts);
+    if (spec.encre && !opts.noEncre) encreBurst(spec, x, y, r);
     if (spec.combo) comboEffect(spec.combo, x, y, r, spec.prm);
     if (spec.prm.echo > 0 && !opts.noEcho) st.sp.push({ k: 'echo', spec, x, y, r, opts: { ...opts, noEcho: true }, t: 0.5, left: spec.prm.echo });
     for (const sub of spec.subs) launch(sub, { x, y }, { x: x + (dir ? dir.x : 0) * 100, y: y + (dir ? dir.y : -1) * 100 }, { depth: spec.depth + 1 });
@@ -959,7 +979,9 @@ const World = (() => {
     const p = st.p;
     if (!p.gestes) p.gestes = { R: null, L: null };
     if (p.gestes[hand]) return false;
-    const cost = gratuit ? 0 : Math.max(1, Math.round(Seal.cost(seal) * (game.opt ? game.opt.cout : 1) * (1 + charge) * maitreMul(seal)));
+    let encre = null;
+    if (seal.encre && DATA.ENCRES[seal.encre]) { if (((game.inv.encres || {})[seal.encre] || 0) > 0) encre = seal.encre; else if (!gratuit) msg('Plus d\'' + DATA.ENCRES[seal.encre].nom.toLowerCase() + ' : le sceau s\'écrit à l\'encre ordinaire.', 'warn'); }
+    const cost = gratuit ? 0 : Math.max(1, Math.round(Seal.cost(seal) * (game.opt ? game.opt.cout : 1) * (1 + charge) * maitreMul(seal) * (encre === 'encre_or' ? 0.6 : 1)));
     if (p.ink < cost) { msg('Plus assez d\'encre (' + Math.floor(p.ink) + '/' + cost + ').', 'warn'); Son.sfx('fail'); return false; }
     p.ink -= cost;
     if (gratuit) part(p.x + p.w / 2, p.y + p.h * 0.4, '#efe3c4', 8, 40, 0.6, 3, 60);
@@ -969,7 +991,8 @@ const World = (() => {
     if (seal.core === 'terre' || seal.core2 === 'terre') evt('terre');
     if (Seal.triggers(seal).includes('retarde')) evt('retarde');
     const gt = Seal.taille(seal).geste * (1 + charge * 0.5);
-    p.gestes[hand] = { seal, aim: { x: aim.x, y: aim.y }, t: gt, max: gt, color: colorOf(seal.core), charge, hand };
+    if (encre) { game.inv.encres[encre]--; if (game.inv.encres[encre] === 0) msg('C\'était la dernière goutte d\'' + DATA.ENCRES[encre].nom.toLowerCase() + '.'); }
+    p.gestes[hand] = { seal, aim: { x: aim.x, y: aim.y }, t: gt, max: gt, color: encre ? DATA.ENCRES[encre].couleur : colorOf(seal.core), charge, hand, encre };
     if (charge > 0.6) msg('Sort chargé : ' + Math.round(100 + charge * 80) + ' % de puissance.');
     return true;
   }
@@ -979,6 +1002,7 @@ const World = (() => {
     const p = st.p;
     const spec = makeSpec(seal, o.depth || 0, o.charge || 0);
     spec.player = !!o.player;
+    if (o.encre) appliquerEncre(spec, o.encre);
     const prm = spec.prm, trig = spec.trig, C = spec.color;
     const ox = origin.x, oy = origin.y;
     // ciblage
@@ -1306,8 +1330,10 @@ const World = (() => {
     let dx = aim.x - pcx, dy = aim.y - pcy; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
     const tx = pcx + dx * 26, ty = pcy + dy * 26;
     let n = 0; const got = [];
+    const zn = (L.zones.find((z) => tx >= z.x && tx < z.x + z.w) || {}).nom, ZI = DATA.ENCRE_ZONES[zn];
     Sim.forRadius(tx, ty, 11, (x, y, i, m) => {
       if (n >= 3 || !P[m].dig) return;
+      if (ZI && ZI.mats.some((q) => M[q] === m) && (!ZI.eau || p.liq) && Math.random() < ZI.p && !got.includes(ZI.ing)) got.push(ZI.ing);
       if (m === M.CRISTAL && Math.random() > 0.25) return;
       Sim.set(x, y, M.AIR); n++;
       const r = Math.random();
@@ -1442,7 +1468,7 @@ const World = (() => {
     if (dirX !== 0) for (const o of st.objs) if (o.t === 'caisse' && !o.mort && !o.carried) { const probe = { x: p.x + dirX * 2, y: p.y, w: p.w, h: p.h }; if (U.rectsOverlap(probe, o)) o.vx = dirX * (p.sta.geant > 0 ? 160 : 70); }
     if (p.y > L.h + 50) { msg('Tu tombes dans l\'encre noire... et te réveilles devant ta porte.'); respawn(); }
     if (p.onGround && Math.abs(p.vx) > 30 && Math.random() < dt * 6) Son.sfx('step', 'terre');
-    if (p.gestes) for (const h of ['R', 'L']) { const g = p.gestes[h]; if (!g) continue; g.t -= dt; if (g.t <= 0) { p.gestes[h] = null; p.lastCast = { t: time, a: Math.atan2(g.aim.y - (p.y + p.h * 0.4), g.aim.x - (p.x + p.w / 2)), c: g.color }; launch(g.seal, { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, g.aim, { depth: 0, player: true, charge: g.charge }); } }
+    if (p.gestes) for (const h of ['R', 'L']) { const g = p.gestes[h]; if (!g) continue; g.t -= dt; if (g.t <= 0) { p.gestes[h] = null; p.lastCast = { t: time, a: Math.atan2(g.aim.y - (p.y + p.h * 0.4), g.aim.x - (p.x + p.w / 2)), c: g.color }; launch(g.seal, { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, g.aim, { depth: 0, player: true, charge: g.charge, encre: g.encre }); } }
     if (p.selfTimer) { p.selfTimer.t -= dt; if (p.selfTimer.t <= 0) { const q = p.selfTimer; p.selfTimer = null; selfCast(q.spec, q.aim); } }
     if (p.hp <= 0 && p.sta.phenix > 0) { p.sta.phenix = 0; p.hp = p.hpMax; p.inv = 2; p.sta.burning = 0; part(p.x + p.w / 2, p.y + p.h / 2, '#e8842a', 30, 140, 1, 4, -120); Son.sfx('unlock'); msg('Tu te relèves dans un battement d\'ailes de feu.'); }
     if (p.hp <= 0) { msg('Tu t\'évanouis... et te réveilles devant ta porte, un peu honteux(se).', 'warn'); Son.sfx('hurt'); respawn(); }
@@ -2018,6 +2044,7 @@ const World = (() => {
           }
           if (s.trig === 'immediat' && !s.potion && !s.liquide && Math.random() < 0.5) for (const c of s.spec.cores) gridEffect(c, s.x, s.y, s.r + 4, { ...s.prm, power: s.prm.power * 0.5 }, false, dt * 3);
           (s.tr || (s.tr = [])).push([s.x, s.y]); if (s.tr.length > 14) s.tr.shift();
+          if (s.spec && s.spec.encreC && Math.random() < 0.45) part(s.x, s.y, s.spec.encreC, 1, 30, 0.45, 1.6, 0, 'etincelle');
           s.trail += dt; if (s.trail > 0.035) { s.trail = 0; if (s.core === 'feu') { part(s.x, s.y, s.chaud >= 2 ? '#5a90e0' : s.chaud ? '#f6e0a0' : '#f08a30', 1, 20, 0.35, s.r * 0.35, -200, 'flamme'); if (s.chaud) st.parts[st.parts.length - 1].chaud = s.chaud; } else if (s.core === 'foudre' || s.core === 'lumiere') part(s.x, s.y, s.color, 1, 60, 0.3, 1.4, 0, 'etincelle'); else if (s.core === 'eau' || s.core === 'acide') part(s.x, s.y, s.color, 1, 30, 0.5, 1.6, 600, 'goutte'); else if (s.core === 'froid') part(s.x, s.y, '#dff0ff', 1, 20, 0.8, 2.2, 30, 'flocon'); else part(s.x, s.y, s.color, 1, 10, 0.35, s.r * 0.5, 0, 'glow'); }
           if (s.y > L.h + 50 || s.y < -50) s.mort = true;
           break;
@@ -2640,5 +2667,5 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise };
+  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig };
 })();

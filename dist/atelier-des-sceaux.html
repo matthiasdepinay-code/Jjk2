@@ -114,7 +114,9 @@
   .glyph-btn small { opacity: 0.6; font-size: calc(11px * var(--s)); }
   .glyph-btn.locked { opacity: 0.5; cursor: help; background: transparent; box-shadow: none; border-style: dashed; }
   #pal-desc { min-height: 3em; margin-top: 10px; padding: 8px 10px; background: rgba(255,255,255,0.3); border-left: 3px solid var(--gold); font-style: italic; }
-  #seal-tailles { align-items: center; margin: 0 0 4px; }
+  #seal-tailles, #seal-encres { align-items: center; margin: 0 0 4px; }
+  #seal-encres .choice i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; border: 1px solid rgba(31,26,22,0.6); }
+  #seal-encres .label { margin-right: 6px; }
   #seal-tailles .label, #seal-params .label { margin-right: 6px; }
   #seal-params .choices { align-items: center; margin: 2px 0; }
   .choice.locked { opacity: 0.4; }
@@ -234,6 +236,7 @@
       <div class="cols">
         <div>
           <div id="seal-tailles" class="choices"></div>
+          <div id="seal-encres" class="choices"></div>
           <canvas id="seal-canvas" width="380" height="380"></canvas>
           <input id="seal-nom" type="text" maxlength="32" placeholder="Nom du sceau">
           <div class="seal-info"><span class="label">Coût en encre</span><span class="cost" id="seal-cost">0</span><span id="seal-etat"></span></div>
@@ -748,6 +751,14 @@ const DATA = (() => {
     sel:        { id: 'sel',        nom: 'Sel',            couleur: '#f2efe6', liquide: 'SEL', desc: 'Gratté dans les salines du désert (X). Fond dans l\'eau, fait fondre la glace.' },
     mousse:     { id: 'mousse',     nom: 'Mousse',         couleur: '#7a9a4a', desc: 'Grattée sur la pierre humide (X).' },
     poudre:     { id: 'poudre',     nom: 'Sac de poudre',  couleur: '#3a3430', liquide: 'POUDRE', desc: 'Se jette en tas. Une étincelle, et boum.' },
+    // ingrédients d'encre : chacun ne se trouve que dans sa région, en creusant (X)
+    coeur_braise:   { id: 'coeur_braise',   nom: 'Cœur de braise',   couleur: '#e0622b', zone: 'Le Volcan',    desc: 'Une braise qui ne s\'éteint jamais. Se trouve en creusant (X) les cendres et la terre du Volcan.' },
+    nacre:          { id: 'nacre',          nom: 'Éclat de nacre',   couleur: '#e6eef2', zone: 'Le Lac',       desc: 'Irisé comme une bulle. Se trouve en creusant (X) le fond du Lac, sous l\'eau.' },
+    ambre:          { id: 'ambre',          nom: 'Larme d\'ambre',   couleur: '#d89a3a', zone: 'La Forêt',     desc: 'De la résine très ancienne. Se trouve en creusant (X) l\'humus de la Forêt.' },
+    givre_bleu:     { id: 'givre_bleu',     nom: 'Givre bleu',       couleur: '#8ab8f0', zone: 'La Montagne',  desc: 'Une glace qui ne fond pas. Se trouve en creusant (X) la neige et la terre de la Montagne.' },
+    poudre_or:      { id: 'poudre_or',      nom: 'Poudre d\'or',     couleur: '#e0b050', zone: 'Les Ruines',   desc: 'Ce qui reste des anciens sceaux dorés. Se trouve en creusant (X) le sol des Ruines.' },
+    sable_chantant: { id: 'sable_chantant', nom: 'Sable chantant',   couleur: '#e8cf8a', zone: 'Le Désert',    desc: 'Il fredonne quand on le verse. Se trouve en creusant (X) les dunes du Désert.' },
+    pollen:         { id: 'pollen',         nom: 'Pollen lumineux',  couleur: '#e8e070', zone: 'La Clairière', desc: 'Une poussière qui luit doucement. Se trouve en arrachant (X) l\'herbe de la Clairière.' },
     // rares : offerts par le maître
     larme_lune:   { id: 'larme_lune',   nom: 'Larme de lune',   couleur: '#cfd8e8', rare: true, desc: 'Offerte par le maître. Une goutte qui luit faiblement.' },
     coeur_chene:  { id: 'coeur_chene',  nom: 'Cœur de chêne',   couleur: '#7a5a2a', rare: true, desc: 'Offert par le maître. Un nœud de bois qui bat lentement.' },
@@ -763,6 +774,7 @@ const DATA = (() => {
     racine: 'vivant', fil: 'vivant', champignon: 'sombre',
     huile: 'visqueux', seve: 'visqueux', acide: 'acide',
     miel: 'visqueux', sel: 'minéral', mousse: 'vivant', poudre: 'chaud',
+    coeur_braise: 'chaud', nacre: 'frais', ambre: 'visqueux', givre_bleu: 'frais', poudre_or: 'minéral', sable_chantant: 'aérien', pollen: 'vivant',
     larme_lune: 'frais', coeur_chene: 'vivant', sable_temps: 'minéral', plume_phenix: 'chaud',
   };
   const ODEURS = { frais: 'ça sent la pluie', chaud: 'ça sent la fumée', 'aérien': 'ça sent l\'orage', 'minéral': 'ça sent la pierre mouillée', vivant: 'ça sent la forêt', sombre: 'ça sent la cave', visqueux: 'ça sent le vieux bois', acide: 'ça pique le nez' };
@@ -786,6 +798,32 @@ const DATA = (() => {
   };
 
   // Potions : ingrédients (ensemble non ordonné) + étapes (ordonnées)
+  // Encres spéciales : brassées au chaudron, elles changent la nature des sceaux qu'on écrit avec
+  const ENCRES = {
+    encre_braise:    { id: 'encre_braise',    nom: 'Encre de braise',  couleur: '#d9622b', encre: true, usage: 'encre', ingr: ['coeur_braise', 'cendre'], etapes: ['chauffer', 'chauffer'],
+                       effet: 'Chaque éclat enflamme un peu ce qui l\'entoure ; le feu y gagne 30 % de puissance.', desc: 'Huit gouttes d\'une encre qui fume encore.', enigme: 'Un cœur qui ne s\'éteint pas, dans ce qui reste du feu, chauffé deux fois.' },
+    encre_nacre:     { id: 'encre_nacre',     nom: 'Encre de nacre',   couleur: '#dfe8ee', encre: true, usage: 'encre', ingr: ['nacre', 'eau_source'], etapes: ['remuer', 'infuser'],
+                       effet: 'Le sort ricoche : deux rebonds de plus, et 30 % de durée.', desc: 'Huit gouttes irisées.', enigme: 'La nacre du fond du lac, remuée puis infusée dans l\'eau claire.' },
+    encre_ambre:     { id: 'encre_ambre',     nom: 'Encre d\'ambre',   couleur: '#c88a2a', encre: true, usage: 'encre', ingr: ['ambre', 'seve'], etapes: ['chauffer', 'refroidir'],
+                       effet: 'Ce que le sort touche s\'englue : ralenti et figé un instant. Durée +50 %.', desc: 'Huit gouttes épaisses et dorées.', enigme: 'La larme d\'un arbre ancien, fondue dans la sève, puis refroidie.' },
+    encre_givre:     { id: 'encre_givre',     nom: 'Encre de givre',   couleur: '#8ab8f0', encre: true, usage: 'encre', ingr: ['givre_bleu', 'eau_source'], etapes: ['refroidir', 'refroidir'],
+                       effet: 'Chaque éclat laisse une morsure de froid : l\'eau gèle, les créatures s\'engourdissent.', desc: 'Huit gouttes qui givrent la plume.', enigme: 'Le givre qui ne fond pas, dans l\'eau de source, refroidi encore et encore.' },
+    encre_or:        { id: 'encre_or',        nom: 'Encre d\'or',      couleur: '#e0b050', encre: true, usage: 'encre', ingr: ['poudre_or', 'miel'], etapes: ['chauffer', 'remuer'],
+                       effet: 'Le sceau coûte 40 % d\'encre en moins.', desc: 'Huit gouttes précieuses.', enigme: 'L\'or des vieux sceaux, lié au miel, chauffé puis remué.' },
+    encre_chantante: { id: 'encre_chantante', nom: 'Encre chantante',  couleur: '#e8cf8a', encre: true, usage: 'encre', ingr: ['sable_chantant', 'plume'], etapes: ['remuer', 'remuer', 'infuser'],
+                       effet: 'Le sort résonne : un écho de plus, et une onde qui attire les curieux.', desc: 'Huit gouttes qui fredonnent.', enigme: 'Le sable qui chante et une plume de vent, remués deux fois puis laissés à infuser.' },
+    encre_pollen:    { id: 'encre_pollen',    nom: 'Encre de pollen',  couleur: '#d8d060', encre: true, usage: 'encre', ingr: ['pollen', 'rosee'], etapes: ['infuser', 'remuer'],
+                       effet: 'Chaque éclat fait pousser l\'herbe et te rend un peu de vitalité.', desc: 'Huit gouttes qui sentent le printemps.', enigme: 'Le pollen qui luit, dans la rosée du matin, infusé puis remué.' },
+  };
+  const ENCRE_ZONES = {
+    'Le Volcan':    { ing: 'coeur_braise',   mats: ['CENDRE', 'TERRE', 'SABLE'], p: 0.035 },
+    'Le Lac':       { ing: 'nacre',          mats: ['SABLE', 'TERRE'], p: 0.06, eau: true },
+    'La Forêt':     { ing: 'ambre',          mats: ['TERRE', 'PLANTE', 'HERBE'], p: 0.03 },
+    'La Montagne':  { ing: 'givre_bleu',     mats: ['NEIGE', 'TERRE'], p: 0.035 },
+    'Les Ruines':   { ing: 'poudre_or',      mats: ['TERRE', 'SABLE'], p: 0.035 },
+    'Le Désert':    { ing: 'sable_chantant', mats: ['SABLE', 'SEL'], p: 0.03 },
+    'La Clairière': { ing: 'pollen',         mats: ['HERBE', 'PLANTE', 'MOUSSE'], p: 0.05 },
+  };
   const POTIONS = {
     encre:      { id: 'encre',      nom: 'Potion d\'encre',    couleur: '#1f1a16', usage: 'boire', ingr: ['cendre', 'eau_source'], etapes: ['chauffer', 'remuer'],
                   desc: 'Restaure 25 points d\'encre.', enigme: 'Ce qui reste du feu, noyé dans l\'eau claire, chauffé puis remué : l\'encre revient.' },
@@ -1067,8 +1105,8 @@ const DATA = (() => {
   ];
   const ACCESSOIRES = ['Bâton', 'Plume', 'Grimoire'];
 
-  Object.assign(POTIONS, BIZARRES);
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise };
+  Object.assign(POTIONS, BIZARRES, ENCRES);
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES };
 })();
 
 </script>
@@ -1080,13 +1118,13 @@ const Seal = (() => {
 
   const NMODS = 5;
   function create(taille = 'moyen') {
-    return { nom: '', taille, core: null, core2: null, shape: null, mods: [null, null, null, null, null], trigger: null, trigger2: null, filtre: null, cible: null, delai: 2, periode: 2 };
+    return { nom: '', taille, core: null, core2: null, shape: null, mods: [null, null, null, null, null], trigger: null, trigger2: null, filtre: null, cible: null, delai: 2, periode: 2, encre: null };
   }
   function clone(s) {
     const mods = (s.mods || []).map((m) => (m && typeof m === 'object' && m.sub ? { sub: clone(m.sub) } : typeof m === 'string' ? m : null));
     while (mods.length < NMODS) mods.push(null);
     return { nom: s.nom || '', taille: s.taille || 'moyen', core: s.core || null, core2: s.core2 || null, shape: s.shape || null, mods: mods.slice(0, NMODS),
-      trigger: s.trigger || null, trigger2: s.trigger2 || null, filtre: s.filtre || null, cible: s.cible || null, delai: s.delai || 2, periode: s.periode || 2 };
+      trigger: s.trigger || null, trigger2: s.trigger2 || null, filtre: s.filtre || null, cible: s.cible || null, delai: s.delai || 2, periode: s.periode || 2, encre: s.encre || null };
   }
   const isSub = (m) => !!(m && typeof m === 'object' && m.sub);
   function subs(s) { return s.mods.filter(isSub).map((m) => m.sub); }
@@ -3404,12 +3442,32 @@ const World = (() => {
     }
   }
   // Éclatement complet : chaque effet, la fusion, l'écho, les sous-sceaux
+  // ---------- Encres spéciales ----------
+  function appliquerEncre(spec, id) {
+    const prm = spec.prm; spec.encre = id; spec.encreC = DATA.ENCRES[id].couleur;
+    if (id === 'encre_braise' && spec.cores.includes('feu')) prm.power *= 1.3;
+    else if (id === 'encre_nacre') { prm.bounces = (prm.bounces || 0) + 2; prm.duration *= 1.3; }
+    else if (id === 'encre_ambre') prm.duration *= 1.5;
+    else if (id === 'encre_chantante') prm.echo = (prm.echo || 0) + 1;
+  }
+  function encreBurst(spec, x, y, r) {
+    const pr = { power: 0.55, size: 1, duration: 1, persist: 0 }, o2 = { noPlayer: true, noField: true };
+    switch (spec.encre) {
+      case 'encre_braise': applyEffect('feu', x, y, r * 0.8, pr, 'burst', o2); break;
+      case 'encre_givre': applyEffect('froid', x, y, r * 0.9, pr, 'burst', o2); for (const c of st.crs) if (c.hp > 0 && U.circleRect(x, y, r, c)) c.sta.lent = Math.max(c.sta.lent || 0, 4); break;
+      case 'encre_ambre': for (const c of st.crs) if (c.hp > 0 && c.t !== 'familier' && U.circleRect(x, y, r, c)) { c.sta.lent = Math.max(c.sta.lent || 0, 6); c.sta.stun = Math.max(c.sta.stun, 1); } part(x, y, '#d8a03a', 12, 80, 0.9, 3, 300, 'goutte'); break;
+      case 'encre_chantante': applyEffect('son', x, y, r * 1.2, pr, 'burst', o2); break;
+      case 'encre_pollen': applyEffect('vie', x, y, r, pr, 'burst', o2); { const p = st.p; p.hp = Math.min(p.hpMax, p.hp + 0.5); } break;
+    }
+    part(x, y, spec.encreC || '#e0b050', 10, 130, 0.6, 2, 0, 'etincelle');
+  }
   function doBurst(spec, x, y, r, opts = {}, dir = null) {
     const pm = spec.cores.length > 1 ? 0.85 : 1;
     if (spec.player && !opts.noCombo && spec.depth === 0) enchainement(spec, x, y, r);
     if (spec.repeat && !opts.noRepeat) st.sp.push({ k: 'repeat', spec, x, y, r, ent: opts.ent || null, opts: { ...opts, noRepeat: true, noExpire: true, noEcho: true, noCombo: true }, t: spec.repeat, max: spec.repeat, left: clamp(Math.round(8 * spec.prm.duration / spec.repeat), 2, 8) });
     if (spec.expire && !opts.noExpire) { const T = (spec.repeat ? spec.repeat * clamp(Math.round(8 * spec.prm.duration / spec.repeat), 2, 8) : 0) + 4 * spec.prm.duration * (1 + (spec.prm.persist || 0)); st.sp.push({ k: 'expire', spec, x, y, r, t: T, max: T }); }
     for (const core of spec.cores) applyEffect(core, x, y, r, { ...spec.prm, power: spec.prm.power * pm }, 'burst', opts);
+    if (spec.encre && !opts.noEncre) encreBurst(spec, x, y, r);
     if (spec.combo) comboEffect(spec.combo, x, y, r, spec.prm);
     if (spec.prm.echo > 0 && !opts.noEcho) st.sp.push({ k: 'echo', spec, x, y, r, opts: { ...opts, noEcho: true }, t: 0.5, left: spec.prm.echo });
     for (const sub of spec.subs) launch(sub, { x, y }, { x: x + (dir ? dir.x : 0) * 100, y: y + (dir ? dir.y : -1) * 100 }, { depth: spec.depth + 1 });
@@ -3453,7 +3511,9 @@ const World = (() => {
     const p = st.p;
     if (!p.gestes) p.gestes = { R: null, L: null };
     if (p.gestes[hand]) return false;
-    const cost = gratuit ? 0 : Math.max(1, Math.round(Seal.cost(seal) * (game.opt ? game.opt.cout : 1) * (1 + charge) * maitreMul(seal)));
+    let encre = null;
+    if (seal.encre && DATA.ENCRES[seal.encre]) { if (((game.inv.encres || {})[seal.encre] || 0) > 0) encre = seal.encre; else if (!gratuit) msg('Plus d\'' + DATA.ENCRES[seal.encre].nom.toLowerCase() + ' : le sceau s\'écrit à l\'encre ordinaire.', 'warn'); }
+    const cost = gratuit ? 0 : Math.max(1, Math.round(Seal.cost(seal) * (game.opt ? game.opt.cout : 1) * (1 + charge) * maitreMul(seal) * (encre === 'encre_or' ? 0.6 : 1)));
     if (p.ink < cost) { msg('Plus assez d\'encre (' + Math.floor(p.ink) + '/' + cost + ').', 'warn'); Son.sfx('fail'); return false; }
     p.ink -= cost;
     if (gratuit) part(p.x + p.w / 2, p.y + p.h * 0.4, '#efe3c4', 8, 40, 0.6, 3, 60);
@@ -3463,7 +3523,8 @@ const World = (() => {
     if (seal.core === 'terre' || seal.core2 === 'terre') evt('terre');
     if (Seal.triggers(seal).includes('retarde')) evt('retarde');
     const gt = Seal.taille(seal).geste * (1 + charge * 0.5);
-    p.gestes[hand] = { seal, aim: { x: aim.x, y: aim.y }, t: gt, max: gt, color: colorOf(seal.core), charge, hand };
+    if (encre) { game.inv.encres[encre]--; if (game.inv.encres[encre] === 0) msg('C\'était la dernière goutte d\'' + DATA.ENCRES[encre].nom.toLowerCase() + '.'); }
+    p.gestes[hand] = { seal, aim: { x: aim.x, y: aim.y }, t: gt, max: gt, color: encre ? DATA.ENCRES[encre].couleur : colorOf(seal.core), charge, hand, encre };
     if (charge > 0.6) msg('Sort chargé : ' + Math.round(100 + charge * 80) + ' % de puissance.');
     return true;
   }
@@ -3473,6 +3534,7 @@ const World = (() => {
     const p = st.p;
     const spec = makeSpec(seal, o.depth || 0, o.charge || 0);
     spec.player = !!o.player;
+    if (o.encre) appliquerEncre(spec, o.encre);
     const prm = spec.prm, trig = spec.trig, C = spec.color;
     const ox = origin.x, oy = origin.y;
     // ciblage
@@ -3800,8 +3862,10 @@ const World = (() => {
     let dx = aim.x - pcx, dy = aim.y - pcy; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
     const tx = pcx + dx * 26, ty = pcy + dy * 26;
     let n = 0; const got = [];
+    const zn = (L.zones.find((z) => tx >= z.x && tx < z.x + z.w) || {}).nom, ZI = DATA.ENCRE_ZONES[zn];
     Sim.forRadius(tx, ty, 11, (x, y, i, m) => {
       if (n >= 3 || !P[m].dig) return;
+      if (ZI && ZI.mats.some((q) => M[q] === m) && (!ZI.eau || p.liq) && Math.random() < ZI.p && !got.includes(ZI.ing)) got.push(ZI.ing);
       if (m === M.CRISTAL && Math.random() > 0.25) return;
       Sim.set(x, y, M.AIR); n++;
       const r = Math.random();
@@ -3936,7 +4000,7 @@ const World = (() => {
     if (dirX !== 0) for (const o of st.objs) if (o.t === 'caisse' && !o.mort && !o.carried) { const probe = { x: p.x + dirX * 2, y: p.y, w: p.w, h: p.h }; if (U.rectsOverlap(probe, o)) o.vx = dirX * (p.sta.geant > 0 ? 160 : 70); }
     if (p.y > L.h + 50) { msg('Tu tombes dans l\'encre noire... et te réveilles devant ta porte.'); respawn(); }
     if (p.onGround && Math.abs(p.vx) > 30 && Math.random() < dt * 6) Son.sfx('step', 'terre');
-    if (p.gestes) for (const h of ['R', 'L']) { const g = p.gestes[h]; if (!g) continue; g.t -= dt; if (g.t <= 0) { p.gestes[h] = null; p.lastCast = { t: time, a: Math.atan2(g.aim.y - (p.y + p.h * 0.4), g.aim.x - (p.x + p.w / 2)), c: g.color }; launch(g.seal, { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, g.aim, { depth: 0, player: true, charge: g.charge }); } }
+    if (p.gestes) for (const h of ['R', 'L']) { const g = p.gestes[h]; if (!g) continue; g.t -= dt; if (g.t <= 0) { p.gestes[h] = null; p.lastCast = { t: time, a: Math.atan2(g.aim.y - (p.y + p.h * 0.4), g.aim.x - (p.x + p.w / 2)), c: g.color }; launch(g.seal, { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, g.aim, { depth: 0, player: true, charge: g.charge, encre: g.encre }); } }
     if (p.selfTimer) { p.selfTimer.t -= dt; if (p.selfTimer.t <= 0) { const q = p.selfTimer; p.selfTimer = null; selfCast(q.spec, q.aim); } }
     if (p.hp <= 0 && p.sta.phenix > 0) { p.sta.phenix = 0; p.hp = p.hpMax; p.inv = 2; p.sta.burning = 0; part(p.x + p.w / 2, p.y + p.h / 2, '#e8842a', 30, 140, 1, 4, -120); Son.sfx('unlock'); msg('Tu te relèves dans un battement d\'ailes de feu.'); }
     if (p.hp <= 0) { msg('Tu t\'évanouis... et te réveilles devant ta porte, un peu honteux(se).', 'warn'); Son.sfx('hurt'); respawn(); }
@@ -4512,6 +4576,7 @@ const World = (() => {
           }
           if (s.trig === 'immediat' && !s.potion && !s.liquide && Math.random() < 0.5) for (const c of s.spec.cores) gridEffect(c, s.x, s.y, s.r + 4, { ...s.prm, power: s.prm.power * 0.5 }, false, dt * 3);
           (s.tr || (s.tr = [])).push([s.x, s.y]); if (s.tr.length > 14) s.tr.shift();
+          if (s.spec && s.spec.encreC && Math.random() < 0.45) part(s.x, s.y, s.spec.encreC, 1, 30, 0.45, 1.6, 0, 'etincelle');
           s.trail += dt; if (s.trail > 0.035) { s.trail = 0; if (s.core === 'feu') { part(s.x, s.y, s.chaud >= 2 ? '#5a90e0' : s.chaud ? '#f6e0a0' : '#f08a30', 1, 20, 0.35, s.r * 0.35, -200, 'flamme'); if (s.chaud) st.parts[st.parts.length - 1].chaud = s.chaud; } else if (s.core === 'foudre' || s.core === 'lumiere') part(s.x, s.y, s.color, 1, 60, 0.3, 1.4, 0, 'etincelle'); else if (s.core === 'eau' || s.core === 'acide') part(s.x, s.y, s.color, 1, 30, 0.5, 1.6, 600, 'goutte'); else if (s.core === 'froid') part(s.x, s.y, '#dff0ff', 1, 20, 0.8, 2.2, 30, 'flocon'); else part(s.x, s.y, s.color, 1, 10, 0.35, s.r * 0.5, 0, 'glow'); }
           if (s.y > L.h + 50 || s.y < -50) s.mort = true;
           break;
@@ -5134,7 +5199,7 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise };
+  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig };
 })();
 
 </script>
@@ -5703,6 +5768,14 @@ const UI = (() => {
     // tailles
     const tz = $('#seal-tailles'); tz.innerHTML = '<span class="label">Taille</span>';
     for (const t in DATA.TAILLES) { const T = DATA.TAILLES[t]; const ok = p.tailles.includes(t); const b = el('button', 'choice' + ((s.taille || 'moyen') === t ? ' on' : '') + (ok ? '' : ' locked'), T.nom); b.title = ok ? T.desc : 'Pas encore débloqué. ' + ((DATA.UNLOCKS.find((u) => u.item === t) || {}).indice || ''); if (ok) b.addEventListener('click', () => changerTaille(t)); else b.disabled = true; tz.appendChild(b); }
+    // encre
+    const ez = $('#seal-encres'); ez.innerHTML = '';
+    const connues = Object.keys(DATA.ENCRES).filter((id) => p.recettes.includes(id) || (game.inv.encres || {})[id] > 0);
+    if (connues.length) {
+      ez.appendChild(el('span', 'label', 'Encre'));
+      const bo = el('button', 'choice' + (!s.encre ? ' on' : ''), 'Ordinaire'); bo.addEventListener('click', () => { s.encre = null; refreshSeal(); Son.sfx('click'); }); ez.appendChild(bo);
+      for (const id of connues) { const E = DATA.ENCRES[id], n = (game.inv.encres || {})[id] || 0; const b = el('button', 'choice' + (s.encre === id ? ' on' : ''), '<i style="background:' + E.couleur + '"></i>' + ((q) => q.charAt(0).toUpperCase() + q.slice(1))(E.nom.replace(/^Encre (de |d')?/, '')) + ' <small>(' + n + ')</small>'); b.title = E.effet + ' Une goutte par lancer.'; b.addEventListener('click', () => { s.encre = id; refreshSeal(); Son.sfx('click'); }); ez.appendChild(b); }
+    }
     // paramètres des déclencheurs
     const pr = $('#seal-params'); pr.innerHTML = '';
     const trs = Seal.triggers(s);
@@ -5755,6 +5828,7 @@ const UI = (() => {
     if (prm.traj) mv.push({ boomerang: 'revient comme un boomerang', spirale: 'vole en spirale', rasesol: 'court au ras du sol' }[prm.traj]); if (prm.power > 1) mv.push('puissance ×' + prm.power.toFixed(1)); if (prm.range > 1) mv.push('portée ×' + prm.range.toFixed(1)); if (prm.size > 1) mv.push('taille ×' + prm.size.toFixed(1)); if (prm.duration > 1) mv.push('durée ×' + prm.duration.toFixed(1)); if (prm.speed > 1) mv.push('vitesse ×' + prm.speed.toFixed(1)); if (prm.bounces) mv.push(prm.bounces + ' rebonds'); if (prm.persist) mv.push('laisse une trace'); if (prm.echo) mv.push('écho ×' + prm.echo);
     if (mv.length) L.push('Réglages : ' + mv.join(', ') + '.');
     for (const el in prm.lg) { const Lg = DATA.LANGAGES[el]; if (cores.includes(el) || [s.core, s.core2].includes(el)) L.push('Langage ' + Lg.de + ' : ' + Lg.nom + (prm.lg[el] > 1 ? ' ×2 — ' + Lg.paliers[1] : ' — ' + Lg.paliers[0])); else L.push('<span class="muted">' + Lg.nom + ' reste muet : il faut le glyphe ' + DATA.CORES[el].nom + '.</span>'); }
+    if (s.encre && DATA.ENCRES[s.encre]) { const E = DATA.ENCRES[s.encre]; L.push('Écrit à l\'' + E.nom.toLowerCase() + ' (' + ((game.inv.encres || {})[s.encre] || 0) + ' gouttes) : ' + E.effet); }
     const sb = Seal.subs(s); if (sb.length) L.push('Puis lance : ' + sb.map((q) => '« ' + Seal.nom(q) + ' »').join(', ') + '.');
     return L.map((l) => '<div>' + l + '</div>').join('');
   }
@@ -6360,7 +6434,7 @@ const UI = (() => {
     state: 'create',
     look: { nom: '', chapeau: 0, cape: 0, acc: 0 },
     progress: makeProgress(),
-    inv: { ingredients: {}, potions: {}, fortes: {}, parchemins: {}, terrarium: [] },
+    inv: { ingredients: {}, potions: {}, fortes: {}, parchemins: {}, terrarium: [], encres: {} },
     seals: [], hotbar: [null, null, null, null, null], selected: 0,
     editSeal: Seal.create(), lastPotion: null, started: false,
     xp: 0, niveau: 1,
@@ -6577,11 +6651,12 @@ const UI = (() => {
       const found = Object.values(DATA.POTIONS).find((P) => P.ingr && P.ingr.slice().sort().join('|') === set && P.etapes.join('|') === steps.join('|'));
       if (found) {
         for (const i of ingr) if (!DATA.INGREDIENTS[i].infini) this.inv.ingredients[i] = Math.max(0, (this.inv.ingredients[i] || 0) - 1);
-        this.inv.potions[found.id] = (this.inv.potions[found.id] || 0) + 1;
+        if (found.encre) { if (!this.inv.encres) this.inv.encres = {}; this.inv.encres[found.id] = (this.inv.encres[found.id] || 0) + 8; }
+        else this.inv.potions[found.id] = (this.inv.potions[found.id] || 0) + 1;
         const nouvelle = !this.progress.recettes.includes(found.id);
         this.progress.event('recette', found.id);
         this.lastPotion = found.id; Son.sfx('brew'); this.save();
-        this.toast((nouvelle ? 'Nouvelle recette : ' : 'Brassé : ') + found.nom + ' !');
+        this.toast((nouvelle ? 'Nouvelle recette : ' : 'Brassé : ') + found.nom + (found.encre ? ' — huit gouttes dans l\'encrier. Choisis-la dans la table des sceaux. ' + found.effet : ' !'));
         return { ok: true, id: found.id, nouvelle };
       }
       const candidates = Object.values(DATA.POTIONS).filter((P) => P.ingr && !this.progress.recettes.includes(P.id) && P.ingr.some((i) => norm.includes(i)));
@@ -6700,7 +6775,7 @@ const UI = (() => {
         for (const [k, v] of [['tailles', DATA.DEBUT.tailles], ['filtres', []], ['cibles', ['souris']], ['enchainements', []]]) if (!this.progress[k]) this.progress[k] = v.slice();
         if (this.inv.parchemins) for (const q of Object.values(this.inv.parchemins)) q.seal = Seal.clone(q.seal);
         this.editSeal = Seal.clone(this.editSeal);
-        if (!this.inv.fortes) this.inv.fortes = {}; if (!this.inv.parchemins) this.inv.parchemins = {}; if (!this.inv.terrarium) this.inv.terrarium = [];
+        if (!this.inv.fortes) this.inv.fortes = {}; if (!this.inv.encres) this.inv.encres = {}; if (!this.inv.parchemins) this.inv.parchemins = {}; if (!this.inv.terrarium) this.inv.terrarium = [];
         const K = this.progress.compteurs; for (const k of ['terre', 'creaturesTouchees', 'vols', 'portes', 'lancers', 'sceaux']) if (K[k] == null) K[k] = 0; K.niveau = this.niveau;
         this.hotbar = this.hotbar.map((e) => (e && e.type === 'seal' ? { type: 'seal', seal: Seal.clone(e.seal) } : e)); this.seals = this.seals.map((q) => Seal.clone(q));
         return this.started;

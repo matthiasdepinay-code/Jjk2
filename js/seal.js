@@ -5,13 +5,13 @@ const Seal = (() => {
 
   const NMODS = 5;
   function create(taille = 'moyen') {
-    return { nom: '', taille, core: null, core2: null, shape: null, mods: [null, null, null, null, null], trigger: null, trigger2: null, filtre: null, cible: null, delai: 2, periode: 2 };
+    return { nom: '', taille, core: null, core2: null, shape: null, mods: [null, null, null, null, null], trigger: null, trigger2: null, filtre: null, cible: null, delai: 2, periode: 2, encre: null };
   }
   function clone(s) {
     const mods = (s.mods || []).map((m) => (m && typeof m === 'object' && m.sub ? { sub: clone(m.sub) } : typeof m === 'string' ? m : null));
     while (mods.length < NMODS) mods.push(null);
     return { nom: s.nom || '', taille: s.taille || 'moyen', core: s.core || null, core2: s.core2 || null, shape: s.shape || null, mods: mods.slice(0, NMODS),
-      trigger: s.trigger || null, trigger2: s.trigger2 || null, filtre: s.filtre || null, cible: s.cible || null, delai: s.delai || 2, periode: s.periode || 2 };
+      trigger: s.trigger || null, trigger2: s.trigger2 || null, filtre: s.filtre || null, cible: s.cible || null, delai: s.delai || 2, periode: s.periode || 2, encre: s.encre || null };
   }
   const isSub = (m) => !!(m && typeof m === 'object' && m.sub);
   function subs(s) { return s.mods.filter(isSub).map((m) => m.sub); }

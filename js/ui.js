@@ -259,6 +259,14 @@ const UI = (() => {
     // tailles
     const tz = $('#seal-tailles'); tz.innerHTML = '<span class="label">Taille</span>';
     for (const t in DATA.TAILLES) { const T = DATA.TAILLES[t]; const ok = p.tailles.includes(t); const b = el('button', 'choice' + ((s.taille || 'moyen') === t ? ' on' : '') + (ok ? '' : ' locked'), T.nom); b.title = ok ? T.desc : 'Pas encore débloqué. ' + ((DATA.UNLOCKS.find((u) => u.item === t) || {}).indice || ''); if (ok) b.addEventListener('click', () => changerTaille(t)); else b.disabled = true; tz.appendChild(b); }
+    // encre
+    const ez = $('#seal-encres'); ez.innerHTML = '';
+    const connues = Object.keys(DATA.ENCRES).filter((id) => p.recettes.includes(id) || (game.inv.encres || {})[id] > 0);
+    if (connues.length) {
+      ez.appendChild(el('span', 'label', 'Encre'));
+      const bo = el('button', 'choice' + (!s.encre ? ' on' : ''), 'Ordinaire'); bo.addEventListener('click', () => { s.encre = null; refreshSeal(); Son.sfx('click'); }); ez.appendChild(bo);
+      for (const id of connues) { const E = DATA.ENCRES[id], n = (game.inv.encres || {})[id] || 0; const b = el('button', 'choice' + (s.encre === id ? ' on' : ''), '<i style="background:' + E.couleur + '"></i>' + ((q) => q.charAt(0).toUpperCase() + q.slice(1))(E.nom.replace(/^Encre (de |d')?/, '')) + ' <small>(' + n + ')</small>'); b.title = E.effet + ' Une goutte par lancer.'; b.addEventListener('click', () => { s.encre = id; refreshSeal(); Son.sfx('click'); }); ez.appendChild(b); }
+    }
     // paramètres des déclencheurs
     const pr = $('#seal-params'); pr.innerHTML = '';
     const trs = Seal.triggers(s);
@@ -311,6 +319,7 @@ const UI = (() => {
     if (prm.traj) mv.push({ boomerang: 'revient comme un boomerang', spirale: 'vole en spirale', rasesol: 'court au ras du sol' }[prm.traj]); if (prm.power > 1) mv.push('puissance ×' + prm.power.toFixed(1)); if (prm.range > 1) mv.push('portée ×' + prm.range.toFixed(1)); if (prm.size > 1) mv.push('taille ×' + prm.size.toFixed(1)); if (prm.duration > 1) mv.push('durée ×' + prm.duration.toFixed(1)); if (prm.speed > 1) mv.push('vitesse ×' + prm.speed.toFixed(1)); if (prm.bounces) mv.push(prm.bounces + ' rebonds'); if (prm.persist) mv.push('laisse une trace'); if (prm.echo) mv.push('écho ×' + prm.echo);
     if (mv.length) L.push('Réglages : ' + mv.join(', ') + '.');
     for (const el in prm.lg) { const Lg = DATA.LANGAGES[el]; if (cores.includes(el) || [s.core, s.core2].includes(el)) L.push('Langage ' + Lg.de + ' : ' + Lg.nom + (prm.lg[el] > 1 ? ' ×2 — ' + Lg.paliers[1] : ' — ' + Lg.paliers[0])); else L.push('<span class="muted">' + Lg.nom + ' reste muet : il faut le glyphe ' + DATA.CORES[el].nom + '.</span>'); }
+    if (s.encre && DATA.ENCRES[s.encre]) { const E = DATA.ENCRES[s.encre]; L.push('Écrit à l\'' + E.nom.toLowerCase() + ' (' + ((game.inv.encres || {})[s.encre] || 0) + ' gouttes) : ' + E.effet); }
     const sb = Seal.subs(s); if (sb.length) L.push('Puis lance : ' + sb.map((q) => '« ' + Seal.nom(q) + ' »').join(', ') + '.');
     return L.map((l) => '<div>' + l + '</div>').join('');
   }

@@ -103,7 +103,7 @@
     state: 'create',
     look: { nom: '', chapeau: 0, cape: 0, acc: 0 },
     progress: makeProgress(),
-    inv: { ingredients: {}, potions: {}, fortes: {}, parchemins: {}, terrarium: [] },
+    inv: { ingredients: {}, potions: {}, fortes: {}, parchemins: {}, terrarium: [], encres: {} },
     seals: [], hotbar: [null, null, null, null, null], selected: 0,
     editSeal: Seal.create(), lastPotion: null, started: false,
     xp: 0, niveau: 1,
@@ -320,11 +320,12 @@
       const found = Object.values(DATA.POTIONS).find((P) => P.ingr && P.ingr.slice().sort().join('|') === set && P.etapes.join('|') === steps.join('|'));
       if (found) {
         for (const i of ingr) if (!DATA.INGREDIENTS[i].infini) this.inv.ingredients[i] = Math.max(0, (this.inv.ingredients[i] || 0) - 1);
-        this.inv.potions[found.id] = (this.inv.potions[found.id] || 0) + 1;
+        if (found.encre) { if (!this.inv.encres) this.inv.encres = {}; this.inv.encres[found.id] = (this.inv.encres[found.id] || 0) + 8; }
+        else this.inv.potions[found.id] = (this.inv.potions[found.id] || 0) + 1;
         const nouvelle = !this.progress.recettes.includes(found.id);
         this.progress.event('recette', found.id);
         this.lastPotion = found.id; Son.sfx('brew'); this.save();
-        this.toast((nouvelle ? 'Nouvelle recette : ' : 'Brassé : ') + found.nom + ' !');
+        this.toast((nouvelle ? 'Nouvelle recette : ' : 'Brassé : ') + found.nom + (found.encre ? ' — huit gouttes dans l\'encrier. Choisis-la dans la table des sceaux. ' + found.effet : ' !'));
         return { ok: true, id: found.id, nouvelle };
       }
       const candidates = Object.values(DATA.POTIONS).filter((P) => P.ingr && !this.progress.recettes.includes(P.id) && P.ingr.some((i) => norm.includes(i)));
@@ -443,7 +444,7 @@
         for (const [k, v] of [['tailles', DATA.DEBUT.tailles], ['filtres', []], ['cibles', ['souris']], ['enchainements', []]]) if (!this.progress[k]) this.progress[k] = v.slice();
         if (this.inv.parchemins) for (const q of Object.values(this.inv.parchemins)) q.seal = Seal.clone(q.seal);
         this.editSeal = Seal.clone(this.editSeal);
-        if (!this.inv.fortes) this.inv.fortes = {}; if (!this.inv.parchemins) this.inv.parchemins = {}; if (!this.inv.terrarium) this.inv.terrarium = [];
+        if (!this.inv.fortes) this.inv.fortes = {}; if (!this.inv.encres) this.inv.encres = {}; if (!this.inv.parchemins) this.inv.parchemins = {}; if (!this.inv.terrarium) this.inv.terrarium = [];
         const K = this.progress.compteurs; for (const k of ['terre', 'creaturesTouchees', 'vols', 'portes', 'lancers', 'sceaux']) if (K[k] == null) K[k] = 0; K.niveau = this.niveau;
         this.hotbar = this.hotbar.map((e) => (e && e.type === 'seal' ? { type: 'seal', seal: Seal.clone(e.seal) } : e)); this.seals = this.seals.map((q) => Seal.clone(q));
         return this.started;
