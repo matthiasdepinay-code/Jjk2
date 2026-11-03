@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L'Atelier des Sceaux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1f1a16; --paper: #efe3c4; --paper2: #f6eed8; --sepia: #6b4f2a; --gold: #d8a63a; --red: #9a4a3a; --green: #5c8f3e;
+    --s: 1;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #14110f; color: var(--ink); font-family: "IM Fell English", Georgia, serif; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; }
+  #app { position: relative; width: 1280px; height: 720px; box-shadow: 0 0 0 2px #2a2420, 0 0 60px rgba(0,0,0,0.8); overflow: hidden; }
+  #game { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+  body[data-state="lab"] #game { cursor: pointer; }
+  button { font-family: inherit; color: var(--ink); background: var(--paper2); border: 1.5px solid var(--ink); border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: calc(15px * var(--s)); box-shadow: 2px 2px 0 rgba(31,26,22,0.25); }
+  button:hover { background: #fff8e4; transform: translate(-1px,-1px); box-shadow: 3px 3px 0 rgba(31,26,22,0.3); }
+  button:active { transform: translate(1px,1px); box-shadow: none; }
+  button.on { background: var(--gold); }
+  input[type=text] { font-family: inherit; font-size: calc(17px * var(--s)); padding: 6px 10px; border: none; border-bottom: 1.5px solid var(--ink); background: transparent; color: var(--ink); outline: none; width: 100%; }
+  .hidden { display: none !important; }
+  .muted { opacity: 0.6; font-style: italic; }
+
+  /* ---------- HUD ---------- */
+  #hud { position: absolute; inset: 0; padding: calc(12px * var(--s)) calc(16px * var(--s)); pointer-events: none; font-size: calc(15px * var(--s)); }
+  body:not([data-state="world"]) #hud .world-only { display: none; }
+  .bar { position: relative; width: calc(220px * var(--s)); height: calc(16px * var(--s)); border: 1.5px solid var(--ink); border-radius: 8px; background: rgba(239,227,196,0.85); overflow: hidden; margin-top: calc(4px * var(--s)); }
+  .bar > div { height: 100%; transition: width 0.15s; }
+  #ink-fill { background: linear-gradient(90deg, #2a2521, #4b3a6b); }
+  #hp-fill { background: linear-gradient(90deg, #9a4a3a, #c45a5a); }
+  .bar span { position: absolute; left: 0; right: 0; top: 0; bottom: 0; text-align: center; font-size: calc(11px * var(--s)); line-height: calc(14px * var(--s)); color: var(--paper); mix-blend-mode: difference; }
+  .label { font-variant: small-caps; letter-spacing: 1px; font-size: calc(13px * var(--s)); color: var(--sepia); }
+  #statuts { margin-top: calc(6px * var(--s)); display: flex; flex-wrap: wrap; gap: 4px; width: calc(260px * var(--s)); }
+  .st { background: rgba(239,227,196,0.9); border: 1px solid var(--ink); border-radius: 10px; padding: 1px 8px; font-size: calc(12px * var(--s)); }
+  .st.burning { background: #d9622b; color: #fff; }
+  .st.stone { background: #8a6b2f; color: #fff; }
+  .st.invisible { background: #5a4a7d; color: #fff; }
+  #zone-name { position: absolute; left: 0; right: 0; top: calc(90px * var(--s)); text-align: center; font-family: "IM Fell English SC", "IM Fell English", Georgia, serif; font-size: calc(40px * var(--s)); color: var(--ink); opacity: 0; letter-spacing: 3px; text-shadow: 0 0 20px rgba(239,227,196,1); }
+  #zone-name.show { animation: zone 3.5s ease forwards; }
+  @keyframes zone { 0% { opacity: 0; transform: translateY(10px); } 15% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
+  #topright { position: absolute; right: calc(16px * var(--s)); top: calc(12px * var(--s)); display: flex; gap: 6px; pointer-events: auto; }
+  #topright button { padding: 4px 10px; font-size: calc(16px * var(--s)); }
+  body:not([data-state="world"]) #btn-lab { display: none; }
+  body[data-state="create"] #topright, body[data-state="create"] #hotbar { display: none; }
+
+  #hotbar { position: absolute; left: 50%; bottom: calc(14px * var(--s)); transform: translateX(-50%); display: flex; gap: calc(8px * var(--s)); pointer-events: auto; }
+  .slot { position: relative; width: calc(62px * var(--s)); height: calc(62px * var(--s)); border: 1.5px solid var(--ink); border-radius: 8px; background: rgba(239,227,196,0.92); box-shadow: 2px 2px 0 rgba(31,26,22,0.3); cursor: pointer; }
+  .slot canvas { width: 100%; height: 100%; display: block; }
+  .slot.on { outline: 3px solid var(--gold); outline-offset: -1px; background: #fff8e4; }
+  .slot .key { position: absolute; left: 4px; top: 2px; font-size: calc(12px * var(--s)); color: var(--sepia); }
+  .slot .count { position: absolute; right: 4px; bottom: 2px; font-size: calc(12px * var(--s)); color: var(--sepia); }
+  .slot.empty-potion canvas { opacity: 0.3; }
+
+  /* ---------- Toasts ---------- */
+  #toasts { position: absolute; left: calc(16px * var(--s)); bottom: calc(16px * var(--s)); display: flex; flex-direction: column; gap: 6px; pointer-events: none; max-width: calc(440px * var(--s)); }
+  .toast { background: rgba(239,227,196,0.96); border: 1.5px solid var(--ink); border-radius: 6px; padding: 6px 12px; font-size: calc(15px * var(--s)); opacity: 0; transform: translateY(8px); transition: all 0.3s; box-shadow: 2px 2px 0 rgba(31,26,22,0.3); }
+  .toast.show { opacity: 1; transform: none; }
+  .toast.warn { border-color: var(--red); color: var(--red); }
+  .toast.unlock { background: #fff3cf; border-color: var(--gold); font-size: calc(17px * var(--s)); }
+
+  /* ---------- Panneaux ---------- */
+  #panels { position: absolute; inset: 0; background: rgba(20,17,15,0.55); display: flex; align-items: center; justify-content: center; }
+  .panel { position: relative; background: var(--paper); border: 2px solid var(--ink); box-shadow: 6px 6px 0 rgba(31,26,22,0.5), inset 0 0 60px rgba(120,90,40,0.15); border-radius: 4px; padding: calc(18px * var(--s)) calc(24px * var(--s)); width: calc(1120px * var(--s)); max-height: calc(680px * var(--s)); overflow: auto; font-size: calc(15px * var(--s)); }
+  .panel::before { content: ''; position: absolute; inset: 6px; border: 1px solid rgba(31,26,22,0.35); pointer-events: none; border-radius: 2px; }
+  .panel h2 { font-family: "IM Fell English SC", "IM Fell English", Georgia, serif; margin: 0 0 calc(10px * var(--s)); font-size: calc(30px * var(--s)); font-weight: normal; letter-spacing: 1px; }
+  .panel h3 { font-weight: normal; font-variant: small-caps; letter-spacing: 1px; margin: calc(10px * var(--s)) 0 calc(5px * var(--s)); font-size: calc(18px * var(--s)); border-bottom: 1px solid rgba(31,26,22,0.3); }
+  .fermer { position: absolute; right: 14px; top: 10px; padding: 2px 10px; font-size: calc(18px * var(--s)); }
+  .cols { display: flex; gap: calc(22px * var(--s)); }
+  .cols > div { flex: 1; min-width: 0; }
+  .ok { color: var(--green); } .warn { color: var(--red); }
+  .intro { font-style: italic; opacity: 0.8; }
+
+  /* création */
+  #panel-create { width: calc(720px * var(--s)); }
+  #create-canvas { width: calc(220px * var(--s)); height: calc(260px * var(--s)); background: rgba(255,255,255,0.25); border: 1.5px solid var(--ink); border-radius: 50% 50% 6px 6px; }
+  .choices { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+  .choice.swatch { width: calc(34px * var(--s)); height: calc(34px * var(--s)); padding: 0; border-radius: 50%; }
+  .choice.swatch.on { outline: 3px solid var(--gold); }
+  #create-go { font-size: calc(20px * var(--s)); padding: 8px 24px; margin-top: 8px; }
+
+  /* sceaux */
+  #seal-canvas { width: calc(330px * var(--s)); height: calc(330px * var(--s)); display: block; margin: 0 auto; cursor: pointer; }
+  .seal-info { display: flex; align-items: baseline; gap: 12px; margin: 6px 0; }
+  .seal-info .cost { font-size: calc(22px * var(--s)); }
+  #seal-etat { min-height: 2.4em; font-style: italic; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; }
+  .slotpick { display: flex; gap: 4px; align-items: center; margin-top: 6px; }
+  .slotpick span { font-size: calc(13px * var(--s)); opacity: 0.8; }
+  .btn-slot { padding: 2px 9px; }
+  .palette { display: flex; flex-wrap: wrap; gap: 6px; }
+  .glyph-btn { display: flex; flex-direction: column; align-items: center; width: calc(86px * var(--s)); padding: 3px 2px; gap: 0; line-height: 1.1; }
+  .glyph-btn canvas { width: calc(38px * var(--s)); height: calc(38px * var(--s)); }
+  .glyph-btn small { opacity: 0.6; font-size: calc(11px * var(--s)); }
+  .glyph-btn.locked { opacity: 0.5; cursor: help; background: transparent; box-shadow: none; border-style: dashed; }
+  #pal-desc { min-height: 3em; margin-top: 10px; padding: 8px 10px; background: rgba(255,255,255,0.3); border-left: 3px solid var(--gold); font-style: italic; }
+  #seal-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: calc(90px * var(--s)); overflow: auto; }
+  .seal-item { display: flex; align-items: center; gap: 6px; border: 1px solid var(--ink); border-radius: 6px; padding: 2px 8px 2px 4px; background: rgba(255,255,255,0.3); cursor: pointer; }
+  .seal-item:hover { background: #fff8e4; }
+  .seal-item canvas { width: calc(36px * var(--s)); height: calc(36px * var(--s)); }
+  .seal-item .x { padding: 0 6px; font-size: calc(12px * var(--s)); box-shadow: none; }
+
+  /* chaudron */
+  .ingr-btn { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 4px 8px; margin-bottom: 4px; }
+  .ingr-btn i, .caul-slot i, .potion-item i, .dot { display: inline-block; width: calc(16px * var(--s)); height: calc(16px * var(--s)); border-radius: 50%; border: 1.5px solid var(--ink); flex: none; }
+  .ingr-btn small { margin-left: auto; opacity: 0.7; }
+  .ingr-btn.locked { opacity: 0.45; cursor: default; }
+  #caul-ingr { display: flex; gap: 8px; }
+  .caul-slot { flex: 1; border: 1.5px dashed var(--ink); border-radius: 8px; padding: 10px 8px; display: flex; align-items: center; gap: 8px; min-height: calc(48px * var(--s)); background: rgba(31,26,22,0.06); }
+  .caul-slot.full { border-style: solid; cursor: pointer; background: rgba(255,255,255,0.35); }
+  #caul-seq { display: flex; gap: 6px; flex-wrap: wrap; min-height: 2.4em; align-items: center; }
+  #caul-stepbtns { display: flex; gap: 6px; flex-wrap: wrap; }
+  #caul-brew { font-size: calc(20px * var(--s)); padding: 8px 22px; background: #e9d6a8; }
+  #caul-result { margin-top: 10px; min-height: 3em; padding: 8px 10px; background: rgba(255,255,255,0.3); border-left: 3px solid var(--gold); }
+  .potion-item { display: flex; align-items: flex-start; gap: 10px; border-bottom: 1px solid rgba(31,26,22,0.2); padding: 6px 0; flex-wrap: wrap; }
+  .potion-item > div { flex: 1; min-width: 200px; }
+  .recette { padding: 3px 0; }
+
+  /* grimoire */
+  #grim-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .decouverte { display: flex; gap: 10px; align-items: flex-start; padding: 6px 4px; border-bottom: 1px solid rgba(31,26,22,0.15); opacity: 0.75; }
+  .decouverte.ok { opacity: 1; }
+  .decouverte .check { width: 1.4em; text-align: center; font-size: calc(18px * var(--s)); color: var(--gold); flex: none; }
+  .glyph-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 14px; }
+  .glyph-card { display: flex; gap: 8px; align-items: center; }
+  .glyph-card canvas { width: calc(48px * var(--s)); height: calc(48px * var(--s)); flex: none; }
+  table.journal td { padding: 3px 14px 3px 0; }
+  table.journal td:last-child { font-size: calc(18px * var(--s)); }
+
+  /* aide */
+  #panel-help { width: calc(760px * var(--s)); }
+  #panel-help p, #panel-help li { line-height: 1.45; }
+  kbd { font-family: inherit; border: 1px solid var(--ink); border-radius: 4px; padding: 0 6px; background: rgba(255,255,255,0.4); font-size: 0.9em; }
+</style>
+</head>
+<body data-state="create">
+<div id="app">
+  <canvas id="game" width="1280" height="720"></canvas>
+
+  <div id="hud">
+    <div class="world-only">
+      <div class="label">Encre</div>
+      <div class="bar"><div id="ink-fill"></div><span id="ink-txt"></span></div>
+      <div class="label">Vitalité</div>
+      <div class="bar"><div id="hp-fill"></div></div>
+      <div id="statuts"></div>
+    </div>
+    <div id="zone-name"></div>
+    <div id="topright">
+      <button id="btn-lab" title="Retourner au labo">🏠 Labo</button>
+      <button id="btn-grim" title="Grimoire (G)">📖</button>
+      <button id="btn-help" title="Aide (H)">?</button>
+      <button id="btn-mute" title="Son (M)">🔊</button>
+    </div>
+    <div id="hotbar"></div>
+  </div>
+  <div id="toasts"></div>
+
+  <div id="panels" class="hidden">
+    <!-- Création -->
+    <section id="panel-create" class="panel hidden">
+      <h2>Un(e) nouvel(le) apprenti(e)</h2>
+      <div class="cols">
+        <div><canvas id="create-canvas" width="220" height="260"></canvas></div>
+        <div style="flex:2">
+          <h3>Nom</h3>
+          <input id="create-nom" type="text" maxlength="18" placeholder="Comment t'appelle-t-on ?">
+          <h3>Chapeau</h3><div id="create-chapeaux" class="choices"></div>
+          <h3>Cape</h3><div id="create-capes" class="choices"></div>
+          <h3>À la main</h3><div id="create-acc" class="choices"></div>
+          <button id="create-go">Entrer dans l'atelier</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Table des sceaux -->
+    <section id="panel-seal" class="panel hidden">
+      <button class="fermer" title="Fermer (Échap)">✕</button>
+      <h2>Table des sceaux</h2>
+      <div class="cols">
+        <div>
+          <canvas id="seal-canvas" width="380" height="380"></canvas>
+          <input id="seal-nom" type="text" maxlength="32" placeholder="Nom du sceau">
+          <div class="seal-info"><span class="label">Coût en encre</span><span class="cost" id="seal-cost">0</span><span id="seal-etat"></span></div>
+          <div class="actions">
+            <button id="seal-save">Consigner</button>
+            <button id="seal-new">Nouveau</button>
+            <button id="seal-tobar">Mettre dans la barre</button>
+          </div>
+          <div id="seal-slots" class="slotpick hidden"></div>
+          <h3>Sceaux consignés</h3>
+          <div id="seal-list"></div>
+        </div>
+        <div style="flex:1.15">
+          <h3>Glyphes d'effet — centre</h3><div id="pal-cores" class="palette"></div>
+          <h3>Formes — premier anneau</h3><div id="pal-shapes" class="palette"></div>
+          <h3>Modificateurs — second anneau</h3><div id="pal-mods" class="palette"></div>
+          <h3>Déclencheurs — pointes</h3><div id="pal-triggers" class="palette"></div>
+          <div id="pal-desc">Survole un glyphe pour lire ce qu'il fait.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chaudron -->
+    <section id="panel-cauldron" class="panel hidden">
+      <button class="fermer" title="Fermer (Échap)">✕</button>
+      <h2>Chaudron</h2>
+      <div class="cols">
+        <div>
+          <h3>Étagère</h3>
+          <div id="caul-shelf"></div>
+        </div>
+        <div style="flex:1.3">
+          <h3>Dans le chaudron (3 au plus)</h3>
+          <div id="caul-ingr"></div>
+          <h3>Préparation, dans l'ordre (3 étapes au plus)</h3>
+          <div id="caul-seq"></div>
+          <div id="caul-stepbtns"></div>
+          <div class="actions"><button id="caul-brew">Brasser</button><button id="caul-clear">Vider</button></div>
+          <div id="caul-result" class="muted">Les ratés ne coûtent rien : le chaudron recrache tout, et le grimoire murmure un indice.</div>
+          <h3>Recettes connues</h3>
+          <div id="caul-recettes"></div>
+        </div>
+        <div>
+          <h3>Potions en réserve</h3>
+          <div id="caul-potions"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grimoire -->
+    <section id="panel-grimoire" class="panel hidden">
+      <button class="fermer" title="Fermer (Échap)">✕</button>
+      <h2>Grimoire</h2>
+      <div id="grim-tabs">
+        <button data-tab="decouvertes" class="on">Découvertes</button>
+        <button data-tab="glyphes">Glyphes</button>
+        <button data-tab="recettes">Recettes</button>
+        <button data-tab="ingredients">Ingrédients</button>
+        <button data-tab="journal">Journal</button>
+      </div>
+      <div id="grim-content"></div>
+    </section>
+
+    <!-- Aide -->
+    <section id="panel-help" class="panel hidden">
+      <button class="fermer" title="Fermer (Échap)">✕</button>
+      <h2>Lettre du maître</h2>
+      <p><em>Mon cher apprenti, ma chère apprentie,</em></p>
+      <p>Je pars quelques semaines. L'atelier est à toi. Un sceau se compose en cercles : au <b>centre</b>, le glyphe d'effet (ce que le sort fait). Sur le <b>premier anneau</b>, la forme (projectile, sur soi, zone, trait). Sur le <b>second</b>, les modificateurs. Aux <b>pointes</b>, le déclencheur. Un sceau incomplet ne tue personne : il fait de la fumée, et c'est déjà une leçon.</p>
+      <p>Le <b>chaudron</b> accepte jusqu'à trois ingrédients et trois étapes dans l'ordre. Commence par <b>cendre + eau de source</b>, <b>chauffer</b> puis <b>remuer</b> : tu auras de l'encre à boire. Le reste, découvre-le. Les ingrédients rares se trouvent dehors.</p>
+      <p>Chaque chose nouvelle que tu réussis dehors ouvre une page du <b>grimoire</b> : nouveaux glyphes, nouveaux emplacements. Expérimente, rate, recommence.</p>
+      <h3>Dehors</h3>
+      <ul>
+        <li><kbd>←</kbd><kbd>→</kbd> ou <kbd>Q</kbd><kbd>D</kbd> : marcher · <kbd>Espace</kbd> : sauter · <kbd>↑</kbd> : grimper aux vignes · <kbd>E</kbd> : interagir (porte, cueillir, lire)</li>
+        <li><kbd>1</kbd>–<kbd>5</kbd> ou molette : choisir dans la barre · <kbd>Clic</kbd> : lancer vers la souris</li>
+        <li><kbd>G</kbd> : grimoire · <kbd>H</kbd> : cette lettre · <kbd>M</kbd> : son · <kbd>Échap</kbd> : fermer</li>
+        <li>Revenir au labo (la porte, ou le bouton 🏠) restaure encre et vitalité. Rien ne meurt vraiment ici : on s'évanouit, on se réveille devant la porte.</li>
+      </ul>
+      <p class="muted">Pour tout recommencer : <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>R</kbd>.</p>
+    </section>
+  </div>
+</div>
+<script src="js/util.js"></script>
+<script src="js/data.js"></script>
+<script src="js/seal.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/world.js"></script>
+<script src="js/lab.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
