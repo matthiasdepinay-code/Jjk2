@@ -58,6 +58,9 @@
   .slot { position: relative; width: calc(62px * var(--s)); height: calc(62px * var(--s)); border: 1.5px solid var(--ink); border-radius: 8px; background: rgba(239,227,196,0.92); box-shadow: 2px 2px 0 rgba(31,26,22,0.3); cursor: pointer; }
   .slot canvas { width: 100%; height: 100%; display: block; }
   .slot.on { outline: 3px solid var(--gold); outline-offset: -1px; background: #fff8e4; }
+  .slot.onL { box-shadow: inset 0 0 0 3px #3b6fb6, 2px 2px 0 rgba(31,26,22,0.3); }
+  .slot.onL::after { content: 'G'; position: absolute; right: 4px; top: 2px; font-size: calc(11px * var(--s)); color: #3b6fb6; }
+  .slot.on::before { content: 'D'; position: absolute; right: 4px; top: 2px; font-size: calc(11px * var(--s)); color: #a3782e; }
   .slot .key { position: absolute; left: 4px; top: 2px; font-size: calc(12px * var(--s)); color: var(--sepia); }
   .slot .count { position: absolute; right: 4px; bottom: 2px; font-size: calc(12px * var(--s)); color: var(--sepia); }
   .slot.empty-potion canvas { opacity: 0.3; }
@@ -104,6 +107,14 @@
   .glyph-btn small { opacity: 0.6; font-size: calc(11px * var(--s)); }
   .glyph-btn.locked { opacity: 0.5; cursor: help; background: transparent; box-shadow: none; border-style: dashed; }
   #pal-desc { min-height: 3em; margin-top: 10px; padding: 8px 10px; background: rgba(255,255,255,0.3); border-left: 3px solid var(--gold); font-style: italic; }
+  #seal-tailles { align-items: center; margin: 0 0 4px; }
+  #seal-tailles .label, #seal-params .label { margin-right: 6px; }
+  #seal-params .choices { align-items: center; margin: 2px 0; }
+  .choice.locked { opacity: 0.4; }
+  .seal-apercu { display: flex; gap: 10px; align-items: flex-start; margin: 8px 0; }
+  #seal-preview { width: calc(300px * var(--s)); height: calc(110px * var(--s)); flex: none; border: 1.5px solid var(--ink); border-radius: 4px; }
+  #seal-fiche { font-size: calc(13px * var(--s)); line-height: 1.35; }
+  #seal-fiche div { margin-bottom: 2px; }
   #seal-sublist { margin-top: 8px; padding: 8px; border: 1.5px dashed var(--ink); border-radius: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: rgba(255,255,255,0.3); }
   #seal-sublist .intro { width: 100%; margin: 0 0 4px; }
   #seal-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: calc(90px * var(--s)); overflow: auto; }
@@ -206,6 +217,7 @@
       <h2>Table des sceaux</h2>
       <div class="cols">
         <div>
+          <div id="seal-tailles" class="choices"></div>
           <canvas id="seal-canvas" width="380" height="380"></canvas>
           <input id="seal-nom" type="text" maxlength="32" placeholder="Nom du sceau">
           <div class="seal-info"><span class="label">Coût en encre</span><span class="cost" id="seal-cost">0</span><span id="seal-etat"></span></div>
@@ -214,6 +226,8 @@
             <button id="seal-new">Nouveau</button>
             <button id="seal-tobar">Mettre dans la barre</button>
           </div>
+          <div id="seal-params"></div>
+          <div class="seal-apercu"><canvas id="seal-preview" width="300" height="110"></canvas><div id="seal-fiche"></div></div>
           <div id="seal-slots" class="slotpick hidden"></div>
           <div id="seal-sublist" class="hidden"></div>
           <h3>Sceaux consignés</h3>
@@ -224,6 +238,8 @@
           <h3>Formes — premier anneau</h3><div id="pal-shapes" class="palette"></div>
           <h3>Modificateurs — second anneau</h3><div id="pal-mods" class="palette"></div>
           <h3>Déclencheurs — pointes</h3><div id="pal-triggers" class="palette"></div>
+          <h3>Filtres de matière — pointe droite</h3><div id="pal-filtres" class="palette"></div>
+          <h3>Cibles — pointe gauche</h3><div id="pal-cibles" class="palette"></div>
           <div id="pal-desc">Survole un glyphe pour lire ce qu'il fait.</div>
         </div>
       </div>
@@ -328,6 +344,8 @@
       <p>Dehors, <b>tout réagit</b> : le feu brûle le bois et l'herbe, l'eau éteint et fait pousser, la glace fond, la lave fige l'eau en pierre noire, l'acide creuse, l'huile flotte et s'enflamme, la foudre court dans l'eau et le métal. Regarde bien : chaque phénomène observé trois fois fait germer un glyphe dans ta palette (onglet <b>Intuitions</b> du grimoire). Les orages sont de bons professeurs.</p>
       <p>Avec l'expérience, la table s'enrichit : un <b>second glyphe d'effet</b> en bas du premier anneau fusionne avec le premier (feu + vent = tornade de feu, eau + froid = banquise, feu + terre = lave...), et un emplacement de modificateur peut recevoir un <b>sous-sceau</b> : un sceau consigné entier, lancé là où le premier éclate.</p>
       <p>Le <b>chaudron</b> accepte jusqu'à trois ingrédients et trois étapes dans l'ordre. Commence par <b>cendre + eau de source</b>, <b>chauffer</b> puis <b>remuer</b> : tu auras de l'encre à boire. Les ingrédients rares se trouvent dehors ; on peut aussi puiser n'importe quel liquide dans une fiole (<kbd>E</kbd>) pour le lancer ou le brasser.</p>
+      <p>Les sceaux ont trois <b>tailles</b> : le petit coûte moitié moins et part presque aussitôt ; le grand a cinq modificateurs et deux déclencheurs, mais se trace plus lentement. Sur la pointe droite, un <b>filtre de matière</b> fait que le sort au contact ne réagit qu'à l'eau, au métal, au bois ou à une créature, et traverse le reste, murs compris. Sur la pointe gauche, une <b>cible</b> l'envoie seul vers la créature la plus proche ou vers ta dernière <b>marque</b>. Les déclencheurs <b>Sur commande</b> (touche F), <b>Répétition</b> et <b>À l'expiration</b> viendront avec l'expérience, et le Retardé se règle.</p>
+      <p>Maintiens le clic pour <b>charger</b> un sort. Plus tard, ta main gauche lancera un second sceau au clic droit. Deux sorts à la suite au même endroit peuvent former un <b>enchaînement</b> (l'eau puis le froid, le feu puis le vent...) ; deux projectiles qui se croisent fusionnent. Le <b>Bouclier</b> se dresse devant toi et repousse l'eau : on peut marcher au fond du lac. Le <b>Contre-sort</b> défait la magie posée.</p>
       <p>La <b>Gravité</b> ne sert pas qu'à voler : elle pose un champ de pesanteur dans le sens où tu la lances. Lancée vers la droite, tout y tombe à droite, même l'eau et le sable ; vers le haut, tout tombe vers le ciel. Avec Puissance, la pesanteur écrase ; avec Inverser, plus rien ne pèse. Sur toi, elle pointe vers la surface que tu vises : tu marches sur les murs et au plafond. Vise le vide pour voler, ajoute Puissance pour devenir une enclume.</p>
       <p>Mon <b>corbeau</b> passera de temps en temps à la fenêtre avec une lettre : des commandes, des épreuves, des sceaux à inventer. Réponds-y, il te rapportera des choses qu'on ne trouve nulle part ailleurs.</p>
       <p>Le labo grandit avec toi : un <b>bac d'essai</b> sous verre pour tester un sceau, un <b>alambic</b> qui distille deux fioles en une forte, une <b>presse à glyphes</b> qui tire des parchemins lançables sans encre, et un <b>terrarium</b> pour loger les créatures apprivoisées que tu ramènes dans tes bras.</p>
@@ -335,7 +353,7 @@
       <ul>
         <li><kbd>←</kbd><kbd>→</kbd> ou <kbd>Q</kbd><kbd>D</kbd> : marcher · <kbd>Espace</kbd> : sauter (maintenir pour un grand saut) · <kbd>↑</kbd> : grimper aux plantes · en vol : toutes les directions</li>
         <li><kbd>E</kbd> : agir (porte, cueillir, lire, remplir une fiole, porter / poser) · <kbd>Clic droit</kbd> : lancer ce qu'on porte · <kbd>X</kbd> maintenu : creuser ou cueillir vers la souris (terre, sable, neige, plantes, cristal)</li>
-        <li><kbd>1</kbd>–<kbd>5</kbd> ou molette : choisir dans la barre · <kbd>Clic</kbd> : lancer vers la souris</li>
+        <li><kbd>1</kbd>–<kbd>5</kbd> ou molette : choisir dans la barre · <kbd>Clic</kbd> : lancer vers la souris (maintenir pour charger) · plus tard, <kbd>Clic droit</kbd> + <kbd>Maj</kbd>+<kbd>1</kbd>–<kbd>5</kbd> : la main gauche · <kbd>F</kbd> : libérer les sorts Sur commande</li>
         <li>Glyphe Esprit : flèches pour guider la créature, <kbd>E</kbd> pour revenir · Glyphe Lien : <kbd>↑</kbd><kbd>↓</kbd> pour raccourcir ou allonger la corde, <kbd>Espace</kbd> pour lâcher</li>
         <li><kbd>G</kbd> : grimoire · <kbd>H</kbd> : cette lettre · <kbd>M</kbd> : son · <kbd>Échap</kbd> : fermer</li>
         <li>Revenir au labo (la porte, ou le bouton 🏠) restaure encre et vitalité et sauvegarde le monde tel que tu l'as laissé. Rien ne meurt vraiment ici : on s'évanouit, on se réveille devant la porte.</li>

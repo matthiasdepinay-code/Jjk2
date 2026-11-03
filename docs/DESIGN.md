@@ -45,3 +45,18 @@ Un vrai bac à sable de magie, style encre & parchemin, ambiance cosy. On compos
 | Visée | Pointillés courts sur l'arc des projectiles. |
 | Carte | Dans le grimoire, se dévoile en explorant. |
 | Confort | Options de simulation (feu, pluie, encre, texte, volumes) ; musique par zone et par heure. |
+
+## Troisième vague : sorts et glyphes (décisions de l'auteur)
+
+| Sujet | Choix |
+| --- | --- |
+| Tailles de sceau | Petit (centre, forme, 1 modificateur, déclencheur ; moitié prix, geste quasi instantané), moyen (l'actuel), grand (5 modificateurs, 2 déclencheurs, geste de 0,5 s ; se débloque). |
+| Déclencheurs | Sur commande (touche F fait éclater tous les sorts en attente), Répétition (toutes les N s), Retardé à durée réglable (1, 2, 5, 10 s), À l'expiration (un dernier effet quand l'effet s'éteint). |
+| Filtres de matière | Petits glyphes posés à côté du déclencheur : le sort au contact ne réagit qu'à la matière choisie et traverse le reste. |
+| Ciblage | Couche « cible » : Souris (défaut), Créature la plus proche, Marque. Glyphe Marque : pose jusqu'à 3 repères ; les sorts ciblés Marque visent le plus récent, même hors de vue. |
+| Charge | Maintenir le clic charge le sort (jusqu'à 1,5 s) : plus puissant, plus loin, plus cher. |
+| Deux mains | Clic gauche = main droite (1-5), clic droit = main gauche (Maj + 1-5). Le clic droit lance d'abord ce qu'on porte. |
+| Enchaînements | Combos d'éléments nommés quand un second sort éclate dans la seconde et près du premier. |
+| Interactions | Collisions entre projectiles = fusion forcée au point de rencontre. Forme Bouclier élémentaire (arc orienté vers la souris). Glyphe Contre-sort qui dissipe champs, pièges, totems, portails. |
+| Déblocage | Par la progression habituelle (découvertes, niveaux), avec indices. |
+| Éditeur | Aperçu animé de l'effet et fiche lisible du sceau. |

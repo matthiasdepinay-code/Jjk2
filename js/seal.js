@@ -3,23 +3,34 @@
 const Seal = (() => {
   const { TAU, INK } = U;
 
-  function create() {
-    return { nom: '', core: null, core2: null, shape: null, mods: [null, null, null], trigger: null };
+  const NMODS = 5;
+  function create(taille = 'moyen') {
+    return { nom: '', taille, core: null, core2: null, shape: null, mods: [null, null, null, null, null], trigger: null, trigger2: null, filtre: null, cible: null, delai: 2, periode: 2 };
   }
   function clone(s) {
-    return { nom: s.nom, core: s.core, core2: s.core2 || null, shape: s.shape, mods: s.mods.map((m) => (m && m.sub ? { sub: clone(m.sub) } : m)), trigger: s.trigger };
+    const mods = (s.mods || []).map((m) => (m && typeof m === 'object' && m.sub ? { sub: clone(m.sub) } : typeof m === 'string' ? m : null));
+    while (mods.length < NMODS) mods.push(null);
+    return { nom: s.nom || '', taille: s.taille || 'moyen', core: s.core || null, core2: s.core2 || null, shape: s.shape || null, mods: mods.slice(0, NMODS),
+      trigger: s.trigger || null, trigger2: s.trigger2 || null, filtre: s.filtre || null, cible: s.cible || null, delai: s.delai || 2, periode: s.periode || 2 };
   }
   const isSub = (m) => !!(m && typeof m === 'object' && m.sub);
   function subs(s) { return s.mods.filter(isSub).map((m) => m.sub); }
   function depth(s) { let d = 0; for (const q of subs(s)) d = Math.max(d, 1 + depth(q)); return d; }
+  function taille(s) { return DATA.TAILLES[s.taille || 'moyen'] || DATA.TAILLES.moyen; }
+  // nombre d'emplacements de modificateur réellement utilisables (progress.slots borne le moyen)
+  function nbSlots(s, slotsMoyen = 3) { const t = s.taille || 'moyen'; return t === 'petit' ? 1 : t === 'grand' ? 5 : Math.min(3, slotsMoyen); }
+  function triggers(s) { return [s.trigger, s.taille === 'grand' ? s.trigger2 : null].filter(Boolean); }
   function cost(s) {
     let c = 0;
     if (s.core) c += DATA.CORES[s.core].cout;
     if (s.core2) c += DATA.CORES[s.core2].cout + 2;
     if (s.shape) c += DATA.SHAPES[s.shape].cout;
     for (const m of s.mods) { if (!m) continue; c += isSub(m) ? cost(m.sub) : DATA.MODS[m].cout; }
-    if (s.trigger) c += DATA.TRIGGERS[s.trigger].cout;
-    return c;
+    for (const t of triggers(s)) c += DATA.TRIGGERS[t].cout;
+    if (s.filtre && s.taille !== 'petit') c += DATA.FILTRES[s.filtre].cout;
+    if (s.cible && s.taille !== 'petit') c += DATA.CIBLES[s.cible].cout;
+    const T = taille(s);
+    return Math.max(s.core ? 1 : 0, Math.round(c * T.coutMul + T.coutAdd));
   }
   function count(s, mod) {
     return s.mods.filter((m) => m === mod).length;
@@ -42,7 +53,8 @@ const Seal = (() => {
     if (s.shape) n = DATA.SHAPES[s.shape].nom + ' de ' + n.toLowerCase();
     const mods = s.mods.filter(Boolean);
     if (mods.length) n += ' ' + mods.map((m) => (isSub(m) ? '« ' + nom(m.sub) + ' »' : DATA.MODS[m].nom.toLowerCase())).join(', ');
-    if (s.trigger && s.trigger !== 'immediat') n += ' (' + DATA.TRIGGERS[s.trigger].nom.toLowerCase() + ')';
+    const tr = triggers(s).filter((t) => t !== 'immediat'); if (tr.length) n += ' (' + tr.map((t) => DATA.TRIGGERS[t].nom.toLowerCase()).join(', ') + ')';
+    if (s.taille === 'petit') n = 'Petit ' + n.charAt(0).toLowerCase() + n.slice(1); else if (s.taille === 'grand') n = 'Grand ' + n.charAt(0).toLowerCase() + n.slice(1);
     return n;
   }
   function nom(s) {
@@ -141,111 +153,98 @@ const Seal = (() => {
       case 'immediat': for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU + 0.3; L(Math.cos(a) * r * 0.25, Math.sin(a) * r * 0.25, Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9); } break;
       case 'contact': L(-r * 0.7, -r * 0.7, r * 0.7, r * 0.7); L(-r * 0.7, r * 0.7, r * 0.7, -r * 0.7); C(0, 0, r * 0.9); break;
       case 'retarde': C(0, 0, r * 0.9); L(0, 0, 0, -r * 0.6); L(0, 0, r * 0.45, r * 0.2); break;
-      default: C(0, 0, r * 0.5);
+      case 'marque': for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i / 5) * TAU, b = a + TAU / 10; L(Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9, Math.cos(b) * r * 0.38, Math.sin(b) * r * 0.38); L(Math.cos(b) * r * 0.38, Math.sin(b) * r * 0.38, Math.cos(a + TAU / 5) * r * 0.9, Math.sin(a + TAU / 5) * r * 0.9); } break;
+      case 'contre': C(0, 0, r * 0.85); L(-r * 0.6, -r * 0.6, r * 0.6, r * 0.6); P([[-r * 0.3, -r * 0.1], [0, -r * 0.4], [r * 0.3, -r * 0.1]], false); break;
+      case 'bouclier': ctx.beginPath(); ctx.moveTo(0, -r * 0.9); ctx.quadraticCurveTo(r * 0.85, -r * 0.7, r * 0.75, 0); ctx.quadraticCurveTo(r * 0.5, r * 0.7, 0, r * 0.95); ctx.quadraticCurveTo(-r * 0.5, r * 0.7, -r * 0.75, 0); ctx.quadraticCurveTo(-r * 0.85, -r * 0.7, 0, -r * 0.9); ctx.stroke(); L(0, -r * 0.6, 0, r * 0.6); break;
+      case 'commande': U.inkRect(ctx, -r * 0.7, -r * 0.55, r * 1.4, r * 1.1, seed, r * 0.03); U.txt(ctx, 'F', 0, r * 0.02, r * 1.0, 'center', color); break;
+      case 'repetition': ctx.beginPath(); ctx.arc(0, 0, r * 0.7, 0.4, TAU - 0.4); ctx.stroke(); P([[r * 0.6, -r * 0.55], [r * 0.7, -r * 0.2], [r * 0.95, -r * 0.4]], false); dot(0, 0, r * 0.15); break;
+      case 'expiration': P([[-r * 0.6, -r * 0.8], [r * 0.6, -r * 0.8], [-r * 0.6, r * 0.8], [r * 0.6, r * 0.8]]); for (let i = 0; i < 4; i++) { const a = (i / 4) * TAU + 0.8; L(Math.cos(a) * r * 0.25, r * 0.6 + Math.sin(a) * r * 0.2, Math.cos(a) * r * 0.5, r * 0.6 + Math.sin(a) * r * 0.4); } break;
+      default:
+        if (id && id.startsWith('f_')) { const F = DATA.FILTRES[id.slice(2)]; P([[-r * 0.9, -r * 0.8], [r * 0.9, -r * 0.8], [r * 0.18, r * 0.25], [r * 0.18, r * 0.9], [-r * 0.18, r * 0.9], [-r * 0.18, r * 0.25]]); if (F) { ctx.restore(); glyph(ctx, F.glyphe, x, y - r * 0.32, r * 0.4, color, seed + 1); ctx.save(); ctx.translate(x, y); } break; }
+        if (id && id.startsWith('c_')) { const k = id.slice(2); C(0, 0, r * 0.65); L(-r, 0, -r * 0.4, 0); L(r * 0.4, 0, r, 0); L(0, -r, 0, -r * 0.4); L(0, r * 0.4, 0, r); if (k === 'creature') { dot(-r * 0.15, -r * 0.05, r * 0.1); dot(r * 0.15, -r * 0.05, r * 0.1); } else if (k === 'marque') { ctx.restore(); glyph(ctx, 'marque', x, y, r * 0.35, color, seed); ctx.save(); ctx.translate(x, y); } else dot(0, 0, r * 0.12); break; }
+        C(0, 0, r * 0.5);
     }
     ctx.restore();
   }
 
   // Positions des emplacements pour un sceau de rayon R
-  function layout(cx, cy, R) {
-    const slotAt = (rad, angDeg, r) => {
-      const a = (angDeg * Math.PI) / 180;
-      return { x: cx + Math.cos(a) * rad, y: cy + Math.sin(a) * rad, r };
-    };
-    return {
+  const MOD_ANGLES = { petit: [30], moyen: [30, 150, 270], grand: [18, 90, 162, 234, 306] };
+  function layout(cx, cy, R, tailleId = 'moyen') {
+    const slotAt = (rad, angDeg, r) => { const a = (angDeg * Math.PI) / 180; return { x: cx + Math.cos(a) * rad, y: cy + Math.sin(a) * rad, r }; };
+    const ang = MOD_ANGLES[tailleId] || MOD_ANGLES.moyen;
+    const L = {
       core: { x: cx, y: cy, r: R * 0.27 },
       shape: slotAt(R * 0.5, -90, R * 0.11),
       core2: slotAt(R * 0.5, 90, R * 0.11),
-      mods: [slotAt(R * 0.74, 30, R * 0.1), slotAt(R * 0.74, 150, R * 0.1), slotAt(R * 0.74, 270, R * 0.1)],
+      mods: ang.map((d) => slotAt(R * 0.74, d, R * 0.1)),
       trigger: slotAt(R * 1.0, -90, R * 0.1),
+      filtre: slotAt(R * 1.0, 30, R * 0.09),
+      cible: slotAt(R * 1.0, 150, R * 0.09),
+      trigger2: slotAt(R * 1.0, 90, R * 0.1),
     };
+    if (tailleId === 'petit') { L.core2 = null; L.filtre = null; L.cible = null; L.trigger2 = null; }
+    if (tailleId === 'moyen') L.trigger2 = null;
+    return L;
+  }
+  // liste des emplacements (identifiant + position) pour le test de clic
+  function slotList(cx, cy, R, tailleId) {
+    const L = layout(cx, cy, R, tailleId); const out = [];
+    for (const k of ['core', 'shape', 'core2', 'trigger', 'filtre', 'cible', 'trigger2']) if (L[k]) out.push({ id: k, ...L[k] });
+    L.mods.forEach((m, i) => out.push({ id: 'mod' + i, ...m }));
+    return out;
   }
 
-  // Dessin complet du sceau. opts: {t (temps), slots (nb mods dispo), highlight (id slot), empty (afficher les vides), glow}
-  function draw(ctx, s, cx, cy, R, opts = {}) {
+  // Dessin complet du sceau. opts: {t (temps), slots (nb mods moyen), highlight (id slot), empty, glow, fusion}
+  function draw(ctx, s, cx, cy, R0, opts = {}) {
     const t = opts.t || 0;
-    const slots = opts.slots == null ? 3 : opts.slots;
+    const tid = s.taille || 'moyen';
+    const R = R0 * (tid === 'petit' ? 0.82 : 1);
+    const nb = nbSlots(s, opts.slots == null ? 3 : opts.slots);
     const st = etat(s);
     const coul = s.core ? DATA.CORES[s.core].couleur : '#8a7a5a';
-    const lay = layout(cx, cy, R);
-    ctx.save();
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    // halo si valide
+    const lay = layout(cx, cy, R, tid);
+    ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     if (s.core && opts.glow !== false) {
       const g = ctx.createRadialGradient(cx, cy, R * 0.1, cx, cy, R * 1.15);
       if (s.core2) g.addColorStop(0, U.hexA(DATA.CORES[s.core2].couleur, 0.35));
       g.addColorStop(s.core2 ? 0.4 : 0, U.hexA(coul, st.ok ? 0.35 : 0.15));
       g.addColorStop(1, U.hexA(coul, 0));
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(cx, cy, R * 1.15, 0, TAU); ctx.fill();
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.15, 0, TAU); ctx.fill();
     }
-
-    // cercles
+    // cercles (le grand a un anneau extérieur supplémentaire)
     ctx.strokeStyle = INK;
-    ctx.lineWidth = Math.max(1.5, R * 0.025);
-    U.inkCircle(ctx, cx, cy, R, 11, R * 0.012);
+    ctx.lineWidth = Math.max(1.5, R * 0.025); U.inkCircle(ctx, cx, cy, R, 11, R * 0.012);
     ctx.lineWidth = Math.max(1, R * 0.015);
-    U.inkCircle(ctx, cx, cy, R * 0.86, 12, R * 0.01);
+    if (tid !== 'petit') U.inkCircle(ctx, cx, cy, R * 0.86, 12, R * 0.01);
     U.inkCircle(ctx, cx, cy, R * 0.62, 13, R * 0.01);
     U.inkCircle(ctx, cx, cy, R * 0.36, 14, R * 0.01);
-
-    // anneau tournant décoratif (petits tirets) si actif
+    if (tid === 'grand') { ctx.setLineDash([R * 0.02, R * 0.03]); U.inkCircle(ctx, cx, cy, R * 1.2, 15, R * 0.01); ctx.setLineDash([]); }
     if (s.core) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(t * 0.3);
-      ctx.strokeStyle = U.hexA(coul, 0.8);
-      ctx.lineWidth = Math.max(1, R * 0.02);
-      for (let i = 0; i < 24; i++) {
-        const a = (i / 24) * TAU;
-        const r1 = R * 0.93, r2 = R * (i % 3 === 0 ? 0.98 : 0.955);
-        ctx.beginPath(); ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1); ctx.lineTo(Math.cos(a) * r2, Math.sin(a) * r2); ctx.stroke();
-      }
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(t * 0.3);
+      ctx.strokeStyle = U.hexA(coul, 0.8); ctx.lineWidth = Math.max(1, R * 0.02);
+      for (let i = 0; i < 24; i++) { const a = (i / 24) * TAU; const r1 = R * 0.93, r2 = R * (i % 3 === 0 ? 0.98 : 0.955); ctx.beginPath(); ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1); ctx.lineTo(Math.cos(a) * r2, Math.sin(a) * r2); ctx.stroke(); }
       ctx.restore();
     }
-
-    // Anneau 1 (forme) : le glyphe répété 4 fois en filigrane + emplacement principal
-    if (s.shape) {
-      for (let i = 1; i < 4; i++) {
-        const a = -Math.PI / 2 + (i / 4) * TAU;
-        ctx.globalAlpha = 0.45;
-        glyph(ctx, s.shape, cx + Math.cos(a) * R * 0.5, cy + Math.sin(a) * R * 0.5, R * 0.075, INK, 20 + i);
-        ctx.globalAlpha = 1;
-      }
+    if (s.shape) for (let i = 1; i < 4; i++) { if (tid !== 'petit' && i === 2) continue; const a = -Math.PI / 2 + (i / 4) * TAU; ctx.globalAlpha = 0.45; glyph(ctx, s.shape, cx + Math.cos(a) * R * 0.5, cy + Math.sin(a) * R * 0.5, R * 0.075, INK, 20 + i); ctx.globalAlpha = 1; }
+    // pointes : 3 (4 pour le grand)
+    const pointes = tid === 'grand' ? [-90, 30, 150, 90] : tid === 'petit' ? [-90] : [-90, 30, 150];
+    for (const deg of pointes) {
+      const a = deg * Math.PI / 180; ctx.strokeStyle = INK; ctx.lineWidth = Math.max(1, R * 0.015);
+      const tx = cx + Math.cos(a) * R * 1.12, ty = cy + Math.sin(a) * R * 1.12, a1 = a + 0.14, a2 = a - 0.14;
+      U.inkPoly(ctx, [[cx + Math.cos(a1) * R * 0.98, cy + Math.sin(a1) * R * 0.98], [tx, ty], [cx + Math.cos(a2) * R * 0.98, cy + Math.sin(a2) * R * 0.98]], 30 + deg, R * 0.01, false);
     }
-    // Pointes du déclencheur (3 triangles sur le cercle extérieur)
-    for (let i = 0; i < 3; i++) {
-      const a = -Math.PI / 2 + (i / 3) * TAU;
-      const px = cx + Math.cos(a) * R, py = cy + Math.sin(a) * R;
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = Math.max(1, R * 0.015);
-      const tx = cx + Math.cos(a) * R * 1.12, ty = cy + Math.sin(a) * R * 1.12;
-      const a1 = a + 0.14, a2 = a - 0.14;
-      U.inkPoly(ctx, [[cx + Math.cos(a1) * R * 0.98, cy + Math.sin(a1) * R * 0.98], [tx, ty], [cx + Math.cos(a2) * R * 0.98, cy + Math.sin(a2) * R * 0.98]], 30 + i, R * 0.01, false);
-      if (s.trigger && i > 0) {
-        ctx.globalAlpha = 0.5;
-        glyph(ctx, s.trigger, px, py, R * 0.06, INK, 40 + i);
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    // emplacements
-    const slot = (sl, id, kind, enabled, hl) => {
+    const slot = (sl, id, kind, enabled, hl, label) => {
+      if (!sl) return;
       ctx.save();
-      // fond du slot
-      ctx.fillStyle = U.hexA('#efe3c4', 0.9);
-      ctx.beginPath(); ctx.arc(sl.x, sl.y, sl.r, 0, TAU); ctx.fill();
-      ctx.strokeStyle = enabled ? INK : 'rgba(60,45,30,0.3)';
-      ctx.lineWidth = Math.max(1, R * 0.014);
+      ctx.fillStyle = U.hexA('#efe3c4', 0.9); ctx.beginPath(); ctx.arc(sl.x, sl.y, sl.r, 0, TAU); ctx.fill();
+      ctx.strokeStyle = enabled ? INK : 'rgba(60,45,30,0.3)'; ctx.lineWidth = Math.max(1, R * 0.014);
       if (!id) ctx.setLineDash([R * 0.03, R * 0.03]);
       if (hl) { ctx.strokeStyle = coul; ctx.lineWidth = Math.max(2, R * 0.03); ctx.setLineDash([]); }
-      U.inkCircle(ctx, sl.x, sl.y, sl.r, 50 + sl.x, R * 0.01);
-      ctx.setLineDash([]);
+      U.inkCircle(ctx, sl.x, sl.y, sl.r, 50 + sl.x, R * 0.01); ctx.setLineDash([]);
       if (id) {
-        const col = kind === 'core' ? coul : kind === 'core2' ? DATA.CORES[id].couleur : INK;
-        glyph(ctx, id, sl.x, sl.y, sl.r * 0.68, col, 60 + sl.x);
+        const col = kind === 'core' ? coul : kind === 'core2' ? DATA.CORES[id].couleur : kind === 'filtre' ? DATA.FILTRES[id].couleur : INK;
+        glyph(ctx, kind === 'filtre' ? 'f_' + id : kind === 'cible' ? 'c_' + id : id, sl.x, sl.y, sl.r * 0.68, col, 60 + sl.x);
+        if (label) U.txt(ctx, label, sl.x + sl.r * 0.9, sl.y - sl.r * 0.9, Math.max(9, sl.r * 0.55), 'center', '#6b4f2a');
       } else if (opts.empty && !enabled) {
         ctx.strokeStyle = 'rgba(60,45,30,0.3)';
         U.inkLine(ctx, sl.x - sl.r * 0.4, sl.y - sl.r * 0.4, sl.x + sl.r * 0.4, sl.y + sl.r * 0.4, 1, 0.3);
@@ -253,20 +252,22 @@ const Seal = (() => {
       }
       ctx.restore();
     };
+    const lbl = (tr) => (tr === 'retarde' ? s.delai + 's' : tr === 'repetition' ? '/' + s.periode + 's' : null);
     slot(lay.core, s.core, 'core', true, opts.highlight === 'core');
     slot(lay.shape, s.shape, 'shape', true, opts.highlight === 'shape');
-    if (opts.fusion || s.core2) slot(lay.core2, s.core2, 'core2', !!opts.fusion, opts.highlight === 'core2');
-    for (let i = 0; i < 3; i++) {
+    if (lay.core2 && (opts.fusion || s.core2)) slot(lay.core2, s.core2, 'core2', !!opts.fusion, opts.highlight === 'core2');
+    lay.mods.forEach((sl, i) => {
       const m = s.mods[i];
       if (m && m.sub) {
-        const sl = lay.mods[i];
         ctx.save(); ctx.fillStyle = U.hexA('#efe3c4', 0.9); ctx.beginPath(); ctx.arc(sl.x, sl.y, sl.r, 0, TAU); ctx.fill(); ctx.restore();
         drawMini(ctx, m.sub, sl.x, sl.y, sl.r * 0.95, t);
         if (opts.highlight === 'mod' + i) { ctx.save(); ctx.strokeStyle = coul; ctx.lineWidth = Math.max(2, R * 0.03); U.inkCircle(ctx, sl.x, sl.y, sl.r, 50 + sl.x, R * 0.01); ctx.restore(); }
-      } else slot(lay.mods[i], m, 'mod', i < slots, opts.highlight === 'mod' + i);
-    }
-    slot(lay.trigger, s.trigger, 'trigger', true, opts.highlight === 'trigger');
-
+      } else slot(sl, m, 'mod', i < nb, opts.highlight === 'mod' + i);
+    });
+    slot(lay.trigger, s.trigger, 'trigger', true, opts.highlight === 'trigger', lbl(s.trigger));
+    if (lay.trigger2) slot(lay.trigger2, s.trigger2, 'trigger', true, opts.highlight === 'trigger2', lbl(s.trigger2));
+    if (lay.filtre && (opts.filtres || s.filtre)) slot(lay.filtre, s.filtre, 'filtre', !!opts.filtres, opts.highlight === 'filtre');
+    if (lay.cible && (opts.cibles || s.cible)) slot(lay.cible, s.cible, 'cible', !!opts.cibles, opts.highlight === 'cible');
     ctx.restore();
   }
 
@@ -290,5 +291,5 @@ const Seal = (() => {
     ctx.restore();
   }
 
-  return { create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, draw, drawMini, isSub, subs, depth, modId, comboName };
+  return { create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, slotList, draw, drawMini, isSub, subs, depth, modId, comboName, taille, nbSlots, triggers, NMODS };
 })();

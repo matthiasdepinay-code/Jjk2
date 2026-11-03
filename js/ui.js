@@ -113,37 +113,57 @@ const UI = (() => {
   }
 
   // ---------- Éditeur de sceaux ----------
+  const SEAL_R = 140;
+  function sealR() { return SEAL_R * (game.editSeal.taille === 'petit' ? 0.82 : 1); }
+  function slotDispo(id) {
+    const s = game.editSeal, p = game.progress, t = s.taille || 'moyen';
+    if (id === 'core2') return p.fusion && t !== 'petit';
+    if (id === 'filtre') return t !== 'petit' && p.filtres.length > 0;
+    if (id === 'cible') return t !== 'petit' && p.cibles.length > 1;
+    if (id === 'trigger2') return t === 'grand';
+    if (id.startsWith('mod')) return +id.slice(3) < Seal.nbSlots(s, p.slots);
+    return true;
+  }
   function onSealCanvasClick(e, canvas, right = false) {
     const r = canvas.getBoundingClientRect();
     const x = (e.clientX - r.left) * (canvas.width / r.width), y = (e.clientY - r.top) * (canvas.height / r.height);
-    const lay = Seal.layout(canvas.width / 2, canvas.height / 2 + 10, 150);
     const s = game.editSeal;
-    const hit = (sl) => U.dist(x, y, sl.x, sl.y) <= sl.r * 1.3;
-    let id = null;
-    if (hit(lay.core)) id = 'core'; else if (hit(lay.shape)) id = 'shape'; else if (hit(lay.trigger)) id = 'trigger';
-    else if (game.progress.fusion && hit(lay.core2)) id = 'core2';
-    else for (let i = 0; i < 3; i++) if (hit(lay.mods[i])) id = 'mod' + i;
+    const hitSl = Seal.slotList(canvas.width / 2, canvas.height / 2 + 10, sealR(), s.taille || 'moyen').find((sl) => U.dist(x, y, sl.x, sl.y) <= sl.r * 1.3);
+    const id = hitSl ? hitSl.id : null;
     if (!id) { selSlot = null; refreshSeal(); return; }
-    if (id.startsWith('mod') && +id[3] >= game.progress.slots) { toast('Cet emplacement est encore scellé. Voir le grimoire.', 'warn'); return; }
+    if (!slotDispo(id)) { toast(id.startsWith('mod') ? 'Cet emplacement est encore scellé. Voir le grimoire.' : id === 'filtre' ? 'Pointe droite : les filtres de matière ne sont pas encore connus.' : id === 'cible' ? 'Pointe gauche : les cibles ne sont pas encore connues.' : 'Emplacement indisponible.', 'warn'); return; }
     if (right || selSlot === id) {
-      // vider
-      if (id === 'core') s.core = null; else if (id === 'core2') s.core2 = null; else if (id === 'shape') s.shape = null; else if (id === 'trigger') s.trigger = null; else s.mods[+id[3]] = null;
+      if (id.startsWith('mod')) s.mods[+id.slice(3)] = null; else s[id] = null;
       selSlot = null; Son.sfx('click');
     } else selSlot = id;
     refreshSeal();
   }
+  function changerTaille(t) {
+    const s = game.editSeal; s.taille = t;
+    const nb = Seal.nbSlots(s, game.progress.slots);
+    for (let i = nb; i < s.mods.length; i++) s.mods[i] = null;
+    if (t === 'petit') { s.core2 = null; s.filtre = null; s.cible = null; }
+    if (t !== 'grand') s.trigger2 = null;
+    selSlot = null; Son.sfx('click'); refreshSeal();
+  }
   function placeInSeal(kind, id) {
     const s = game.editSeal;
     if (kind === 'core') {
-      if (selSlot === 'core2' || (game.progress.fusion && s.core && s.core !== id && !s.core2 && selSlot !== 'core')) { s.core2 = id; selSlot = null; }
+      if ((selSlot === 'core2' || (game.progress.fusion && s.core && s.core !== id && !s.core2 && selSlot !== 'core')) && slotDispo('core2')) { s.core2 = id; selSlot = null; }
       else { s.core = id; if (selSlot === 'core') selSlot = null; }
     }
     else if (kind === 'shape') { s.shape = id; if (selSlot === 'shape') selSlot = null; }
-    else if (kind === 'trigger') { s.trigger = id; if (selSlot === 'trigger') selSlot = null; }
+    else if (kind === 'trigger') {
+      if (selSlot === 'trigger2' || (s.taille === 'grand' && s.trigger && !s.trigger2 && selSlot !== 'trigger' && s.trigger !== id)) s.trigger2 = id; else s.trigger = id;
+      if (selSlot === 'trigger' || selSlot === 'trigger2') selSlot = null;
+    }
+    else if (kind === 'filtre') { if (!slotDispo('filtre')) { toast('Un petit sceau n\'a pas de pointe pour les filtres.', 'warn'); return; } s.filtre = id; if (selSlot === 'filtre') selSlot = null; }
+    else if (kind === 'cible') { if (!slotDispo('cible')) { toast('Un petit sceau n\'a pas de pointe pour les cibles.', 'warn'); return; } s.cible = id === 'souris' ? null : id; if (selSlot === 'cible') selSlot = null; }
     else {
-      let i = selSlot && selSlot.startsWith('mod') ? +selSlot[3] : s.mods.findIndex((m, k) => !m && k < game.progress.slots);
+      const nb = Seal.nbSlots(s, game.progress.slots);
+      let i = selSlot && selSlot.startsWith('mod') ? +selSlot.slice(3) : s.mods.findIndex((m, k) => !m && k < nb);
       if (i < 0) i = 0;
-      if (i >= game.progress.slots) { toast('Aucun emplacement de modificateur libre.', 'warn'); return; }
+      if (i >= nb) { toast('Aucun emplacement de modificateur libre.', 'warn'); return; }
       if (id === 'sous') { subSlot = i; showSubList(); return; }
       s.mods[i] = id; selSlot = null;
     }
@@ -180,16 +200,16 @@ const UI = (() => {
         const b = el('button', 'glyph-btn' + (unlocked ? '' : ' locked'));
         const cv = document.createElement('canvas'); cv.width = 44; cv.height = 44;
         const cx = cv.getContext('2d');
-        if (unlocked) Seal.glyph(cx, id, 22, 22, 15, kind === 'core' ? d.couleur : U.INK, 1);
+        if (unlocked) Seal.glyph(cx, kind === 'filtre' ? 'f_' + id : kind === 'cible' ? 'c_' + id : id, 22, 22, 15, kind === 'core' || kind === 'filtre' ? d.couleur : U.INK, 1);
         else U.txt(cx, '?', 22, 22, 22, 'center', 'rgba(60,45,30,0.4)');
         b.appendChild(cv);
         b.appendChild(el('span', '', unlocked ? d.nom : '???'));
         b.appendChild(el('small', '', unlocked ? d.cout + ' encre' : ''));
         if (unlocked) {
           b.addEventListener('click', () => placeInSeal(kind, id));
-          b.addEventListener('mouseenter', () => { $('#pal-desc').innerHTML = '<b>' + d.nom + '</b> — ' + d.desc; });
+          b.addEventListener('mouseenter', () => { $('#pal-desc').innerHTML = '<b>' + d.nom + '</b> — ' + (kind === 'filtre' ? 'Avec Au contact (ou un piège de zone), le sort ne réagit qu\'à : ' + d.nom.toLowerCase() + '. Il traverse tout le reste, murs compris.' : d.desc); });
         } else {
-          const u = DATA.UNLOCKS.find((q) => q.item === id || (Array.isArray(q.item) && q.item.includes(id)));
+          const u = DATA.UNLOCKS.find((q) => (q.type === kind || (kind === 'filtre' && q.type === 'filtres') || (kind === 'cible' && (q.type === 'cible' || q.type === 'marque')) || (kind === 'core' && (q.type === 'core' || q.type === 'marque')) || (kind === 'mod' && q.type === 'mods') || kind === 'shape' || kind === 'trigger') && (q.item === id || (Array.isArray(q.item) && q.item.includes(id))));
           b.addEventListener('mouseenter', () => { $('#pal-desc').innerHTML = '<b>Inconnu.</b> ' + (u ? 'Indice : ' + u.indice : ''); });
         }
         c.appendChild(b);
@@ -199,6 +219,18 @@ const UI = (() => {
     pal('#pal-shapes', DATA.SHAPES, p.shapes, 'shape');
     pal('#pal-mods', DATA.MODS, p.mods, 'mod');
     pal('#pal-triggers', DATA.TRIGGERS, p.triggers, 'trigger');
+    pal('#pal-filtres', DATA.FILTRES, p.filtres, 'filtre');
+    pal('#pal-cibles', DATA.CIBLES, p.cibles, 'cible');
+    // tailles
+    const tz = $('#seal-tailles'); tz.innerHTML = '<span class="label">Taille</span>';
+    for (const t in DATA.TAILLES) { const T = DATA.TAILLES[t]; const ok = p.tailles.includes(t); const b = el('button', 'choice' + ((s.taille || 'moyen') === t ? ' on' : '') + (ok ? '' : ' locked'), T.nom); b.title = ok ? T.desc : 'Pas encore débloqué. ' + ((DATA.UNLOCKS.find((u) => u.item === t) || {}).indice || ''); if (ok) b.addEventListener('click', () => changerTaille(t)); else b.disabled = true; tz.appendChild(b); }
+    // paramètres des déclencheurs
+    const pr = $('#seal-params'); pr.innerHTML = '';
+    const trs = Seal.triggers(s);
+    const reglage = (lab, cle, vals) => { const g = el('div', 'choices'); g.appendChild(el('span', 'label', lab)); for (const v of vals) { const b = el('button', 'choice' + (s[cle] === v ? ' on' : ''), v + ' s'); b.addEventListener('click', () => { s[cle] = v; refreshSeal(); Son.sfx('click'); }); g.appendChild(b); } pr.appendChild(g); };
+    if (trs.includes('retarde')) reglage('Délai', 'delai', [1, 2, 5, 10]);
+    if (trs.includes('repetition')) reglage('Période', 'periode', [1, 2, 5]);
+    $('#seal-fiche').innerHTML = ficheSceau(s);
     // liste des sceaux enregistrés
     const list = $('#seal-list'); list.innerHTML = '';
     if (!game.seals.length) list.appendChild(el('p', 'muted', 'Aucun sceau consigné. Compose, puis « Consigner ».'));
@@ -216,13 +248,95 @@ const UI = (() => {
     });
     drawSealCanvas();
   }
+  function ficheSceau(s) {
+    if (!s.core) return '<span class="muted">Pose un glyphe d\'effet au centre pour commencer.</span>';
+    const T = Seal.taille(s), prm = Seal.params(s), trs = Seal.triggers(s);
+    const nomG = (c) => (DATA.CORES[c] || DATA.PSEUDO[c] || { nom: c }).nom.toLowerCase();
+    let cores = [s.core]; if (s.core2 && s.taille !== 'petit') cores.push(s.core2);
+    if (prm.inverse) cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c));
+    const combo = cores.length > 1 && !prm.inverse ? DATA.COMBOS[[s.core, s.core2].sort().join('|')] : null;
+    const L = [];
+    L.push('<b>' + T.nom + ' sceau</b> · ' + Seal.cost(s) + ' encre · tracé en ' + T.geste + ' s · maintenir le clic charge jusqu\'à +80 %.');
+    let eff = 'Effet : ' + cores.map(nomG).join(' et ') + (combo ? ' (fusion : ' + combo.nom.toLowerCase() + ')' : '') + (prm.inverse ? (cores.includes('gravite') ? ', apesanteur' : ', inversé') : '') + '.';
+    L.push(eff);
+    if (s.shape) L.push('Forme : ' + DATA.SHAPES[s.shape].nom.toLowerCase() + (prm.extra ? ', en double' : '') + (prm.orbite ? ', en orbite autour de toi' : '') + (prm.teleguide ? ', guidé par la souris' : '') + (prm.canalise ? ', canalisé tant que tu maintiens' : '') + '.');
+    if (s.cible && s.taille !== 'petit') L.push('Cible : ' + (s.cible === 'creature' ? 'la créature hostile la plus proche, qu\'il suit' : 'ta marque la plus récente, même hors de vue') + '.');
+    const tx = [];
+    const prim = trs.find((t) => ['immediat', 'contact', 'retarde', 'commande'].includes(t));
+    if (!trs.length || prim === 'immediat') tx.push('agit tout de suite');
+    if (prim === 'contact') tx.push('éclate au premier contact');
+    if (prim === 'retarde') tx.push('se fixe puis éclate après ' + s.delai + ' s');
+    if (prim === 'commande') tx.push('attend que tu appuies sur F');
+    if (!prim && trs.includes('repetition')) tx.push(s.shape === 'projectile' || s.shape === 'chaine' ? 'éclate au contact' : 'agit tout de suite');
+    if (s.filtre && s.taille !== 'petit') tx.push('uniquement au contact de : ' + DATA.FILTRES[s.filtre].nom.toLowerCase() + ' (traverse le reste)');
+    if (trs.includes('repetition')) tx.push('puis recommence toutes les ' + s.periode + ' s');
+    if (trs.includes('expiration')) tx.push('et éclate une dernière fois quand il s\'éteint');
+    L.push('Déclenchement : ' + tx.join(', ') + '.');
+    const mv = [];
+    if (prm.power > 1) mv.push('puissance ×' + prm.power.toFixed(1)); if (prm.range > 1) mv.push('portée ×' + prm.range.toFixed(1)); if (prm.size > 1) mv.push('taille ×' + prm.size.toFixed(1)); if (prm.duration > 1) mv.push('durée ×' + prm.duration.toFixed(1)); if (prm.speed > 1) mv.push('vitesse ×' + prm.speed.toFixed(1)); if (prm.bounces) mv.push(prm.bounces + ' rebonds'); if (prm.persist) mv.push('laisse une trace'); if (prm.echo) mv.push('écho ×' + prm.echo);
+    if (mv.length) L.push('Réglages : ' + mv.join(', ') + '.');
+    const sb = Seal.subs(s); if (sb.length) L.push('Puis lance : ' + sb.map((q) => '« ' + Seal.nom(q) + ' »').join(', ') + '.');
+    return L.map((l) => '<div>' + l + '</div>').join('');
+  }
+  function drawPreview() {
+    const c = $('#seal-preview'); if (!c || open !== 'seal') return;
+    const ctx = c.getContext('2d'), W = c.width, H = c.height, s = game.editSeal;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(0, 0, W, H);
+    const G = H - 16; ctx.strokeStyle = U.INK; ctx.lineWidth = 1.5; U.inkLine(ctx, 0, G, W, G, 3, 0.6);
+    // lanceur
+    const px = 26, py = G; ctx.fillStyle = '#6b3f73'; ctx.beginPath(); ctx.moveTo(px - 7, py - 4); ctx.lineTo(px + 7, py - 4); ctx.lineTo(px + 3, py - 22); ctx.lineTo(px - 3, py - 22); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(px, py - 27, 5, 0, U.TAU); ctx.fillStyle = '#efdcc0'; ctx.fill(); ctx.stroke();
+    if (!s.core || !s.shape) { U.txt(ctx, s.core ? 'Choisis une forme.' : 'Pose un glyphe d\'effet.', W / 2, H / 2, 13, 'center', '#6b4f2a', 'IM Fell English', 'italic'); return; }
+    const col = DATA.CORES[s.core].couleur, col2 = s.core2 && s.taille !== 'petit' ? DATA.CORES[s.core2].couleur : null;
+    const prm = Seal.params(s), trs = Seal.triggers(s);
+    const prim = trs.find((t) => ['immediat', 'contact', 'retarde', 'commande'].includes(t)) || 'immediat';
+    const P = 3.2, t = (time % P) / P;
+    const sx = px + 12, sy = py - 18, tx = W - 60, ty = G - 30;
+    const burst = (x, y, r, k, cc = col) => { if (k <= 0 || k >= 1) return; ctx.save(); ctx.globalAlpha = 1 - k; ctx.strokeStyle = cc; ctx.lineWidth = 3 * (1 - k) + 1; U.inkCircle(ctx, x, y, r * (0.3 + k), 4, 1.2); if (col2) { ctx.strokeStyle = col2; U.inkCircle(ctx, x, y, r * (0.15 + k * 0.7), 5, 1); } ctx.restore(); };
+    // cible et filtre
+    const cible = s.taille !== 'petit' ? s.cible : null;
+    if (cible === 'creature') { ctx.fillStyle = 'rgba(31,26,22,0.75)'; ctx.beginPath(); ctx.ellipse(tx, G - 7, 12, 7, 0, 0, U.TAU); ctx.fill(); ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.arc(tx + 4, G - 10, 2, 0, U.TAU); ctx.fill(); }
+    if (cible === 'marque') Seal.glyph(ctx, 'marque', tx, ty, 7, '#c08a2a', 2);
+    const filtre = s.taille !== 'petit' ? s.filtre : null;
+    if (filtre) { ctx.fillStyle = 'rgba(168,151,122,0.5)'; ctx.fillRect(W / 2 - 6, G - 56, 12, 56); U.hatch(ctx, W / 2 - 6, G - 56, 12, 56, 4, Math.PI / 4, 3, 0.4); if (filtre !== 'creature') { ctx.fillStyle = DATA.FILTRES[filtre].couleur; ctx.globalAlpha = 0.6; ctx.fillRect(tx - 16, ty + 6, 32, 10); ctx.globalAlpha = 1; } }
+    // phase 1 : le sort part (0 → 0.35)
+    const arr = 0.35; let ix = tx, iy = ty;
+    const enVol = (k) => { const fl = ['lumiere', 'vent', 'ombre', 'foudre', 'gravite', 'son', 'esprit', 'temps'].includes(s.core); return { x: U.lerp(sx, tx, k), y: U.lerp(sy, ty, k) - (fl ? 0 : Math.sin(k * Math.PI) * 26) }; };
+    switch (s.shape) {
+      case 'projectile': case 'chaine': {
+        if (t < arr) { const q = enVol(t / arr); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(q.x, q.y, 5 * Math.min(1.6, prm.size), 0, U.TAU); ctx.fill(); ctx.strokeStyle = U.INK; ctx.stroke(); if (prm.extra) { ctx.beginPath(); ctx.arc(q.x, q.y + 10, 4, 0, U.TAU); ctx.fill(); ctx.stroke(); } }
+        if (s.shape === 'chaine' && t > arr && t < 0.65) { const k = (t - arr) / 0.3; const pts = [[tx, ty], [tx + 30, ty - 24], [tx + 48, ty + 4]]; const i = Math.min(2, Math.floor(k * 3)); const f = k * 3 - i; const a = pts[i], b = pts[Math.min(2, i + 1)]; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(U.lerp(a[0], b[0], f), U.lerp(a[1], b[1], f), 4, 0, U.TAU); ctx.fill(); for (const q of pts) burst(q[0], q[1], 14, (t - arr) * 3); }
+        break;
+      }
+      case 'trait': if (t < arr) { ctx.strokeStyle = col; ctx.globalAlpha = 1 - t / arr; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(tx, ty); ctx.stroke(); ctx.globalAlpha = 1; } break;
+      case 'soi': case 'aura': ix = px; iy = py - 16; if (s.shape === 'aura') { ctx.strokeStyle = col; ctx.globalAlpha = 0.6; ctx.setLineDash([3, 4]); U.inkCircle(ctx, ix, iy, 24 + Math.sin(time * 3) * 2, 2, 1); ctx.setLineDash([]); ctx.globalAlpha = 1; } break;
+      case 'mur': if (t > 0.1) for (let k = -2; k <= 2; k++) burst(tx, ty + k * 12, 9, (t - 0.1) * 2.5); break;
+      case 'totem': ctx.strokeStyle = U.INK; ctx.lineWidth = 2; U.inkLine(ctx, tx, G, tx, G - 30, 2, 0.4); ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(tx - 6, G - 30); ctx.lineTo(tx + 6, G - 30); ctx.lineTo(tx, G - 40); ctx.closePath(); ctx.fill(); ctx.stroke(); for (let k = 0; k < 3; k++) burst(tx, G - 24, 22, ((t * 3) % 1)); iy = G - 24; break;
+      case 'pluie': for (let k = 0; k < 7; k++) { const yy = 8 + ((t * 90 + k * 13) % (G - 10)); ctx.fillStyle = col; ctx.fillRect(tx - 30 + k * 10, yy, 2, 6); } ctx.strokeStyle = U.INK; ctx.globalAlpha = 0.5; for (let k = 0; k < 4; k++) U.inkCircle(ctx, tx - 22 + k * 15, 8, 8, k, 0.6); ctx.globalAlpha = 1; break;
+      case 'objet': ctx.fillStyle = 'rgba(170,130,70,0.5)'; ctx.fillRect(tx - 10, G - 20, 20, 20); ctx.strokeStyle = U.INK; ctx.strokeRect(tx - 10, G - 20, 20, 20); ctx.strokeStyle = col; ctx.globalAlpha = 0.5 + Math.sin(time * 6) * 0.3; ctx.strokeRect(tx - 13, G - 23, 26, 26); ctx.globalAlpha = 1; iy = G - 10; break;
+      case 'invocation': { const a = time * 3; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(px + Math.cos(a) * 22, py - 30 + Math.sin(a) * 10, 5, 0, U.TAU); ctx.fill(); ctx.stroke(); break; }
+      case 'bouclier': ctx.strokeStyle = col; ctx.lineWidth = 6; ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.arc(px, py - 16, 26, -1, 1); ctx.stroke(); ctx.globalAlpha = 1; break;
+    }
+    // phase 2 : l'impact selon le déclencheur
+    const instant = ['zone', 'trait'].includes(s.shape) ? 0.05 : arr;
+    const tImpact = s.shape === 'soi' || s.shape === 'aura' ? 0.05 : instant;
+    let tBurst = tImpact;
+    if (prim === 'retarde') { tBurst = tImpact + 0.3; if (t > tImpact && t < tBurst) { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ix, iy, 9, -Math.PI / 2, -Math.PI / 2 + U.TAU * (t - tImpact) / 0.3); ctx.stroke(); U.txt(ctx, s.delai + 's', ix + 14, iy - 12, 10, 'left', '#6b4f2a'); } }
+    if (prim === 'commande') { tBurst = tImpact + 0.35; if (t > tImpact && t < tBurst) { ctx.strokeStyle = col; ctx.globalAlpha = 0.5 + Math.sin(time * 10) * 0.4; U.inkCircle(ctx, ix, iy, 9, 3, 0.6); ctx.globalAlpha = 1; ctx.fillStyle = '#f6eed8'; ctx.fillRect(ix + 8, iy - 24, 14, 14); ctx.strokeStyle = U.INK; ctx.strokeRect(ix + 8, iy - 24, 14, 14); U.txt(ctx, 'F', ix + 15, iy - 17, 11, 'center', U.INK); } }
+    if (!['chaine', 'mur', 'totem', 'pluie', 'invocation', 'bouclier', 'objet'].includes(s.shape)) burst(ix, iy, 30 * Math.min(1.8, prm.size), (t - tBurst) / 0.22);
+    if (trs.includes('repetition')) for (let k = 1; k <= 3; k++) burst(ix, iy, 22, (t - tBurst - k * 0.13) / 0.12);
+    if (trs.includes('expiration')) { const te = 0.84; if (t < te && t > tBurst) Seal.glyph(ctx, 'expiration', ix, iy - 22, 5, col, 2); burst(ix, iy, 40, (t - te) / 0.15); }
+    // sous-sceau
+    const sb = Seal.subs(s)[0];
+    if (sb && sb.core) { const k = (t - tBurst - 0.1) / 0.3; if (k > 0 && k < 1) { const c2 = DATA.CORES[sb.core].couleur; ctx.fillStyle = c2; ctx.beginPath(); ctx.arc(ix + k * 40, iy - Math.sin(k * Math.PI) * 30, 4, 0, U.TAU); ctx.fill(); } burst(ix + 40, iy, 18, (t - tBurst - 0.4) / 0.2, DATA.CORES[sb.core].couleur); }
+  }
   function drawSealCanvas() {
     const c = $('#seal-canvas'); if (!c || open !== 'seal') return;
     const ctx = c.getContext('2d');
     ctx.clearRect(0, 0, c.width, c.height);
-    Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, 150, { t: time, slots: game.progress.slots, highlight: selSlot, empty: true, fusion: game.progress.fusion });
+    Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, SEAL_R, { t: time, slots: game.progress.slots, highlight: selSlot, empty: true, fusion: game.progress.fusion, filtres: game.progress.filtres.length > 0, cibles: game.progress.cibles.length > 1 });
     const combo = Seal.comboName(game.editSeal);
-    const hint = combo ? 'Fusion : ' + combo + '. ' + (DATA.COMBOS[[game.editSeal.core, game.editSeal.core2].sort().join('|')].desc || '') : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot ? 'Choisis un glyphe dans la palette, ou clique à nouveau pour vider.' : game.progress.fusion ? 'Centre, formes, modificateurs, pointes. En bas : un second effet à fusionner.' : 'Clique un emplacement, puis un glyphe. Clic droit : vider.';
+    const hint = combo ? 'Fusion : ' + combo + '. ' + (DATA.COMBOS[[game.editSeal.core, game.editSeal.core2].sort().join('|')].desc || '') : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot === 'filtre' ? 'Choisis un filtre de matière.' : selSlot === 'cible' ? 'Choisis une cible.' : selSlot === 'trigger2' ? 'Choisis un second déclencheur.' : selSlot ? 'Choisis un glyphe dans la palette, ou clique à nouveau pour vider.' : game.progress.fusion ? 'Centre, formes, modificateurs, pointes. En bas : un second effet à fusionner.' : 'Clique un emplacement, puis un glyphe. Clic droit : vider.';
     U.txt(ctx, hint, c.width / 2, 16, 13, 'center', '#6b4f2a', 'IM Fell English', 'italic');
   }
 
@@ -345,7 +459,14 @@ const UI = (() => {
       grp('Glyphes d\'effet (centre)', DATA.CORES, p.cores, 'core');
       grp('Formes (premier anneau)', DATA.SHAPES, p.shapes, 'shape');
       grp('Modificateurs (second anneau) — ' + p.slots + ' emplacement(s)', DATA.MODS, p.mods, 'mod');
-      grp('Déclencheurs (pointes)', DATA.TRIGGERS, p.triggers, 'trigger');
+      grp('Déclencheurs (pointe haute ; deux pour le grand sceau)', DATA.TRIGGERS, p.triggers, 'trigger');
+      c.appendChild(el('h3', '', 'Filtres de matière (pointe droite)'));
+      c.appendChild(el('p', '', p.filtres.length ? p.filtres.map((f) => DATA.FILTRES[f].nom).join(', ') + '. Avec Au contact, le sort ne réagit qu\'à cette matière et traverse tout le reste.' : '<span class="muted">Pas encore connus.</span>'));
+      c.appendChild(el('h3', '', 'Cibles (pointe gauche)'));
+      c.appendChild(el('p', '', p.cibles.map((q) => DATA.CIBLES[q].nom + ' : ' + DATA.CIBLES[q].desc).join('<br>')));
+      c.appendChild(el('h3', '', 'Tailles de sceau'));
+      c.appendChild(el('p', '', Object.values(DATA.TAILLES).map((T) => (p.tailles.includes(T.id) ? '<b>' + T.nom + '</b>' : '<span class="muted">' + T.nom + ' (scellé)</span>') + ' : ' + T.desc).join('<br>')));
+      c.appendChild(el('p', 'intro', 'Lancer : maintenir le clic charge le sort (plus fort, plus loin, plus cher). ' + (p.deuxMains ? 'Clic droit : main gauche (Maj + 1-5 pour la choisir).' : 'La main gauche viendra avec l\'expérience.') + ' F libère les sorts Sur commande. Deux projectiles qui se croisent fusionnent.'));
       if (p.fusion) {
         c.appendChild(el('h3', '', 'Fusions connues'));
         const known = Object.keys(DATA.COMBOS).filter((k) => k.split('|').every((q) => p.cores.includes(q)));
@@ -367,6 +488,10 @@ const UI = (() => {
         c.appendChild(el('div', 'decouverte' + (vu ? ' ok' : ''), '<span class="check"><i class="dot" style="background:' + (vu ? I.couleur : '#aaa') + '"></i></span><div><b>' + (vu ? I.nom : '???') + '</b> <small>×' + n + '</small><br><em>' + I.desc + '</em></div>'));
       }
     } else if (grimTab === 'intuitions') {
+      c.appendChild(el('h3', '', 'Enchaînements'));
+      c.appendChild(el('p', 'intro', 'Deux sorts à la suite, la seconde qui suit le premier, au même endroit : certaines paires ont un nom.'));
+      for (const k in DATA.ENCHAINEMENTS) { const E = DATA.ENCHAINEMENTS[k]; const ok = (p.enchainements || []).includes(k); const [a, b] = k.split('>'); c.appendChild(el('div', 'decouverte' + (ok ? ' ok' : ''), '<span class="check">' + (ok ? '✓' : '○') + '</span><div><b>' + (ok ? E.nom : '???') + '</b> <small>' + (ok ? DATA.CORES[a].nom + ' puis ' + DATA.CORES[b].nom : DATA.CORES[a].nom + ' puis ???') + '</small>' + (ok ? '<br><em>' + E.desc + '</em>' : '') + '</div>')); }
+      c.appendChild(el('h3', '', 'Phénomènes'));
       c.appendChild(el('p', 'intro', 'L\'encyclopédie des réactions : chaque phénomène observé dehors s\'inscrit ici, et certains font germer des glyphes au bout de trois observations. Les orages, la lave, la glace et l\'acide sont de bons professeurs.'));
       for (const id in DATA.OBSERVATIONS) {
         const O = DATA.OBSERVATIONS[id]; const n = p.obs[id] || 0;
@@ -570,6 +695,7 @@ const UI = (() => {
     $$('#hotbar .slot').forEach((s, i) => {
       const e = game.hotbar[i];
       s.classList.toggle('on', game.selected === i);
+      s.classList.toggle('onL', !!game.progress.deuxMains && game.selectedL === i);
       const cv = s.querySelector('canvas'), ctx = cv.getContext('2d');
       ctx.clearRect(0, 0, 56, 56);
       const cnt = s.querySelector('.count');
@@ -612,7 +738,7 @@ const UI = (() => {
   }
   function tick(dt) {
     time += dt;
-    if (open === 'seal') drawSealCanvas();
+    if (open === 'seal') { drawSealCanvas(); drawPreview(); }
     if (open === 'cauldron' && Math.floor(time * 30) % 2 === 0) drawCaulCanvas(caulSens);
     if (open === 'bac') drawBac();
     if (open === 'create' && Math.floor(time * 10) % 3 === 0) refreshCreate();

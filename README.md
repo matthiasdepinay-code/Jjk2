@@ -33,11 +33,18 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 
 ## Les sceaux
 
+- **Tailles** : petit (centre, forme, un modificateur, un déclencheur ; moitié prix, presque instantané), moyen, grand (cinq modificateurs, deux déclencheurs, tracé en 0,5 s).
+- **Filtres de matière** (pointe droite) : avec Au contact, le sort ne réagit qu'à l'eau, au feu, à la pierre, à la terre, au bois, au métal, à la glace ou aux créatures, et traverse tout le reste.
+- **Cibles** (pointe gauche) : souris, créature hostile la plus proche (le sort la suit), ou marque la plus récente posée par le glyphe Marque, même hors de vue.
+- **Déclencheurs** : Immédiat, Au contact, Retardé (1, 2, 5 ou 10 s), Sur commande (la touche F libère tous les sorts en attente), Répétition (toutes les 1, 2 ou 5 s), À l'expiration (dernier éclat quand l'effet s'éteint).
+- **Lancer** : maintenir le clic charge le sort (plus puissant, plus loin, plus cher) ; la main gauche lance un second sceau au clic droit (Maj + 1-5) ; dix enchaînements nommés quand un second sort éclate près du premier dans la seconde ; deux projectiles qui se croisent fusionnent.
+- **Bouclier** : arc élémentaire tourné vers la souris, qui repousse créatures, eau et sable (bulle sèche sous l'eau). **Contre-sort** : dissipe champs, pièges, totems, sorts en attente, portails et marques.
+- **Éditeur** : fiche lisible du sceau et aperçu animé de son effet.
 - **Gravité** : pose un champ de pesanteur orienté dans le sens du lancer (l'eau, le sable, les créatures et les caisses y tombent de ce côté) ; Puissance l'alourdit, Inverser donne l'apesanteur. Sur soi : marcher sur le mur ou le plafond visé, voler en visant le vide, devenir une enclume avec Puissance.
-- **Effets** (19) : Feu, Vent, Eau, Terre au départ. Lumière, Ombre, Vie, Force, Froid, Foudre, Acide, Gravité, Temps, Transmutation, Son, Esprit, Lien, Portail et Métal se découvrent (par exploits ou par observation de phénomènes).
+- **Effets** (21) : Feu, Vent, Eau, Terre au départ. Lumière, Ombre, Vie, Force, Froid, Foudre, Acide, Gravité, Temps, Transmutation, Son, Esprit, Lien, Portail, Métal, Marque et Contre-sort se découvrent (par exploits ou par observation de phénomènes).
 - **Fusion** : deux glyphes d'effet dans un sceau, avec des combos nommés (tornade de feu, banquise, lave, orage, blizzard...).
 - **Sous-sceaux** : un emplacement de modificateur peut contenir un sceau consigné entier, lancé là où le premier éclate (deux niveaux).
-- **Formes** : Projectile, Sur soi, puis Zone, Trait, Aura, Mur, Totem, Chaîne, Pluie, Sur objet, Invocation.
+- **Formes** : Projectile, Sur soi, puis Zone, Trait, Aura, Mur, Totem, Chaîne, Pluie, Sur objet, Bouclier, Invocation.
 - **Modificateurs** : Puissance, Portée, Durée, Taille, Rebond, Persistance, Vitesse, Double, Inverser, Écho, Téléguidé, Orbite, Canalisé. Un à trois emplacements.
 - **Déclencheurs** : Immédiat, Au contact, Retardé.
 - Chaque glyphe coûte de l'encre. L'expérience de découverte augmente l'encre et sa régénération.

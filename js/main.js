@@ -18,6 +18,7 @@
   function makeProgress() {
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
+      tailles: DATA.DEBUT.tailles.slice(), filtres: DATA.DEBUT.filtres.slice(), cibles: DATA.DEBUT.cibles.slice(), deuxMains: false, enchainements: [],
       recettes: [], ingredientsVus: [], done: [], nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
       compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0, terre: 0, creaturesTouchees: 0, vols: 0, portes: 0, lancers: 0, niveau: 1, sceaux: 0 },
       event(name, data) {
@@ -37,6 +38,9 @@
           case 'vol': k.vols++; break;
           case 'porte': k.portes++; break;
           case 'lancer': k.lancers++; break;
+          case 'retarde': k.retardes = (k.retardes || 0) + 1; break;
+          case 'bouscule': k.bouscule = (k.bouscule || 0) + 1; break;
+          case 'enchainement': if (!this.enchainements.includes(data)) this.enchainements.push(data); break;
           case 'brule': k.brule = (k.brule || 0) + 1; return;
           case 'pousse': k.pousse = (k.pousse || 0) + 1; return;
           case 'portailEau': k.portailEau = (k.portailEau || 0) + 1; return;
@@ -62,6 +66,11 @@
           else if (u.type === 'slot') this.slots = Math.max(this.slots, u.item);
           else if (u.type === 'fusion') this.fusion = true;
           else if (u.type === 'labo') this.labo[u.item] = true;
+          else if (u.type === 'taille') { if (!this.tailles.includes(u.item)) this.tailles.push(u.item); }
+          else if (u.type === 'flag') this[u.item] = true;
+          else if (u.type === 'filtres') for (const f of u.item) { if (!this.filtres.includes(f)) this.filtres.push(f); }
+          else if (u.type === 'cible') { if (!this.cibles.includes(u.item)) this.cibles.push(u.item); }
+          else if (u.type === 'marque') { if (!this.cores.includes('marque')) this.cores.push('marque'); if (!this.cibles.includes('marque')) this.cibles.push('marque'); }
           this.nouveau = true;
           game.toast('✦ Découverte : ' + u.titre, 'unlock');
           Son.sfx('unlock');
@@ -355,15 +364,31 @@
       } else lines.push('Le mélange reste terne : rien ne s\'accorde vraiment.');
       return { couleur: cols, lines, dom };
     },
-    useSelected() {
-      const e = this.hotbar[this.selected];
+    selectedL: 1, charging: { R: null, L: null },
+    itemMain(hand) { return this.hotbar[hand === 'L' ? this.selectedL : this.selected]; },
+    // appui : les sceaux se chargent tant qu'on maintient (sauf Canalisé), le reste part tout de suite
+    presserMain(hand) {
+      if (hand === 'L' && !this.progress.deuxMains) { this.toast('La main gauche n\'est pas encore maîtrisée (voir le grimoire).', 'warn'); return; }
+      const e = this.itemMain(hand);
+      const seal = e && (e.type === 'seal' ? e.seal : e.type === 'parchemin' && this.inv.parchemins[e.nom] ? this.inv.parchemins[e.nom].seal : null);
+      if (seal && seal.core && !Seal.params(seal).canalise) { this.charging[hand] = { t0: performance.now(), color: (DATA.CORES[seal.core] || {}).couleur }; return; }
+      this.useSelected(hand, 0);
+    },
+    relacherMain(hand) {
+      const c = this.charging[hand]; if (!c) return;
+      this.charging[hand] = null;
+      const held = (performance.now() - c.t0) / 1000;
+      this.useSelected(hand, held < 0.18 ? 0 : Math.min(1, held / 1.5));
+    },
+    useSelected(hand = 'R', charge = 0) {
+      const e = this.itemMain(hand);
       if (!e) { this.toast('Emplacement vide. Prépare un sceau ou une potion au labo.', 'warn'); return; }
       const aim = World.toWorld(inp.mouse.x, inp.mouse.y);
-      if (e.type === 'seal') { if (World.castSeal(e.seal, aim)) this.progress.event('sort'); }
+      if (e.type === 'seal') { if (World.castSeal(e.seal, aim, false, charge, hand)) this.progress.event('sort'); }
       else if (e.type === 'parchemin') {
         const q = this.inv.parchemins[e.nom];
         if (!q || q.n <= 0) { this.toast('Plus de parchemin « ' + e.nom + ' ». Retourne à la presse.', 'warn'); Son.sfx('fail'); return; }
-        if (World.castSeal(q.seal, aim, true)) { q.n--; this.progress.event('sort'); UI.refreshHotbar(); this.save(); }
+        if (World.castSeal(q.seal, aim, true, charge, hand)) { q.n--; this.progress.event('sort'); UI.refreshHotbar(); this.save(); }
       }
       else if (e.type === 'potion') {
         const store = e.forte ? this.inv.fortes : this.inv.potions;
@@ -379,8 +404,8 @@
     save() {
       this.progress.compteurs.sceaux = this.seals.length;
       try {
-        const data = { carte: this.carte, courrier: this.courrier, bonus: this.bonus, trophees: this.trophees, look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
-          progress: { labo: this.progress.labo, cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs, pagesLues: this.progress.pagesLues, defisFaits: this.progress.defisFaits, bizarresVues: this.progress.bizarresVues || [], bestiaire: this.progress.bestiaire, especesVues: this.progress.especesVues } };
+        const data = { selectedL: this.selectedL, carte: this.carte, courrier: this.courrier, bonus: this.bonus, trophees: this.trophees, look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
+          progress: { tailles: this.progress.tailles, filtres: this.progress.filtres, cibles: this.progress.cibles, deuxMains: this.progress.deuxMains, enchainements: this.progress.enchainements, labo: this.progress.labo, cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs, pagesLues: this.progress.pagesLues, defisFaits: this.progress.defisFaits, bizarresVues: this.progress.bizarresVues || [], bestiaire: this.progress.bestiaire, especesVues: this.progress.especesVues } };
         localStorage.setItem(SAVE_KEY, JSON.stringify(data));
       } catch (e) { /* stockage indisponible */ }
     },
@@ -394,9 +419,13 @@
         if (d.courrier) this.courrier = Object.assign(this.courrier, d.courrier); if (d.bonus) this.bonus = Object.assign(this.bonus, d.bonus); if (d.trophees) this.trophees = d.trophees;
         if (d.progress) Object.assign(this.progress, d.progress);
         if (!this.progress.obs) this.progress.obs = {};
+        if (typeof d.selectedL === 'number') this.selectedL = d.selectedL;
         if (!this.progress.pagesLues) this.progress.pagesLues = []; if (!this.progress.defisFaits) this.progress.defisFaits = [];
         if (!this.progress.bestiaire) this.progress.bestiaire = {}; if (!this.progress.especesVues) this.progress.especesVues = [];
         if (!this.progress.labo) this.progress.labo = { bac: false, alambic: false, terrarium: false, presse: false };
+        for (const [k, v] of [['tailles', DATA.DEBUT.tailles], ['filtres', []], ['cibles', ['souris']], ['enchainements', []]]) if (!this.progress[k]) this.progress[k] = v.slice();
+        if (this.inv.parchemins) for (const q of Object.values(this.inv.parchemins)) q.seal = Seal.clone(q.seal);
+        this.editSeal = Seal.clone(this.editSeal);
         if (!this.inv.fortes) this.inv.fortes = {}; if (!this.inv.parchemins) this.inv.parchemins = {}; if (!this.inv.terrarium) this.inv.terrarium = [];
         const K = this.progress.compteurs; for (const k of ['terre', 'creaturesTouchees', 'vols', 'portes', 'lancers', 'sceaux']) if (K[k] == null) K[k] = 0; K.niveau = this.niveau;
         this.hotbar = this.hotbar.map((e) => (e && e.type === 'seal' ? { type: 'seal', seal: Seal.clone(e.seal) } : e)); this.seals = this.seals.map((q) => Seal.clone(q));
@@ -425,7 +454,8 @@
     if (e.code === 'Space') { if (!inp.jumpHeld) inp.jump = true; inp.jumpHeld = true; e.preventDefault(); }
     if (e.code === 'KeyE' || e.code === 'Enter') inp.interact = true;
     if (e.code === 'KeyX') inp.dig = true;
-    if (/^Digit[1-5]$/.test(e.code)) { game.selected = +e.code[5] - 1; UI.refreshHotbar(); }
+    if (/^Digit[1-5]$/.test(e.code)) { if (e.shiftKey) { if (game.progress.deuxMains) game.selectedL = +e.code[5] - 1; else game.toast('La main gauche n\'est pas encore maîtrisée (voir le grimoire).', 'warn'); } else game.selected = +e.code[5] - 1; UI.refreshHotbar(); }
+    if (e.code === 'KeyF' && game.state === 'world' && !UI.isOpen()) World.detoner();
     if (e.code === 'KeyM') { const m = Son.toggleMute(); document.getElementById('btn-mute').textContent = m ? '🔇' : '🔊'; }
     if (e.code === 'KeyH') { if (UI.isOpen() === 'help') UI.close(); else UI.openPanel('help'); }
     if (e.code === 'KeyG' || e.code === 'Tab') { e.preventDefault(); if (UI.isOpen() === 'grimoire') UI.close(); else if (game.state !== 'create') UI.openPanel('grimoire'); }
@@ -443,7 +473,7 @@
     Son.init(); Son.resume();
     const m = mousePos(e); inp.mouse.x = m.x; inp.mouse.y = m.y;
     if (UI.isOpen()) return;
-    if (e.button === 2) { if (game.state === 'world') World.throwCarried(World.toWorld(m.x, m.y)); return; }
+    if (e.button === 2) { if (game.state === 'world') { if (World.state().p.carry) World.throwCarried(World.toWorld(m.x, m.y)); else game.presserMain('L'); } return; }
     if (e.button !== 0) return;
     inp.mouse.down = true;
     if (game.state === 'lab') {
@@ -459,12 +489,12 @@
       else if (id === 'corbeau') game.ouvrirCourrier();
       else if (id === 'trophees') { UI.openPanel('grimoire'); UI.grimTab('lettres'); }
       else if (id === 'alambic' || id === 'presse' || id === 'terrarium' || id === 'bac') { if (game.progress.labo[id]) UI.openPanel(id); else { const u = DATA.UNLOCKS.find((q) => q.item === id && q.type === 'labo'); game.toast('Ce poste est encore scellé. ' + (u ? 'Indice : ' + u.indice : ''), 'warn'); } }
-    } else if (game.state === 'world') game.useSelected();
+    } else if (game.state === 'world') game.presserMain('R');
   });
-  window.addEventListener('mouseup', (e) => { if (e.button === 0) inp.mouse.down = false; });
+  window.addEventListener('mouseup', (e) => { if (e.button === 0) { inp.mouse.down = false; if (game.state === 'world') game.relacherMain('R'); } if (e.button === 2 && game.state === 'world') game.relacherMain('L'); });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('wheel', (e) => { if (game.state !== 'world' || UI.isOpen()) return; game.selected = (game.selected + (e.deltaY > 0 ? 1 : 4)) % 5; UI.refreshHotbar(); e.preventDefault(); }, { passive: false });
-  window.addEventListener('blur', () => { inp.left = inp.right = inp.up = inp.down = inp.jumpHeld = inp.dig = false; });
+  window.addEventListener('blur', () => { inp.left = inp.right = inp.up = inp.down = inp.jumpHeld = inp.dig = false; game.charging.R = game.charging.L = null; });
   window.addEventListener('beforeunload', () => { game.save(); game.saveWorld(); });
 
   function resize() {

@@ -21,6 +21,8 @@ const DATA = (() => {
     esprit:  { id: 'esprit',  nom: 'Esprit',   couleur: '#b08ad8', cout: 5, desc: 'Prend le contrôle d\'une créature touchée pendant un moment (E pour la relâcher).' },
     lien:    { id: 'lien',    nom: 'Lien',     couleur: '#c9a63a', cout: 3, desc: 'Une corde magique vers ce que le sort touche : on s\'y hisse, on s\'y balance (Espace pour lâcher).' },
     portail: { id: 'portail', nom: 'Portail',  couleur: '#4fb0a0', cout: 5, desc: 'Deux lancers posent deux portails : tout ce qui entre dans l\'un sort par l\'autre, même les liquides. Sur soi : rejoindre son dernier portail.' },
+    marque:  { id: 'marque',  nom: 'Marque',   couleur: '#e0b050', cout: 1, desc: 'Pose un repère lumineux là où le sort touche (sur une créature, il la suit). Trois au plus. Les sorts ciblés « Marque » visent le plus récent, même hors de vue.' },
+    contre:  { id: 'contre',  nom: 'Contre-sort', couleur: '#a8a29a', cout: 3, desc: 'Dissipe la magie posée : champs, pièges, totems, sorts en attente, portails, pesanteurs, marques.' },
     metal:   { id: 'metal',   nom: 'Métal',    couleur: '#737e86', cout: 4, desc: 'Fait surgir du métal, qui conduit la foudre et résiste à l\'acide. Attire caisses, rochers et golems. Sur soi : armure.' },
   };
   // Effets dérivés (par Inverser), jamais dans la palette
@@ -34,7 +36,7 @@ const DATA = (() => {
     silence:     { id: 'silence',     nom: 'Silence',     couleur: '#6a5a7a' },
     rouille:     { id: 'rouille',     nom: 'Rouille',     couleur: '#9a5a3a' },
   };
-  const INVERSE = { feu: 'froid', froid: 'feu', force: 'vent', vent: 'force', lumiere: 'ombre', ombre: 'lumiere', terre: 'creuser', vie: 'fanaison', acide: 'neutraliser', foudre: 'neutraliser', gravite: 'poids', eau: 'secheresse', temps: 'ralentir', son: 'silence', metal: 'rouille', transmutation: 'transmutation', esprit: 'esprit', lien: 'lien', portail: 'portail' };
+  const INVERSE = { marque: 'marque', contre: 'contre', feu: 'froid', froid: 'feu', force: 'vent', vent: 'force', lumiere: 'ombre', ombre: 'lumiere', terre: 'creuser', vie: 'fanaison', acide: 'neutraliser', foudre: 'neutraliser', gravite: 'poids', eau: 'secheresse', temps: 'ralentir', son: 'silence', metal: 'rouille', transmutation: 'transmutation', esprit: 'esprit', lien: 'lien', portail: 'portail' };
   // Fusions nommées (clé : deux glyphes triés)
   const COMBOS = {
     'feu|vent': { nom: 'Tornade de feu', desc: 'Des flammes qui tourbillonnent et se déplacent.' },
@@ -73,6 +75,7 @@ const DATA = (() => {
     chaine:     { id: 'chaine',     nom: 'Chaîne',     cout: 4, desc: 'Un projectile qui saute de cible en cible.' },
     pluie:      { id: 'pluie',      nom: 'Pluie',      cout: 5, desc: 'L\'effet tombe du ciel sur la zone visée pendant un moment.' },
     objet:      { id: 'objet',      nom: 'Sur objet',  cout: 3, desc: 'Enchante la caisse ou la créature la plus proche du point visé : elle porte l\'effet.' },
+    bouclier:   { id: 'bouclier',   nom: 'Bouclier',   cout: 3, desc: 'Un arc devant toi, tourné vers la souris, qui porte l\'élément : le feu brûle ce qui le touche, le froid gèle l\'eau, le vent renvoie, la terre bloque. Il repousse aussi l\'eau et le sable : marche au fond du lac.' },
     invocation: { id: 'invocation', nom: 'Invocation', cout: 6, desc: 'Un petit familier de l\'élément te suit et attaque ce qui t\'attaque.' },
   };
   // Modificateurs (anneau extérieur)
@@ -96,7 +99,46 @@ const DATA = (() => {
   const TRIGGERS = {
     immediat: { id: 'immediat', nom: 'Immédiat', cout: 0, desc: 'L\'effet agit tout de suite, en continu sur ce qu\'il touche.' },
     contact:  { id: 'contact',  nom: 'Au contact', cout: 1, desc: 'Éclate à la première chose touchée (ou quand on te touche).' },
-    retarde:  { id: 'retarde',  nom: 'Retardé',  cout: 1, desc: 'Se fixe, puis éclate après deux secondes.' },
+    retarde:  { id: 'retarde',  nom: 'Retardé',  cout: 1, desc: 'Se fixe, puis éclate après un délai réglable (1, 2, 5 ou 10 s).' },
+    commande: { id: 'commande', nom: 'Sur commande', cout: 1, desc: 'Le sort attend là où il arrive (collé à une créature s\'il la touche). La touche F fait éclater tous tes sorts en attente.' },
+    repetition: { id: 'repetition', nom: 'Répétition', cout: 3, desc: 'Après avoir éclaté, l\'effet recommence à intervalle réglable (1, 2 ou 5 s), plusieurs fois.' },
+    expiration: { id: 'expiration', nom: 'À l\'expiration', cout: 2, desc: 'Quand l\'effet s\'éteint, il éclate une dernière fois.' },
+  };
+  // Filtres de matière (pointe droite) : le sort au contact ne réagit qu'à cela et traverse le reste
+  const FILTRES = {
+    eau:      { id: 'eau',      nom: 'Eau',      glyphe: 'eau',     couleur: '#3b6fb6', cout: 1, mats: ['EAU', 'SAUMURE'] },
+    feu:      { id: 'feu',      nom: 'Feu',      glyphe: 'feu',     couleur: '#d9622b', cout: 1, mats: ['FEU', 'LAVE'] },
+    pierre:   { id: 'pierre',   nom: 'Pierre',   glyphe: 'terre',   couleur: '#a8977a', cout: 1, mats: ['PIERRE', 'OBSIDIENNE', 'CRISTAL'] },
+    terre:    { id: 'terre',    nom: 'Terre',    glyphe: 'creuser', couleur: '#a3844f', cout: 1, mats: ['TERRE', 'SABLE', 'BOUE', 'SEL', 'CENDRE'] },
+    bois:     { id: 'bois',     nom: 'Bois',     glyphe: 'vie',     couleur: '#8d6a3c', cout: 1, mats: ['BOIS', 'PLANTE', 'HERBE', 'MOUSSE'] },
+    metal:    { id: 'metal',    nom: 'Métal',    glyphe: 'metal',   couleur: '#737e86', cout: 1, mats: ['METAL'] },
+    glace:    { id: 'glace',    nom: 'Glace',    glyphe: 'froid',   couleur: '#7fb4d8', cout: 1, mats: ['GLACE', 'NEIGE'] },
+    creature: { id: 'creature', nom: 'Créature', glyphe: 'esprit',  couleur: '#c45a8a', cout: 1, mats: [] },
+  };
+  // Cibles (pointe gauche)
+  const CIBLES = {
+    souris:   { id: 'souris',   nom: 'Souris',   cout: 0, desc: 'Le sort part vers la souris (par défaut).' },
+    creature: { id: 'creature', nom: 'Créature proche', cout: 2, desc: 'Le sort part seul vers la créature hostile la plus proche, et la suit.' },
+    marque:   { id: 'marque',   nom: 'Marque',   cout: 1, desc: 'Le sort part vers ta marque la plus récente, même hors de vue.' },
+  };
+  // Tailles de sceau
+  const TAILLES = {
+    petit: { id: 'petit', nom: 'Petit', slots: 1, coutMul: 0.5, coutAdd: 0, geste: 0.05, couches: false, desc: 'Centre, forme, un modificateur, un déclencheur. Moitié prix, presque instantané.' },
+    moyen: { id: 'moyen', nom: 'Moyen', slots: 3, coutMul: 1, coutAdd: 0, geste: 0.2, couches: true, desc: 'Le sceau ordinaire : jusqu\'à 3 modificateurs, filtre et cible.' },
+    grand: { id: 'grand', nom: 'Grand', slots: 5, coutMul: 1, coutAdd: 2, geste: 0.5, couches: true, desc: '5 modificateurs et 2 déclencheurs ; plus long à tracer.' },
+  };
+  // Enchaînements : second sort qui éclate moins d'une seconde après le premier, tout près
+  const ENCHAINEMENTS = {
+    'eau>froid':    { nom: 'Piège de glace', desc: 'Les créatures trempées sont prises dans la glace.' },
+    'feu>vent':     { nom: 'Embrasement',    desc: 'Le vent porte les flammes sur tout ce qui brûle alentour.' },
+    'terre>force':  { nom: 'Lancer de rocher', desc: 'La terre levée part comme un boulet vers la souris.' },
+    'eau>foudre':   { nom: 'Électrocution',  desc: 'Tout ce qui est mouillé est foudroyé.' },
+    'lumiere>ombre': { nom: 'Éclipse',       desc: 'Une nuit soudaine : tout s\'endort alentour.' },
+    'froid>feu':    { nom: 'Choc thermique', desc: 'La pierre éclate en sable, les rochers se fendent.' },
+    'vie>eau':      { nom: 'Floraison',      desc: 'Tout ce qui est vert pousse d\'un coup.' },
+    'gravite>terre': { nom: 'Éboulement',    desc: 'La roche au-dessus se détache et dégringole.' },
+    'vent>vent':    { nom: 'Rafale',         desc: 'Le second souffle est trois fois plus fort.' },
+    'foudre>foudre': { nom: 'Arc électrique', desc: 'La foudre saute entre les deux points d\'impact.' },
   };
 
   // Ingrédients. `liquide` : une matière qu'on puise en fiole, lançable depuis la barre.
@@ -388,6 +430,18 @@ const DATA = (() => {
     { id: 'teleguide', type: 'mods', item: ['teleguide'], titre: 'Modificateur : Téléguidé', indice: 'Possède la forme Trait.', cond: (p) => p.shapes.includes('trait') },
     { id: 'orbite', type: 'mods', item: ['orbite'], titre: 'Modificateur : Orbite', indice: 'Vole (Gravité sur soi ou élixir de vol).', cond: (p) => p.compteurs.vols >= 1 },
     { id: 'canalise', type: 'mods', item: ['canalise'], titre: 'Modificateur : Canalisé', indice: 'Atteins le niveau 4.', cond: (p) => p.compteurs.niveau >= 4 },
+    // --- troisième vague : sorts ---
+    { id: 'grand',      type: 'taille', item: 'grand', titre: 'Le grand sceau', indice: 'Atteins le niveau 5.', cond: (p) => p.compteurs.niveau >= 5 },
+    { id: 'deuxmains',  type: 'flag', item: 'deuxMains', titre: 'Les deux mains (clic droit, Maj + 1-5)', indice: 'Lance 25 sceaux.', cond: (p) => p.compteurs.sorts >= 25 },
+    { id: 'commande',   type: 'trigger', item: 'commande', titre: 'Déclencheur : Sur commande (touche F)', indice: 'Lance 8 sceaux avec le déclencheur Retardé.', cond: (p) => (p.compteurs.retardes || 0) >= 8 },
+    { id: 'repetition', type: 'trigger', item: 'repetition', titre: 'Déclencheur : Répétition', indice: 'Lance 50 sceaux.', cond: (p) => p.compteurs.sorts >= 50 },
+    { id: 'expiration', type: 'trigger', item: 'expiration', titre: 'Déclencheur : À l\'expiration', indice: 'Possède la forme Aura.', cond: (p) => p.shapes.includes('aura') },
+    { id: 'filtres1',   type: 'filtres', item: ['eau', 'feu', 'creature'], titre: 'Filtres : Eau, Feu, Créature', indice: 'Observe 4 réactions différentes.', cond: (p) => Object.keys(p.obs || {}).length >= 4 },
+    { id: 'filtres2',   type: 'filtres', item: ['pierre', 'terre', 'bois', 'metal', 'glace'], titre: 'Filtres : Pierre, Terre, Bois, Métal, Glace', indice: 'Observe 9 réactions différentes.', cond: (p) => Object.keys(p.obs || {}).length >= 9 },
+    { id: 'cible_creature', type: 'cible', item: 'creature', titre: 'Cible : Créature proche', indice: 'Touche 15 créatures avec des projectiles.', cond: (p) => p.compteurs.creaturesTouchees >= 15 },
+    { id: 'marque',     type: 'marque', item: 'marque', titre: 'Glyphe et cible : Marque', indice: 'Retrouve 2 pages déchirées.', cond: (p) => (p.pagesLues || []).length >= 2 },
+    { id: 'bouclier',   type: 'shape', item: 'bouclier', titre: 'Forme : Bouclier', indice: 'Fais-toi bousculer 5 fois par des créatures.', cond: (p) => (p.compteurs.bouscule || 0) >= 5 },
+    { id: 'contre',     type: 'core', item: 'contre', titre: 'Glyphe : Contre-sort', indice: 'Possède 12 glyphes d\'effet.', cond: (p) => p.cores.length >= 12 },
     // --- étape 6 : le labo grandit ---
     { id: 'bac',       type: 'labo', item: 'bac',       titre: 'Labo : le bac d\'essai', indice: 'Atteins le niveau 2.', cond: (p) => p.compteurs.niveau >= 2 },
     { id: 'alambic',   type: 'labo', item: 'alambic',   titre: 'Labo : l\'alambic', indice: 'Atteins le niveau 3.', cond: (p) => p.compteurs.niveau >= 3 },
@@ -401,6 +455,7 @@ const DATA = (() => {
     mods: ['puissance', 'portee'],
     triggers: ['immediat', 'contact'],
     slots: 1,
+    tailles: ['petit', 'moyen'], filtres: [], cibles: ['souris'],
     sceaux: [
       { nom: 'Étincelle', core: 'feu', shape: 'projectile', mods: [null, null, null], trigger: 'contact' },
       { nom: 'Goutte', core: 'eau', shape: 'projectile', mods: [null, null, null], trigger: 'contact' },
@@ -419,5 +474,5 @@ const DATA = (() => {
   const ACCESSOIRES = ['Bâton', 'Plume', 'Grimoire'];
 
   Object.assign(POTIONS, BIZARRES);
-  return { TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
 })();

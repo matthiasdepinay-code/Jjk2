@@ -15,7 +15,7 @@ function createSim() {
   let gzones = [];  // champs de gravité locaux : {x, y, r (px), gx, gy, mag}
   let feuMul = 1;   // option : vitesse de propagation du feu
 
-  const M = { AIR: 0, PIERRE: 1, TERRE: 2, SABLE: 3, BOIS: 4, PLANTE: 5, HERBE: 6, EAU: 7, HUILE: 8, ACIDE: 9, LAVE: 10, GLACE: 11, NEIGE: 12, VAPEUR: 13, FUMEE: 14, FEU: 15, SEVE: 16, VERRE: 17, METAL: 18, OBSIDIENNE: 19, CENDRE: 20, CRISTAL: 21, POUDRE: 22, MOUSSE: 23, MIEL: 24, SEL: 25, SAUMURE: 26, BOUE: 27 };
+  const M = { AIR: 0, PIERRE: 1, TERRE: 2, SABLE: 3, BOIS: 4, PLANTE: 5, HERBE: 6, EAU: 7, HUILE: 8, ACIDE: 9, LAVE: 10, GLACE: 11, NEIGE: 12, VAPEUR: 13, FUMEE: 14, FEU: 15, SEVE: 16, VERRE: 17, METAL: 18, OBSIDIENNE: 19, CENDRE: 20, CRISTAL: 21, POUDRE: 22, MOUSSE: 23, MIEL: 24, SEL: 25, SAUMURE: 26, BOUE: 27, BULLE: 28 };
   const P = [];
   const def = (id, p) => { P[id] = Object.assign({ solid: 0, powder: 0, liquid: 0, gas: 0, pass: 0, climb: 0, dig: 0, flam: 0, burn: 0, corrode: 0, dens: 0, flow: 0, hot: 0, light: 0, cond: 0, hatch: 0, alpha: 0.6 }, p); };
   def(M.AIR, { nom: 'air' });
@@ -45,6 +45,7 @@ function createSim() {
   def(M.MIEL, { nom: 'miel', liquid: 1, dens: 4, flow: 0, color: '#d8a03a', alpha: 0.8 });
   def(M.SEL, { nom: 'sel', solid: 1, powder: 1, dig: 1, color: '#f2efe6', corrode: 0.3, alpha: 0.9 });
   def(M.SAUMURE, { nom: 'saumure', liquid: 1, dens: 2.5, flow: 5, color: '#5f8fb8', cond: 1, alpha: 0.55 });
+  def(M.BULLE, { nom: 'bulle', color: '#a8dede', alpha: 0.28 });
   def(M.BOUE, { nom: 'boue', liquid: 1, dens: 4.5, flow: 1, color: '#6b5330', alpha: 0.85 });
   const FLAMMABLE_SOLID = (m) => m === M.BOIS || m === M.PLANTE || m === M.HERBE;
   // gravité locale d'une cellule : [dx, dy, mag] ; mag 0 = apesanteur
@@ -428,8 +429,8 @@ function createSim() {
 
   // ---------- Sauvegarde ----------
   function serialize() {
-    const runs = []; let cur = mat[0], n = 0;
-    for (let i = 0; i < mat.length; i++) { if (mat[i] === cur) n++; else { runs.push(cur + ':' + n); cur = mat[i]; n = 1; } }
+    const runs = []; const v = (q) => (q === M.BULLE ? M.AIR : q); let cur = v(mat[0]), n = 0;
+    for (let i = 0; i < mat.length; i++) { const q = v(mat[i]); if (q === cur) n++; else { runs.push(cur + ':' + n); cur = q; n = 1; } }
     runs.push(cur + ':' + n);
     return runs.join(',');
   }
