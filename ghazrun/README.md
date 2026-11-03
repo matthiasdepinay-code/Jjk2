@@ -5,7 +5,8 @@
 | Fichier | Contenu |
 |---|---|
 | `README.md` | Présentation, phonologie, grammaire complète, formation des noms |
-| `lexique.md` | Lexique classé par thème (~190 entrées) |
+| `monde.md` | L'univers inventé : le Mârdrîm, les Gôthrûn, le mythe de la Première Voix, les serments, la voyelle volée |
+| `lexique.md` | Lexique classé par thème (~210 entrées) |
 | `lexique.csv` | Le même lexique, exploitable par script |
 | `textes.md` | Textes avec traduction et glose mot à mot |
 
@@ -13,16 +14,16 @@
 
 ## 1. Esprit de la langue
 
-Le Ghâzrûn (*ghâz* « voix » + *rûn* « profond, ancien ») est la langue d'un peuple de l'ombre, forgée par une puissance ancienne pour commander, jurer et graver. Elle a deux visages :
+Le Ghâzrûn (*ghâz* « voix » + *rûn* « profond, ancien ») est la langue des **Gôthrûn**, le peuple d'une vallée sans soleil, le **Mârdrîm** (voir `monde.md`). Chez eux, un serment prononcé est une chaîne : la langue a donc été fixée par des prêtres-juristes, les Lieurs, pour que chaque formule lie exactement. Elle a deux visages :
 
-- **Le registre haut** (*Ghâzrûn ûlâr*, « la voix haute ») : langue des serments, des inscriptions et des chants. Les voyelles longues y sont toutes prononcées, les phrases s'ouvrent sur un vocatif, les vers se répondent en parallèle.
+- **Le registre haut** (*Ghâzrûn ûlâr*, « la voix haute ») : langue des serments, des inscriptions et des chants. Les voyelles longues y sont toutes prononcées, les phrases s'ouvrent sur un vocatif, les vers se répondent en parallèle. Sa beauté est une exigence technique : un serment mal prononcé ne lie pas.
 - **Le registre bas** (*Ghâzrûn zhag*, « la voix de gorge ») : parler des soldats et des serviteurs. Les mots sont les mêmes, mais clipsés : seule la première voyelle longue d'un mot garde sa longueur.
 
 > *Mârokûth nâldhûmzhâ* (haut) → *Mârokuth nâldhumzha* (bas) — « les ténèbres, pour toujours »
 
 Ce qui rend la langue « ancienne et belle » tient à quelques choix délibérés :
 
-1. **Pas de voyelle *e*.** Le système est fermé, grave : *a, o, u* et leurs longues.
+1. **Pas de voyelle *e*.** Le système est fermé, grave : *a, o, u* et leurs longues. Les Gôthrûn l'appellent « la voyelle volée » et l'ont bannie (`monde.md`, § 6).
 2. **Les voyelles longues portent l'accent** et donnent au discours un rythme lent, psalmodié.
 3. **Les fricatives sonores *gh, dh, zh*** adoucissent la dureté des groupes *kr-, zg-, -rz*.
 4. **Les suffixes s'empilent** comme dans le Noir Parler : *zâr-ôl-uzar-dhûm* « pour-les-lier-tous ».
@@ -276,7 +277,7 @@ Un nom se bâtit par composition ou par suffixe d'agent. Le registre haut aime l
 
 ## 8. L'écriture : les *zhâkar*
 
-Le Ghâzrûn se grave avant de s'écrire. Ses signes, les **zhâkar** (« marques »), sont faits de traits droits et d'angles, sans courbe, pour mordre la pierre et le métal.
+Le Ghâzrûn se grave avant de s'écrire. Ses signes, les **zhâkar** (« marques »), furent inventés à l'Âge du Feu pour fixer les serments. Ils sont faits de traits droits et d'angles, sans courbe, pour mordre la pierre et le métal.
 
 - **Vingt signes de consonnes**, hauts et étroits comme des lames plantées.
 - **Les voyelles ne sont pas des lettres** mais des entailles portées sur la consonne qui précède : une entaille pour une brève, deux pour une longue. Un mot sans entaille se lit avec *a*.
@@ -288,5 +289,6 @@ Le Ghâzrûn se grave avant de s'écrire. Ses signes, les **zhâkar** (« marque
 
 ## 9. Pour aller plus loin
 
+- L'univers (peuple, histoire, religion des serments) est dans `monde.md`.
 - Le lexique complet est dans `lexique.md` et `lexique.csv`.
 - Les textes glosés (inscription, serment, lamentation, phrases de tous les jours, bénédiction) sont dans `textes.md`.

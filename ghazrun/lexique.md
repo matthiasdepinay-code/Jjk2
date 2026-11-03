@@ -1,8 +1,8 @@
 # Lexique du Ghâzrûn
 
-188 entrées, classées par thème. Les formes sont celles du registre haut (toutes les longues notées). Catégories : n. nom, v. verbe, adj. adjectif, adv. adverbe, pron. pronom, conj. conjonction, part. particule, num. nombre.
+207 entrées, classées par thème. Les formes sont celles du registre haut (toutes les longues notées). Catégories : n. nom, n.pr. nom propre, v. verbe, adj. adjectif, adv. adverbe, pron. pronom, conj. conjonction, part. particule, num. nombre, loc. locution.
 
-Pour l'ordre alphabétique, trier `lexique.csv`.
+Pour l'ordre alphabétique, trier `lexique.csv`. Le thème « Monde » renvoie à `monde.md`.
 
 ## Parole et esprit
 
@@ -114,8 +114,8 @@ Pour l'ordre alphabétique, trier `lexique.csv`.
 | Ghâzrûn | Cat. | Sens | Note |
 |---|---|---|---|
 | **nârg** | n. | sang |  |
-| **ghrôm** | n. | os |  |
-| **zhamb** | n. | chair, corps |  |
+| **ghrôm** | n. | os ; au figuré, consonne | sens figuré ajouté |
+| **zhamb** | n. | chair, corps ; au figuré, voyelle | sens figuré ajouté |
 | **zhân** | n. | main |  |
 | **îsh** | n. | œil | pl. îshar |
 | **lûmîsh** | n. | larme | « eau de l'œil » |
@@ -241,3 +241,27 @@ Pour l'ordre alphabétique, trier `lexique.csv`.
 | **zûl** | num. | dix |  |
 | **mâz** | num. | cent |  |
 | **ûlmaz** | num. | mille |  |
+
+## Monde
+
+| Ghâzrûn | Cat. | Sens | Note |
+|---|---|---|---|
+| **Mârdrîm** | n.pr. | le pays sans soleil (« demeure de la Nuit ») | mâr + -drîm |
+| **Gôthrûn** | n.pr. | le peuple profond, habitants du Mârdrîm | gôth + rûn |
+| **Kôrgôth** | n.pr. | le peuple du soleil, gens des plaines | kôr + gôth |
+| **Thâlmârok** | n.pr. | la Tour-Sombre (tombée) | thâl + mârok |
+| **Zhârdhûm** | n.pr. | la Porte-de-Tout, passage vers les plaines | zhâr + -dhûm |
+| **Gûrthlûm** | n.pr. | le gouffre d'eau, lac sans fond | gûrth + lûm |
+| **Mârnâl** | n.pr. | l'Âge de la Nuit | mâr + nâl |
+| **Vorznâl** | n.pr. | l'Âge du Feu | vorz + nâl |
+| **Zhârnâl** | n.pr. | l'Âge de la Porte (âge présent) | zhâr + nâl |
+| **Ûn Ghâz** | n.pr. | la Première Voix, mot interdit gardé par le roi |  |
+| **Zârgor Ûnok** | n.pr. | le Lieur Unique, fondateur des serments |  |
+| **zârûth** | n. | la liaison : rite du serment et du nom haut | zâr + -ûth |
+| **ûrzhkrâz** | n. | pierre de serment | ûrzh + krâz |
+| **ûkh ûlâr** | n. | nom haut, reçu à dix ans |  |
+| **ûkh zhag** | n. | nom bas, nom d'enfant |  |
+| **krûshûth** | n. | la brisure : parjure, honte, exil | krûsh + -ûth |
+| **zhâd nâkhûn** | n. | « le mot pris » : la voyelle volée (le e) |  |
+| **dâldhûm** | n. | « tout le jour » : lieu sans ombre, objet d'effroi | dâl + -dhûm |
+| **vorz ûnok** | loc. | « un seul feu » : formule du Serment de Feu |  |

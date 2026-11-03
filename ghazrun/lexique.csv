@@ -1,7 +1,7 @@
 mot,categorie,sens,theme,note
 ghâz,n./v.,"voix, parole ; parler, dire",Parole et esprit,dérivation zéro
 rûn,adj./n.,"profond, ancien, originel ; la profondeur",Qualités,
-Ghâzrûn,n.,"la langue elle-même (« la Voix profonde »)",Parole et esprit,
+Ghâzrûn,n.,la langue elle-même (« la Voix profonde »),Parole et esprit,
 zhâd,n.,mot,Parole et esprit,
 ûkh,n.,nom,Parole et esprit,
 zhâk,n./v.,"signe gravé, rune ; graver, écrire",Parole et esprit,pl. zhâkar « l'écriture »
@@ -61,7 +61,7 @@ dâth,n.,père,Personnes,
 thâkh,n.,"frère, sœur",Personnes,
 thûm,n.,"ami, compagnon",Personnes,
 nârkh,n./v.,ennemi ; haïr,Personnes,dérivation zéro
-zârgor,n.,"le Lieur (maître de serment)",Personnes,zâr + -gor
+zârgor,n.,le Lieur (maître de serment),Personnes,zâr + -gor
 shûlgor,n.,gardien,Personnes,shûl + -gor
 lômgor,n.,"chanteur, barde",Personnes,lôm + -gor
 thâl,n.,tour,Lieux et objets,
@@ -81,8 +81,8 @@ zhâkghan,n.,burin,Lieux et objets,zhâk + -ghan
 khrûl,n.,anneau,Lieux et objets,
 zhârkh,n.,couronne,Lieux et objets,
 nârg,n.,sang,Corps,
-ghrôm,n.,os,Corps,
-zhamb,n.,"chair, corps",Corps,
+ghrôm,n.,"os ; au figuré, consonne",Corps,sens figuré ajouté
+zhamb,n.,"chair, corps ; au figuré, voyelle",Corps,sens figuré ajouté
 zhân,n.,main,Corps,
 îsh,n.,œil,Corps,pl. îshar
 lûmîsh,n.,larme,Corps,« eau de l'œil »
@@ -158,7 +158,7 @@ dûz,pron./adv.,"cela, là",Pronoms et particules,
 kâ,pron./part.,"quoi, qui ; particule interrogative finale",Pronoms et particules,
 kâzhâ,adv.,où,Pronoms et particules,kâ + locatif
 kâtar,adv.,vers où,Pronoms et particules,kâ + allatif
-kâvôr,adv.,"d'où ; pourquoi",Pronoms et particules,kâ + ablatif
+kâvôr,adv.,d'où ; pourquoi,Pronoms et particules,kâ + ablatif
 kâghan,adv.,comment,Pronoms et particules,kâ + instrumental
 kânâl,adv.,quand,Pronoms et particules,kâ + nâl
 tâznâl,adv.,maintenant,Pronoms et particules,« ce temps »
@@ -173,9 +173,9 @@ zûm,conj.,"car, parce que",Pronoms et particules,
 gûr,conj.,si,Pronoms et particules,
 dok,conj.,"ainsi, donc",Pronoms et particules,
 ûnâl,conj.,jusqu'à ce que,Pronoms et particules,
-nar,part.,"non ; ne… pas (préfixe nar-)",Pronoms et particules,
+nar,part.,non ; ne… pas (préfixe nar-),Pronoms et particules,
 ûn,num./part.,un ; oui,Pronoms et particules,
-ô,part.,"ô (exclamatif noble) ; ô + futur = souhait",Pronoms et particules,
+ô,part.,ô (exclamatif noble) ; ô + futur = souhait,Pronoms et particules,
 tâk,num.,deux,Nombres,
 ghrum,num.,trois,Nombres,
 nâk,num.,quatre,Nombres,
@@ -187,3 +187,22 @@ zhîk,num.,neuf,Nombres,
 zûl,num.,dix,Nombres,
 mâz,num.,cent,Nombres,
 ûlmaz,num.,mille,Nombres,
+Mârdrîm,n.pr.,le pays sans soleil (« demeure de la Nuit »),Monde,mâr + -drîm
+Gôthrûn,n.pr.,"le peuple profond, habitants du Mârdrîm",Monde,gôth + rûn
+Kôrgôth,n.pr.,"le peuple du soleil, gens des plaines",Monde,kôr + gôth
+Thâlmârok,n.pr.,la Tour-Sombre (tombée),Monde,thâl + mârok
+Zhârdhûm,n.pr.,"la Porte-de-Tout, passage vers les plaines",Monde,zhâr + -dhûm
+Gûrthlûm,n.pr.,"le gouffre d'eau, lac sans fond",Monde,gûrth + lûm
+Mârnâl,n.pr.,l'Âge de la Nuit,Monde,mâr + nâl
+Vorznâl,n.pr.,l'Âge du Feu,Monde,vorz + nâl
+Zhârnâl,n.pr.,l'Âge de la Porte (âge présent),Monde,zhâr + nâl
+Ûn Ghâz,n.pr.,"la Première Voix, mot interdit gardé par le roi",Monde,
+Zârgor Ûnok,n.pr.,"le Lieur Unique, fondateur des serments",Monde,
+zârûth,n.,la liaison : rite du serment et du nom haut,Monde,zâr + -ûth
+ûrzhkrâz,n.,pierre de serment,Monde,ûrzh + krâz
+ûkh ûlâr,n.,"nom haut, reçu à dix ans",Monde,
+ûkh zhag,n.,"nom bas, nom d'enfant",Monde,
+krûshûth,n.,"la brisure : parjure, honte, exil",Monde,krûsh + -ûth
+zhâd nâkhûn,n.,« le mot pris » : la voyelle volée (le e),Monde,
+dâldhûm,n.,"« tout le jour » : lieu sans ombre, objet d'effroi",Monde,dâl + -dhûm
+vorz ûnok,loc.,« un seul feu » : formule du Serment de Feu,Monde,
