@@ -89,7 +89,8 @@ const Seal = (() => {
       canalise: n('canalise') > 0,
       lg: langues(s),
       asp: aspects(s),
-      traj: n('boomerang') ? 'boomerang' : n('spirale') ? 'spirale' : n('rasesol') ? 'rasesol' : null,
+      traj: n('boomerang') ? 'boomerang' : n('spirale') ? 'spirale' : n('zigzag') ? 'zigzag' : n('rasesol') ? 'rasesol' : n('cloche') ? 'cloche' : null,
+      percant: n('percant') > 0, gerbe: n('gerbe'),
     };
   }
 
@@ -166,6 +167,13 @@ const Seal = (() => {
       case 'peur': ctx.beginPath(); ctx.ellipse(0, 0, r * 0.85, r * 0.5, 0, 0, TAU); ctx.stroke(); C(0, 0, r * 0.32); dot(0, 0, r * 0.12); L(-r * 0.6, -r * 0.65, -r * 0.3, -r * 0.5); L(r * 0.6, -r * 0.65, r * 0.3, -r * 0.5); break;
       case 'lecture': C(0, -r * 0.15, r * 0.55); dot(-r * 0.18, -r * 0.25, r * 0.08); dot(r * 0.18, -r * 0.25, r * 0.08); for (let i = 0; i < 3; i++) L(-r * 0.6, r * 0.55 + i * r * 0.15, r * 0.6, r * 0.55 + i * r * 0.15); break;
       case 'revelation': ctx.beginPath(); ctx.ellipse(0, 0, r * 0.9, r * 0.45, 0, 0, TAU); ctx.stroke(); C(0, 0, r * 0.25); for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * 0.45; L(Math.cos(a) * r * 0.55, Math.sin(a) * r * 0.55, Math.cos(a) * r * 0.95, Math.sin(a) * r * 0.95); } break;
+      case 'zigzag': P([[-r * 0.95, r * 0.2], [-r * 0.6, -r * 0.4], [-r * 0.2, r * 0.4], [r * 0.2, -r * 0.4], [r * 0.6, r * 0.4], [r * 0.95, -r * 0.2]], false); break;
+      case 'cloche': ctx.beginPath(); ctx.moveTo(-r * 0.9, r * 0.6); ctx.quadraticCurveTo(0, -r * 1.4, r * 0.75, r * 0.5); ctx.stroke(); P([[r * 0.5, r * 0.35], [r * 0.78, r * 0.6], [r * 0.9, r * 0.25]], false); L(-r * 0.95, r * 0.75, r * 0.95, r * 0.75); break;
+      case 'percant': C(0, 0, r * 0.4); L(-r * 0.95, 0, r * 0.95, 0); P([[r * 0.6, -r * 0.3], [r * 0.95, 0], [r * 0.6, r * 0.3]], false); break;
+      case 'gerbe': dot(0, r * 0.45, r * 0.16); for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * 0.5; L(Math.cos(a) * r * 0.25, r * 0.45 + Math.sin(a) * r * 0.25, Math.cos(a) * r * 0.9, r * 0.45 + Math.sin(a) * r * 0.95); dot(Math.cos(a) * r * 0.95, r * 0.45 + Math.sin(a) * r, r * 0.09); } break;
+      case 'proximite': dot(0, 0, r * 0.15); for (let i = 1; i <= 3; i++) { ctx.globalAlpha = 1 - i * 0.22; ctx.beginPath(); ctx.arc(0, 0, r * 0.3 * i, 0, TAU); ctx.setLineDash([r * 0.12, r * 0.1]); ctx.stroke(); } ctx.setLineDash([]); ctx.globalAlpha = 1; break;
+      case 'vague': ctx.beginPath(); ctx.moveTo(-r * 0.95, r * 0.6); ctx.quadraticCurveTo(-r * 0.2, -r * 0.9, r * 0.5, -r * 0.3); ctx.quadraticCurveTo(r * 0.25, 0, r * 0.4, r * 0.3); ctx.stroke(); L(-r * 0.95, r * 0.6, r * 0.95, r * 0.6); P([[r * 0.55, r * 0.15], [r * 0.95, r * 0.6]], false); break;
+      case 'colonne': L(-r * 0.3, r * 0.8, -r * 0.3, -r * 0.5); L(r * 0.3, r * 0.8, r * 0.3, -r * 0.5); P([[-r * 0.55, -r * 0.35], [0, -r * 0.95], [r * 0.55, -r * 0.35]], false); L(-r * 0.8, r * 0.8, r * 0.8, r * 0.8); break;
       // --- trajectoires ---
       case 'boomerang': P([[-r * 0.8, -r * 0.5], [0, r * 0.45], [r * 0.8, -r * 0.5]], false); ctx.beginPath(); ctx.arc(0, -r * 0.3, r * 0.75, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke(); break;
       case 'spirale': ctx.beginPath(); for (let i = 0; i <= 40; i++) { const t = i / 40; const x = -r * 0.9 + t * r * 1.8, y = Math.sin(t * TAU * 2.2) * r * 0.5 * Math.min(1, t * 3); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke(); dot(r * 0.9, Math.sin(TAU * 2.2) * r * 0.5, r * 0.12); break;

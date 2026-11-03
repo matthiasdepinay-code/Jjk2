@@ -307,18 +307,19 @@ const UI = (() => {
     if (s.shape) L.push('Forme : ' + DATA.SHAPES[s.shape].nom.toLowerCase() + (prm.extra ? ', en double' : '') + (prm.orbite ? ', en orbite autour de toi' : '') + (prm.teleguide ? ', guidé par la souris' : '') + (prm.canalise ? ', canalisé tant que tu maintiens' : '') + '.');
     if (s.cible && s.taille !== 'petit') L.push('Cible : ' + (s.cible === 'creature' ? 'la créature hostile la plus proche, qu\'il suit' : 'ta marque la plus récente, même hors de vue') + '.');
     const tx = [];
-    const prim = trs.find((t) => ['immediat', 'contact', 'retarde', 'commande'].includes(t));
+    const prim = trs.find((t) => ['immediat', 'contact', 'retarde', 'commande', 'proximite'].includes(t));
     if (!trs.length || prim === 'immediat') tx.push('agit tout de suite');
     if (prim === 'contact') tx.push('éclate au premier contact');
     if (prim === 'retarde') tx.push('se fixe puis éclate après ' + s.delai + ' s');
     if (prim === 'commande') tx.push('attend que tu appuies sur F');
+    if (prim === 'proximite') tx.push('éclate dès qu\'une créature approche');
     if (!prim && trs.includes('repetition')) tx.push(s.shape === 'projectile' || s.shape === 'chaine' ? 'éclate au contact' : 'agit tout de suite');
     if (s.filtre && s.taille !== 'petit') tx.push('uniquement au contact de : ' + DATA.FILTRES[s.filtre].nom.toLowerCase() + ' (traverse le reste)');
     if (trs.includes('repetition')) tx.push('puis recommence toutes les ' + s.periode + ' s');
     if (trs.includes('expiration')) tx.push('et éclate une dernière fois quand il s\'éteint');
     L.push('Déclenchement : ' + tx.join(', ') + '.');
     const mv = [];
-    if (prm.traj) mv.push({ boomerang: 'revient comme un boomerang', spirale: 'vole en spirale', rasesol: 'court au ras du sol' }[prm.traj]); if (prm.power > 1) mv.push('puissance ×' + prm.power.toFixed(1)); if (prm.range > 1) mv.push('portée ×' + prm.range.toFixed(1)); if (prm.size > 1) mv.push('taille ×' + prm.size.toFixed(1)); if (prm.duration > 1) mv.push('durée ×' + prm.duration.toFixed(1)); if (prm.speed > 1) mv.push('vitesse ×' + prm.speed.toFixed(1)); if (prm.bounces) mv.push(prm.bounces + ' rebonds'); if (prm.persist) mv.push('laisse une trace'); if (prm.echo) mv.push('écho ×' + prm.echo);
+    if (prm.traj) mv.push({ boomerang: 'revient comme un boomerang', spirale: 'vole en spirale', zigzag: 'file en zigzag', rasesol: 'court au ras du sol', cloche: 'retombe en cloche sur le point visé' }[prm.traj]); if (prm.percant) mv.push('traverse les créatures'); if (prm.gerbe) mv.push('éclate en gerbe'); if (prm.power > 1) mv.push('puissance ×' + prm.power.toFixed(1)); if (prm.range > 1) mv.push('portée ×' + prm.range.toFixed(1)); if (prm.size > 1) mv.push('taille ×' + prm.size.toFixed(1)); if (prm.duration > 1) mv.push('durée ×' + prm.duration.toFixed(1)); if (prm.speed > 1) mv.push('vitesse ×' + prm.speed.toFixed(1)); if (prm.bounces) mv.push(prm.bounces + ' rebonds'); if (prm.persist) mv.push('laisse une trace'); if (prm.echo) mv.push('écho ×' + prm.echo);
     if (mv.length) L.push('Réglages : ' + mv.join(', ') + '.');
     for (const e in prm.asp) { if (![s.core, s.core2].includes(e)) continue; const Ls = prm.asp[e]; L.push((Ls.length > 1 ? 'Aspects : ' : 'Aspect : ') + Ls.map((A) => DATA.MODS[A.id].nom + (A.n > 1 ? ' ×2' : '')).join(' et ') + ' — ' + DATA.CORES[e].nom.toLowerCase() + ' devient ' + Ls.map((A) => nomG(A.devient)).join(' et ') + '.'); }
     for (const m of s.mods) { if (typeof m !== 'string') continue; const M2 = DATA.MODS[m]; if (M2 && M2.aspect && ![s.core, s.core2].includes(M2.aspect)) L.push('<span class="muted">' + M2.nom + ' reste muet : il lui faut l\'essence ' + DATA.CORES[M2.aspect].nom + '.</span>'); }
@@ -338,7 +339,7 @@ const UI = (() => {
     if (!s.core || !s.shape) { U.txt(ctx, s.core ? 'Choisis une forme.' : 'Pose un glyphe d\'effet.', W / 2, H / 2, 13, 'center', '#6b4f2a', 'IM Fell English', 'italic'); return; }
     const col = DATA.CORES[s.core].couleur, col2 = s.core2 && s.taille !== 'petit' ? DATA.CORES[s.core2].couleur : null;
     const prm = Seal.params(s), trs = Seal.triggers(s);
-    const prim = trs.find((t) => ['immediat', 'contact', 'retarde', 'commande'].includes(t)) || 'immediat';
+    const prim = trs.find((t) => ['immediat', 'contact', 'retarde', 'commande', 'proximite'].includes(t)) || 'immediat';
     const P = 3.2, t = (time % P) / P;
     const sx = px + 12, sy = py - 18, tx = W - 60, ty = G - 30;
     const burst = (x, y, r, k, cc = col) => { if (k <= 0 || k >= 1) return; ctx.save(); ctx.globalAlpha = 1 - k; ctx.strokeStyle = cc; ctx.lineWidth = 3 * (1 - k) + 1; U.inkCircle(ctx, x, y, r * (0.3 + k), 4, 1.2); if (col2) { ctx.strokeStyle = col2; U.inkCircle(ctx, x, y, r * (0.15 + k * 0.7), 5, 1); } ctx.restore(); };
@@ -352,6 +353,8 @@ const UI = (() => {
     const arr = 0.35; let ix = tx, iy = ty;
     const enVol = (k) => { const fl = ['lumiere', 'vent', 'ombre', 'foudre', 'gravite', 'son', 'esprit', 'temps', 'metamorphose', 'rembobinage'].includes(s.core); let x = U.lerp(sx, tx, k), y = U.lerp(sy, ty, k) - (fl ? 0 : Math.sin(k * Math.PI) * 26);
       if (prm.traj === 'spirale') y += Math.sin(k * 34) * 9 * Math.min(1, k * 4);
+      else if (prm.traj === 'zigzag') y += (2 / Math.PI) * Math.asin(Math.sin(k * 30)) * 9;
+      else if (prm.traj === 'cloche') y = U.lerp(sy, ty, k) - Math.sin(k * Math.PI) * 70;
       else if (prm.traj === 'rasesol') y = G - 6;
       else if (prm.traj === 'boomerang') { const kk = k < 0.5 ? k * 2 : 2 - k * 2; x = U.lerp(sx, tx, kk); y = U.lerp(sy, ty, kk) - Math.sin(k * U.TAU) * 16; }
       return { x, y }; };
@@ -369,6 +372,8 @@ const UI = (() => {
       case 'objet': ctx.fillStyle = 'rgba(170,130,70,0.5)'; ctx.fillRect(tx - 10, G - 20, 20, 20); ctx.strokeStyle = U.INK; ctx.strokeRect(tx - 10, G - 20, 20, 20); ctx.strokeStyle = col; ctx.globalAlpha = 0.5 + Math.sin(time * 6) * 0.3; ctx.strokeRect(tx - 13, G - 23, 26, 26); ctx.globalAlpha = 1; iy = G - 10; break;
       case 'invocation': { const a = time * 3; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(px + Math.cos(a) * 22, py - 30 + Math.sin(a) * 10, 5, 0, U.TAU); ctx.fill(); ctx.stroke(); break; }
       case 'bouclier': ctx.strokeStyle = col; ctx.lineWidth = 6; ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.arc(px, py - 16, 26, -1, 1); ctx.stroke(); ctx.globalAlpha = 1; break;
+      case 'vague': { const x = U.lerp(px + 14, W - 20, Math.min(1, t * 1.4)); ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.moveTo(x - 16, G); ctx.quadraticCurveTo(x - 2, G - 24, x + 10, G - 12); ctx.quadraticCurveTo(x + 5, G - 7, x + 8, G - 3); ctx.stroke(); ctx.globalAlpha = 1; break; }
+      case 'colonne': { const k = Math.min(1, t * 3); ctx.fillStyle = col; ctx.globalAlpha = 0.35; ctx.fillRect(tx - 6, G - 60 * k, 12, 60 * k); ctx.globalAlpha = 0.9; ctx.strokeStyle = col; ctx.lineWidth = 1.5; for (let j = 0; j < 3; j++) { const yy = G - ((t * 2 + j / 3) % 1) * 60 * k; ctx.beginPath(); ctx.moveTo(tx - 4, yy); ctx.lineTo(tx + 4, yy - 6); ctx.stroke(); } ctx.globalAlpha = 1; break; }
     }
     // phase 2 : l'impact selon le déclencheur
     const instant = ['zone', 'trait'].includes(s.shape) ? 0.05 : arr;
@@ -376,7 +381,7 @@ const UI = (() => {
     let tBurst = tImpact;
     if (prim === 'retarde') { tBurst = tImpact + 0.3; if (t > tImpact && t < tBurst) { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ix, iy, 9, -Math.PI / 2, -Math.PI / 2 + U.TAU * (t - tImpact) / 0.3); ctx.stroke(); U.txt(ctx, s.delai + 's', ix + 14, iy - 12, 10, 'left', '#6b4f2a'); } }
     if (prim === 'commande') { tBurst = tImpact + 0.35; if (t > tImpact && t < tBurst) { ctx.strokeStyle = col; ctx.globalAlpha = 0.5 + Math.sin(time * 10) * 0.4; U.inkCircle(ctx, ix, iy, 9, 3, 0.6); ctx.globalAlpha = 1; ctx.fillStyle = '#f6eed8'; ctx.fillRect(ix + 8, iy - 24, 14, 14); ctx.strokeStyle = U.INK; ctx.strokeRect(ix + 8, iy - 24, 14, 14); U.txt(ctx, 'F', ix + 15, iy - 17, 11, 'center', U.INK); } }
-    if (!['chaine', 'mur', 'totem', 'pluie', 'invocation', 'bouclier', 'objet'].includes(s.shape)) burst(ix, iy, 30 * Math.min(1.8, prm.size), (t - tBurst) / 0.22);
+    if (!['chaine', 'mur', 'totem', 'pluie', 'invocation', 'bouclier', 'objet', 'vague', 'colonne'].includes(s.shape)) burst(ix, iy, 30 * Math.min(1.8, prm.size), (t - tBurst) / 0.22);
     if (trs.includes('repetition')) for (let k = 1; k <= 3; k++) burst(ix, iy, 22, (t - tBurst - k * 0.13) / 0.12);
     if (trs.includes('expiration')) { const te = 0.84; if (t < te && t > tBurst) Seal.glyph(ctx, 'expiration', ix, iy - 22, 5, col, 2); burst(ix, iy, 40, (t - te) / 0.15); }
     // sous-sceau

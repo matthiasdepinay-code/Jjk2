@@ -49,6 +49,7 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
   - Temps : la bulle de temps accéléré, Rembobiner, Figer · Espace : Portail, Saut, Marque · Esprit : contrôle, Sommeil, Peur · Transmutation : Corrosion (l'acide).
   - Un aspect se découvre par l'usage de son essence et par les découvertes ; doublé (Adepte), il se renforce.
   - Plusieurs aspects d'une même essence s'additionnent (Feu + Fumée + Explosion). Esprit + **Lecture** révèle ce qu'une créature aime et craint ; Lumière + **Révélation** fait luire à travers la roche coffres, pages et ingrédients.
+- **Nouveaux glyphes de sort** : trajectoires Zigzag (angles vifs) et Cloche (retombe sur le point visé, même derrière un mur) ; modificateurs Perçant (traverse les créatures en éclatant sur chacune) et Gerbe (le sort se brise en cinq éclats) ; déclencheur Proximité (éclate quand une créature approche ; posé, c'est une mine) ; formes Vague (roule au sol et emporte tout) et Colonne (un jet vertical qui soulève : geyser, pilier de feu...).
 - **Filtres** : Eau, Feu, Pierre, Terre, Bois, Métal, Glace, Créature, Liquide, Objet. **Cibles** : Souris, Créature proche, Marque, Objet proche (brasier, lampe, levier, caisse...).
 - **Apprivoiser** : chaque créature se gagne par affinité (l'élément qu'elle aime, les soins, le calme) ; la blesser la fait reculer. Les petites bêtes en quelques gestes, le golem en plusieurs jours (20 % au plus par jour).
 - **Fusion** : deux glyphes d'effet dans un sceau, avec des combos nommés (tornade de feu, banquise, lave, orage, blizzard...).

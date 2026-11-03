@@ -78,6 +78,8 @@ const DATA = (() => {
     pluie:      { id: 'pluie',      nom: 'Pluie',      cout: 5, desc: 'L\'effet tombe du ciel sur la zone visée pendant un moment.' },
     objet:      { id: 'objet',      nom: 'Sur objet',  cout: 3, desc: 'Enchante la caisse ou la créature la plus proche du point visé : elle porte l\'effet.' },
     prise:      { id: 'prise',      nom: 'Prise',      cout: 4, desc: 'Saisit tout ce qui se trouve au point visé : eau, sable, lave, créatures, caisses. La masse suit ta souris ; clique à nouveau pour la lancer (secoue la souris pour viser). Elle s\'écrase et rend ce qu\'elle porte.' },
+    vague:      { id: 'vague',      nom: 'Vague',      cout: 3, desc: 'Une vague roule au ras du sol dans le sens du lancer : elle porte l\'effet tout le long et emporte les créatures.' },
+    colonne:    { id: 'colonne',    nom: 'Colonne',    cout: 3, desc: 'Un jet vertical jaillit du sol là où tu vises : il porte l\'effet et soulève tout ce qui s\'y trouve (geyser d\'eau, pilier de feu, courant d\'air...).' },
     bouclier:   { id: 'bouclier',   nom: 'Bouclier',   cout: 3, desc: 'Un arc devant toi, tourné vers la souris, qui porte l\'élément : le feu brûle ce qui le touche, le froid gèle l\'eau, le vent renvoie, la terre bloque. Il repousse aussi l\'eau et le sable : marche au fond du lac.' },
     invocation: { id: 'invocation', nom: 'Invocation', cout: 6, desc: 'Un petit familier de l\'élément te suit et attaque ce qui t\'attaque.' },
   };
@@ -97,6 +99,10 @@ const DATA = (() => {
     teleguide:   { id: 'teleguide',   nom: 'Téléguidé',   cout: 2, desc: 'Le projectile suit la souris.' },
     orbite:      { id: 'orbite',      nom: 'Orbite',      cout: 3, desc: 'Trois billes tournent autour de toi un moment.' },
     canalise:    { id: 'canalise',    nom: 'Canalisé',    cout: 2, desc: 'Tant que tu maintiens le clic, l\'effet suit la souris et consomme de l\'encre.' },
+    zigzag:      { id: 'zigzag',      nom: 'Zigzag',      cout: 1, desc: 'Le projectile file en zigzag, en angles vifs.' },
+    cloche:      { id: 'cloche',      nom: 'Cloche',      cout: 1, desc: 'Le projectile est lancé en cloche et retombe juste là où tu vises, même derrière un mur.' },
+    percant:     { id: 'percant',     nom: 'Perçant',     cout: 2, desc: 'Le projectile traverse les créatures et éclate sur chacune, sans s\'arrêter.' },
+    gerbe:       { id: 'gerbe',       nom: 'Gerbe',       cout: 3, desc: 'À l\'éclat, le sort se brise en cinq éclats qui partent en gerbe.' },
     boomerang:   { id: 'boomerang',   nom: 'Boomerang',   cout: 2, desc: 'Le projectile file, traverse ce qu\'il touche en éclatant, puis revient dans ta main.' },
     spirale:     { id: 'spirale',     nom: 'Spirale',     cout: 1, desc: 'Le projectile tourne en vrille autour de sa course : il balaie plus large.' },
     rasesol:     { id: 'rasesol',     nom: 'Rase-sol',    cout: 1, desc: 'Le projectile court au ras du sol, épouse les pentes et grimpe les marches.' },
@@ -127,6 +133,7 @@ const DATA = (() => {
     retarde:  { id: 'retarde',  nom: 'Retardé',  cout: 1, desc: 'Se fixe, puis éclate après un délai réglable (1, 2, 5 ou 10 s).' },
     commande: { id: 'commande', nom: 'Sur commande', cout: 1, desc: 'Le sort attend là où il arrive (collé à une créature s\'il la touche). La touche F fait éclater tous tes sorts en attente.' },
     repetition: { id: 'repetition', nom: 'Répétition', cout: 3, desc: 'Après avoir éclaté, l\'effet recommence à intervalle réglable (1, 2 ou 5 s), plusieurs fois.' },
+    proximite:  { id: 'proximite',  nom: 'Proximité', cout: 1, desc: 'Éclate dès qu\'une créature approche, sans avoir à la toucher. Posé (zone), c\'est une mine.' },
     expiration: { id: 'expiration', nom: 'À l\'expiration', cout: 2, desc: 'Quand l\'effet s\'éteint, il éclate une dernière fois.' },
   };
   // Filtres de matière (pointe droite) : le sort au contact ne réagit qu'à cela et traverse le reste
@@ -507,6 +514,14 @@ const DATA = (() => {
     { id: 'prise',      type: 'shape', item: 'prise', titre: 'Forme : Prise', indice: 'Possède le glyphe Force ou Gravité.', cond: (p) => p.cores.includes('force') || p.cores.includes('gravite') },
     { id: 'bouclier',   type: 'shape', item: 'bouclier', titre: 'Forme : Bouclier', indice: 'Fais-toi bousculer 5 fois par des créatures.', cond: (p) => (p.compteurs.bouscule || 0) >= 5 },
     { id: 'contre',     type: 'core', item: 'contre', titre: 'Glyphe : Contre-sort', indice: 'Possède 12 glyphes d\'effet.', cond: (p) => p.cores.length >= 12 },
+    // --- nouveaux glyphes de sort ---
+    { id: 'zigzag', type: 'mods', item: ['zigzag'], titre: 'Trajectoire : Zigzag', indice: 'Lance 45 sceaux.', cond: (p) => p.compteurs.sorts >= 45 },
+    { id: 'cloche', type: 'mods', item: ['cloche'], titre: 'Trajectoire : Cloche', indice: 'Atteins le niveau 3.', cond: (p) => p.compteurs.niveau >= 3 },
+    { id: 'percant', type: 'mods', item: ['percant'], titre: 'Modificateur : Perçant', indice: 'Touche 25 créatures avec des projectiles.', cond: (p) => p.compteurs.creaturesTouchees >= 25 },
+    { id: 'gerbe', type: 'mods', item: ['gerbe'], titre: 'Modificateur : Gerbe', indice: 'Atteins le niveau 5.', cond: (p) => p.compteurs.niveau >= 5 },
+    { id: 'proximite', type: 'trigger', item: 'proximite', titre: 'Déclencheur : Proximité', indice: 'Lance 4 sceaux avec le déclencheur Retardé.', cond: (p) => (p.compteurs.retardes || 0) >= 4 },
+    { id: 'vague', type: 'shape', item: 'vague', titre: 'Forme : Vague', indice: 'Lance 10 sceaux de Terre.', cond: (p) => p.compteurs.terre >= 10 },
+    { id: 'colonne', type: 'shape', item: 'colonne', titre: 'Forme : Colonne', indice: 'Emploie souvent l\'Eau.', cond: (p) => ((p.maitrise || {}).eau || 0) >= 15 },
     // --- trajectoires, métamorphose, rembobinage ---
     { id: 'spirale',  type: 'mods', item: ['spirale'], titre: 'Trajectoire : Spirale', indice: 'Lance 35 sceaux.', cond: (p) => p.compteurs.sorts >= 35 },
     { id: 'boomerang', type: 'mods', item: ['boomerang'], titre: 'Trajectoire : Boomerang', indice: 'Touche 20 créatures avec des projectiles.', cond: (p) => p.compteurs.creaturesTouchees >= 20 },
