@@ -290,7 +290,7 @@ const Seal = (() => {
       if (hl) { ctx.strokeStyle = coul; ctx.lineWidth = Math.max(2, R * 0.03); ctx.setLineDash([]); }
       U.inkCircle(ctx, sl.x, sl.y, sl.r, 50 + sl.x, R * 0.01); ctx.setLineDash([]);
       if (id) {
-        const col = kind === 'core' ? coul : kind === 'core2' ? DATA.CORES[id].couleur : kind === 'filtre' ? DATA.FILTRES[id].couleur : INK;
+        const col = kind === 'core' ? coul : kind === 'core2' ? DATA.CORES[id].couleur : kind === 'filtre' ? DATA.FILTRES[id].couleur : kind === 'mod' && DATA.MODS[id] && DATA.MODS[id].aspect ? DATA.CORES[DATA.MODS[id].aspect].couleur : INK;
         glyph(ctx, kind === 'filtre' ? 'f_' + id : kind === 'cible' ? 'c_' + id : id, sl.x, sl.y, sl.r * 0.68, col, 60 + sl.x);
         if (label) U.txt(ctx, label, sl.x + sl.r * 0.9, sl.y - sl.r * 0.9, Math.max(9, sl.r * 0.55), 'center', '#6b4f2a');
       } else if (opts.empty && !enabled) {
@@ -306,7 +306,7 @@ const Seal = (() => {
     if (lay.core2 && (opts.fusion || s.core2)) slot(lay.core2, s.core2, 'core2', !!opts.fusion, opts.highlight === 'core2');
     lay.mods.forEach((sl, i) => {
       const m = s.mods[i];
-      if (m && m.sub) {
+      if (isSub(m)) {
         ctx.save(); ctx.fillStyle = U.hexA('#efe3c4', 0.9); ctx.beginPath(); ctx.arc(sl.x, sl.y, sl.r, 0, TAU); ctx.fill(); ctx.restore();
         drawMini(ctx, m.sub, sl.x, sl.y, sl.r * 0.95, t);
         if (opts.highlight === 'mod' + i) { ctx.save(); ctx.strokeStyle = coul; ctx.lineWidth = Math.max(2, R * 0.03); U.inkCircle(ctx, sl.x, sl.y, sl.r, 50 + sl.x, R * 0.01); ctx.restore(); }
