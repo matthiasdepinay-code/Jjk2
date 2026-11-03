@@ -11,6 +11,7 @@
 | `outils/zhakar.py` | Grave un texte dans l'écriture du Ghâzrûn (SVG) |
 | `lexique.md` | Lexique classé par thème (~650 entrées : parole, magie, religion, guerre, parler bas, sentiments, temps et lieu, nature, créatures, corps, vie quotidienne) |
 | `conversation.md` | Guide de conversation par situation |
+| `recit-cendre.md` | Un récit court dans ce monde, avec dialogues en Ghâzrûn |
 | `lexique.csv` | Le même lexique, exploitable par script |
 | `textes.md` | Textes avec traduction et glose mot à mot, dont un dialogue de garnison et un chant de guerre |
 

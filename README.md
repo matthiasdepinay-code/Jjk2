@@ -10,6 +10,7 @@ Une langue inventée dans l'esprit du Noir Parler des films : rauque, primitive,
 - [`ghazrun/lexique.md`](ghazrun/lexique.md) / [`lexique.csv`](ghazrun/lexique.csv) — lexique (~650 mots : parole, magie, religion, guerre, parler bas, sentiments, temps et lieu, nature, créatures, corps, vie quotidienne)
 - [`ghazrun/conversation.md`](ghazrun/conversation.md) — guide de conversation par situation : saluer, demander, se déplacer, manger, marché, danger, sentiments, météo
 - [`ghazrun/textes.md`](ghazrun/textes.md) — inscription, serment, lamentation, Décret, dialogue de garnison, chant de guerre, avec gloses
+- [`ghazrun/recit-cendre.md`](ghazrun/recit-cendre.md) — « Cendre », un récit court avec dialogues en Ghâzrûn
 - [`ghazrun/outils/`](ghazrun/outils) — `ghazrun.py` (déclinaison, conjugaison, lexique, analyse) et `zhakar.py` (écriture gravée en SVG)
 
 > *Ûl ghâzagh, vânôth.*
