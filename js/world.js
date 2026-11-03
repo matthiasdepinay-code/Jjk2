@@ -22,7 +22,7 @@ const World = (() => {
       objs: [], crs: [], sp: [], parts: [], pickups: [], eclairs: [],
       cam: { x: 0, y: 0 }, shake: 0, lastZone: '', flash: 0,
       tod: 0.32, meteo: { type: 'clair', t: 120 }, foudreT: 4, rainT: 0, obsT: {}, ileT: 0, pluieT: 0,
-      control: null, lien: null, portails: [], defiT: 0, lac: null, lacSec: false, vuSommet: false, maxDepth: 0,
+      control: null, lien: null, portails: [], gz: [], defiT: 0, lac: null, lacSec: false, vuSommet: false, maxDepth: 0,
     };
     for (const o of L.objs) st.objs.push(makeObj(o));
     for (const c of L.crs) st.crs.push(makeCreature(c));
@@ -34,7 +34,7 @@ const World = (() => {
   function ensure(g, saved) { if (!st) build(g, saved); game = g; }
   function respawn() {
     const p = st.p;
-    p.x = L.spawn.x; p.y = L.spawn.y; p.vx = 0; p.vy = 0; p.hp = p.hpMax;
+    p.x = L.spawn.x; p.y = L.spawn.y; p.vx = 0; p.vy = 0; p.hp = p.hpMax; p.pg = null; p.w = 26; p.h = 50;
     for (const k in p.sta) p.sta[k] = 0;
     if (p.carry) drop();
   }
@@ -119,6 +119,25 @@ const World = (() => {
     if (blockedBy(b, sols)) { for (let up = 1; up <= CS * 6; up++) { if (!blockedBy({ x: b.x, y: b.y - up, w: b.w, h: b.h }, sols)) { b.y -= up; break; } } }
     b.x = clamp(b.x, 0, L.w - b.w);
     if (b.y > L.h + 100) b.y = L.h + 100;
+  }
+  function unstick(b) {
+    const sols = dynSolids(b);
+    if (!blockedBy(b, sols)) return;
+    for (let r = 2; r <= 40; r += 2) for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const t = { x: b.x + dx * r, y: b.y + dy * r, w: b.w, h: b.h };
+      if (!blockedBy(t, sols)) { b.x = t.x; b.y = t.y; return; }
+    }
+  }
+  function crush(p) {
+    const cx = p.x + p.w / 2, cy = p.y + p.h; let n = 0;
+    Sim.forRadius(cx, cy + 8, 22, (x, y, i, m) => {
+      if (m === M.VERRE) { Sim.set(x, y, M.SABLE); n++; } else if (m === M.GLACE) { Sim.set(x, y, M.NEIGE); n++; }
+      else if ((m === M.NEIGE || m === M.SABLE || m === M.CENDRE || m === M.HERBE || m === M.PLANTE || m === M.TERRE) && Math.random() < 0.55) { Sim.set(x, y, M.AIR); n++; }
+    });
+    for (const c of st.crs) if (c.hp > 0 && dist(cx, cy, c.x + c.w / 2, c.y + c.h / 2) < 80) { c.sta.stun = Math.max(c.sta.stun, 2); c.vy -= 260; }
+    for (const o of st.objs) if (o.dyn && !o.carried && dist(cx, cy, o.x + o.w / 2, o.y + o.h / 2) < 80) o.vy -= 300;
+    st.shake = 0.4; part(cx, cy, '#8a7a5a', 16, 130, 0.6, 3, 500); Son.sfx('burst', 'terre');
+    if (n > 6) msg('Boum. Le sol cède sous ton poids.');
   }
   function liquidOf(b) { const m = Sim.matAt(b.x + b.w / 2, b.y + b.h * 0.55); return P[m].liquid ? m : 0; }
 
@@ -259,10 +278,7 @@ const World = (() => {
         });
         break;
       case 'gravite':
-        Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
-          const q = P[m]; if (m === M.AIR || (q.solid && !q.powder)) return;
-          if (Math.random() < pr * 0.5 && y > 0 && Sim.get(x, y - 1) === M.AIR) Sim.swap(i, (y - 1) * Sim.W + x);
-        });
+        if (Sim !== MainSim) Sim.forRadius(cx, cy, rad, (x, y, i, m) => { const q = P[m]; if (m === M.AIR || (q.solid && !q.powder)) return; if (Math.random() < pr * 0.5 && y > 0 && Sim.get(x, y - 1) === M.AIR) Sim.swap(i, (y - 1) * Sim.W + x); });
         break;
       case 'temps':
         Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
@@ -361,7 +377,7 @@ const World = (() => {
           case 'froid': c.sta.stun = Math.max(c.sta.stun, (burst ? 3 : 0.5) * dur); c.sta.burn = 0; break;
           case 'foudre': hurt(c, 2 * power * k * faible); c.sta.stun = Math.max(c.sta.stun, 2 * dur); break;
           case 'acide': case 'fanaison': hurt(c, 1.5 * power * k * faible); break;
-          case 'gravite': c.vy -= (burst ? 450 : 1900 * mode) * power; c.onGround = false; break;
+          case 'gravite': if (burst) c.onGround = false; break;
           case 'poids': c.vy += (burst ? 500 : 1500 * mode) * power; break;
           case 'temps': case 'ralentir': c.sta.lent = Math.max(c.sta.lent || 0, (burst ? 8 : 0.5) * dur); break;
           case 'esprit': if (burst) controlCreature(c, 12 * dur); break;
@@ -393,7 +409,7 @@ const World = (() => {
         case 'froid': c.sta.stun = Math.max(c.sta.stun, (burst ? 3 : 0.5) * dur); c.sta.burn = 0; if (c.t === 'follet') hurt(c, 1.5 * power * k, 'eau'); if (burst) part(ccx, ccy, C, 8, 50, 0.6, 2, 0, 'spark'); break;
         case 'foudre': hurt(c, 2 * power * k); c.sta.stun = Math.max(c.sta.stun, 2 * dur); if (c.t === 'golem' && burst) { c.sta.stun += 2; } if (burst) part(ccx, ccy, C, 10, 120, 0.4, 2, 0, 'spark'); break;
         case 'acide': if (c.t !== 'golem') hurt(c, 1.5 * power * k); else if (burst) { hurt(c, 3 * power); part(ccx, ccy, '#8fbf2a', 8, 60); } break;
-        case 'gravite': c.vy -= (burst ? 450 : 1900 * mode) * power; c.onGround = false; break;
+        case 'gravite': if (burst) c.onGround = false; break;
         case 'temps': case 'ralentir': c.sta.lent = Math.max(c.sta.lent || 0, (burst ? 8 : 0.5) * dur); if (burst) part(ccx, ccy, C, 6, 40, 0.6, 2); break;
         case 'son': c.vx += dx * 600 * power * k; c.vy -= 200 * power * k; c.sta.sleep = 0; c.sta.stun = Math.max(c.sta.stun, 0.5); c.curieux = { x: cx, y: cy, t: 6 }; break;
         case 'silence': c.sta.sleep = Math.max(c.sta.sleep, (burst ? 5 : 0.4) * dur); break;
@@ -419,7 +435,7 @@ const World = (() => {
           if (core === 'eau' || core === 'froid') o.burning = 0;
           if (core === 'vent') { const dx = Math.sign(ocx - cx) || 1; o.vx += dx * 420 * power * k; o.vy -= 220 * power * k; }
           if (core === 'force') { o.vx -= (ocx - cx) * 6 * power * k; o.vy -= (ocy - cy) * 4 * power * k + 100 * k; }
-          if (core === 'gravite') { o.vy -= (burst ? 400 : 1900 * mode) * power; }
+
           if (core === 'metal' || core === 'son') { const sg = core === 'metal' ? -1 : 1; o.vx += sg * Math.sign(ocx - cx) * 420 * power * k; o.vy -= 150 * power * k; }
           if (core === 'poids') o.vy += (burst ? 400 : 1500 * mode) * power;
           if ((core === 'terre' || core === 'acide') && burst) { o.hp -= power; if (o.hp <= 0) { o.mort = true; part(ocx, ocy, '#8a6b2f', 12, 90); } }
@@ -437,7 +453,6 @@ const World = (() => {
             o.mort = true; part(ocx, ocy, '#8a6b2f', 16, 120, 0.8, 4, 600);
             dropPickup('poussiere', ocx, o.y - 10); msg('Le rocher éclate ! Il en tombe une poussière scintillante.');
           } else if (burst && (core === 'feu' || core === 'terre' || core === 'force' || core === 'vent' || core === 'foudre')) { o.fissure = 0.5; if (!o.msgT || time - o.msgT > 4) { o.msgT = time; msg('Le rocher vibre. Il faudrait plus de puissance...'); } }
-          if (core === 'gravite') o.vy -= (burst ? 300 : 1700 * mode) * power;
           if (core === 'metal') { o.vx -= Math.sign(ocx - cx) * 300 * power * k; }
           break;
         case 'rune': if (core === 'lumiere') { o.revele = Math.min(1, o.revele + (burst ? 1 : k * 0.5)); if (burst) part(ocx, ocy, C, 10, 60, 0.8, 2, 0, 'spark'); } break;
@@ -460,7 +475,7 @@ const World = (() => {
         case 'lumiere': p.sta.lumiere = Math.max(p.sta.lumiere, 4 * dur); break;
         case 'foudre': if (!p.sta.vitesse && !p.sta.stone && burst) { p.hp -= 1; p.vy -= 200; msg('Tu es secoué(e) par ta propre foudre.', 'warn'); } break;
         case 'acide': if (!p.sta.stone && !p.sta.dissous) { p.hp -= (burst ? 1 : 1.5 * mode) * power; if (burst) msg('Ça pique !', 'warn'); } break;
-        case 'gravite': p.vy -= (burst ? 450 : 1900 * mode) * power; p.onGround = false; break;
+
         case 'froid': if (burst && !p.sta.patins) msg('Brrr.'); break;
         case 'son': { const dx = Math.sign(pcx - cx) || 1; p.vx += dx * 300 * power * k; p.vy -= 200 * power * k; break; }
         case 'poids': p.vy += (burst ? 400 : 1500 * mode) * power; break;
@@ -475,7 +490,16 @@ const World = (() => {
       Son.sfx('burst', core);
       if (prm.persist > 0 && core !== 'terre' && core !== 'gravite' && core !== 'metal' && core !== 'esprit' && core !== 'lien' && core !== 'portail') st.sp.push({ k: 'field', core, x: cx, y: cy, r: rad * 0.8, life: 4 * prm.persist * dur, max: 4 * prm.persist * dur, prm });
       else if (core === 'lumiere' && !opts.noField) st.sp.push({ k: 'field', core, x: cx, y: cy, r: rad * 0.8, life: 5 * dur, max: 5 * dur, prm, faible: true });
-      if (core === 'gravite' && !opts.noField) st.sp.push({ k: 'field', core, x: cx, y: cy, r: rad * 1.1, life: 5 * dur * (1 + prm.persist), max: 5 * dur, prm, grav: true });
+      if (core === 'gravite' && !opts.noField) {
+        const p = st.p; let dv = opts.dir;
+        if (!dv) { const ddx = cx - (p.x + p.w / 2), ddy = cy - (p.y + p.h / 2); const dd = Math.hypot(ddx, ddy); dv = dd > 20 ? { x: ddx / dd, y: ddy / dd } : { x: 0, y: 1 }; }
+        const [gx, gy] = snapDir(dv.x, dv.y);
+        const mag = prm.gInv ? 0 : 1.2 + 0.9 * Math.max(0, (power - 1) / 0.6);
+        addGField(cx, cy, rad * 1.3, gx, gy, mag, 6 * dur * (1 + (prm.persist || 0)));
+        const lbl = mag === 0 ? 'Apesanteur' : gy === 1 ? (mag > 1.6 ? 'Pesanteur écrasante' : 'Pesanteur') : gy === -1 ? 'Chute vers le ciel' : 'Pesanteur latérale';
+        st.sp.push({ k: 'label', x: cx, y: cy - rad, txt: lbl, life: 1.4, max: 1.4 });
+        evt('gravite', lbl);
+      }
       if (core === 'terre' || core === 'metal') { st.shake = 0.15; }
       if (core === 'portail' && !opts.self) placePortail(cx, cy);
     }
@@ -530,7 +554,19 @@ const World = (() => {
       case 'froid': p.sta.patins = 12 * dur; p.sta.burning = 0; msg('Des patins de givre : tu marches sur l\'eau.'); around(); break;
       case 'foudre': p.sta.vitesse = 10 * dur; msg('Tes jambes crépitent !'); around({ noGrid: true }); break;
       case 'acide': p.sta.dissous = 8 * dur; msg('Tu dissous ce que tu touches. Attention où tu poses les mains.'); break;
-      case 'gravite': p.sta.vol = Math.max(p.sta.vol, 8 * dur); p.onGround = false; msg('Tu quittes le sol. Flèches ou ZQSD pour voler ; ça consomme de l\'encre.'); evt('vol'); break;
+      case 'gravite': {
+        const heavy = power >= 1.5, T = 10 * dur;
+        if (prm.gInv) { setPG(0, -1, heavy ? 2.2 : 1, T); msg('Ta pesanteur s\'inverse : tu tombes vers le ciel. Le plafond devient ton sol.'); evt('gravite', 'plafond'); break; }
+        let dx = aim.x - pcx, dy = aim.y - pcy; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
+        const h = Sim.raycast(pcx, pcy, dx, dy, 280 * (prm.range || 1));
+        if (h) {
+          const [gx, gy] = snapDir(dx, dy);
+          if (gx === 0 && gy === 1 && heavy) { setPG(0, 1, 2.8, T, { enclume: true }); msg('Tu deviens lourd(e) comme une enclume.'); evt('gravite', 'enclume'); }
+          else { setPG(gx, gy, heavy ? 2.2 : 1, T); msg(gy === 1 ? 'Ta pesanteur se raffermit.' : gy === -1 ? 'Tu tombes vers le plafond visé.' : 'Ta pesanteur pointe vers le mur : marche dessus (↑ ↓ pour avancer).'); evt('gravite', 'mur'); }
+        } else if (heavy) { setPG(0, 1, 2.8, T, { enclume: true }); msg('Tu deviens lourd(e) comme une enclume.'); evt('gravite', 'enclume'); }
+        else { p.pg = null; p.sta.vol = Math.max(p.sta.vol, 8 * dur); p.onGround = false; msg('Tu vises le vide : ta pesanteur s\'annule. Vol libre (flèches ou ZQSD) ; ça consomme de l\'encre.'); evt('vol'); }
+        break;
+      }
       case 'temps': p.sta.hate = 10 * dur; msg('Le monde ralentit autour de toi.'); break;
       case 'ralentir': p.sta.lent = 6 * dur; msg('Tes jambes pèsent une tonne. Bien joué.'); break;
       case 'son': around({ noGrid: false }); st.shake = 0.3; msg('Un cri à réveiller les golems.'); break;
@@ -552,7 +588,7 @@ const World = (() => {
   function makeSpec(seal, depth = 0) {
     const prm = Seal.params(seal);
     let cores = [seal.core]; if (seal.core2) cores.push(seal.core2);
-    if (prm.inverse) cores = cores.map((c) => DATA.INVERSE[c] || c);
+    if (prm.inverse) { prm.gInv = cores.includes('gravite'); cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c)); }
     const combo = seal.core2 && !prm.inverse ? [seal.core, seal.core2].sort().join('|') : null;
     return { cores, prm, trig: seal.trigger || 'immediat', subs: depth < 2 ? Seal.subs(seal) : [], combo, color: colorOf(cores[0]), core: cores[0], depth, nom: Seal.nom(seal) };
   }
@@ -581,7 +617,11 @@ const World = (() => {
       case 'eau|vie': for (let k = 0; k < 3; k++) gridEffect('vie', x, y, r * 1.3, prm, true, 1); break;
       case 'lumiere|ombre': msg('Lumière et ombre s\'annulent dans un silence gêné.'); break;
       case 'force|terre': st.shake = 0.6; for (const c of st.crs) if (c.hp > 0 && dist(x, y, c.x, c.y) < r * 3) { c.sta.stun = Math.max(c.sta.stun, 3); c.vy -= 200; } break;
-      case 'gravite|vent': st.sp.push({ k: 'field', core: 'gravite', x, y: y - r, r: r * 1.5, life: 12 * dur, max: 12 * dur, prm, grav: true }); break;
+      case 'gravite|vent': addGField(x, y - r, r * 1.5, 0, -1, 1.1, 12 * dur); break;
+      case 'force|gravite': st.sp.push({ k: 'singularite', x, y, r: r * 2.2, life: 3 * dur, max: 3 * dur }); break;
+      case 'gravite|terre': { const g = Math.floor(x / CS), top = 2; for (let yy = top; yy < top + 6; yy++) for (let xx = g - 3; xx <= g + 3; xx++) if (Sim.get(xx, yy) === M.AIR && Math.hypot(xx - g, yy - top - 3) < 3.3) Sim.set(xx, yy, M.PIERRE); addGField(x, (top + 3) * CS, 40, 0, 1, 3, 3); msg('Un météore se détache du ciel...'); break; }
+      case 'eau|gravite': { spawnLiquid(M.EAU, x, y - 30, 40); addGField(x, y - 30, r, 0, 1, 0, 10 * dur); break; }
+      case 'gravite|temps': addGField(x, y, r * 1.4, 0, 1, 0.25, 10 * dur); break;
       case 'feu|froid': Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (m === M.PIERRE && Math.random() < 0.5) Sim.set(cx, cy, M.SABLE); else if (m === M.AIR && Math.random() < 0.3) Sim.set(cx, cy, M.VAPEUR, 40); }); break;
       case 'acide|feu': Sim.forRadius(x, y, r * 1.3, (cx, cy, i, m) => { if (m === M.AIR && Math.random() < 0.5) Sim.set(cx, cy, M.FUMEE, 120); }); for (const c of st.crs) if (c.hp > 0 && dist(x, y, c.x, c.y) < r * 1.5) c.sta.sleep = Math.max(c.sta.sleep, 8 * dur); break;
       case 'ombre|vie': { const g = groundBelow(x, y); if (g != null) { for (let k = 0; k < 2; k++) st.objs.push(makeObj({ t: 'champignon', x: x - 20 + k * 30, y: g - 26 })); } break; }
@@ -924,13 +964,27 @@ const World = (() => {
   function update(dt, inp, aim) {
     time += dt;
     const p = st.p;
+    updateGFields(dt);
     Sim.step();
     updateMeteo(dt);
     for (const k in p.sta) if (p.sta[k] > 0) p.sta[k] = Math.max(0, p.sta[k] - dt);
     p.inv = Math.max(0, (p.inv || 0) - dt);
-    // taille
+    // pesanteur personnelle
+    if (p.pg) { p.pg.t -= dt; if (p.pg.t <= 0) { p.pg = null; msg('Ta pesanteur redevient normale.'); } }
+    const G = playerGrav();
+    const Gstd = !G || (G.gx === 0 && G.gy === 1);
+    const Gvol = p.sta.vol > 0 || (G && G.mag === 0);
+    const enclume = !!(p.pg && p.pg.enclume);
+    p.G = G;
+    // taille (couché(e) contre un mur : la boîte pivote)
     const wantH = p.sta.small > 0 ? 26 : p.sta.geant > 0 ? 84 : 50, wantW = p.sta.small > 0 ? 14 : p.sta.geant > 0 ? 42 : 26;
-    if (p.h !== wantH) { const bottom = p.y + p.h, cx = p.x + p.w / 2; p.h = wantH; p.w = wantW; p.y = bottom - p.h; p.x = cx - p.w / 2; }
+    const horiz = G && G.gx !== 0 && !Gvol;
+    const W2 = horiz ? wantH : wantW, H2 = horiz ? wantW : wantH;
+    if (p.h !== H2 || p.w !== W2) {
+      if (!horiz && p.w <= p.h) { const bottom = p.y + p.h, cx = p.x + p.w / 2; p.h = H2; p.w = W2; p.y = bottom - p.h; p.x = cx - p.w / 2; }
+      else { const cx = p.x + p.w / 2, cy = p.y + p.h / 2; p.w = W2; p.h = H2; p.x = cx - p.w / 2; p.y = cy - p.h / 2; }
+      unstick(p);
+    }
     p.ink = Math.min(p.inkMax, p.ink + dt * p.inkRegen);
     // statuts qui blessent / coûtent
     if (p.sta.burning > 0 && !p.sta.stone) { p.hp -= dt * 0.8; if (Math.random() < 0.3) part(p.x + p.w / 2, p.y + p.h * 0.3, '#d9622b', 1, 40, 0.5, 3, -150); }
@@ -958,11 +1012,31 @@ const World = (() => {
     const dirX = ((inp.right ? 1 : 0) - (inp.left ? 1 : 0)) * (p.sta.boussole > 0 ? -1 : 1);
     const dirY = (inp.down ? 1 : 0) - (inp.up ? 1 : 0);
     const friction = p.sta.glisse > 0 ? 0.6 : 14;
-    if (p.sta.vol > 0) {
-      // vol libre
-      const fs = 270;
+    if (Gvol) {
+      // vol libre (sort sur soi) ou apesanteur d'un champ (plus mou)
+      const fs = p.sta.vol > 0 ? 270 : 170;
       p.vx = lerp(p.vx, dirX * fs, Math.min(1, dt * 6)); p.vy = lerp(p.vy, dirY * fs - (inp.jumpHeld ? fs : 0), Math.min(1, dt * 6));
       if (dirX) p.face = dirX; p.anim += dt * 4;
+      p.climbing = false;
+    } else if (!Gstd) {
+      // pesanteur latérale ou inversée : on marche sur la surface visée
+      const gx = G.gx, gy = G.gy, mag = G.mag;
+      const tx = gy !== 0 ? 1 : 0, ty = gy !== 0 ? 0 : 1;
+      const dirT = gy !== 0 ? dirX : dirY;
+      let vA = p.vx * gx + p.vy * gy, vT = p.vx * tx + p.vy * ty;
+      const grounded = blockedBy({ x: p.x + gx * 2, y: p.y + gy * 2, w: p.w, h: p.h }, dynSolids());
+      const accel = grounded ? 2200 : 1200;
+      if (dirT) {
+        vT = clamp(vT + dirT * accel * dt, -speed, speed); p.anim += dt * 10;
+        const th = Math.atan2(gy, gx) - Math.PI / 2; const rx = Math.cos(th), ry = Math.sin(th);
+        p.face = Math.sign((tx * rx + ty * ry) * dirT) || p.face;
+      } else vT *= grounded ? Math.max(0, 1 - friction * dt) : Math.max(0, 1 - 3 * dt);
+      vA = Math.min(vA + GRAV * mag * dt * (inWater ? 0.15 : 1), inWater ? 120 : 1100);
+      if (grounded) p.coyote = 0.1; else p.coyote -= dt;
+      if (inp.jump) p.jumpBuf = 0.12; else p.jumpBuf -= dt;
+      if (p.jumpBuf > 0 && (p.coyote > 0 || inWater)) { vA = -(inWater ? 360 : 585); p.coyote = 0; p.jumpBuf = 0; Son.sfx('jump'); }
+      if (!inp.jumpHeld && vA < -150) vA += 800 * dt;
+      p.vx = vA * gx + vT * tx; p.vy = vA * gy + vT * ty;
       p.climbing = false;
     } else {
       const accel = p.onGround ? (p.sta.glisse > 0 ? 300 : 2200) : 1200;
@@ -972,16 +1046,16 @@ const World = (() => {
       // grimper (plantes)
       p.climbing = false;
       if ((inp.up || (inp.down && !p.onGround)) && Sim.rectHas(p, (m) => P[m].climb)) { p.climbing = true; p.vy = inp.up ? -160 : 140; p.vx *= 0.5; if (inp.up) p.anim += dt * 8; }
-      let g = GRAV;
+      let g = GRAV * (G ? G.mag : 1);
+      const nage = inWater && !enclume;
       if (p.sta.lowgrav > 0) g *= 0.35;
       if (p.sta.glide > 0 && p.vy > 0) g *= 0.25;
-      if (inWater) g *= 0.15;
-      if (gravField(p)) g = -GRAV * 0.6;
-      if (!p.climbing) p.vy = Math.min(p.vy + g * dt, inWater ? 120 : 1100);
-      if (inWater) p.vy *= Math.max(0, 1 - 1.5 * dt);
+      if (nage) g *= 0.15;
+      if (!p.climbing) p.vy = Math.min(p.vy + g * dt, nage ? 120 : 1100 * (enclume ? 1.4 : 1));
+      if (nage) p.vy *= Math.max(0, 1 - 1.5 * dt);
       if (p.onGround) p.coyote = 0.1; else p.coyote -= dt;
       if (inp.jump) p.jumpBuf = 0.12; else p.jumpBuf -= dt;
-      if (p.jumpBuf > 0 && (p.coyote > 0 || inWater || p.climbing)) {
+      if (p.jumpBuf > 0 && (p.coyote > 0 || nage || p.climbing)) {
         const j = inWater ? 360 : 585 * (p.sta.jump > 0 ? 1.6 : 1);
         p.vy = -j; p.coyote = 0; p.jumpBuf = 0; p.climbing = false; Son.sfx('jump');
         if (!inWater) part(p.x + p.w / 2, p.y + p.h, '#8a7a5a', 4, 40, 0.3, 2);
@@ -989,7 +1063,11 @@ const World = (() => {
       if (!inp.jumpHeld && p.vy < -150 && !inWater && !p.climbing) p.vy += 800 * dt;
     }
     if (st.control) { p.vx = 0; }
+    p.canStep = Gstd && !Gvol;
+    const vyAvant = p.vy;
     moveBody(p, dt);
+    if (!Gstd && !Gvol) p.onGround = blockedBy({ x: p.x + G.gx * 2, y: p.y + G.gy * 2, w: p.w, h: p.h }, dynSolids());
+    if (enclume && p.onGround && vyAvant > 420) crush(p);
     updateLien(dt, inp);
     updatePortails(dt);
     // pousser une caisse
@@ -999,7 +1077,7 @@ const World = (() => {
     if (p.selfTimer) { p.selfTimer.t -= dt; if (p.selfTimer.t <= 0) { const q = p.selfTimer; p.selfTimer = null; selfCast(q.spec, q.aim); } }
     if (p.hp <= 0) { msg('Tu t\'évanouis... et te réveilles devant ta porte, un peu honteux(se).', 'warn'); Son.sfx('hurt'); respawn(); }
     // objet porté
-    if (p.carry) { const o = p.carry; o.x = p.x + p.w / 2 - o.w / 2; o.y = p.y - o.h - 4; o.vx = 0; o.vy = 0; }
+    if (p.carry) { const o = p.carry; const g = p.G && p.G.mag > 0 ? p.G : { gx: 0, gy: 1 }; const cx = p.x + p.w / 2 - g.gx * (p.w / 2 + o.w / 2 + 4), cy = p.y + p.h / 2 - g.gy * (p.h / 2 + o.h / 2 + 4); o.x = cx - o.w / 2; o.y = cy - o.h / 2; o.vx = 0; o.vy = 0; }
     // creuser
     if (inp.dig) dig(aim, dt);
     // électricité sur le joueur
@@ -1039,7 +1117,40 @@ const World = (() => {
     return { torches, vigneMax, golemTame, lacSec: st.lacSec, vuSommet: st.vuSommet, profondeur: st.maxDepth,
       glaceLac: Sim.countRect(223, 125, 327, 165, M.GLACE), glaceSommet: Sim.countRect(385, 65, 415, 82, M.GLACE) };
   }
-  function gravField(b) { for (const s of st.sp) if (s.k === 'field' && s.grav && U.circleRect(s.x, s.y, s.r, b)) return true; return false; }
+  // ---- Gravité : champs locaux (st.gz, partagés avec la simulation) ----
+  function snapDir(dx, dy) { return Math.abs(dx) > Math.abs(dy) ? [Math.sign(dx) || 1, 0] : [0, Math.sign(dy) || 1]; }
+  function addGField(x, y, r, gx, gy, mag, life) {
+    st.gz.push({ x, y, r, gx, gy, mag, life, max: life });
+    part(x, y, '#6c5ab8', 14, 60, 0.8, 2, 0, 'spark');
+  }
+  function gravOf(b) {
+    const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+    for (const z of st.gz) if ((cx - z.x) * (cx - z.x) + (cy - z.y) * (cy - z.y) <= z.r * z.r) return z;
+    return null;
+  }
+  function gravField(b) { const z = gravOf(b); return !!(z && (z.mag === 0 || z.gy < 0)); }
+  // applique la pesanteur (locale ou normale) à un corps ; k : facteur (liquides...)
+  function applyGrav(b, dt, k = 1, vmax = 1000) {
+    const z = gravOf(b);
+    if (!z) { b.vy = Math.min(b.vy + GRAV * dt * k, vmax); return; }
+    if (z.mag === 0) { b.vx *= Math.max(0, 1 - 0.6 * dt); b.vy *= Math.max(0, 1 - 0.6 * dt); b.vy -= 25 * dt; return; }
+    b.vx = clamp(b.vx + GRAV * z.mag * z.gx * dt * k, -vmax, vmax);
+    b.vy = clamp(b.vy + GRAV * z.mag * z.gy * dt * k, -vmax, vmax);
+    if (z.gy !== 1) b.onGround = false;
+  }
+  function updateGFields(dt) {
+    for (const z of st.gz) z.life -= dt;
+    st.gz = st.gz.filter((z) => z.life > 0);
+    Sim.gzones = st.gz;
+  }
+  // gravité personnelle (sort sur soi) ou du champ où l'on se trouve ; null = normale
+  function playerGrav() {
+    const p = st.p;
+    if (p.pg && p.pg.t > 0) return p.pg;
+    const z = gravOf(p);
+    return z ? { gx: z.gx, gy: z.gy, mag: z.mag } : null;
+  }
+  function setPG(gx, gy, mag, t, extra = {}) { st.p.pg = Object.assign({ gx, gy, mag, t }, extra); st.p.onGround = false; }
 
   function updateMeteo(dt) {
     st.tod = (st.tod + dt / DAY) % 1;
@@ -1091,7 +1202,7 @@ const World = (() => {
         case 'caisse': case 'rocher':
           if (o.ench) { o.ench.t -= dt; if (o.ench.t <= 0) o.ench = null; else { doContinuous(o.ench.spec, o.x + o.w / 2, o.y + o.h / 2, 50 * (o.ench.spec.prm.size || 1), dt, { noPlayer: true, noField: true }); if (Math.random() < 0.3) part(o.x + Math.random() * o.w, o.y + Math.random() * o.h, o.ench.spec.color, 1, 20, 0.5, 2, -40, 'spark'); } }
           if (o.carried) break;
-          o.vy = Math.min(o.vy + GRAV * dt * (gravField(o) ? -0.6 : 1), 1000);
+          applyGrav(o, dt);
           o.vx *= Math.max(0, 1 - (o.onGround ? 6 : 1) * dt);
           moveBody(o, dt, o);
           { const lq = liquidOf(o); if (lq === M.EAU || lq === M.HUILE) { o.vy -= 1400 * dt; if (o.t === 'caisse') o.burning = 0; } if (lq === M.LAVE && o.t === 'caisse') o.burning = 3; }
@@ -1154,10 +1265,11 @@ const World = (() => {
         if (c.controlled && c.ctl) { c.vx += c.ctl.dirX * 900 * dt; c.vy += c.ctl.dirY * 900 * dt; if (c.ctl.dirX) c.dir = c.ctl.dirX; }
         else if (actif) { c.vx += (tx - c.x) * 2.4 * dt * lentMul; c.vy += (ty - c.y) * 2.4 * dt * lentMul; }
         c.vx *= Math.max(0, 1 - 3 * dt); c.vy *= Math.max(0, 1 - 3 * dt);
+        { const z = gravOf(c); if (z && z.mag > 0) { c.vx += GRAV * z.mag * z.gx * dt * 0.5; c.vy += GRAV * z.mag * z.gy * dt * 0.5; } }
         c.canStep = false; moveBody(c, dt);
         if (Math.random() < 0.3) part(ccx, ccy, '#3f9c9b', 1, 20, 0.5, 2, -40, 'spark');
       } else {
-        c.vy = Math.min(c.vy + GRAV * dt * (gravField(c) ? -0.6 : 1) * (lq ? 0.2 : 1), 1000);
+        applyGrav(c, dt, lq ? 0.2 : 1);
         if (lq) c.vy *= Math.max(0, 1 - 1.5 * dt);
         if (c.controlled && c.ctl) {
           const sp = c.t === 'golem' ? 150 : 200; c.vx = c.ctl.dirX * sp; if (c.ctl.dirX) c.dir = c.ctl.dirX; if (c.ctl.jump && c.onGround) c.vy = -420; c.ctl.jump = false;
@@ -1188,14 +1300,14 @@ const World = (() => {
         if (c.y > L.h + 50) { c.hp = 0; c.respawn = 10; }
       }
       // contact joueur
-      if (U.rectsOverlap(c, p) && actif && !c.sta.tame && !c.controlled && p.inv <= 0 && p.sta.geant <= 0) {
+      if (U.rectsOverlap(c, p) && actif && !c.sta.tame && !c.controlled && p.inv <= 0 && p.sta.geant <= 0 && !(p.pg && p.pg.enclume)) {
         const dx = Math.sign(pcx - ccx) || 1;
         p.vx = dx * 320; p.vy = -260; p.inv = 1;
         if (p.sta.stone <= 0 && p.sta.armure <= 0) { p.hp -= c.dmg; Son.sfx('hurt'); msg(nomCreature(c.t) + ' te bouscule !', 'warn'); st.shake = 0.25; }
         else msg('Ton armure encaisse le choc.');
         c.vx = -dx * 150;
         if (p.trap) { doBurst(p.trap.spec, pcx, pcy, 80 * (p.trap.spec.prm.size || 1), { noPlayer: true }); p.trap = null; msg('Le sceau sur ta peau éclate !'); }
-      } else if (U.rectsOverlap(c, p) && p.sta.geant > 0 && !c.sta.tame) { c.vx = Math.sign(ccx - pcx) * 300; c.vy = -200; }
+      } else if (U.rectsOverlap(c, p) && (p.sta.geant > 0 || (p.pg && p.pg.enclume)) && !c.sta.tame) { c.vx = Math.sign(ccx - pcx) * 300; c.vy = -200; }
     }
   }
 
@@ -1234,7 +1346,7 @@ const World = (() => {
         c.vx *= Math.max(0, 1 - 2 * dt); c.vy *= Math.max(0, 1 - 2 * dt);
         c.hors = 0;
       } else {
-        c.vy = Math.min(c.vy + GRAV * dt, 900); c.hors = (c.hors || 0) + dt;
+        applyGrav(c, dt, 1, 900); c.hors = (c.hors || 0) + dt;
         if (c.onGround && Math.random() < dt * 3) { c.vx = (Math.random() - 0.5) * 160; c.vy = -220; }
         if (c.hors > 12) { hurt(c, dt * 0.5); if (c.hp <= 0) return; }
       }
@@ -1242,7 +1354,7 @@ const World = (() => {
     } else {
       // hop / walk / crawl
       const sw = sp.lave && lq === M.LAVE;
-      c.vy = Math.min(c.vy + GRAV * dt * (gravField(c) ? -0.6 : 1) * (lq ? 0.2 : 1), 1000);
+      applyGrav(c, dt, lq ? 0.2 : 1);
       if (lq) c.vy *= Math.max(0, 1 - 1.5 * dt);
       if (sw && actif) { c.vy -= 900 * dt * (Math.sin(c.phase * 2) > 0 ? 1 : 0.3); }
       if (actif || c.controlled) {
@@ -1258,7 +1370,7 @@ const World = (() => {
     }
     if (c.y > L.h + 50) { c.hp = 0; c.respawn = 10; }
     // contact
-    if (sp.hostile && U.rectsOverlap(c, p) && actif && !c.sta.tame && !c.controlled && p.inv <= 0 && p.sta.geant <= 0) {
+    if (sp.hostile && U.rectsOverlap(c, p) && actif && !c.sta.tame && !c.controlled && p.inv <= 0 && p.sta.geant <= 0 && !(p.pg && p.pg.enclume)) {
       const dx = Math.sign(pcx - ccx) || 1; p.vx = dx * 280; p.vy = -240; p.inv = 1;
       if (p.sta.stone <= 0 && p.sta.armure <= 0 && c.dmg > 0) { p.hp -= c.dmg; Son.sfx('hurt'); msg(nomCreature(c.t) + ' te bouscule !', 'warn'); }
       c.vx = -dx * 150;
@@ -1284,7 +1396,7 @@ const World = (() => {
       switch (s.k) {
         case 'proj': {
           s.life -= dt; if (s.life <= 0) { s.mort = true; part(s.x, s.y, s.color, 5, 30, 0.4); break; }
-          s.vy += s.grav * dt;
+          { const z = st.gz.length ? gravOf({ x: s.x - 1, y: s.y - 1, w: 2, h: 2 }) : null; if (z) { s.vx += 900 * z.mag * z.gx * dt; s.vy += 900 * z.mag * z.gy * dt; } else s.vy += s.grav * dt; }
           const nx = s.x + s.vx * dt, ny = s.y + s.vy * dt;
           if (s.guide) { const aim = toWorld(game.inp.mouse.x, game.inp.mouse.y); const want = Math.atan2(aim.y - s.y, aim.x - s.x), cur = Math.atan2(s.vy, s.vx); let da = want - cur; while (da > Math.PI) da -= TAU; while (da < -Math.PI) da += TAU; const na = cur + clamp(da, -4 * dt, 4 * dt); const sp = Math.hypot(s.vx, s.vy); s.vx = Math.cos(na) * sp; s.vy = Math.sin(na) * sp; }
           const dirv = { x: s.vx / (Math.hypot(s.vx, s.vy) || 1), y: s.vy / (Math.hypot(s.vx, s.vy) || 1) };
@@ -1380,12 +1492,19 @@ const World = (() => {
           break;
         }
         case 'label': s.life -= dt; s.y -= 20 * dt; if (s.life <= 0) s.mort = true; break;
+        case 'singularite': {
+          s.life -= dt; const ph = s.life > 0.6;
+          const pull = (b, k) => { const bx = b.x + b.w / 2, by = b.y + b.h / 2; const dx = s.x - bx, dy = s.y - by; const d = Math.hypot(dx, dy) || 1; if (d > s.r) return; if (ph) { b.vx += dx / d * 1800 * dt * k; b.vy += dy / d * 1800 * dt * k; } else { b.vx -= dx / d * 900 * k; b.vy -= dy / d * 900 * k - 200; } };
+          if (s.life <= 0.6 && !s.recrache) { s.recrache = true; for (const c of st.crs) if (c.hp > 0) pull(c, 1); for (const o of st.objs) if (o.dyn && !o.carried) pull(o, 1); pull(st.p, 0.6); st.shake = 0.4; Son.sfx('burst', 'force'); }
+          if (ph) { for (const c of st.crs) if (c.hp > 0) pull(c, 1); for (const o of st.objs) if (o.dyn && !o.carried) pull(o, 1); pull(st.p, 0.5); Sim.forRadius(s.x, s.y, s.r * 0.7, (x, y, i, m) => { const q = P[m]; if ((q.liquid || q.powder || q.gas) && Math.random() < 0.3) { const dx = Math.sign(Math.floor(s.x / CS) - x), dy = Math.sign(Math.floor(s.y / CS) - y); const j = (y + dy) * Sim.W + x + dx; if (Sim.get(x + dx, y + dy) === M.AIR) Sim.swap(i, j); } }); }
+          if (s.life <= 0) s.mort = true;
+          break;
+        }
         case 'field': {
           s.life -= dt; if (s.life <= 0) { s.mort = true; break; }
           if (s.follow) { const p = st.p; s.x = p.x + p.w / 2; s.y = p.y + p.h / 2; }
           if (s.vx) { s.x += s.vx * dt; if (Sim.solidAt(s.x + Math.sign(s.vx) * s.r * 0.5, s.y)) s.vx = -s.vx; }
           if (s.faible) break;
-          if (s.grav) { applyEffect('gravite', s.x, s.y, s.r, { ...s.prm, power: 1 }, dt, { noField: true }); break; }
           if (s.spec) { doContinuous(s.spec, s.x, s.y, s.r, dt, { noField: true, noPlayer: !!s.follow }); }
           else applyEffect(s.core, s.x, s.y, s.r, { ...s.prm, power: s.prm.power * 0.5 }, dt, { noField: true });
           if (Math.random() < 0.6) { const a = Math.random() * TAU, rr = Math.random() * s.r; part(s.x + Math.cos(a) * rr, s.y + Math.sin(a) * rr * 0.5, colorOf(s.core), 1, 20, 0.7, 3, s.core === 'feu' ? -200 : s.core === 'eau' ? 100 : -30, s.core === 'lumiere' ? 'spark' : 'dot'); }
@@ -1406,7 +1525,7 @@ const World = (() => {
   function updatePickups(dt) {
     const p = st.p;
     for (const k of st.pickups) {
-      k.vy += 900 * dt; k.x += k.vx * dt; k.y += k.vy * dt; k.vx *= 0.98; k.bob += dt;
+      { const z = st.gz.length ? gravOf({ x: k.x - 1, y: k.y - 1, w: 2, h: 2 }) : null; if (z) { k.vx += 900 * z.mag * z.gx * dt; k.vy += 900 * z.mag * z.gy * dt; if (z.mag === 0) { k.vx *= 0.98; k.vy *= 0.98; } } else k.vy += 900 * dt; } k.x += k.vx * dt; k.y += k.vy * dt; k.vx *= 0.98; k.bob += dt;
       if (k.vy > 0 && Sim.solidAt(k.x, k.y + 2)) { k.vy = 0; k.vx = 0; while (Sim.solidAt(k.x, k.y)) k.y -= 1; }
       if (dist(k.x, k.y, p.x + p.w / 2, p.y + p.h / 2) < 40) { k.pris = true; game.gainIngredient(k.ing); }
       if (k.y > L.h + 50) k.pris = true;
@@ -1431,6 +1550,7 @@ const World = (() => {
     for (const q of st.portails) { ctx.save(); ctx.strokeStyle = '#4fb0a0'; ctx.lineWidth = 3; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.ellipse(q.x, q.y, q.r * 0.55, q.r, 0, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.2; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.ellipse(q.x, q.y, q.r * 0.3, q.r * 0.7, time * 2, 0, TAU); ctx.stroke(); ctx.restore(); if (Math.random() < 0.3) part(q.x + (Math.random() - 0.5) * 20, q.y + (Math.random() - 0.5) * 40, '#4fb0a0', 1, 10, 0.5, 2, 0, 'spark'); }
     if (st.lien) { ctx.save(); ctx.strokeStyle = '#c9a63a'; ctx.lineWidth = 2.5; U.inkLine(ctx, p.x + p.w / 2, p.y + p.h * 0.4, st.lien.x, st.lien.y, Math.floor(time * 3), 2); ctx.fillStyle = '#c9a63a'; ctx.beginPath(); ctx.arc(st.lien.x, st.lien.y, 4, 0, TAU); ctx.fill(); ctx.restore(); }
     if (st.control) { const c = st.control.c; ctx.save(); ctx.strokeStyle = '#b08ad8'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); U.inkCircle(ctx, c.x + c.w / 2, c.y + c.h / 2, Math.max(c.w, c.h) * 0.8, 2, 1.5); ctx.setLineDash([]); ctx.globalAlpha = 0.5; U.inkLine(ctx, p.x + p.w / 2, p.y + 10, c.x + c.w / 2, c.y, 3, 3); ctx.restore(); }
+    for (const z of st.gz) drawGField(ctx, z);
     for (const s of st.sp) drawSpell(ctx, s);
     for (const q of st.parts) drawPart(ctx, q);
     for (const e of st.eclairs) { ctx.save(); ctx.strokeStyle = '#fff8d0'; ctx.lineWidth = 4 * e.life / 0.35 + 1; ctx.globalAlpha = Math.min(1, e.life * 4); ctx.lineJoin = 'round'; ctx.beginPath(); e.pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); ctx.strokeStyle = '#e0c43a'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore(); }
@@ -1741,7 +1861,17 @@ const World = (() => {
     if (p.sta.wet > 0 && Math.random() < 0.06) part(p.x + p.w / 2, p.y + p.h, '#6aa0d8', 1, 10, 0.6, 2, 300);
     if (p.sta.lumiere > 0) { const g = ctx.createRadialGradient(p.x + p.w / 2, p.y + p.h / 2, 5, p.x + p.w / 2, p.y + p.h / 2, 80); g.addColorStop(0, 'rgba(216,166,58,0.35)'); g.addColorStop(1, 'rgba(216,166,58,0)'); ctx.fillStyle = g; ctx.fillRect(p.x - 80, p.y - 60, 200, 200); }
     if (p.sta.vol > 0) { ctx.save(); ctx.strokeStyle = '#6c5ab8'; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.6; U.inkCircle(ctx, p.x + p.w / 2, p.y + p.h / 2, p.h * 0.7, 3 + Math.floor(time * 4), 2); ctx.restore(); }
-    drawApprenti(ctx, p.x + p.w / 2, p.y + p.h, p.h, game.look, p.face, p.anim, p.sta, moving);
+    const G = p.G;
+    if (G && G.mag > 0 && !(G.gx === 0 && G.gy === 1) && p.sta.vol <= 0) {
+      const th = Math.atan2(G.gy, G.gx) - Math.PI / 2; const hs = Math.max(p.w, p.h);
+      ctx.save(); ctx.translate(p.x + p.w / 2, p.y + p.h / 2); ctx.rotate(th);
+      drawApprenti(ctx, 0, hs / 2, hs, game.look, p.face, p.anim, p.sta, moving || (Math.abs(p.vx) + Math.abs(p.vy) > 30 && p.onGround));
+      ctx.restore();
+      ctx.save(); ctx.strokeStyle = '#6c5ab8'; ctx.globalAlpha = 0.5; ctx.lineWidth = 1.5; const cx = p.x + p.w / 2, cy = p.y + p.h / 2; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + G.gx * 34, cy + G.gy * 34); ctx.stroke(); ctx.restore();
+    } else {
+      if (p.pg && p.pg.enclume) { ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = '#4a4a55'; ctx.beginPath(); ctx.ellipse(p.x + p.w / 2, p.y + p.h, p.w * 0.9, 4, 0, 0, TAU); ctx.fill(); ctx.restore(); }
+      drawApprenti(ctx, p.x + p.w / 2, p.y + p.h, p.h, game.look, p.face, p.anim, p.sta, moving);
+    }
     if (p.trap) { ctx.save(); ctx.strokeStyle = p.trap.spec.color; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(p.x + p.w / 2, p.y + p.h / 2, 30, time * 2, time * 2 + TAU); ctx.stroke(); ctx.restore(); }
     if (p.selfTimer) { ctx.save(); ctx.strokeStyle = p.selfTimer.spec.color; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x + p.w / 2, p.y + p.h / 2, 34, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - p.selfTimer.t / 2)); ctx.stroke(); ctx.restore(); }
     if (p.air !== undefined && p.air < 8 && p.liq === M.EAU) { ctx.save(); ctx.fillStyle = 'rgba(31,26,22,0.4)'; ctx.fillRect(p.x - 6, p.y - 14, p.w + 12, 4); ctx.fillStyle = '#3b6fb6'; ctx.fillRect(p.x - 6, p.y - 14, (p.w + 12) * clamp(p.air / 8, 0, 1), 4); ctx.restore(); }
@@ -1773,9 +1903,29 @@ const World = (() => {
       case 'orbit': ctx.fillStyle = s.color; ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill(); ctx.stroke(); Seal.glyph(ctx, s.spec.core, s.x, s.y, s.r * 0.6, '#efe3c4', 1); break;
       case 'totem': { ctx.strokeStyle = INK; ctx.lineWidth = 2.5; U.inkLine(ctx, s.x, s.y, s.x, s.y - 44, 3, 0.8); ctx.fillStyle = s.color; ctx.strokeStyle = INK; U.inkPolyPath(ctx, [[s.x - 10, s.y - 44], [s.x + 10, s.y - 44], [s.x, s.y - 60]], 4, 0.6); ctx.fill(); ctx.stroke(); Seal.glyph(ctx, s.spec.core, s.x, s.y - 30, 7, s.color, 2); const pulse = 1 - s.t / 2; ctx.globalAlpha = 0.35 * (1 - pulse); ctx.strokeStyle = s.color; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(s.x, s.y - 20, s.r * pulse, s.r * 0.5 * pulse, 0, 0, TAU); ctx.stroke(); break; }
       case 'rain': ctx.strokeStyle = s.color; ctx.lineWidth = 1.2; ctx.globalAlpha = 0.5; for (let k = 0; k < 5; k++) U.inkCircle(ctx, s.x - s.w / 2 + k * s.w / 4, s.yTop - 10 + (k % 2) * 6, 14, k, 1.2); break;
+      case 'singularite': { const t = 1 - s.life / s.max; ctx.strokeStyle = '#9a4a8c'; ctx.lineWidth = 2; for (let k = 0; k < 4; k++) { ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(s.x, s.y, (s.r * 0.6) * (1 - ((t * 3 + k * 0.25) % 1)), 0, TAU); ctx.stroke(); } ctx.fillStyle = '#1f1a16'; ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(s.x, s.y, 6 + Math.sin(time * 20) * 2, 0, TAU); ctx.fill(); break; }
       case 'label': ctx.globalAlpha = Math.min(1, s.life * 2); U.txt(ctx, s.txt, s.x, s.y, 20, 'center', INK, 'IM Fell English SC'); break;
       case 'ring': { const t = 1 - s.life / s.max; ctx.strokeStyle = s.color; ctx.globalAlpha = 1 - t; ctx.lineWidth = 3 * (1 - t) + 0.5; U.inkCircle(ctx, s.x, s.y, s.r * (0.3 + t * 0.9), 3, 2); ctx.lineWidth = 1; U.inkCircle(ctx, s.x, s.y, s.r * (0.1 + t * 0.6), 4, 1.5); break; }
       case 'beam': { const t = s.life / s.max; ctx.strokeStyle = s.color; ctx.globalAlpha = t; ctx.lineWidth = s.w * t + 1; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); ctx.strokeStyle = '#efe3c4'; ctx.lineWidth = Math.max(0.5, s.w * t * 0.3); ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); break; }
+    }
+    ctx.restore();
+  }
+  function drawGField(ctx, z) {
+    ctx.save();
+    const a = clamp(z.life / Math.max(0.1, z.max) * 3, 0, 1);
+    ctx.strokeStyle = '#6c5ab8'; ctx.globalAlpha = 0.55 * a; ctx.lineWidth = 1.5; ctx.setLineDash([4, 6]);
+    U.inkCircle(ctx, z.x, z.y, z.r, 7, 2); ctx.setLineDash([]);
+    ctx.globalAlpha = 0.08 * a; ctx.fillStyle = '#6c5ab8'; ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, TAU); ctx.fill();
+    ctx.globalAlpha = 0.6 * a; ctx.lineWidth = 1.5;
+    const n = 7;
+    for (let i = 0; i < n; i++) {
+      const u = U.hash2(i, 3) * 2 - 1, v = ((time * (0.3 + z.mag * 0.25) + i / n) % 1) * 2 - 1;
+      if (z.mag === 0) { const ax = z.x + Math.cos(i * 2.4 + time * 0.5) * z.r * 0.6, ay = z.y + Math.sin(i * 1.7 + time * 0.7) * z.r * 0.6; ctx.beginPath(); ctx.arc(ax, ay, 3, 0, TAU); ctx.stroke(); continue; }
+      const px = -z.gy, py = z.gx;
+      const ax = z.x + px * u * z.r * 0.7 + z.gx * v * z.r * 0.7, ay = z.y + py * u * z.r * 0.7 + z.gy * v * z.r * 0.7;
+      ctx.beginPath(); ctx.moveTo(ax - z.gx * 8, ay - z.gy * 8); ctx.lineTo(ax + z.gx * 4, ay + z.gy * 4);
+      ctx.moveTo(ax + z.gx * 4 + px * 3 - z.gx * 4, ay + z.gy * 4 + py * 3 - z.gy * 4); ctx.lineTo(ax + z.gx * 4, ay + z.gy * 4); ctx.lineTo(ax + z.gx * 4 - px * 3 - z.gx * 4, ay + z.gy * 4 - py * 3 - z.gy * 4);
+      ctx.stroke();
     }
     ctx.restore();
   }

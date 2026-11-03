@@ -12,6 +12,8 @@ function createSim() {
   let onEvent = null;
   let sunny = true;
   let surf = null; // hauteur de surface par colonne (cellules), fournie par la génération
+  let gzones = [];  // champs de gravité locaux : {x, y, r (px), gx, gy, mag}
+  let feuMul = 1;   // option : vitesse de propagation du feu
 
   const M = { AIR: 0, PIERRE: 1, TERRE: 2, SABLE: 3, BOIS: 4, PLANTE: 5, HERBE: 6, EAU: 7, HUILE: 8, ACIDE: 9, LAVE: 10, GLACE: 11, NEIGE: 12, VAPEUR: 13, FUMEE: 14, FEU: 15, SEVE: 16, VERRE: 17, METAL: 18, OBSIDIENNE: 19, CENDRE: 20, CRISTAL: 21 };
   const P = [];
@@ -39,6 +41,12 @@ function createSim() {
   def(M.CENDRE, { nom: 'cendre', solid: 1, powder: 1, dig: 1, color: '#7a736b', corrode: 0.3, alpha: 0.7 });
   def(M.CRISTAL, { nom: 'cristal', solid: 1, color: '#b58fd8', light: 1, dig: 1, alpha: 0.6 });
   const FLAMMABLE_SOLID = (m) => m === M.BOIS || m === M.PLANTE || m === M.HERBE;
+  // gravité locale d'une cellule : [dx, dy, mag] ; mag 0 = apesanteur
+  function gravAt(x, y) {
+    for (const z of gzones) { const dx = (x + 0.5) * CS - z.x, dy = (y + 0.5) * CS - z.y; if (dx * dx + dy * dy <= z.r * z.r) return [z.gx, z.gy, z.mag]; }
+    return [0, 1, 1];
+  }
+  function cellIn(x, y) { return x >= 0 && y >= 0 && x < W && y < H; }
 
   function init(w, h) {
     W = w; H = h; CW = Math.ceil(W / CH); CHn = Math.ceil(H / CH);
@@ -79,6 +87,7 @@ function createSim() {
     const f = frame & 255;
     // réveils aléatoires (processus lents loin de l'action)
     for (let k = 0; k < 6; k++) { const c = (rnd() * CW * CHn) | 0; if (chunkActive[c] <= frame) chunkActive[c] = frame + 1; }
+    for (const z of gzones) { const c0x = Math.max(0, Math.floor((z.x - z.r) / CPX)), c1x = Math.min(CW - 1, Math.floor((z.x + z.r) / CPX)), c0y = Math.max(0, Math.floor((z.y - z.r) / CPX)), c1y = Math.min(CHn - 1, Math.floor((z.y + z.r) / CPX)); for (let cy = c0y; cy <= c1y; cy++) for (let cx = c0x; cx <= c1x; cx++) chunkActive[cy * CW + cx] = frame + 2; }
     const ltr = (frame & 1) === 0;
     for (let cy = CHn - 1; cy >= 0; cy--) {
       for (let cx = 0; cx < CW; cx++) {
@@ -113,14 +122,17 @@ function createSim() {
 
   function stepPowder(x, y, i, m, p) {
     if (m === M.NEIGE && hotNear(i)) { setI(i, M.EAU); evt('fonte', x, y); return; }
-    if (y + 1 >= H) return;
-    const b = i + W;
-    if (canEnter(b, 9)) { swap(i, b); return; }
+    const [gx, gy, mag] = gzones.length ? gravAt(x, y) : [0, 1, 1];
+    if (mag === 0) { if (rnd() < 0.15) { const d = [[1, 0], [-1, 0], [0, 1], [0, -1]][(rnd() * 4) | 0]; const nx = x + d[0], ny = y + d[1]; if (cellIn(nx, ny) && canEnter(ny * W + nx, 9)) swap(i, ny * W + nx); } return; }
+    const bx = x + gx, by = y + gy; if (!cellIn(bx, by)) return;
+    const b = by * W + bx;
+    if (canEnter(b, 9)) { swap(i, b); if (mag > 1 && cellIn(bx + gx, by + gy) && canEnter((by + gy) * W + bx + gx, 9)) swap(b, (by + gy) * W + bx + gx); return; }
+    const sx = -gy, sy = gx; // perpendiculaire
     const dir = rnd() < 0.5 ? 1 : -1;
     for (const d of [dir, -dir]) {
-      const nx = x + d; if (nx < 0 || nx >= W) continue;
-      const s = i + d, bd = b + d;
-      if (!P[mat[s]].solid && canEnter(bd, 9)) { swap(i, bd); return; }
+      const nx = x + sx * d, ny = y + sy * d; if (!cellIn(nx, ny)) continue;
+      const dx2 = nx + gx, dy2 = ny + gy; if (!cellIn(dx2, dy2)) continue;
+      if (!P[mat[ny * W + nx]].solid && canEnter(dy2 * W + dx2, 9)) { swap(i, dy2 * W + dx2); return; }
     }
   }
   function hotNear(i) {
@@ -154,19 +166,23 @@ function createSim() {
         else if ((n === M.NEIGE || n === M.GLACE) && rnd() < 0.3) { setI(j, M.EAU); evt('fonte', x, y); }
       }
     }
-    if (y + 1 >= H) return;
-    const b = i + W;
+    const [gx, gy, mag] = gzones.length ? gravAt(x, y) : [0, 1, 1];
+    if (mag === 0) { if (rnd() < 0.2) { const d = [[1, 0], [-1, 0], [0, 1], [0, -1]][(rnd() * 4) | 0]; const nx = x + d[0], ny = y + d[1]; if (cellIn(nx, ny) && canEnter(ny * W + nx, p.dens)) swap(i, ny * W + nx); } return; }
+    const bx = x + gx, by = y + gy; if (!cellIn(bx, by)) return;
+    const b = by * W + bx;
     if (canEnter(b, p.dens)) { if (m !== M.SEVE || rnd() < 0.25) swap(i, b); return; }
+    const sx = -gy, sy = gx;
     const dir = rnd() < 0.5 ? 1 : -1;
     for (const d of [dir, -dir]) {
-      const nx = x + d; if (nx < 0 || nx >= W) continue;
-      if (!P[mat[i + d]].solid && canEnter(b + d, p.dens)) { if (m !== M.SEVE || rnd() < 0.1) swap(i, b + d); return; }
+      const nx = x + sx * d, ny = y + sy * d; if (!cellIn(nx, ny)) continue;
+      const dx2 = nx + gx, dy2 = ny + gy; if (!cellIn(dx2, dy2)) continue;
+      if (!P[mat[ny * W + nx]].solid && canEnter(dy2 * W + dx2, p.dens)) { if (m !== M.SEVE || rnd() < 0.1) swap(i, dy2 * W + dx2); return; }
     }
     if (p.flow === 0) return;
-    // étalement latéral
+    // étalement perpendiculaire à la gravité
     for (let k = 1; k <= p.flow; k++) {
-      const nx = x + dir * k; if (nx < 0 || nx >= W) break;
-      const j = i + dir * k; const n = mat[j];
+      const nx = x + sx * dir * k, ny = y + sy * dir * k; if (!cellIn(nx, ny)) break;
+      const j = ny * W + nx; const n = mat[j];
       if (n === M.AIR || P[n].gas) { swap(i, j); return; }
       if (n !== m && !(P[n].liquid && P[n].dens <= p.dens)) break;
     }
@@ -184,21 +200,25 @@ function createSim() {
       for (const d of [1, -1, W, -W]) {
         const j = i + d; if (j < 0 || j >= W * H) continue; const n = mat[j]; const q = P[n];
         if (n === M.EAU) { setI(i, M.VAPEUR, 50); evt('vapeur', x, y); return; }
-        if (FLAMMABLE_SOLID(n) && aux[j] === 0 && rnd() < q.flam) { aux[j] = q.burn; touch(j); evt('incendie', x, y); }
+        if (FLAMMABLE_SOLID(n) && aux[j] === 0 && rnd() < q.flam * feuMul) { aux[j] = q.burn; touch(j); evt('incendie', x, y); }
         else if ((n === M.HUILE || n === M.SEVE) && rnd() < q.flam) { setI(j, M.FEU, q.burn); evt('incendie', x, y); }
         else if ((n === M.GLACE || n === M.NEIGE) && rnd() < 0.15) { setI(j, M.EAU); evt('fonte', x, y); }
       }
       if (rnd() < 0.45) return; // le feu reste près de son combustible
     }
-    if (y === 0) { setI(i, M.AIR); return; }
-    const u = i - W;
+    const [gx, gy, mag] = gzones.length ? gravAt(x, y) : [0, 1, 1];
+    const ux = x - gx * (mag ? 1 : 0), uy = y - gy * (mag ? 1 : 0);
+    if (uy < 0 && mag) { setI(i, M.AIR); return; }
+    if (!cellIn(ux, uy)) return;
+    const u = uy * W + ux;
     const r = rnd();
-    if (r < 0.6 && (mat[u] === M.AIR || P[mat[u]].liquid)) { swap(i, u); return; }
+    if (mag && r < 0.6 && (mat[u] === M.AIR || P[mat[u]].liquid)) { swap(i, u); return; }
+    const sx = mag ? -gy : 1, sy = mag ? gx : 0;
     const dir = rnd() < 0.5 ? 1 : -1;
-    if (x + dir >= 0 && x + dir < W) {
-      if (r < 0.85 && mat[u + dir] === M.AIR) { swap(i, u + dir); return; }
-      if (mat[i + dir] === M.AIR) { swap(i, i + dir); return; }
-    }
+    const nx = ux + sx * dir, ny = uy + sy * dir, lx = x + sx * dir, ly = y + sy * dir;
+    if (cellIn(nx, ny) && r < 0.85 && mat[ny * W + nx] === M.AIR) { swap(i, ny * W + nx); return; }
+    if (cellIn(lx, ly) && mat[ly * W + lx] === M.AIR) { swap(i, ly * W + lx); return; }
+    if (!mag && rnd() < 0.5) { const d = [[0, 1], [0, -1]][(rnd() * 2) | 0]; const qx = x + d[0], qy = y + d[1]; if (cellIn(qx, qy) && mat[qy * W + qx] === M.AIR) swap(i, qy * W + qx); }
   }
   function stepSolid(x, y, i, m, p) {
     if (FLAMMABLE_SOLID(m)) {
@@ -209,7 +229,7 @@ function createSim() {
         if (aux[i] === 0) { if (m === M.BOIS) { setI(i, M.CENDRE); evt('cendre', x, y); } else if (m === M.PLANTE) setI(i, rnd() < 0.4 ? M.CENDRE : M.AIR); else setI(i, M.AIR); if (onEvent) onEvent('brule', x * CS, y * CS); }
         return;
       }
-      if (hotNear(i) && rnd() < p.flam) { aux[i] = p.burn; touch(i); evt('incendie', x, y); }
+      if (hotNear(i) && rnd() < p.flam * feuMul) { aux[i] = p.burn; touch(i); evt('incendie', x, y); }
       return;
     }
     if (m === M.GLACE) { if (hotNear(i) && rnd() < 0.25) { setI(i, M.EAU); evt('fonte', x, y); } return; }
@@ -380,7 +400,7 @@ function createSim() {
 
   return { CS, CH, M, P, init, get, set, swap, wake, touch, idx, step, matAt, solidAt, rectBlocked, rectHas, forRadius, raycast, countAround, countRect, draw, lights, dirtyAll, serialize, deserialize,
     get W() { return W; }, get H() { return H; }, get mat() { return mat; }, get aux() { return aux; }, get elec() { return elec; },
-    set onEvent(f) { onEvent = f; }, set sunny(v) { sunny = v; }, set surf(v) { surf = v; }, get surf() { return surf; }, get frame() { return frame; } };
+    set onEvent(f) { onEvent = f; }, set sunny(v) { sunny = v; }, get gzones() { return gzones; }, set gzones(v) { gzones = v; }, gravAt, set feuMul(v) { feuMul = v; }, set surf(v) { surf = v; }, get surf() { return surf; }, get frame() { return frame; } };
 })();
 }
 const Sim = createSim();
