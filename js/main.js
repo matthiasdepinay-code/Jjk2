@@ -10,13 +10,14 @@
   let last = 0, worldSaveT = 0;
 
   const inp = { left: false, right: false, up: false, down: false, jump: false, jumpHeld: false, interact: false, dig: false, mouse: { x: 640, y: 360, down: false } };
+  window.__inp = inp;
 
   // ---------- Progression ----------
   function makeProgress() {
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
-      recettes: [], ingredientsVus: [], done: [], nouveau: false, obs: {},
-      compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0 },
+      recettes: [], ingredientsVus: [], done: [], nouveau: false, obs: {}, fusion: false,
+      compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0, terre: 0, creaturesTouchees: 0, vols: 0, portes: 0, lancers: 0, niveau: 1, sceaux: 0 },
       event(name, data) {
         const k = this.compteurs;
         switch (name) {
@@ -29,6 +30,11 @@
           case 'rune': k.runes++; break;
           case 'tame': k.tames++; break;
           case 'sort': k.sorts++; break;
+          case 'terre': k.terre++; break;
+          case 'creatureTouchee': k.creaturesTouchees++; break;
+          case 'vol': k.vols++; break;
+          case 'porte': k.portes++; break;
+          case 'lancer': k.lancers++; break;
           case 'ingredient': if (!this.ingredientsVus.includes(data)) { this.ingredientsVus.push(data); game.addXp(DATA.XP.ingredient); } break;
           case 'recette': if (!this.recettes.includes(data)) { this.recettes.push(data); game.addXp(DATA.XP.recette); } k.potions++; break;
         }
@@ -44,6 +50,7 @@
           else if (u.type === 'trigger') { if (!this.triggers.includes(u.item)) this.triggers.push(u.item); }
           else if (u.type === 'mods') for (const m of u.item) { if (!this.mods.includes(m)) this.mods.push(m); }
           else if (u.type === 'slot') this.slots = Math.max(this.slots, u.item);
+          else if (u.type === 'fusion') this.fusion = true;
           this.nouveau = true;
           game.toast('✦ Découverte : ' + u.titre, 'unlock');
           Son.sfx('unlock');
@@ -87,6 +94,7 @@
       while (this.xp >= need) {
         this.xp -= need; this.niveau++;
         this.toast('✦ Niveau ' + this.niveau + ' : ton encre s\'approfondit.', 'unlock'); Son.sfx('unlock');
+        this.progress.compteurs.niveau = this.niveau; this.progress.check();
         need = DATA.XP.parNiveau(this.niveau);
       }
       this.applyNiveau();
@@ -173,9 +181,10 @@
       }
     },
     save() {
+      this.progress.compteurs.sceaux = this.seals.length;
       try {
         const data = { look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
-          progress: { cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs } };
+          progress: { cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs } };
         localStorage.setItem(SAVE_KEY, JSON.stringify(data));
       } catch (e) { /* stockage indisponible */ }
     },
@@ -187,11 +196,14 @@
         this.xp = d.xp || 0; this.niveau = d.niveau || 1;
         if (d.progress) Object.assign(this.progress, d.progress);
         if (!this.progress.obs) this.progress.obs = {};
+        const K = this.progress.compteurs; for (const k of ['terre', 'creaturesTouchees', 'vols', 'portes', 'lancers', 'sceaux']) if (K[k] == null) K[k] = 0; K.niveau = this.niveau;
+        this.hotbar = this.hotbar.map((e) => (e && e.type === 'seal' ? { type: 'seal', seal: Seal.clone(e.seal) } : e)); this.seals = this.seals.map((q) => Seal.clone(q));
         return this.started;
       } catch (e) { return false; }
     },
     reset() { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(WORLD_KEY); location.reload(); },
   };
+  game.inp = inp;
   window.game = game;
 
   // ---------- Entrées ----------
@@ -231,6 +243,7 @@
     if (UI.isOpen()) return;
     if (e.button === 2) { if (game.state === 'world') World.throwCarried(World.toWorld(m.x, m.y)); return; }
     if (e.button !== 0) return;
+    inp.mouse.down = true;
     if (game.state === 'lab') {
       const id = Lab.click(m.x, m.y);
       if (!id) return;
@@ -243,6 +256,7 @@
       else if (id === 'porte') game.goWorld();
     } else if (game.state === 'world') game.useSelected();
   });
+  window.addEventListener('mouseup', (e) => { if (e.button === 0) inp.mouse.down = false; });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('wheel', (e) => { if (game.state !== 'world' || UI.isOpen()) return; game.selected = (game.selected + (e.deltaY > 0 ? 1 : 4)) % 5; UI.refreshHotbar(); e.preventDefault(); }, { passive: false });
   window.addEventListener('blur', () => { inp.left = inp.right = inp.up = inp.down = inp.jumpHeld = inp.dig = false; });

@@ -2,7 +2,7 @@
 // ---------- Interface DOM : création du personnage, éditeur de sceaux, chaudron, grimoire, HUD ----------
 const UI = (() => {
   let game = null, open = null, selSlot = null, time = 0;
-  let caulIngr = [null, null, null], caulSteps = [], grimTab = 'decouvertes';
+  let caulIngr = [null, null, null], caulSteps = [], grimTab = 'decouvertes', subSlot = null;
   let look = { nom: '', chapeau: 0, cape: 0, acc: 0 };
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -93,6 +93,7 @@ const UI = (() => {
     $$('.panel').forEach((p) => p.classList.add('hidden'));
     $('#panels').classList.add('hidden');
     $('#seal-slots').classList.add('hidden');
+    const sl = $('#seal-sublist'); if (sl) sl.classList.add('hidden');
   }
   function isOpen() { return open; }
 
@@ -112,32 +113,52 @@ const UI = (() => {
     const hit = (sl) => U.dist(x, y, sl.x, sl.y) <= sl.r * 1.3;
     let id = null;
     if (hit(lay.core)) id = 'core'; else if (hit(lay.shape)) id = 'shape'; else if (hit(lay.trigger)) id = 'trigger';
+    else if (game.progress.fusion && hit(lay.core2)) id = 'core2';
     else for (let i = 0; i < 3; i++) if (hit(lay.mods[i])) id = 'mod' + i;
     if (!id) { selSlot = null; refreshSeal(); return; }
     if (id.startsWith('mod') && +id[3] >= game.progress.slots) { toast('Cet emplacement est encore scellé. Voir le grimoire.', 'warn'); return; }
     if (right || selSlot === id) {
       // vider
-      if (id === 'core') s.core = null; else if (id === 'shape') s.shape = null; else if (id === 'trigger') s.trigger = null; else s.mods[+id[3]] = null;
+      if (id === 'core') s.core = null; else if (id === 'core2') s.core2 = null; else if (id === 'shape') s.shape = null; else if (id === 'trigger') s.trigger = null; else s.mods[+id[3]] = null;
       selSlot = null; Son.sfx('click');
     } else selSlot = id;
     refreshSeal();
   }
   function placeInSeal(kind, id) {
     const s = game.editSeal;
-    if (kind === 'core') { s.core = id; if (selSlot === 'core') selSlot = null; }
+    if (kind === 'core') {
+      if (selSlot === 'core2' || (game.progress.fusion && s.core && s.core !== id && !s.core2 && selSlot !== 'core')) { s.core2 = id; selSlot = null; }
+      else { s.core = id; if (selSlot === 'core') selSlot = null; }
+    }
     else if (kind === 'shape') { s.shape = id; if (selSlot === 'shape') selSlot = null; }
     else if (kind === 'trigger') { s.trigger = id; if (selSlot === 'trigger') selSlot = null; }
     else {
       let i = selSlot && selSlot.startsWith('mod') ? +selSlot[3] : s.mods.findIndex((m, k) => !m && k < game.progress.slots);
       if (i < 0) i = 0;
       if (i >= game.progress.slots) { toast('Aucun emplacement de modificateur libre.', 'warn'); return; }
+      if (id === 'sous') { subSlot = i; showSubList(); return; }
       s.mods[i] = id; selSlot = null;
     }
     Son.sfx('cast', s.core || 'vent');
     refreshSeal();
   }
+  function showSubList() {
+    const box = $('#seal-sublist'); box.innerHTML = '<p class="intro">Quel sceau consigné emboîter ? Il sera lancé là où celui-ci éclate (deux niveaux au plus).</p>';
+    const cands = game.seals.filter((q) => q.core && q.shape && Seal.depth(q) < 1 && q.nom !== game.editSeal.nom);
+    if (!cands.length) box.appendChild(el('p', 'muted', 'Consigne d\'abord un sceau complet (sans sous-sceau).'));
+    for (const q of cands) {
+      const it = el('div', 'seal-item');
+      const cv = document.createElement('canvas'); cv.width = 40; cv.height = 40; Seal.drawMini(cv.getContext('2d'), q, 20, 20, 17, 0);
+      it.appendChild(cv); it.appendChild(el('span', '', q.nom + ' <small>(' + Seal.cost(q) + ')</small>'));
+      it.addEventListener('click', () => { game.editSeal.mods[subSlot] = { sub: Seal.clone(q) }; selSlot = null; box.classList.add('hidden'); refreshSeal(); Son.sfx('cast', q.core); });
+      box.appendChild(it);
+    }
+    const b = el('button', '', 'Annuler'); b.addEventListener('click', () => box.classList.add('hidden')); box.appendChild(b);
+    box.classList.remove('hidden');
+  }
   function refreshSeal() {
     const s = game.editSeal, p = game.progress;
+    if (!('core2' in s)) s.core2 = null;
     $('#seal-nom').value = s.nom || '';
     $('#seal-nom').placeholder = Seal.autoNom(s);
     $('#seal-cost').textContent = Seal.cost(s);
@@ -191,8 +212,9 @@ const UI = (() => {
     const c = $('#seal-canvas'); if (!c || open !== 'seal') return;
     const ctx = c.getContext('2d');
     ctx.clearRect(0, 0, c.width, c.height);
-    Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, 150, { t: time, slots: game.progress.slots, highlight: selSlot, empty: true });
-    const hint = selSlot ? 'Choisis un glyphe dans la palette, ou clique à nouveau pour vider.' : 'Clique un emplacement, puis un glyphe. Clic droit : vider.';
+    Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, 150, { t: time, slots: game.progress.slots, highlight: selSlot, empty: true, fusion: game.progress.fusion });
+    const combo = Seal.comboName(game.editSeal);
+    const hint = combo ? 'Fusion : ' + combo + '. ' + (DATA.COMBOS[[game.editSeal.core, game.editSeal.core2].sort().join('|')].desc || '') : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot ? 'Choisis un glyphe dans la palette, ou clique à nouveau pour vider.' : game.progress.fusion ? 'Centre, formes, modificateurs, pointes. En bas : un second effet à fusionner.' : 'Clique un emplacement, puis un glyphe. Clic droit : vider.';
     U.txt(ctx, hint, c.width / 2, 16, 13, 'center', '#6b4f2a', 'IM Fell English', 'italic');
   }
 
@@ -293,6 +315,13 @@ const UI = (() => {
       grp('Formes (premier anneau)', DATA.SHAPES, p.shapes, 'shape');
       grp('Modificateurs (second anneau) — ' + p.slots + ' emplacement(s)', DATA.MODS, p.mods, 'mod');
       grp('Déclencheurs (pointes)', DATA.TRIGGERS, p.triggers, 'trigger');
+      if (p.fusion) {
+        c.appendChild(el('h3', '', 'Fusions connues'));
+        const known = Object.keys(DATA.COMBOS).filter((k) => k.split('|').every((q) => p.cores.includes(q)));
+        if (!known.length) c.appendChild(el('p', 'muted', 'Aucune : il faut posséder les deux glyphes.'));
+        for (const k of known) { const [a, b] = k.split('|'); const Cm = DATA.COMBOS[k]; c.appendChild(el('div', 'recette', '<b>' + Cm.nom + '</b> : ' + DATA.CORES[a].nom + ' + ' + DATA.CORES[b].nom + (Cm.desc ? ' — ' + Cm.desc : ''))); }
+        c.appendChild(el('p', 'intro', 'Toute autre paire fusionne aussi : les deux effets s\'appliquent ensemble.'));
+      }
       c.appendChild(el('p', 'intro', 'Déclencheurs : <b>Immédiat</b> agit en continu sur ce que le sort touche (un projectile traverse les créatures). <b>Au contact</b> éclate en zone à la première chose touchée. <b>Retardé</b> se fixe et éclate après deux secondes.'));
     } else if (grimTab === 'recettes') {
       c.appendChild(el('p', 'intro', 'Le chaudron accepte jusqu\'à trois ingrédients et trois étapes, dans l\'ordre. Les recettes inconnues ne sont que des énigmes.'));
@@ -347,7 +376,7 @@ const UI = (() => {
     $('#hp-fill').style.width = (100 * Math.max(0, p.hp) / p.hpMax) + '%';
     if (g) { const need = DATA.XP.parNiveau(g.niveau); $('#xp-fill').style.width = (100 * g.xp / need) + '%'; $('#xp-txt').textContent = 'Niveau ' + g.niveau; }
     const sts = [];
-    const names = { wet: 'Trempé(e)', stone: 'Peau de pierre', invisible: 'Invisible', lowgrav: 'Léger(ère)', jump: 'Bonds', small: 'Minuscule', vision: 'Vision', burning: 'En feu !', glide: 'Planeur', lumiere: 'Lumineux(se)', patins: 'Patins de givre', vitesse: 'Foudroyé(e)', dissous: 'Mains d\'acide', vol: 'En vol', branchies: 'Branchies', geant: 'Géant(e)', glisse: 'Savonné(e)' };
+    const names = { wet: 'Trempé(e)', stone: 'Peau de pierre', invisible: 'Invisible', lowgrav: 'Léger(ère)', jump: 'Bonds', small: 'Minuscule', vision: 'Vision', burning: 'En feu !', glide: 'Planeur', lumiere: 'Lumineux(se)', patins: 'Patins de givre', vitesse: 'Foudroyé(e)', dissous: 'Mains d\'acide', vol: 'En vol', branchies: 'Branchies', geant: 'Géant(e)', glisse: 'Savonné(e)', hate: 'Hâte', lent: 'Englué(e)', armure: 'Armure' };
     for (const k in p.sta) if (p.sta[k] > 0) sts.push('<span class="st ' + k + '">' + names[k] + ' ' + Math.ceil(p.sta[k]) + 's</span>');
     $('#statuts').innerHTML = sts.join('');
   }

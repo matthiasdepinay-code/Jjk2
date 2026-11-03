@@ -15,6 +15,47 @@ const DATA = (() => {
     foudre:  { id: 'foudre',  nom: 'Foudre',   couleur: '#e0c43a', cout: 4, desc: 'Électrise : l\'eau et le métal conduisent, l\'huile s\'embrase, les créatures sont secouées. Sur soi : vitesse.' },
     acide:   { id: 'acide',   nom: 'Acide',    couleur: '#8fbf2a', cout: 3, desc: 'Fait couler de l\'acide qui ronge pierre, terre, bois et métal. Sur soi : tu dissous ce que tu touches.' },
     gravite: { id: 'gravite', nom: 'Gravité',  couleur: '#6c5ab8', cout: 5, desc: 'Inverse la pesanteur dans une zone : tout flotte. Sur soi : vol libre.' },
+    temps:   { id: 'temps',   nom: 'Temps',    couleur: '#8a8f9a', cout: 4, desc: 'Le temps passe plus vite : les plantes poussent, le feu s\'éteint, la lave se fige, la glace fond, les créatures s\'engourdissent. Sur soi : hâte, encre rapide.' },
+    transmutation: { id: 'transmutation', nom: 'Transmutation', couleur: '#c08a3a', cout: 4, desc: 'Change la matière : pierre en sable, sable en terre, terre en pierre, bois en pierre, eau en huile, glace en verre... Sur soi : peau de pierre.' },
+    son:     { id: 'son',     nom: 'Son',      couleur: '#d08ab0', cout: 3, desc: 'Onde de choc : repousse, réveille, brise le verre, attire les créatures curieuses.' },
+    esprit:  { id: 'esprit',  nom: 'Esprit',   couleur: '#b08ad8', cout: 5, desc: 'Prend le contrôle d\'une créature touchée pendant un moment (E pour la relâcher).' },
+    lien:    { id: 'lien',    nom: 'Lien',     couleur: '#c9a63a', cout: 3, desc: 'Une corde magique vers ce que le sort touche : on s\'y hisse, on s\'y balance (Espace pour lâcher).' },
+    portail: { id: 'portail', nom: 'Portail',  couleur: '#4fb0a0', cout: 5, desc: 'Deux lancers posent deux portails : tout ce qui entre dans l\'un sort par l\'autre, même les liquides. Sur soi : rejoindre son dernier portail.' },
+    metal:   { id: 'metal',   nom: 'Métal',    couleur: '#737e86', cout: 4, desc: 'Fait surgir du métal, qui conduit la foudre et résiste à l\'acide. Attire caisses, rochers et golems. Sur soi : armure.' },
+  };
+  // Effets dérivés (par Inverser), jamais dans la palette
+  const PSEUDO = {
+    creuser:     { id: 'creuser',     nom: 'Creuser',     couleur: '#6b4f2a' },
+    fanaison:    { id: 'fanaison',    nom: 'Fanaison',    couleur: '#8a6b2f' },
+    neutraliser: { id: 'neutraliser', nom: 'Neutraliser', couleur: '#8fb8d8' },
+    poids:       { id: 'poids',       nom: 'Poids',       couleur: '#4a4a55' },
+    secheresse:  { id: 'secheresse',  nom: 'Sécheresse',  couleur: '#d9c48a' },
+    ralentir:    { id: 'ralentir',    nom: 'Ralentir',    couleur: '#5a6070' },
+    silence:     { id: 'silence',     nom: 'Silence',     couleur: '#6a5a7a' },
+    rouille:     { id: 'rouille',     nom: 'Rouille',     couleur: '#9a5a3a' },
+  };
+  const INVERSE = { feu: 'froid', froid: 'feu', force: 'vent', vent: 'force', lumiere: 'ombre', ombre: 'lumiere', terre: 'creuser', vie: 'fanaison', acide: 'neutraliser', foudre: 'neutraliser', gravite: 'poids', eau: 'secheresse', temps: 'ralentir', son: 'silence', metal: 'rouille', transmutation: 'transmutation', esprit: 'esprit', lien: 'lien', portail: 'portail' };
+  // Fusions nommées (clé : deux glyphes triés)
+  const COMBOS = {
+    'feu|vent': { nom: 'Tornade de feu', desc: 'Des flammes qui tourbillonnent et se déplacent.' },
+    'feu|terre': { nom: 'Lave', desc: 'La terre fond en lave.' },
+    'eau|feu': { nom: 'Vapeur', desc: 'Les deux s\'annulent dans un grand nuage.' },
+    'eau|froid': { nom: 'Banquise', desc: 'Un bloc de glace solide, même en l\'air.' },
+    'eau|foudre': { nom: 'Orage', desc: 'L\'eau conduit loin, la pluie tombe.' },
+    'froid|vent': { nom: 'Blizzard', desc: 'Neige et bourrasques.' },
+    'eau|vie': { nom: 'Printemps', desc: 'Tout pousse d\'un coup.' },
+    'lumiere|ombre': { nom: 'Crépuscule', desc: 'Rien. Un silence gêné.' },
+    'force|terre': { nom: 'Séisme', desc: 'Le sol tremble et attire.' },
+    'gravite|vent': { nom: 'Cyclone', desc: 'Une colonne qui soulève tout, longtemps.' },
+    'feu|froid': { nom: 'Choc thermique', desc: 'La pierre éclate en sable.' },
+    'acide|feu': { nom: 'Fumée toxique', desc: 'Un nuage qui endort.' },
+    'ombre|vie': { nom: 'Mycélium', desc: 'Des champignons d\'ombre poussent.' },
+    'eau|terre': { nom: 'Boue', desc: 'La terre coule en sable mouillé.' },
+    'feu|lumiere': { nom: 'Petit soleil', desc: 'Une lumière immense et chaude.' },
+    'foudre|metal': { nom: 'Dynamo', desc: 'Le métal garde la charge longtemps.' },
+    'son|verre': { nom: 'Chant du verre', desc: '' },
+    'temps|vie': { nom: 'Forêt instantanée', desc: 'Les plantes jaillissent.' },
+    'portail|eau': { nom: 'Source', desc: 'De l\'eau jaillit du portail.' },
   };
   // Formes (anneau intérieur)
   const SHAPES = {
@@ -22,6 +63,13 @@ const DATA = (() => {
     soi:        { id: 'soi',        nom: 'Sur soi',    cout: 1, desc: 'L\'effet s\'applique à toi-même.' },
     zone:       { id: 'zone',       nom: 'Zone',       cout: 3, desc: 'L\'effet surgit autour du point visé, à portée.' },
     trait:      { id: 'trait',      nom: 'Trait',      cout: 3, desc: 'Une ligne d\'énergie instantanée vers le point visé.' },
+    aura:       { id: 'aura',       nom: 'Aura',       cout: 3, desc: 'L\'effet t\'entoure et te suit un moment.' },
+    mur:        { id: 'mur',        nom: 'Mur',        cout: 4, desc: 'L\'effet se dresse en colonne au point visé.' },
+    totem:      { id: 'totem',      nom: 'Totem',      cout: 5, desc: 'Un piquet planté au point visé répète l\'effet toutes les deux secondes.' },
+    chaine:     { id: 'chaine',     nom: 'Chaîne',     cout: 4, desc: 'Un projectile qui saute de cible en cible.' },
+    pluie:      { id: 'pluie',      nom: 'Pluie',      cout: 5, desc: 'L\'effet tombe du ciel sur la zone visée pendant un moment.' },
+    objet:      { id: 'objet',      nom: 'Sur objet',  cout: 3, desc: 'Enchante la caisse ou la créature la plus proche du point visé : elle porte l\'effet.' },
+    invocation: { id: 'invocation', nom: 'Invocation', cout: 6, desc: 'Un petit familier de l\'élément te suit et attaque ce qui t\'attaque.' },
   };
   // Modificateurs (anneau extérieur)
   const MODS = {
@@ -33,6 +81,12 @@ const DATA = (() => {
     persistance: { id: 'persistance', nom: 'Persistance', cout: 3, desc: 'Laisse une trace durable (flammes, pierre au lieu de terre, lueur...).' },
     vitesse:     { id: 'vitesse',     nom: 'Vitesse',     cout: 1, desc: 'Projectile plus rapide et plus droit.' },
     double:      { id: 'double',      nom: 'Double',      cout: 3, desc: 'Deux fois l\'effet, en éventail.' },
+    inverser:    { id: 'inverser',    nom: 'Inverser',    cout: 2, desc: 'Retourne l\'effet : le feu refroidit, la terre creuse, la vie fane, l\'eau assèche, la force repousse...' },
+    echo:        { id: 'echo',        nom: 'Écho',        cout: 3, desc: 'L\'effet se répète deux fois de plus, au même endroit.' },
+    teleguide:   { id: 'teleguide',   nom: 'Téléguidé',   cout: 2, desc: 'Le projectile suit la souris.' },
+    orbite:      { id: 'orbite',      nom: 'Orbite',      cout: 3, desc: 'Trois billes tournent autour de toi un moment.' },
+    canalise:    { id: 'canalise',    nom: 'Canalisé',    cout: 2, desc: 'Tant que tu maintiens le clic, l\'effet suit la souris et consomme de l\'encre.' },
+    sous:        { id: 'sous',        nom: 'Sous-sceau',  cout: 0, desc: 'Un sceau consigné entier, lancé là où celui-ci éclate.' },
   };
   // Déclencheurs (pointes)
   const TRIGGERS = {
@@ -120,6 +174,8 @@ const DATA = (() => {
     obsidienne: { id: 'obsidienne', nom: 'La lave et l\'eau',       glyphe: null,      desc: 'La lave touche l\'eau et se fige en pierre noire.' },
     verre:      { id: 'verre',      nom: 'Le sable et la lave',     glyphe: null,      desc: 'Le sable chauffé par la lave devient verre.' },
     incendie:   { id: 'incendie',   nom: 'Le feu se propage',       glyphe: null,      desc: 'Une flamme en allume une autre.' },
+    pluie:      { id: 'pluie',      nom: 'La pluie tombe',          glyphe: null,      desc: 'Être dehors sous la pluie.' },
+    verre_brise: { id: 'verre_brise', nom: 'Le verre se brise',      glyphe: 'son',     desc: 'Du verre vole en éclats.' },
   };
 
   // Découvertes : ce qui est débloqué et comment
@@ -140,6 +196,28 @@ const DATA = (() => {
     { id: 'mods3',  type: 'mods', item: ['vitesse', 'double'], titre: 'Modificateurs : Vitesse & Double', indice: 'Lis deux runes cachées.', cond: (p) => p.compteurs.runes >= 2 },
     { id: 'slot2',  type: 'slot', item: 2, titre: 'Deuxième emplacement de modificateur', indice: 'Possède 6 glyphes d\'effet.', cond: (p) => p.cores.length >= 6 },
     { id: 'slot3',  type: 'slot', item: 3, titre: 'Troisième emplacement de modificateur', indice: 'Possède 10 glyphes d\'effet.', cond: (p) => p.cores.length >= 10 },
+    // --- étape 2 : fusion, sous-sceaux, nouveaux glyphes, formes et modificateurs ---
+    { id: 'fusion', type: 'fusion', item: true, titre: 'Fusion : deux glyphes d\'effet dans un sceau', indice: 'Lance 30 sceaux.', cond: (p) => p.compteurs.sorts >= 30 },
+    { id: 'sous',   type: 'mods', item: ['sous'], titre: 'Sous-sceau : un sceau dans un sceau', indice: 'Consigne 6 sceaux différents.', cond: (p) => p.compteurs.sceaux >= 6 },
+    { id: 'temps',  type: 'core', item: 'temps',  titre: 'Glyphe : Temps', indice: 'Atteins le niveau 3.', cond: (p) => p.compteurs.niveau >= 3 },
+    { id: 'transmutation', type: 'core', item: 'transmutation', titre: 'Glyphe : Transmutation', indice: 'Observe le sable devenir verre et la lave devenir pierre.', cond: (p) => (p.obs.verre || 0) >= 1 && (p.obs.obsidienne || 0) >= 1 },
+    { id: 'son',    type: 'core', item: 'son',    titre: 'Glyphe : Son', indice: 'Observe du verre se briser (le verre des ruines, ou le tien).', cond: (p) => (p.obs.verre_brise || 0) >= 1 },
+    { id: 'esprit', type: 'core', item: 'esprit', titre: 'Glyphe : Esprit', indice: 'Apprivoise 3 créatures.', cond: (p) => p.compteurs.tames >= 3 },
+    { id: 'lien',   type: 'core', item: 'lien',   titre: 'Glyphe : Lien', indice: 'Porte et lance 5 objets ou créatures.', cond: (p) => p.compteurs.lancers >= 5 },
+    { id: 'portail', type: 'core', item: 'portail', titre: 'Glyphe : Portail', indice: 'Lis 3 runes cachées.', cond: (p) => p.compteurs.runes >= 3 },
+    { id: 'metal',  type: 'core', item: 'metal',  titre: 'Glyphe : Métal', indice: 'Possède un éclat de cristal et une poussière de pierre.', cond: (p) => p.ingredientsVus.includes('eclat') && p.ingredientsVus.includes('poussiere') },
+    { id: 'aura',   type: 'shape', item: 'aura',  titre: 'Forme : Aura', indice: 'Atteins le niveau 2.', cond: (p) => p.compteurs.niveau >= 2 },
+    { id: 'mur',    type: 'shape', item: 'mur',   titre: 'Forme : Mur', indice: 'Lance 12 sceaux de Terre.', cond: (p) => p.compteurs.terre >= 12 },
+    { id: 'totem',  type: 'shape', item: 'totem', titre: 'Forme : Totem', indice: 'Découvre 5 recettes.', cond: (p) => p.recettes.length >= 5 },
+    { id: 'chaine', type: 'shape', item: 'chaine', titre: 'Forme : Chaîne', indice: 'Touche 10 créatures avec des projectiles.', cond: (p) => p.compteurs.creaturesTouchees >= 10 },
+    { id: 'pluie',  type: 'shape', item: 'pluie', titre: 'Forme : Pluie', indice: 'Reste dehors sous la pluie.', cond: (p) => (p.obs.pluie || 0) >= 1 },
+    { id: 'objet',  type: 'shape', item: 'objet', titre: 'Forme : Sur objet', indice: 'Porte 3 fois une caisse ou une créature.', cond: (p) => p.compteurs.portes >= 3 },
+    { id: 'invocation', type: 'shape', item: 'invocation', titre: 'Forme : Invocation', indice: 'Apprivoise 5 créatures.', cond: (p) => p.compteurs.tames >= 5 },
+    { id: 'inverser', type: 'mods', item: ['inverser'], titre: 'Modificateur : Inverser', indice: 'Possède le Feu et le Froid.', cond: (p) => p.cores.includes('froid') },
+    { id: 'echo',   type: 'mods', item: ['echo'], titre: 'Modificateur : Écho', indice: 'Lance 60 sceaux.', cond: (p) => p.compteurs.sorts >= 60 },
+    { id: 'teleguide', type: 'mods', item: ['teleguide'], titre: 'Modificateur : Téléguidé', indice: 'Possède la forme Trait.', cond: (p) => p.shapes.includes('trait') },
+    { id: 'orbite', type: 'mods', item: ['orbite'], titre: 'Modificateur : Orbite', indice: 'Vole (Gravité sur soi ou élixir de vol).', cond: (p) => p.compteurs.vols >= 1 },
+    { id: 'canalise', type: 'mods', item: ['canalise'], titre: 'Modificateur : Canalisé', indice: 'Atteins le niveau 4.', cond: (p) => p.compteurs.niveau >= 4 },
   ];
 
   const DEBUT = {
@@ -165,5 +243,5 @@ const DATA = (() => {
   ];
   const ACCESSOIRES = ['Bâton', 'Plume', 'Grimoire'];
 
-  return { CORES, SHAPES, MODS, TRIGGERS, INGREDIENTS, STEPS, POTIONS, OBSERVATIONS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
+  return { CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, STEPS, POTIONS, OBSERVATIONS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
 })();

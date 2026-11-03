@@ -104,6 +104,8 @@
   .glyph-btn small { opacity: 0.6; font-size: calc(11px * var(--s)); }
   .glyph-btn.locked { opacity: 0.5; cursor: help; background: transparent; box-shadow: none; border-style: dashed; }
   #pal-desc { min-height: 3em; margin-top: 10px; padding: 8px 10px; background: rgba(255,255,255,0.3); border-left: 3px solid var(--gold); font-style: italic; }
+  #seal-sublist { margin-top: 8px; padding: 8px; border: 1.5px dashed var(--ink); border-radius: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: rgba(255,255,255,0.3); }
+  #seal-sublist .intro { width: 100%; margin: 0 0 4px; }
   #seal-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: calc(90px * var(--s)); overflow: auto; }
   .seal-item { display: flex; align-items: center; gap: 6px; border: 1px solid var(--ink); border-radius: 6px; padding: 2px 8px 2px 4px; background: rgba(255,255,255,0.3); cursor: pointer; }
   .seal-item:hover { background: #fff8e4; }
@@ -200,6 +202,7 @@
             <button id="seal-tobar">Mettre dans la barre</button>
           </div>
           <div id="seal-slots" class="slotpick hidden"></div>
+          <div id="seal-sublist" class="hidden"></div>
           <h3>Sceaux consignés</h3>
           <div id="seal-list"></div>
         </div>
@@ -262,12 +265,14 @@
       <p><em>Mon cher apprenti, ma chère apprentie,</em></p>
       <p>Je pars quelques semaines. L'atelier est à toi. Un sceau se compose en cercles : au <b>centre</b>, le glyphe d'effet (ce que le sort fait). Sur le <b>premier anneau</b>, la forme (projectile, sur soi, zone, trait). Sur le <b>second</b>, les modificateurs. Aux <b>pointes</b>, le déclencheur. Un sceau incomplet ne tue personne : il fait de la fumée, et c'est déjà une leçon.</p>
       <p>Dehors, <b>tout réagit</b> : le feu brûle le bois et l'herbe, l'eau éteint et fait pousser, la glace fond, la lave fige l'eau en pierre noire, l'acide creuse, l'huile flotte et s'enflamme, la foudre court dans l'eau et le métal. Regarde bien : chaque phénomène observé trois fois fait germer un glyphe dans ta palette (onglet <b>Intuitions</b> du grimoire). Les orages sont de bons professeurs.</p>
+      <p>Avec l'expérience, la table s'enrichit : un <b>second glyphe d'effet</b> en bas du premier anneau fusionne avec le premier (feu + vent = tornade de feu, eau + froid = banquise, feu + terre = lave...), et un emplacement de modificateur peut recevoir un <b>sous-sceau</b> : un sceau consigné entier, lancé là où le premier éclate.</p>
       <p>Le <b>chaudron</b> accepte jusqu'à trois ingrédients et trois étapes dans l'ordre. Commence par <b>cendre + eau de source</b>, <b>chauffer</b> puis <b>remuer</b> : tu auras de l'encre à boire. Les ingrédients rares se trouvent dehors ; on peut aussi puiser n'importe quel liquide dans une fiole (<kbd>E</kbd>) pour le lancer ou le brasser.</p>
       <h3>Dehors</h3>
       <ul>
         <li><kbd>←</kbd><kbd>→</kbd> ou <kbd>Q</kbd><kbd>D</kbd> : marcher · <kbd>Espace</kbd> : sauter (maintenir pour un grand saut) · <kbd>↑</kbd> : grimper aux plantes · en vol : toutes les directions</li>
         <li><kbd>E</kbd> : agir (porte, cueillir, lire, remplir une fiole, porter / poser) · <kbd>Clic droit</kbd> : lancer ce qu'on porte · <kbd>X</kbd> maintenu : creuser ou cueillir vers la souris (terre, sable, neige, plantes, cristal)</li>
         <li><kbd>1</kbd>–<kbd>5</kbd> ou molette : choisir dans la barre · <kbd>Clic</kbd> : lancer vers la souris</li>
+        <li>Glyphe Esprit : flèches pour guider la créature, <kbd>E</kbd> pour revenir · Glyphe Lien : <kbd>↑</kbd><kbd>↓</kbd> pour raccourcir ou allonger la corde, <kbd>Espace</kbd> pour lâcher</li>
         <li><kbd>G</kbd> : grimoire · <kbd>H</kbd> : cette lettre · <kbd>M</kbd> : son · <kbd>Échap</kbd> : fermer</li>
         <li>Revenir au labo (la porte, ou le bouton 🏠) restaure encre et vitalité et sauvegarde le monde tel que tu l'as laissé. Rien ne meurt vraiment ici : on s'évanouit, on se réveille devant la porte.</li>
       </ul>
@@ -473,6 +478,47 @@ const DATA = (() => {
     foudre:  { id: 'foudre',  nom: 'Foudre',   couleur: '#e0c43a', cout: 4, desc: 'Électrise : l\'eau et le métal conduisent, l\'huile s\'embrase, les créatures sont secouées. Sur soi : vitesse.' },
     acide:   { id: 'acide',   nom: 'Acide',    couleur: '#8fbf2a', cout: 3, desc: 'Fait couler de l\'acide qui ronge pierre, terre, bois et métal. Sur soi : tu dissous ce que tu touches.' },
     gravite: { id: 'gravite', nom: 'Gravité',  couleur: '#6c5ab8', cout: 5, desc: 'Inverse la pesanteur dans une zone : tout flotte. Sur soi : vol libre.' },
+    temps:   { id: 'temps',   nom: 'Temps',    couleur: '#8a8f9a', cout: 4, desc: 'Le temps passe plus vite : les plantes poussent, le feu s\'éteint, la lave se fige, la glace fond, les créatures s\'engourdissent. Sur soi : hâte, encre rapide.' },
+    transmutation: { id: 'transmutation', nom: 'Transmutation', couleur: '#c08a3a', cout: 4, desc: 'Change la matière : pierre en sable, sable en terre, terre en pierre, bois en pierre, eau en huile, glace en verre... Sur soi : peau de pierre.' },
+    son:     { id: 'son',     nom: 'Son',      couleur: '#d08ab0', cout: 3, desc: 'Onde de choc : repousse, réveille, brise le verre, attire les créatures curieuses.' },
+    esprit:  { id: 'esprit',  nom: 'Esprit',   couleur: '#b08ad8', cout: 5, desc: 'Prend le contrôle d\'une créature touchée pendant un moment (E pour la relâcher).' },
+    lien:    { id: 'lien',    nom: 'Lien',     couleur: '#c9a63a', cout: 3, desc: 'Une corde magique vers ce que le sort touche : on s\'y hisse, on s\'y balance (Espace pour lâcher).' },
+    portail: { id: 'portail', nom: 'Portail',  couleur: '#4fb0a0', cout: 5, desc: 'Deux lancers posent deux portails : tout ce qui entre dans l\'un sort par l\'autre, même les liquides. Sur soi : rejoindre son dernier portail.' },
+    metal:   { id: 'metal',   nom: 'Métal',    couleur: '#737e86', cout: 4, desc: 'Fait surgir du métal, qui conduit la foudre et résiste à l\'acide. Attire caisses, rochers et golems. Sur soi : armure.' },
+  };
+  // Effets dérivés (par Inverser), jamais dans la palette
+  const PSEUDO = {
+    creuser:     { id: 'creuser',     nom: 'Creuser',     couleur: '#6b4f2a' },
+    fanaison:    { id: 'fanaison',    nom: 'Fanaison',    couleur: '#8a6b2f' },
+    neutraliser: { id: 'neutraliser', nom: 'Neutraliser', couleur: '#8fb8d8' },
+    poids:       { id: 'poids',       nom: 'Poids',       couleur: '#4a4a55' },
+    secheresse:  { id: 'secheresse',  nom: 'Sécheresse',  couleur: '#d9c48a' },
+    ralentir:    { id: 'ralentir',    nom: 'Ralentir',    couleur: '#5a6070' },
+    silence:     { id: 'silence',     nom: 'Silence',     couleur: '#6a5a7a' },
+    rouille:     { id: 'rouille',     nom: 'Rouille',     couleur: '#9a5a3a' },
+  };
+  const INVERSE = { feu: 'froid', froid: 'feu', force: 'vent', vent: 'force', lumiere: 'ombre', ombre: 'lumiere', terre: 'creuser', vie: 'fanaison', acide: 'neutraliser', foudre: 'neutraliser', gravite: 'poids', eau: 'secheresse', temps: 'ralentir', son: 'silence', metal: 'rouille', transmutation: 'transmutation', esprit: 'esprit', lien: 'lien', portail: 'portail' };
+  // Fusions nommées (clé : deux glyphes triés)
+  const COMBOS = {
+    'feu|vent': { nom: 'Tornade de feu', desc: 'Des flammes qui tourbillonnent et se déplacent.' },
+    'feu|terre': { nom: 'Lave', desc: 'La terre fond en lave.' },
+    'eau|feu': { nom: 'Vapeur', desc: 'Les deux s\'annulent dans un grand nuage.' },
+    'eau|froid': { nom: 'Banquise', desc: 'Un bloc de glace solide, même en l\'air.' },
+    'eau|foudre': { nom: 'Orage', desc: 'L\'eau conduit loin, la pluie tombe.' },
+    'froid|vent': { nom: 'Blizzard', desc: 'Neige et bourrasques.' },
+    'eau|vie': { nom: 'Printemps', desc: 'Tout pousse d\'un coup.' },
+    'lumiere|ombre': { nom: 'Crépuscule', desc: 'Rien. Un silence gêné.' },
+    'force|terre': { nom: 'Séisme', desc: 'Le sol tremble et attire.' },
+    'gravite|vent': { nom: 'Cyclone', desc: 'Une colonne qui soulève tout, longtemps.' },
+    'feu|froid': { nom: 'Choc thermique', desc: 'La pierre éclate en sable.' },
+    'acide|feu': { nom: 'Fumée toxique', desc: 'Un nuage qui endort.' },
+    'ombre|vie': { nom: 'Mycélium', desc: 'Des champignons d\'ombre poussent.' },
+    'eau|terre': { nom: 'Boue', desc: 'La terre coule en sable mouillé.' },
+    'feu|lumiere': { nom: 'Petit soleil', desc: 'Une lumière immense et chaude.' },
+    'foudre|metal': { nom: 'Dynamo', desc: 'Le métal garde la charge longtemps.' },
+    'son|verre': { nom: 'Chant du verre', desc: '' },
+    'temps|vie': { nom: 'Forêt instantanée', desc: 'Les plantes jaillissent.' },
+    'portail|eau': { nom: 'Source', desc: 'De l\'eau jaillit du portail.' },
   };
   // Formes (anneau intérieur)
   const SHAPES = {
@@ -480,6 +526,13 @@ const DATA = (() => {
     soi:        { id: 'soi',        nom: 'Sur soi',    cout: 1, desc: 'L\'effet s\'applique à toi-même.' },
     zone:       { id: 'zone',       nom: 'Zone',       cout: 3, desc: 'L\'effet surgit autour du point visé, à portée.' },
     trait:      { id: 'trait',      nom: 'Trait',      cout: 3, desc: 'Une ligne d\'énergie instantanée vers le point visé.' },
+    aura:       { id: 'aura',       nom: 'Aura',       cout: 3, desc: 'L\'effet t\'entoure et te suit un moment.' },
+    mur:        { id: 'mur',        nom: 'Mur',        cout: 4, desc: 'L\'effet se dresse en colonne au point visé.' },
+    totem:      { id: 'totem',      nom: 'Totem',      cout: 5, desc: 'Un piquet planté au point visé répète l\'effet toutes les deux secondes.' },
+    chaine:     { id: 'chaine',     nom: 'Chaîne',     cout: 4, desc: 'Un projectile qui saute de cible en cible.' },
+    pluie:      { id: 'pluie',      nom: 'Pluie',      cout: 5, desc: 'L\'effet tombe du ciel sur la zone visée pendant un moment.' },
+    objet:      { id: 'objet',      nom: 'Sur objet',  cout: 3, desc: 'Enchante la caisse ou la créature la plus proche du point visé : elle porte l\'effet.' },
+    invocation: { id: 'invocation', nom: 'Invocation', cout: 6, desc: 'Un petit familier de l\'élément te suit et attaque ce qui t\'attaque.' },
   };
   // Modificateurs (anneau extérieur)
   const MODS = {
@@ -491,6 +544,12 @@ const DATA = (() => {
     persistance: { id: 'persistance', nom: 'Persistance', cout: 3, desc: 'Laisse une trace durable (flammes, pierre au lieu de terre, lueur...).' },
     vitesse:     { id: 'vitesse',     nom: 'Vitesse',     cout: 1, desc: 'Projectile plus rapide et plus droit.' },
     double:      { id: 'double',      nom: 'Double',      cout: 3, desc: 'Deux fois l\'effet, en éventail.' },
+    inverser:    { id: 'inverser',    nom: 'Inverser',    cout: 2, desc: 'Retourne l\'effet : le feu refroidit, la terre creuse, la vie fane, l\'eau assèche, la force repousse...' },
+    echo:        { id: 'echo',        nom: 'Écho',        cout: 3, desc: 'L\'effet se répète deux fois de plus, au même endroit.' },
+    teleguide:   { id: 'teleguide',   nom: 'Téléguidé',   cout: 2, desc: 'Le projectile suit la souris.' },
+    orbite:      { id: 'orbite',      nom: 'Orbite',      cout: 3, desc: 'Trois billes tournent autour de toi un moment.' },
+    canalise:    { id: 'canalise',    nom: 'Canalisé',    cout: 2, desc: 'Tant que tu maintiens le clic, l\'effet suit la souris et consomme de l\'encre.' },
+    sous:        { id: 'sous',        nom: 'Sous-sceau',  cout: 0, desc: 'Un sceau consigné entier, lancé là où celui-ci éclate.' },
   };
   // Déclencheurs (pointes)
   const TRIGGERS = {
@@ -578,6 +637,8 @@ const DATA = (() => {
     obsidienne: { id: 'obsidienne', nom: 'La lave et l\'eau',       glyphe: null,      desc: 'La lave touche l\'eau et se fige en pierre noire.' },
     verre:      { id: 'verre',      nom: 'Le sable et la lave',     glyphe: null,      desc: 'Le sable chauffé par la lave devient verre.' },
     incendie:   { id: 'incendie',   nom: 'Le feu se propage',       glyphe: null,      desc: 'Une flamme en allume une autre.' },
+    pluie:      { id: 'pluie',      nom: 'La pluie tombe',          glyphe: null,      desc: 'Être dehors sous la pluie.' },
+    verre_brise: { id: 'verre_brise', nom: 'Le verre se brise',      glyphe: 'son',     desc: 'Du verre vole en éclats.' },
   };
 
   // Découvertes : ce qui est débloqué et comment
@@ -598,6 +659,28 @@ const DATA = (() => {
     { id: 'mods3',  type: 'mods', item: ['vitesse', 'double'], titre: 'Modificateurs : Vitesse & Double', indice: 'Lis deux runes cachées.', cond: (p) => p.compteurs.runes >= 2 },
     { id: 'slot2',  type: 'slot', item: 2, titre: 'Deuxième emplacement de modificateur', indice: 'Possède 6 glyphes d\'effet.', cond: (p) => p.cores.length >= 6 },
     { id: 'slot3',  type: 'slot', item: 3, titre: 'Troisième emplacement de modificateur', indice: 'Possède 10 glyphes d\'effet.', cond: (p) => p.cores.length >= 10 },
+    // --- étape 2 : fusion, sous-sceaux, nouveaux glyphes, formes et modificateurs ---
+    { id: 'fusion', type: 'fusion', item: true, titre: 'Fusion : deux glyphes d\'effet dans un sceau', indice: 'Lance 30 sceaux.', cond: (p) => p.compteurs.sorts >= 30 },
+    { id: 'sous',   type: 'mods', item: ['sous'], titre: 'Sous-sceau : un sceau dans un sceau', indice: 'Consigne 6 sceaux différents.', cond: (p) => p.compteurs.sceaux >= 6 },
+    { id: 'temps',  type: 'core', item: 'temps',  titre: 'Glyphe : Temps', indice: 'Atteins le niveau 3.', cond: (p) => p.compteurs.niveau >= 3 },
+    { id: 'transmutation', type: 'core', item: 'transmutation', titre: 'Glyphe : Transmutation', indice: 'Observe le sable devenir verre et la lave devenir pierre.', cond: (p) => (p.obs.verre || 0) >= 1 && (p.obs.obsidienne || 0) >= 1 },
+    { id: 'son',    type: 'core', item: 'son',    titre: 'Glyphe : Son', indice: 'Observe du verre se briser (le verre des ruines, ou le tien).', cond: (p) => (p.obs.verre_brise || 0) >= 1 },
+    { id: 'esprit', type: 'core', item: 'esprit', titre: 'Glyphe : Esprit', indice: 'Apprivoise 3 créatures.', cond: (p) => p.compteurs.tames >= 3 },
+    { id: 'lien',   type: 'core', item: 'lien',   titre: 'Glyphe : Lien', indice: 'Porte et lance 5 objets ou créatures.', cond: (p) => p.compteurs.lancers >= 5 },
+    { id: 'portail', type: 'core', item: 'portail', titre: 'Glyphe : Portail', indice: 'Lis 3 runes cachées.', cond: (p) => p.compteurs.runes >= 3 },
+    { id: 'metal',  type: 'core', item: 'metal',  titre: 'Glyphe : Métal', indice: 'Possède un éclat de cristal et une poussière de pierre.', cond: (p) => p.ingredientsVus.includes('eclat') && p.ingredientsVus.includes('poussiere') },
+    { id: 'aura',   type: 'shape', item: 'aura',  titre: 'Forme : Aura', indice: 'Atteins le niveau 2.', cond: (p) => p.compteurs.niveau >= 2 },
+    { id: 'mur',    type: 'shape', item: 'mur',   titre: 'Forme : Mur', indice: 'Lance 12 sceaux de Terre.', cond: (p) => p.compteurs.terre >= 12 },
+    { id: 'totem',  type: 'shape', item: 'totem', titre: 'Forme : Totem', indice: 'Découvre 5 recettes.', cond: (p) => p.recettes.length >= 5 },
+    { id: 'chaine', type: 'shape', item: 'chaine', titre: 'Forme : Chaîne', indice: 'Touche 10 créatures avec des projectiles.', cond: (p) => p.compteurs.creaturesTouchees >= 10 },
+    { id: 'pluie',  type: 'shape', item: 'pluie', titre: 'Forme : Pluie', indice: 'Reste dehors sous la pluie.', cond: (p) => (p.obs.pluie || 0) >= 1 },
+    { id: 'objet',  type: 'shape', item: 'objet', titre: 'Forme : Sur objet', indice: 'Porte 3 fois une caisse ou une créature.', cond: (p) => p.compteurs.portes >= 3 },
+    { id: 'invocation', type: 'shape', item: 'invocation', titre: 'Forme : Invocation', indice: 'Apprivoise 5 créatures.', cond: (p) => p.compteurs.tames >= 5 },
+    { id: 'inverser', type: 'mods', item: ['inverser'], titre: 'Modificateur : Inverser', indice: 'Possède le Feu et le Froid.', cond: (p) => p.cores.includes('froid') },
+    { id: 'echo',   type: 'mods', item: ['echo'], titre: 'Modificateur : Écho', indice: 'Lance 60 sceaux.', cond: (p) => p.compteurs.sorts >= 60 },
+    { id: 'teleguide', type: 'mods', item: ['teleguide'], titre: 'Modificateur : Téléguidé', indice: 'Possède la forme Trait.', cond: (p) => p.shapes.includes('trait') },
+    { id: 'orbite', type: 'mods', item: ['orbite'], titre: 'Modificateur : Orbite', indice: 'Vole (Gravité sur soi ou élixir de vol).', cond: (p) => p.compteurs.vols >= 1 },
+    { id: 'canalise', type: 'mods', item: ['canalise'], titre: 'Modificateur : Canalisé', indice: 'Atteins le niveau 4.', cond: (p) => p.compteurs.niveau >= 4 },
   ];
 
   const DEBUT = {
@@ -623,7 +706,7 @@ const DATA = (() => {
   ];
   const ACCESSOIRES = ['Bâton', 'Plume', 'Grimoire'];
 
-  return { CORES, SHAPES, MODS, TRIGGERS, INGREDIENTS, STEPS, POTIONS, OBSERVATIONS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
+  return { CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, STEPS, POTIONS, OBSERVATIONS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
 })();
 
 </script>
@@ -634,34 +717,44 @@ const Seal = (() => {
   const { TAU, INK } = U;
 
   function create() {
-    return { nom: '', core: null, shape: null, mods: [null, null, null], trigger: null };
+    return { nom: '', core: null, core2: null, shape: null, mods: [null, null, null], trigger: null };
   }
   function clone(s) {
-    return { nom: s.nom, core: s.core, shape: s.shape, mods: s.mods.slice(), trigger: s.trigger };
+    return { nom: s.nom, core: s.core, core2: s.core2 || null, shape: s.shape, mods: s.mods.map((m) => (m && m.sub ? { sub: clone(m.sub) } : m)), trigger: s.trigger };
   }
+  const isSub = (m) => !!(m && typeof m === 'object' && m.sub);
+  function subs(s) { return s.mods.filter(isSub).map((m) => m.sub); }
+  function depth(s) { let d = 0; for (const q of subs(s)) d = Math.max(d, 1 + depth(q)); return d; }
   function cost(s) {
     let c = 0;
     if (s.core) c += DATA.CORES[s.core].cout;
+    if (s.core2) c += DATA.CORES[s.core2].cout + 2;
     if (s.shape) c += DATA.SHAPES[s.shape].cout;
-    for (const m of s.mods) if (m) c += DATA.MODS[m].cout;
+    for (const m of s.mods) { if (!m) continue; c += isSub(m) ? cost(m.sub) : DATA.MODS[m].cout; }
     if (s.trigger) c += DATA.TRIGGERS[s.trigger].cout;
     return c;
   }
   function count(s, mod) {
     return s.mods.filter((m) => m === mod).length;
   }
+  function modId(m) { return isSub(m) ? 'sous' : m; }
   // Un sceau sans glyphe d'effet est un pétard. Sans forme : effet faible sur soi.
   function etat(s) {
     if (!s.core) return { ok: false, raison: 'Pas de glyphe d\'effet : ce sceau ne fera qu\'un pétard de fumée.' };
     if (!s.shape) return { ok: false, raison: 'Pas de forme : l\'effet se répandra mollement autour de toi.' };
     return { ok: true, raison: s.trigger ? '' : 'Pas de déclencheur : l\'effet sera immédiat.' };
   }
+  function comboName(s) {
+    if (!s.core || !s.core2) return null;
+    const k = [s.core, s.core2].sort().join('|');
+    return DATA.COMBOS[k] ? DATA.COMBOS[k].nom : null;
+  }
   function autoNom(s) {
     if (!s.core) return 'Pétard';
-    let n = DATA.CORES[s.core].nom;
+    let n = comboName(s) || (s.core2 ? DATA.CORES[s.core].nom + '-' + DATA.CORES[s.core2].nom.toLowerCase() : DATA.CORES[s.core].nom);
     if (s.shape) n = DATA.SHAPES[s.shape].nom + ' de ' + n.toLowerCase();
     const mods = s.mods.filter(Boolean);
-    if (mods.length) n += ' ' + mods.map((m) => DATA.MODS[m].nom.toLowerCase()).join(', ');
+    if (mods.length) n += ' ' + mods.map((m) => (isSub(m) ? '« ' + nom(m.sub) + ' »' : DATA.MODS[m].nom.toLowerCase())).join(', ');
     if (s.trigger && s.trigger !== 'immediat') n += ' (' + DATA.TRIGGERS[s.trigger].nom.toLowerCase() + ')';
     return n;
   }
@@ -679,6 +772,11 @@ const Seal = (() => {
       persist: n('persistance'),
       speed: 1 + 0.4 * n('vitesse'),
       extra: n('double'),
+      inverse: n('inverser') > 0,
+      echo: n('echo') * 2,
+      teleguide: n('teleguide') > 0,
+      orbite: n('orbite') > 0,
+      canalise: n('canalise') > 0,
     };
   }
 
@@ -705,11 +803,38 @@ const Seal = (() => {
       case 'ombre': ctx.beginPath(); ctx.arc(0, 0, r * 0.85, Math.PI * 0.2, Math.PI * 1.8); ctx.stroke(); ctx.beginPath(); ctx.arc(r * 0.35, 0, r * 0.6, Math.PI * 1.3, Math.PI * 0.7, true); ctx.stroke(); dot(-r * 0.2, -r * 0.1, r * 0.1); break;
       case 'vie': ctx.beginPath(); ctx.moveTo(0, r * 0.9); ctx.quadraticCurveTo(0, 0, r * 0.2, -r * 0.8); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, r * 0.3); ctx.quadraticCurveTo(-r * 0.9, r * 0.1, -r * 0.55, -r * 0.55); ctx.quadraticCurveTo(0, -r * 0.4, 0, r * 0.3); ctx.stroke(); ctx.beginPath(); ctx.moveTo(r * 0.1, -r * 0.1); ctx.quadraticCurveTo(r * 0.9, -r * 0.3, r * 0.6, -r * 0.9); ctx.quadraticCurveTo(r * 0.1, -r * 0.8, r * 0.1, -r * 0.1); ctx.stroke(); break;
       case 'force': ctx.beginPath(); for (let i = 0; i <= 40; i++) { const t = i / 40; const a = t * TAU * 2.2; const rr = r * 0.95 * (1 - t); const px = Math.cos(a) * rr, py = Math.sin(a) * rr; if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); } ctx.stroke(); dot(0, 0, r * 0.12); break;
+      case 'froid': for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; L(0, 0, Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9); L(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5, Math.cos(a + 0.5) * r * 0.7, Math.sin(a + 0.5) * r * 0.7); } break;
+      case 'foudre': P([[r * 0.2, -r * 0.95], [-r * 0.4, r * 0.05], [r * 0.1, r * 0.05], [-r * 0.2, r * 0.95], [r * 0.5, -r * 0.1], [0, -r * 0.1]], true); break;
+      case 'acide': ctx.beginPath(); ctx.moveTo(0, -r * 0.9); ctx.bezierCurveTo(r * 0.9, r * 0.1, r * 0.6, r * 0.9, 0, r * 0.9); ctx.bezierCurveTo(-r * 0.6, r * 0.9, -r * 0.9, r * 0.1, 0, -r * 0.9); ctx.stroke(); dot(-r * 0.25, r * 0.3, r * 0.1); dot(r * 0.2, r * 0.5, r * 0.08); break;
+      case 'gravite': C(0, r * 0.3, r * 0.35); L(-r * 0.7, -r * 0.5, r * 0.7, -r * 0.5); P([[-r * 0.3, -r * 0.2], [0, -r * 0.6], [r * 0.3, -r * 0.2]], false); break;
+      case 'temps': C(0, 0, r * 0.85); L(0, 0, 0, -r * 0.55); L(0, 0, r * 0.4, r * 0.25); for (let i = 0; i < 4; i++) { const a = (i / 4) * TAU; dot(Math.cos(a) * r * 0.7, Math.sin(a) * r * 0.7, r * 0.07); } break;
+      case 'transmutation': P([[-r * 0.8, r * 0.3], [0, -r * 0.8], [r * 0.8, r * 0.3]], true); L(-r * 0.8, r * 0.3, r * 0.8, r * 0.3); C(0, r * 0.55, r * 0.3); break;
+      case 'son': for (let i = 1; i <= 3; i++) { ctx.beginPath(); ctx.arc(-r * 0.4, 0, r * 0.3 * i, -Math.PI / 3, Math.PI / 3); ctx.stroke(); } dot(-r * 0.4, 0, r * 0.12); break;
+      case 'esprit': C(0, -r * 0.2, r * 0.6); dot(-r * 0.2, -r * 0.3, r * 0.1); dot(r * 0.2, -r * 0.3, r * 0.1); ctx.beginPath(); ctx.moveTo(-r * 0.5, r * 0.5); ctx.quadraticCurveTo(0, r * 1.0, r * 0.5, r * 0.5); ctx.stroke(); break;
+      case 'lien': C(-r * 0.45, 0, r * 0.3); C(r * 0.45, 0, r * 0.3); L(-r * 0.15, 0, r * 0.15, 0); break;
+      case 'portail': ctx.beginPath(); ctx.ellipse(-r * 0.4, 0, r * 0.3, r * 0.8, 0, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.ellipse(r * 0.4, 0, r * 0.3, r * 0.8, 0, 0, TAU); ctx.stroke(); ctx.setLineDash([r * 0.15, r * 0.15]); L(-r * 0.4, 0, r * 0.4, 0); ctx.setLineDash([]); break;
+      case 'metal': P([[-r * 0.6, r * 0.8], [-r * 0.6, -r * 0.3], [-r * 0.3, -r * 0.8], [r * 0.3, -r * 0.8], [r * 0.6, -r * 0.3], [r * 0.6, r * 0.8]], false); L(-r * 0.6, r * 0.8, -r * 0.6, r * 0.3); L(r * 0.6, r * 0.8, r * 0.6, r * 0.3); break;
+      // --- pseudo-effets ---
+      case 'creuser': L(-r * 0.8, r * 0.6, r * 0.2, -r * 0.6); P([[r * 0.2, -r * 0.6], [r * 0.8, -r * 0.9], [r * 0.6, -r * 0.2]], true); break;
+      case 'fanaison': ctx.beginPath(); ctx.moveTo(0, r * 0.9); ctx.quadraticCurveTo(r * 0.2, 0, r * 0.6, -r * 0.5); ctx.stroke(); L(-r * 0.6, -r * 0.6, r * 0.2, r * 0.2); break;
+      case 'neutraliser': C(0, 0, r * 0.7); L(-r * 0.5, 0, r * 0.5, 0); break;
+      case 'poids': P([[-r * 0.7, r * 0.5], [r * 0.7, r * 0.5], [r * 0.3, -r * 0.5], [-r * 0.3, -r * 0.5]], true); L(0, -r * 0.5, 0, -r * 0.9); break;
+      case 'secheresse': for (let i = 0; i < 3; i++) L(-r * 0.6 + i * r * 0.6, r * 0.6, -r * 0.4 + i * r * 0.6, -r * 0.4); ctx.setLineDash([r * 0.1, r * 0.1]); L(-r * 0.8, r * 0.8, r * 0.8, r * 0.8); ctx.setLineDash([]); break;
+      case 'ralentir': C(0, 0, r * 0.85); L(0, 0, 0, -r * 0.55); L(0, 0, -r * 0.4, r * 0.25); break;
+      case 'silence': for (let i = 1; i <= 2; i++) { ctx.beginPath(); ctx.arc(-r * 0.4, 0, r * 0.3 * i, -Math.PI / 3, Math.PI / 3); ctx.stroke(); } L(-r * 0.8, -r * 0.8, r * 0.8, r * 0.8); break;
+      case 'rouille': P([[-r * 0.6, r * 0.8], [-r * 0.6, -r * 0.3], [-r * 0.3, -r * 0.8], [r * 0.3, -r * 0.8], [r * 0.6, -r * 0.3], [r * 0.6, r * 0.8]], false); dot(0, r * 0.2, r * 0.15); dot(r * 0.3, r * 0.5, r * 0.1); break;
       // --- formes ---
       case 'projectile': L(-r * 0.8, r * 0.5, r * 0.6, -r * 0.5); P([[r * 0.8, -r * 0.7], [r * 0.15, -r * 0.6], [r * 0.7, -r * 0.05]], false); dot(-r * 0.8, r * 0.5, r * 0.18); break;
       case 'soi': C(0, -r * 0.45, r * 0.3); P([[-r * 0.6, r * 0.9], [0, -r * 0.1], [r * 0.6, r * 0.9]]); break;
       case 'zone': C(0, 0, r * 0.35); for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; dot(Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.8, r * 0.12); } break;
       case 'trait': L(-r * 0.9, r * 0.6, r * 0.9, -r * 0.6); L(-r * 0.9, r * 0.9, -r * 0.5, r * 0.9); L(r * 0.5, -r * 0.9, r * 0.9, -r * 0.9); break;
+      case 'aura': C(0, -r * 0.45, r * 0.22); P([[-r * 0.45, r * 0.8], [0, -r * 0.15], [r * 0.45, r * 0.8]]); ctx.setLineDash([r * 0.12, r * 0.12]); C(0, r * 0.1, r * 0.9); ctx.setLineDash([]); break;
+      case 'mur': for (let i = 0; i < 3; i++) U.inkRect(ctx, -r * 0.3, -r * 0.9 + i * r * 0.6, r * 0.6, r * 0.5, seed + i, r * 0.03); break;
+      case 'totem': L(0, r * 0.9, 0, -r * 0.6); P([[-r * 0.3, -r * 0.6], [0, -r * 0.95], [r * 0.3, -r * 0.6]], true); for (let i = 1; i <= 2; i++) { ctx.beginPath(); ctx.arc(0, -r * 0.3, r * 0.35 * i, Math.PI * 0.15, Math.PI * 0.85, true); ctx.stroke(); } break;
+      case 'chaine': dot(-r * 0.7, r * 0.5, r * 0.15); dot(0, -r * 0.5, r * 0.15); dot(r * 0.7, r * 0.3, r * 0.15); L(-r * 0.7, r * 0.5, 0, -r * 0.5); L(0, -r * 0.5, r * 0.7, r * 0.3); break;
+      case 'pluie': ctx.beginPath(); for (let k = 0; k < 4; k++) U.inkCircle(ctx, -r * 0.5 + k * r * 0.33, -r * 0.45, r * 0.25, seed + k, r * 0.02); for (let k = 0; k < 3; k++) L(-r * 0.4 + k * r * 0.4, -r * 0.05, -r * 0.5 + k * r * 0.4, r * 0.6); break;
+      case 'objet': U.inkRect(ctx, -r * 0.5, -r * 0.2, r, r, seed, r * 0.03); for (let i = 0; i < 4; i++) { const a = (i / 4) * TAU + 0.4; L(Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.8 - r * 0.3, Math.cos(a) * r * 1.0, Math.sin(a) * r * 1.0 - r * 0.3); } break;
+      case 'invocation': C(0, r * 0.1, r * 0.4); dot(-r * 0.12, 0, r * 0.07); dot(r * 0.12, 0, r * 0.07); L(0, -r * 0.3, 0, -r * 0.8); L(-r * 0.3, -r * 0.6, 0, -r * 0.8); L(r * 0.3, -r * 0.6, 0, -r * 0.8); break;
       // --- modificateurs ---
       case 'puissance': L(-r * 0.7, 0, r * 0.7, 0); L(0, -r * 0.7, 0, r * 0.7); dot(r * 0.75, -r * 0.75, r * 0.12); dot(-r * 0.75, r * 0.75, r * 0.12); break;
       case 'portee': L(-r * 0.9, 0, r * 0.9, 0); P([[r * 0.9, 0], [r * 0.4, -r * 0.4]], false); P([[r * 0.9, 0], [r * 0.4, r * 0.4]], false); dot(-r * 0.9, 0, r * 0.15); break;
@@ -719,6 +844,12 @@ const Seal = (() => {
       case 'persistance': ctx.beginPath(); ctx.moveTo(-r * 0.9, 0); ctx.bezierCurveTo(-r * 0.9, -r * 0.9, 0, -r * 0.5, 0, 0); ctx.bezierCurveTo(0, r * 0.5, r * 0.9, r * 0.9, r * 0.9, 0); ctx.bezierCurveTo(r * 0.9, -r * 0.9, 0, -r * 0.5, 0, 0); ctx.bezierCurveTo(0, r * 0.5, -r * 0.9, r * 0.9, -r * 0.9, 0); ctx.stroke(); break;
       case 'vitesse': P([[-r * 0.9, -r * 0.6], [-r * 0.3, 0], [-r * 0.9, r * 0.6]], false); P([[-r * 0.1, -r * 0.6], [r * 0.5, 0], [-r * 0.1, r * 0.6]], false); break;
       case 'double': dot(-r * 0.4, 0, r * 0.3); dot(r * 0.4, 0, r * 0.3); ctx.globalAlpha *= 0.6; C(0, 0, r * 0.9); break;
+      case 'inverser': ctx.beginPath(); ctx.arc(0, 0, r * 0.7, Math.PI * 0.1, Math.PI * 0.9); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, r * 0.7, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); P([[-r * 0.9, r * 0.1], [-r * 0.7, r * 0.4], [-r * 0.4, r * 0.15]], false); P([[r * 0.9, -r * 0.1], [r * 0.7, -r * 0.4], [r * 0.4, -r * 0.15]], false); break;
+      case 'echo': for (let i = 1; i <= 3; i++) { ctx.globalAlpha = 1 - i * 0.25; C(0, 0, r * 0.3 * i); } break;
+      case 'teleguide': ctx.beginPath(); ctx.moveTo(-r * 0.8, r * 0.6); ctx.bezierCurveTo(-r * 0.2, r * 0.6, 0, -r * 0.6, r * 0.6, -r * 0.6); ctx.stroke(); P([[r * 0.6, -r * 0.6], [r * 0.2, -r * 0.7], [r * 0.5, -r * 0.2]], false); C(r * 0.6, -r * 0.6, r * 0.12); break;
+      case 'orbite': C(0, 0, r * 0.2); ctx.beginPath(); ctx.ellipse(0, 0, r * 0.9, r * 0.4, -0.5, 0, TAU); ctx.stroke(); dot(r * 0.7, -r * 0.4, r * 0.12); break;
+      case 'canalise': L(-r * 0.9, 0, r * 0.3, 0); L(-r * 0.9, -r * 0.3, r * 0.1, -r * 0.3); L(-r * 0.9, r * 0.3, r * 0.1, r * 0.3); dot(r * 0.6, 0, r * 0.2); break;
+      case 'sous': C(0, 0, r * 0.9); C(0, 0, r * 0.55); C(0, 0, r * 0.25); break;
       // --- déclencheurs ---
       case 'immediat': for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU + 0.3; L(Math.cos(a) * r * 0.25, Math.sin(a) * r * 0.25, Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9); } break;
       case 'contact': L(-r * 0.7, -r * 0.7, r * 0.7, r * 0.7); L(-r * 0.7, r * 0.7, r * 0.7, -r * 0.7); C(0, 0, r * 0.9); break;
@@ -737,6 +868,7 @@ const Seal = (() => {
     return {
       core: { x: cx, y: cy, r: R * 0.27 },
       shape: slotAt(R * 0.5, -90, R * 0.11),
+      core2: slotAt(R * 0.5, 90, R * 0.11),
       mods: [slotAt(R * 0.74, 30, R * 0.1), slotAt(R * 0.74, 150, R * 0.1), slotAt(R * 0.74, 270, R * 0.1)],
       trigger: slotAt(R * 1.0, -90, R * 0.1),
     };
@@ -756,7 +888,8 @@ const Seal = (() => {
     // halo si valide
     if (s.core && opts.glow !== false) {
       const g = ctx.createRadialGradient(cx, cy, R * 0.1, cx, cy, R * 1.15);
-      g.addColorStop(0, U.hexA(coul, st.ok ? 0.35 : 0.15));
+      if (s.core2) g.addColorStop(0, U.hexA(DATA.CORES[s.core2].couleur, 0.35));
+      g.addColorStop(s.core2 ? 0.4 : 0, U.hexA(coul, st.ok ? 0.35 : 0.15));
       g.addColorStop(1, U.hexA(coul, 0));
       ctx.fillStyle = g;
       ctx.beginPath(); ctx.arc(cx, cy, R * 1.15, 0, TAU); ctx.fill();
@@ -824,7 +957,7 @@ const Seal = (() => {
       U.inkCircle(ctx, sl.x, sl.y, sl.r, 50 + sl.x, R * 0.01);
       ctx.setLineDash([]);
       if (id) {
-        const col = kind === 'core' ? coul : INK;
+        const col = kind === 'core' ? coul : kind === 'core2' ? DATA.CORES[id].couleur : INK;
         glyph(ctx, id, sl.x, sl.y, sl.r * 0.68, col, 60 + sl.x);
       } else if (opts.empty && !enabled) {
         ctx.strokeStyle = 'rgba(60,45,30,0.3)';
@@ -835,7 +968,16 @@ const Seal = (() => {
     };
     slot(lay.core, s.core, 'core', true, opts.highlight === 'core');
     slot(lay.shape, s.shape, 'shape', true, opts.highlight === 'shape');
-    for (let i = 0; i < 3; i++) slot(lay.mods[i], s.mods[i], 'mod', i < slots, opts.highlight === 'mod' + i);
+    if (opts.fusion || s.core2) slot(lay.core2, s.core2, 'core2', !!opts.fusion, opts.highlight === 'core2');
+    for (let i = 0; i < 3; i++) {
+      const m = s.mods[i];
+      if (m && m.sub) {
+        const sl = lay.mods[i];
+        ctx.save(); ctx.fillStyle = U.hexA('#efe3c4', 0.9); ctx.beginPath(); ctx.arc(sl.x, sl.y, sl.r, 0, TAU); ctx.fill(); ctx.restore();
+        drawMini(ctx, m.sub, sl.x, sl.y, sl.r * 0.95, t);
+        if (opts.highlight === 'mod' + i) { ctx.save(); ctx.strokeStyle = coul; ctx.lineWidth = Math.max(2, R * 0.03); U.inkCircle(ctx, sl.x, sl.y, sl.r, 50 + sl.x, R * 0.01); ctx.restore(); }
+      } else slot(lay.mods[i], m, 'mod', i < slots, opts.highlight === 'mod' + i);
+    }
     slot(lay.trigger, s.trigger, 'trigger', true, opts.highlight === 'trigger');
 
     ctx.restore();
@@ -857,10 +999,11 @@ const Seal = (() => {
       glyph(ctx, s.core, cx, cy, R * 0.5, coul, 3);
     }
     if (s.shape) glyph(ctx, s.shape, cx, cy - R * 0.7, R * 0.18, INK, 4);
+    if (s.core2) glyph(ctx, s.core2, cx, cy + R * 0.7, R * 0.22, DATA.CORES[s.core2].couleur, 5);
     ctx.restore();
   }
 
-  return { create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, draw, drawMini };
+  return { create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, draw, drawMini, isSub, subs, depth, modId, comboName };
 })();
 
 </script>
@@ -1546,6 +1689,8 @@ const World = (() => {
   let L = null, st = null, game = null, darkCv = null, time = 0;
   const DAY = 420; // secondes par jour
   const LIQ_ING = { [M.EAU]: 'eau', [M.HUILE]: 'huile', [M.ACIDE]: 'acide', [M.LAVE]: 'lave', [M.SEVE]: 'seve' };
+  const colorOf = (core) => (DATA.CORES[core] || DATA.PSEUDO[core] || { couleur: '#8a7a5a' }).couleur;
+  const FLAM = (m) => m === M.BOIS || m === M.PLANTE || m === M.HERBE;
 
   // ---------- Construction ----------
   function build(g, saved) {
@@ -1556,7 +1701,8 @@ const World = (() => {
       p: makePlayer(L.spawn.x, L.spawn.y),
       objs: [], crs: [], sp: [], parts: [], pickups: [], eclairs: [],
       cam: { x: 0, y: 0 }, shake: 0, lastZone: '', flash: 0,
-      tod: 0.32, meteo: { type: 'clair', t: 120 }, foudreT: 4, rainT: 0, obsT: {}, ileT: 0,
+      tod: 0.32, meteo: { type: 'clair', t: 120 }, foudreT: 4, rainT: 0, obsT: {}, ileT: 0, pluieT: 0,
+      control: null, lien: null, portails: [],
     };
     for (const o of L.objs) st.objs.push(makeObj(o));
     for (const c of L.crs) st.crs.push(makeCreature(c));
@@ -1575,7 +1721,7 @@ const World = (() => {
   function makePlayer(x, y) {
     return { x, y, w: 26, h: 50, vx: 0, vy: 0, face: 1, onGround: false, coyote: 0, jumpBuf: 0, anim: 0, canStep: true,
       hp: 10, hpMax: 10, ink: 40, inkMax: 40, inkRegen: 1.8, inv: 0, climbing: false, liq: 0,
-      sta: { wet: 0, stone: 0, invisible: 0, lowgrav: 0, jump: 0, small: 0, vision: 0, burning: 0, glide: 0, lumiere: 0, patins: 0, vitesse: 0, dissous: 0, vol: 0, branchies: 0, geant: 0, glisse: 0 },
+      sta: { wet: 0, stone: 0, invisible: 0, lowgrav: 0, jump: 0, small: 0, vision: 0, burning: 0, glide: 0, lumiere: 0, patins: 0, vitesse: 0, dissous: 0, vol: 0, branchies: 0, geant: 0, glisse: 0, hate: 0, lent: 0, armure: 0 },
       trap: null, selfTimer: null, carry: null, digT: 0 };
   }
   function makeObj(o) {
@@ -1791,6 +1937,64 @@ const World = (() => {
           if (Math.random() < pr * 0.5 && y > 0 && Sim.get(x, y - 1) === M.AIR) Sim.swap(i, (y - 1) * Sim.W + x);
         });
         break;
+      case 'temps':
+        Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
+          const r = Math.random();
+          if (FLAM(m) && Sim.aux[i] > 0) { Sim.aux[i] = 1; Sim.touch(i); }
+          else if (m === M.PLANTE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.6) Sim.set(x, y - 1, M.PLANTE); }
+          else if (m === M.HERBE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.3) Sim.set(x, y, M.PLANTE); }
+          else if (m === M.LAVE) { if (r < pr * 0.8) Sim.set(x, y, M.OBSIDIENNE); }
+          else if (m === M.GLACE || m === M.NEIGE) { if (r < pr * 0.6) Sim.set(x, y, M.EAU); }
+          else if (m === M.FEU || m === M.VAPEUR || m === M.FUMEE) Sim.set(x, y, M.AIR);
+          else if (m === M.CENDRE) { if (r < pr * 0.5) Sim.set(x, y, M.TERRE); }
+        });
+        break;
+      case 'ralentir': break;
+      case 'transmutation': {
+        const MAP = { [M.PIERRE]: M.SABLE, [M.SABLE]: M.TERRE, [M.TERRE]: M.PIERRE, [M.BOIS]: M.PIERRE, [M.EAU]: M.HUILE, [M.HUILE]: M.EAU, [M.GLACE]: M.VERRE, [M.VERRE]: M.SABLE, [M.CENDRE]: M.TERRE, [M.NEIGE]: M.SABLE, [M.METAL]: M.OBSIDIENNE, [M.OBSIDIENNE]: M.METAL, [M.PLANTE]: M.BOIS, [M.SEVE]: M.ACIDE, [M.ACIDE]: M.SEVE };
+        Sim.forRadius(cx, cy, rad, (x, y, i, m) => { const t = MAP[m]; if (t !== undefined && Math.random() < pr * 0.9) Sim.set(x, y, t); });
+        break;
+      }
+      case 'son':
+        Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
+          const q = P[m];
+          if (m === M.VERRE) { if (Math.random() < pr) { Sim.set(x, y, M.SABLE); if (Math.random() < 0.05) onSimEvent('verre_brise', (x + 0.5) * CS, (y + 0.5) * CS); } }
+          else if (q.gas || q.powder) { if (Math.random() < pr * 0.4) { const [nx, ny] = towards(x, y, -1); if (Sim.get(nx, ny) === M.AIR) Sim.swap(i, ny * Sim.W + nx); } }
+        });
+        break;
+      case 'silence': break;
+      case 'metal':
+        if (!burst) break;
+        Sim.forRadius(cx, cy, rad * 0.7, (x, y, i, m) => { const q = P[m]; if (q.solid) return; if (Math.random() < pr && !pcell(cellRect(x, y))) Sim.set(x, y, M.METAL); });
+        break;
+      case 'rouille':
+        Sim.forRadius(cx, cy, rad, (x, y, i, m) => { if (m === M.METAL && Math.random() < pr * 0.6) Sim.set(x, y, Math.random() < 0.5 ? M.SABLE : M.CENDRE); });
+        break;
+      case 'creuser':
+        Sim.forRadius(cx, cy, rad, (x, y, i, m) => { const q = P[m]; if (!q.solid || m === M.OBSIDIENNE) return; if (Math.random() < pr * (m === M.METAL ? 0.2 : 0.9) && !pcell(cellRect(x, y))) Sim.set(x, y, M.AIR); });
+        break;
+      case 'fanaison':
+        Sim.forRadius(cx, cy, rad, (x, y, i, m) => { if ((m === M.PLANTE || m === M.HERBE) && Math.random() < pr * 0.8) Sim.set(x, y, Math.random() < 0.5 ? M.CENDRE : M.AIR); else if (m === M.BOIS && Math.random() < pr * 0.3) Sim.set(x, y, M.CENDRE); });
+        break;
+      case 'neutraliser':
+        Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
+          if (m === M.ACIDE) Sim.set(x, y, M.EAU); else if (m === M.LAVE && Math.random() < pr) Sim.set(x, y, M.OBSIDIENNE); else if (m === M.FEU) Sim.set(x, y, M.AIR);
+          else if (FLAM(m) && Sim.aux[i] > 0) { Sim.aux[i] = 0; Sim.touch(i); }
+          if (Sim.elec[i] > 0) { Sim.elec[i] = 0; Sim.touch(i); }
+        });
+        break;
+      case 'poids':
+        Sim.forRadius(cx, cy, rad, (x, y, i, m) => { const q = P[m]; if (q.gas) Sim.set(x, y, M.AIR); else if ((q.liquid || q.powder) && Math.random() < pr * 0.5 && Sim.get(x, y + 1) === M.AIR) Sim.swap(i, (y + 1) * Sim.W + x); });
+        break;
+      case 'secheresse':
+        Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
+          const r = Math.random();
+          if (m === M.EAU && cap > 0) { if (r < pr * 0.7) { Sim.set(x, y, r < 0.1 ? M.VAPEUR : M.AIR, 20); cap--; } }
+          else if (m === M.PLANTE) { if (r < pr * 0.3) Sim.set(x, y, M.HERBE); }
+          else if (m === M.HERBE) { if (r < pr * 0.3) Sim.set(x, y, M.CENDRE); }
+          else if (m === M.TERRE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.2) Sim.set(x, y, M.SABLE); }
+        });
+        break;
     }
   }
 
@@ -1800,7 +2004,7 @@ const World = (() => {
     const burst = mode === 'burst';
     const k = burst ? 1 : mode * 2.2;
     const power = prm.power || 1, dur = prm.duration || 1;
-    const C = DATA.CORES[core].couleur;
+    const C = colorOf(core);
     if (burst) st.sp.push({ k: 'ring', core, x: cx, y: cy, r: rad, life: 0.4, max: 0.4, color: C });
     if (!opts.noGrid) gridEffect(core, cx, cy, rad, prm, burst, k);
 
@@ -1836,6 +2040,17 @@ const World = (() => {
         case 'foudre': hurt(c, 2 * power * k); c.sta.stun = Math.max(c.sta.stun, 2 * dur); if (c.t === 'golem' && burst) { c.sta.stun += 2; } if (burst) part(ccx, ccy, C, 10, 120, 0.4, 2, 0, 'spark'); break;
         case 'acide': if (c.t !== 'golem') hurt(c, 1.5 * power * k); else if (burst) { hurt(c, 3 * power); part(ccx, ccy, '#8fbf2a', 8, 60); } break;
         case 'gravite': c.vy -= (burst ? 450 : 1900 * mode) * power; c.onGround = false; break;
+        case 'temps': case 'ralentir': c.sta.lent = Math.max(c.sta.lent || 0, (burst ? 8 : 0.5) * dur); if (burst) part(ccx, ccy, C, 6, 40, 0.6, 2); break;
+        case 'son': c.vx += dx * 600 * power * k; c.vy -= 200 * power * k; c.sta.sleep = 0; c.sta.stun = Math.max(c.sta.stun, 0.5); c.curieux = { x: cx, y: cy, t: 6 }; break;
+        case 'silence': c.sta.sleep = Math.max(c.sta.sleep, (burst ? 5 : 0.4) * dur); break;
+        case 'esprit': if (burst && c.t !== 'familier') { controlCreature(c, 12 * dur); } break;
+        case 'lien': if (burst) attachLien(c, cx, cy, dur); break;
+        case 'metal': if (c.t === 'golem') { c.vx -= dx * 500 * power * k; c.vy -= dy * 300 * power * k; } break;
+        case 'fanaison': hurt(c, 1.2 * power * k); break;
+        case 'poids': c.vy += (burst ? 500 : 1500 * mode) * power; c.sta.stun = Math.max(c.sta.stun, 0.8); break;
+        case 'secheresse': c.sta.wet = 0; if (c.t === 'limace') { c.size = Math.max(0.6, c.size - 0.2 * k); c.w = 36 * c.size; c.h = 24 * c.size; } break;
+        case 'neutraliser': c.sta.burn = 0; c.sta.stun = 0; break;
+        case 'rouille': if (c.t === 'golem') hurt(c, 1.5 * power * k); break;
       }
     }
     // --- objets ---
@@ -1851,6 +2066,8 @@ const World = (() => {
           if (core === 'vent') { const dx = Math.sign(ocx - cx) || 1; o.vx += dx * 420 * power * k; o.vy -= 220 * power * k; }
           if (core === 'force') { o.vx -= (ocx - cx) * 6 * power * k; o.vy -= (ocy - cy) * 4 * power * k + 100 * k; }
           if (core === 'gravite') { o.vy -= (burst ? 400 : 1900 * mode) * power; }
+          if (core === 'metal' || core === 'son') { const sg = core === 'metal' ? -1 : 1; o.vx += sg * Math.sign(ocx - cx) * 420 * power * k; o.vy -= 150 * power * k; }
+          if (core === 'poids') o.vy += (burst ? 400 : 1500 * mode) * power;
           if ((core === 'terre' || core === 'acide') && burst) { o.hp -= power; if (o.hp <= 0) { o.mort = true; part(ocx, ocy, '#8a6b2f', 12, 90); } }
           break;
         case 'torche':
@@ -1867,6 +2084,7 @@ const World = (() => {
             dropPickup('poussiere', ocx, o.y - 10); msg('Le rocher éclate ! Il en tombe une poussière scintillante.');
           } else if (burst && (core === 'feu' || core === 'terre' || core === 'force' || core === 'vent' || core === 'foudre')) { o.fissure = 0.5; if (!o.msgT || time - o.msgT > 4) { o.msgT = time; msg('Le rocher vibre. Il faudrait plus de puissance...'); } }
           if (core === 'gravite') o.vy -= (burst ? 300 : 1700 * mode) * power;
+          if (core === 'metal') { o.vx -= Math.sign(ocx - cx) * 300 * power * k; }
           break;
         case 'rune': if (core === 'lumiere') { o.revele = Math.min(1, o.revele + (burst ? 1 : k * 0.5)); if (burst) part(ocx, ocy, C, 10, 60, 0.8, 2, 0, 'spark'); } break;
       }
@@ -1890,6 +2108,9 @@ const World = (() => {
         case 'acide': if (!p.sta.stone && !p.sta.dissous) { p.hp -= (burst ? 1 : 1.5 * mode) * power; if (burst) msg('Ça pique !', 'warn'); } break;
         case 'gravite': p.vy -= (burst ? 450 : 1900 * mode) * power; p.onGround = false; break;
         case 'froid': if (burst && !p.sta.patins) msg('Brrr.'); break;
+        case 'son': { const dx = Math.sign(pcx - cx) || 1; p.vx += dx * 300 * power * k; p.vy -= 200 * power * k; break; }
+        case 'poids': p.vy += (burst ? 400 : 1500 * mode) * power; break;
+        case 'lien': if (burst && !opts.self) attachLien(null, cx, cy, dur); break;
       }
     }
     // --- décor ---
@@ -1898,10 +2119,11 @@ const World = (() => {
       const type = core === 'lumiere' || core === 'foudre' ? 'spark' : core === 'vie' ? 'feuille' : 'dot';
       part(cx, cy, C, n, 60 + rad, 0.7, 3, core === 'terre' ? 500 : core === 'eau' ? 400 : 0, type);
       Son.sfx('burst', core);
-      if (prm.persist > 0 && core !== 'terre' && core !== 'gravite') st.sp.push({ k: 'field', core, x: cx, y: cy, r: rad * 0.8, life: 4 * prm.persist * dur, max: 4 * prm.persist * dur, prm });
+      if (prm.persist > 0 && core !== 'terre' && core !== 'gravite' && core !== 'metal' && core !== 'esprit' && core !== 'lien' && core !== 'portail') st.sp.push({ k: 'field', core, x: cx, y: cy, r: rad * 0.8, life: 4 * prm.persist * dur, max: 4 * prm.persist * dur, prm });
       else if (core === 'lumiere' && !opts.noField) st.sp.push({ k: 'field', core, x: cx, y: cy, r: rad * 0.8, life: 5 * dur, max: 5 * dur, prm, faible: true });
       if (core === 'gravite' && !opts.noField) st.sp.push({ k: 'field', core, x: cx, y: cy, r: rad * 1.1, life: 5 * dur * (1 + prm.persist), max: 5 * dur, prm, grav: true });
-      if (core === 'terre') { st.shake = 0.15; }
+      if (core === 'terre' || core === 'metal') { st.shake = 0.15; }
+      if (core === 'portail' && !opts.self) placePortail(cx, cy);
     }
   }
   function tame(c) {
@@ -1931,32 +2153,91 @@ const World = (() => {
       if (st.p.carry === c) st.p.carry = null;
     }
   }
-  function nomCreature(t) { return t === 'limace' ? 'La limace d\'encre' : t === 'follet' ? 'Le feu follet' : 'Le golem'; }
+  function nomCreature(t) { return t === 'limace' ? 'La limace d\'encre' : t === 'follet' ? 'Le feu follet' : t === 'familier' ? 'Le familier' : 'Le golem'; }
   function dropPickup(ing, x, y) { st.pickups.push({ ing, x, y, vy: -120, vx: (Math.random() - 0.5) * 80, bob: 0 }); }
 
   // ---------- Sur soi ----------
-  function applySelf(core, prm, aim) {
+  function applySelf(core, prm, aim, spec) {
     const p = st.p; const pcx = p.x + p.w / 2, pcy = p.y + p.h / 2;
     const dur = prm.duration || 1, power = prm.power || 1, size = prm.size || 1;
-    const C = DATA.CORES[core].couleur;
+    const C = colorOf(core);
     st.sp.push({ k: 'ring', core, x: pcx, y: pcy, r: 50 * size, life: 0.5, max: 0.5, color: C });
     Son.sfx('cast', core);
-    const around = (opts) => applyEffect(core, pcx, pcy, 60 * size, prm, 'burst', Object.assign({ noPlayer: true }, opts));
+    const around = (opts) => applyEffect(core, pcx, pcy, 60 * size, prm, 'burst', Object.assign({ noPlayer: true, self: true }, opts));
     switch (core) {
       case 'feu': if (p.sta.wet) { p.sta.wet = 0; msg('Tu te sèches en un nuage de vapeur.'); part(pcx, pcy, '#ccc', 10, 50); } else { p.sta.burning = 2; p.hp -= 0.5; msg('Tu t\'es mis(e) le feu. Classique.'); } around(); break;
       case 'vent': p.vy = -560 * Math.sqrt(power); p.sta.glide = 1.6 * dur; p.onGround = false; part(pcx, p.y + p.h, C, 12, 80); around(); break;
       case 'eau': p.sta.wet = 12 * dur; p.sta.branchies = Math.max(p.sta.branchies, 20 * dur); p.sta.burning = 0; msg('Trempé(e), à l\'abri du feu, et tu respires l\'eau un moment.'); around(); break;
-      case 'terre': p.sta.stone = 12 * dur; msg('Ta peau devient pierre.'); break;
+      case 'terre': case 'transmutation': p.sta.stone = 12 * dur; msg('Ta peau devient pierre.'); break;
       case 'lumiere': p.sta.lumiere = 18 * dur; applyEffect('lumiere', pcx, pcy, 160 * size, prm, 'burst', { noPlayer: true, noField: true }); msg('Tu rayonnes comme une lanterne.'); break;
       case 'ombre': p.sta.invisible = 10 * dur; msg('Tu te fonds dans l\'encre. Les créatures t\'ignorent.'); break;
       case 'vie': p.hp = Math.min(p.hpMax, p.hp + 4 * power); p.sta.burning = 0; around(); break;
       case 'force': { let dx = aim.x - pcx, dy = aim.y - pcy; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d; p.vx = dx * 650 * Math.sqrt(power); p.vy = dy * 500 * Math.sqrt(power) - 100; p.sta.glide = 0.6; p.inv = Math.max(p.inv, 0.5); break; }
-      case 'froid': p.sta.patins = 12 * dur; p.sta.burning = 0; msg('Des patins de givre : tu marches sur l\'eau.'); around({ noGrid: false }); break;
+      case 'froid': p.sta.patins = 12 * dur; p.sta.burning = 0; msg('Des patins de givre : tu marches sur l\'eau.'); around(); break;
       case 'foudre': p.sta.vitesse = 10 * dur; msg('Tes jambes crépitent !'); around({ noGrid: true }); break;
       case 'acide': p.sta.dissous = 8 * dur; msg('Tu dissous ce que tu touches. Attention où tu poses les mains.'); break;
-      case 'gravite': p.sta.vol = Math.max(p.sta.vol, 8 * dur); p.onGround = false; msg('Tu quittes le sol. Flèches ou ZQSD pour voler ; ça consomme de l\'encre.'); break;
+      case 'gravite': p.sta.vol = Math.max(p.sta.vol, 8 * dur); p.onGround = false; msg('Tu quittes le sol. Flèches ou ZQSD pour voler ; ça consomme de l\'encre.'); evt('vol'); break;
+      case 'temps': p.sta.hate = 10 * dur; msg('Le monde ralentit autour de toi.'); break;
+      case 'ralentir': p.sta.lent = 6 * dur; msg('Tes jambes pèsent une tonne. Bien joué.'); break;
+      case 'son': around({ noGrid: false }); st.shake = 0.3; msg('Un cri à réveiller les golems.'); break;
+      case 'silence': around(); break;
+      case 'esprit': { let best = null, bd = 220; for (const c of st.crs) if (c.hp > 0 && c.t !== 'familier') { const d = dist(pcx, pcy, c.x, c.y); if (d < bd) { bd = d; best = c; } } if (best) controlCreature(best, 12 * dur); else msg('Aucun esprit à portée.'); break; }
+      case 'lien': { const h = Sim.raycast(pcx, pcy, (aim.x - pcx) / (dist(pcx, pcy, aim.x, aim.y) || 1), (aim.y - pcy) / (dist(pcx, pcy, aim.x, aim.y) || 1), 320 * (prm.range || 1)); if (h) attachLien(null, h.x, h.y, dur); else msg('La corde ne trouve rien à saisir.'); break; }
+      case 'portail': { const q = st.portails[st.portails.length - 1]; if (q) { p.x = q.x - p.w / 2; p.y = q.y - p.h / 2; p.vx = 0; p.vy = 0; part(q.x, q.y, C, 14, 80); msg('Tu traverses jusqu\'à ton dernier portail.'); } else msg('Aucun portail n\'est ouvert.'); break; }
+      case 'metal': p.sta.armure = 20 * dur; msg('Une armure de métal : rien ne te bouscule, la foudre glisse.'); break;
+      case 'creuser': Sim.forRadius(pcx, p.y + p.h + 10, 40 * size, (x, y, i, m) => { if (P[m].solid && m !== M.OBSIDIENNE) Sim.set(x, y, M.AIR); }); msg('Le sol se dérobe sous tes pieds.'); break;
+      case 'fanaison': p.hp -= 1; msg('Tu te sens flétrir. Mauvaise idée.', 'warn'); break;
+      case 'neutraliser': p.sta.burning = 0; p.sta.dissous = 0; p.sta.lent = 0; msg('Tout redevient calme.'); break;
+      case 'poids': p.vy += 600; p.sta.lent = 4 * dur; msg('Tu pèses une enclume.'); break;
+      case 'secheresse': p.sta.wet = 0; around(); break;
+      case 'rouille': p.sta.armure = 0; around(); break;
     }
   }
+
+  // ---------- Spécification d'un sceau au lancer ----------
+  function makeSpec(seal, depth = 0) {
+    const prm = Seal.params(seal);
+    let cores = [seal.core]; if (seal.core2) cores.push(seal.core2);
+    if (prm.inverse) cores = cores.map((c) => DATA.INVERSE[c] || c);
+    const combo = seal.core2 && !prm.inverse ? [seal.core, seal.core2].sort().join('|') : null;
+    return { cores, prm, trig: seal.trigger || 'immediat', subs: depth < 2 ? Seal.subs(seal) : [], combo, color: colorOf(cores[0]), core: cores[0], depth, nom: Seal.nom(seal) };
+  }
+  // Éclatement complet : chaque effet, la fusion, l'écho, les sous-sceaux
+  function doBurst(spec, x, y, r, opts = {}, dir = null) {
+    const pm = spec.cores.length > 1 ? 0.85 : 1;
+    for (const core of spec.cores) applyEffect(core, x, y, r, { ...spec.prm, power: spec.prm.power * pm }, 'burst', opts);
+    if (spec.combo) comboEffect(spec.combo, x, y, r, spec.prm);
+    if (spec.prm.echo > 0 && !opts.noEcho) st.sp.push({ k: 'echo', spec, x, y, r, opts: { ...opts, noEcho: true }, t: 0.5, left: spec.prm.echo });
+    for (const sub of spec.subs) launch(sub, { x, y }, { x: x + (dir ? dir.x : 0) * 100, y: y + (dir ? dir.y : -1) * 100 }, { depth: spec.depth + 1 });
+  }
+  function doContinuous(spec, x, y, r, dt, opts = {}) {
+    for (const core of spec.cores) applyEffect(core, x, y, r, { ...spec.prm, power: spec.prm.power * 0.5 }, dt, opts);
+  }
+  function comboEffect(key, x, y, r, prm) {
+    const C = DATA.COMBOS[key]; const size = prm.size || 1, dur = prm.duration || 1;
+    if (C && C.nom) st.sp.push({ k: 'label', x, y: y - 40, txt: C.nom, life: 1.6, max: 1.6 });
+    switch (key) {
+      case 'feu|vent': st.sp.push({ k: 'field', core: 'feu', x, y, r: r * 0.7, life: 5 * dur, max: 5 * dur, prm, vx: (Math.random() < 0.5 ? -1 : 1) * 60 }); break;
+      case 'feu|terre': { let cap = 25 * size; Sim.forRadius(x, y, r * 0.6, (cx, cy, i, m) => { if (cap > 0 && (m === M.TERRE || m === M.PIERRE || m === M.SABLE) && Math.random() < 0.7) { Sim.set(cx, cy, M.LAVE); cap--; } }); break; }
+      case 'eau|feu': Sim.forRadius(x, y, r * 1.2, (cx, cy, i, m) => { if (m === M.AIR && Math.random() < 0.5) Sim.set(cx, cy, M.VAPEUR, 80 + (Math.random() * 60) | 0); }); break;
+      case 'eau|froid': Sim.forRadius(x, y, r * 0.7, (cx, cy, i, m) => { if ((m === M.AIR || m === M.EAU) && !U.rectsOverlap({ x: cx * CS, y: cy * CS, w: CS, h: CS }, st.p)) Sim.set(cx, cy, M.GLACE); }); break;
+      case 'eau|foudre': Sim.forRadius(x, y, r * 2.2, (cx, cy, i, m) => { if (P[m].cond) { Sim.elec[i] = 60; Sim.touch(i); } }); for (let k = 0; k < 30; k++) { const cx = Math.floor((x - r + Math.random() * 2 * r) / CS), cy = Math.floor(y / CS) - 20 - Math.floor(Math.random() * 10); if (Sim.get(cx, cy) === M.AIR) Sim.set(cx, cy, M.EAU); } break;
+      case 'froid|vent': { let cap = 40 * size; Sim.forRadius(x, y - r * 0.5, r, (cx, cy, i, m) => { if (cap > 0 && m === M.AIR && Math.random() < 0.3) { Sim.set(cx, cy, M.NEIGE); cap--; } }); break; }
+      case 'eau|vie': for (let k = 0; k < 3; k++) gridEffect('vie', x, y, r * 1.3, prm, true, 1); break;
+      case 'lumiere|ombre': msg('Lumière et ombre s\'annulent dans un silence gêné.'); break;
+      case 'force|terre': st.shake = 0.6; for (const c of st.crs) if (c.hp > 0 && dist(x, y, c.x, c.y) < r * 3) { c.sta.stun = Math.max(c.sta.stun, 3); c.vy -= 200; } break;
+      case 'gravite|vent': st.sp.push({ k: 'field', core: 'gravite', x, y: y - r, r: r * 1.5, life: 12 * dur, max: 12 * dur, prm, grav: true }); break;
+      case 'feu|froid': Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (m === M.PIERRE && Math.random() < 0.5) Sim.set(cx, cy, M.SABLE); else if (m === M.AIR && Math.random() < 0.3) Sim.set(cx, cy, M.VAPEUR, 40); }); break;
+      case 'acide|feu': Sim.forRadius(x, y, r * 1.3, (cx, cy, i, m) => { if (m === M.AIR && Math.random() < 0.5) Sim.set(cx, cy, M.FUMEE, 120); }); for (const c of st.crs) if (c.hp > 0 && dist(x, y, c.x, c.y) < r * 1.5) c.sta.sleep = Math.max(c.sta.sleep, 8 * dur); break;
+      case 'ombre|vie': { const g = groundBelow(x, y); if (g != null) { for (let k = 0; k < 2; k++) st.objs.push(makeObj({ t: 'champignon', x: x - 20 + k * 30, y: g - 26 })); } break; }
+      case 'eau|terre': Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (m === M.TERRE && Math.random() < 0.8) Sim.set(cx, cy, M.SABLE); }); break;
+      case 'feu|lumiere': st.sp.push({ k: 'field', core: 'lumiere', x, y, r: r * 3, life: 12 * dur, max: 12 * dur, prm, faible: true }); break;
+      case 'foudre|metal': Sim.forRadius(x, y, r * 2, (cx, cy, i, m) => { if (m === M.METAL) { Sim.elec[i] = 250; Sim.touch(i); } }); break;
+      case 'temps|vie': for (let k = 0; k < 4; k++) gridEffect('vie', x, y, r * 1.5, prm, true, 1); for (let k = 0; k < 3; k++) gridEffect('temps', x, y, r * 1.5, prm, true, 1); break;
+      case 'portail|eau': { const q = st.portails[0]; if (q) spawnLiquid(M.EAU, q.x, q.y, 40); break; }
+    }
+  }
+  function groundBelow(x, y) { for (let yy = y; yy < L.h; yy += CS) if (Sim.solidAt(x, yy)) return yy - (yy % CS); return null; }
 
   // ---------- Lancer un sceau ----------
   function castSeal(seal, aim) {
@@ -1965,50 +2246,98 @@ const World = (() => {
     if (p.ink < cost) { msg('Plus assez d\'encre (' + Math.floor(p.ink) + '/' + cost + ').', 'warn'); Son.sfx('fail'); return false; }
     p.ink -= cost;
     const pcx = p.x + p.w / 2, pcy = p.y + p.h * 0.45;
-    const prm = Seal.params(seal);
-    const trig = seal.trigger || 'immediat';
     if (!seal.core) { part(pcx, pcy - 20, '#777', 14, 50, 1, 4); Son.sfx('fizzle'); msg('Pfft. Un pétard de fumée grise. Il manque un glyphe d\'effet.'); p.ink = Math.min(p.inkMax, p.ink + cost - 1); return true; }
-    if (!seal.shape) { applyEffect(seal.core, pcx, pcy, 45, { ...prm, power: 0.5 }, 'burst', { noPlayer: seal.core !== 'feu' }); msg('Sans forme, l\'effet se répand mollement autour de toi.'); return true; }
-    const C = DATA.CORES[seal.core].couleur;
-    let dx = aim.x - pcx, dy = aim.y - pcy; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
-    Son.sfx('cast', seal.core);
+    if (!seal.shape) { applyEffect(seal.core, pcx, pcy, 45, { ...Seal.params(seal), power: 0.5 }, 'burst', { noPlayer: seal.core !== 'feu' }); msg('Sans forme, l\'effet se répand mollement autour de toi.'); return true; }
+    if (seal.core === 'terre' || seal.core2 === 'terre') evt('terre');
+    launch(seal, { x: pcx, y: pcy }, aim, { depth: 0, player: true });
+    return true;
+  }
+  // Lance un sceau depuis un point (joueur ou sous-sceau)
+  function launch(seal, origin, aim, o = {}) {
+    if (!seal.core || !seal.shape) return;
+    const p = st.p;
+    const spec = makeSpec(seal, o.depth || 0);
+    const prm = spec.prm, trig = spec.trig, C = spec.color;
+    const ox = origin.x, oy = origin.y;
+    let dx = aim.x - ox, dy = aim.y - oy; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
+    if (o.player) Son.sfx('cast', spec.core);
+    const canal = prm.canalise && o.player;
+    if (canal && seal.shape !== 'projectile' && seal.shape !== 'soi' && seal.shape !== 'chaine') {
+      st.sp.push({ k: 'canal', spec, t: 0, tick: 0, range: 260 * prm.range, r: 50 * prm.size, cost: Math.max(1, Seal.cost(seal) * 0.25) });
+      msg('Maintiens le clic pour canaliser.');
+      return;
+    }
     switch (seal.shape) {
-      case 'projectile': {
+      case 'projectile': case 'chaine': {
+        if (prm.orbite && o.player) {
+          for (let i = 0; i < 3; i++) st.sp.push({ k: 'orbit', spec, a: (i / 3) * TAU, r: 10 * prm.size, life: 6 * prm.duration, hits: new Map(), color: C });
+          break;
+        }
         const n = 1 + prm.extra;
         for (let i = 0; i < n; i++) {
           const spread = n > 1 ? (i - (n - 1) / 2) * 0.22 : 0;
           const a = Math.atan2(dy, dx) + spread;
-          const sp = (seal.core === 'foudre' ? 800 : 520) * prm.speed;
-          const floats = seal.core === 'lumiere' || seal.core === 'vent' || seal.core === 'ombre' || seal.core === 'foudre' || seal.core === 'gravite';
-          st.sp.push({ k: 'proj', core: seal.core, x: pcx + Math.cos(a) * 20, y: pcy + Math.sin(a) * 20, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
-            r: 8 * prm.size, prm, trig, bounces: prm.bounces, life: 1.1 * prm.range, grav: floats ? 40 : 420 / prm.speed, hits: new Set(), color: C, trail: 0 });
+          const sp = (spec.core === 'foudre' ? 800 : 520) * prm.speed;
+          const floats = ['lumiere', 'vent', 'ombre', 'foudre', 'gravite', 'son', 'esprit', 'temps'].includes(spec.core);
+          st.sp.push({ k: 'proj', spec, core: spec.core, x: ox + Math.cos(a) * 20, y: oy + Math.sin(a) * 20, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+            r: 8 * prm.size, prm, trig, bounces: prm.bounces, life: 1.1 * prm.range, grav: floats ? 40 : 420 / prm.speed, hits: new Set(), color: C, trail: 0,
+            chain: seal.shape === 'chaine' ? 3 + (prm.extra ? 2 : 0) : 0, guide: prm.teleguide && o.player });
         }
         break;
       }
       case 'soi':
-        if (trig === 'immediat') applySelf(seal.core, prm, aim);
-        else if (trig === 'contact') { p.trap = { core: seal.core, prm }; msg('Le sceau attend sur ta peau. Il éclatera au premier contact.'); }
-        else { p.selfTimer = { core: seal.core, prm, t: 2, aim: { ...aim } }; msg('Le sceau s\'enroule autour de toi... deux secondes.'); }
+        if (!o.player) { doBurst(spec, ox, oy, 60 * prm.size, { noPlayer: true }); break; }
+        if (trig === 'immediat') selfCast(spec, aim);
+        else if (trig === 'contact') { p.trap = { spec }; msg('Le sceau attend sur ta peau. Il éclatera au premier contact.'); }
+        else { p.selfTimer = { spec, t: 2, aim: { ...aim } }; msg('Le sceau s\'enroule autour de toi... deux secondes.'); }
         break;
-      case 'zone': {
+      case 'zone': case 'mur': {
         const range = 260 * prm.range; const dd = Math.min(d, range); const n = 1 + prm.extra;
         for (let i = 0; i < n; i++) {
           const off = n > 1 ? (i - (n - 1) / 2) * 90 * prm.size : 0;
-          const tx = pcx + dx * dd + -dy * off, ty = pcy + dy * dd + dx * off; const r = 70 * prm.size;
-          if (trig === 'immediat') applyEffect(seal.core, tx, ty, r, prm, 'burst');
-          else if (trig === 'contact') st.sp.push({ k: 'trap', core: seal.core, x: tx, y: ty, r: r * 0.85, prm, life: 20 * prm.duration, color: C, t: 0 });
-          else st.sp.push({ k: 'timer', core: seal.core, x: tx, y: ty, r, prm, t: 2, color: C });
+          const tx = ox + dx * dd + -dy * off, ty = oy + dy * dd + dx * off;
+          if (seal.shape === 'mur') {
+            for (let k = -2; k <= 2; k++) { const yy = ty + k * 36 * prm.size; if (trig === 'immediat') doBurst(spec, tx, yy, 24 * prm.size, { noField: k !== 0, noEcho: k !== 0 }); else st.sp.push({ k: 'timer', spec, x: tx, y: yy, r: 24 * prm.size, t: trig === 'retarde' ? 2 : 0.1 + Math.abs(k) * 0.1, color: C, noField: k !== 0 }); }
+          } else {
+            const r = 70 * prm.size;
+            if (trig === 'immediat') doBurst(spec, tx, ty, r, {}, { x: dx, y: dy });
+            else if (trig === 'contact') st.sp.push({ k: 'trap', spec, x: tx, y: ty, r: r * 0.85, prm, life: 20 * prm.duration, color: C, t: 0 });
+            else st.sp.push({ k: 'timer', spec, x: tx, y: ty, r, t: 2, color: C });
+          }
         }
         break;
       }
       case 'trait':
-        if (trig === 'retarde') { st.sp.push({ k: 'beamtimer', core: seal.core, x: pcx, y: pcy, dx, dy, prm, t: 2, color: C }); msg('Le trait se charge...'); }
-        else fireBeam(seal.core, pcx, pcy, dx, dy, prm, trig, C);
+        if (trig === 'retarde') { st.sp.push({ k: 'beamtimer', spec, x: ox, y: oy, dx, dy, prm, t: 2, color: C }); if (o.player) msg('Le trait se charge...'); }
+        else fireBeam(spec, ox, oy, dx, dy, trig);
         break;
+      case 'aura': st.sp.push({ k: 'field', spec, core: spec.core, x: ox, y: oy, r: 70 * prm.size, life: 6 * prm.duration, max: 6 * prm.duration, prm, follow: true }); if (o.player) msg('L\'effet t\'enveloppe un moment.'); break;
+      case 'totem': { const range = 260 * prm.range; const dd = Math.min(d, range); const tx = ox + dx * dd, ty = oy + dy * dd; const g = groundBelow(tx, ty); st.sp.push({ k: 'totem', spec, x: tx, y: g != null ? g : ty, r: 60 * prm.size, life: 20 * prm.duration, max: 20 * prm.duration, t: 0.5, color: C }); break; }
+      case 'pluie': { const range = 320 * prm.range; const dd = Math.min(d, range); const tx = ox + dx * dd; st.sp.push({ k: 'rain', spec, x: tx, w: 120 * prm.size, yTop: Math.max(30, oy - 320), life: 3 * prm.duration, t: 0, color: C }); break; }
+      case 'objet': {
+        const range = 260 * prm.range; const dd = Math.min(d, range); const tx = ox + dx * dd, ty = oy + dy * dd;
+        let best = null, bd = 140;
+        for (const q of st.objs) if ((q.t === 'caisse' || q.t === 'rocher') && !q.mort) { const dq = dist(tx, ty, q.x + q.w / 2, q.y + q.h / 2); if (dq < bd) { bd = dq; best = q; } }
+        for (const c of st.crs) if (c.hp > 0) { const dq = dist(tx, ty, c.x + c.w / 2, c.y + c.h / 2); if (dq < bd) { bd = dq; best = c; } }
+        if (best) { best.ench = { spec, t: 15 * prm.duration, tick: 0 }; part(best.x + best.w / 2, best.y, C, 12, 60, 0.8, 3, 0, 'spark'); if (o.player) msg('L\'objet porte maintenant l\'effet.'); }
+        else if (o.player) msg('Rien à enchanter par ici.');
+        break;
+      }
+      case 'invocation': {
+        const f = makeCreature({ t: 'familier', x: ox, y: oy - 30 });
+        f.spec = spec; f.core = spec.core; f.life = 30 * prm.duration; f.sta.tame = true; f.filDonne = true; f.vole = true; f.hp = 4; f.hpMax = 4; f.dmg = 0; f.w = 20; f.h = 20; f.cd = 0; f.x0 = ox; f.y0 = oy - 40;
+        st.crs.push(f); if (o.player) msg('Un petit familier de ' + (DATA.CORES[spec.core] || DATA.PSEUDO[spec.core]).nom.toLowerCase() + ' t\'accompagne.');
+        break;
+      }
     }
-    return true;
   }
-  function fireBeam(core, x, y, dx, dy, prm, trig, C) {
+  function selfCast(spec, aim) {
+    for (const core of spec.cores) applySelf(core, spec.prm, aim, spec);
+    if (spec.combo) comboEffect(spec.combo, st.p.x + st.p.w / 2, st.p.y + st.p.h / 2, 60 * (spec.prm.size || 1), spec.prm);
+    for (const sub of spec.subs) launch(sub, { x: st.p.x + st.p.w / 2, y: st.p.y + st.p.h / 2 }, aim, { depth: spec.depth + 1 });
+  }
+  function fireBeam(spec, x, y, dx, dy, trig) {
+    const prm = spec.prm, C = spec.color, core = spec.core;
     const len = 320 * prm.range;
     const sols = dynSolids();
     let ex = x, ey = y;
@@ -2024,13 +2353,63 @@ const World = (() => {
     }
     st.sp.push({ k: 'beam', core, x1: x, y1: y, x2: ex, y2: ey, life: 0.35, max: 0.35, color: C, w: 6 * prm.size });
     Son.sfx('cast', core);
-    if (trig === 'contact') applyEffect(core, ex, ey, 55 * prm.size, prm, 'burst', { noPlayer: true });
+    if (trig === 'contact') doBurst(spec, ex, ey, 55 * prm.size, { noPlayer: true }, { x: dx, y: dy });
     else {
-      // effet le long du trait, sur la grille et sur chaque entité touchée
-      for (let t = 10; t < Math.hypot(ex - x, ey - y); t += 14) gridEffect(core, x + dx * t, y + dy * t, 9 * prm.size, { ...prm, power: prm.power * 0.6 }, true, 1);
-      for (const e of touched) applyEffect(core, e.x + e.w / 2, e.y + e.h / 2, Math.max(e.w, e.h) * 0.6, { ...prm, power: prm.power * 0.8 }, 'burst', { noPlayer: true, noField: true, noGrid: true });
-      applyEffect(core, ex - dx * 6, ey - dy * 6, 24 * prm.size, prm, 'burst', { noPlayer: true, noField: core !== 'lumiere' });
+      for (let t = 10; t < Math.hypot(ex - x, ey - y); t += 14) for (const c of spec.cores) gridEffect(c, x + dx * t, y + dy * t, 9 * prm.size, { ...prm, power: prm.power * 0.6 }, true, 1);
+      for (const e of touched) for (const c of spec.cores) applyEffect(c, e.x + e.w / 2, e.y + e.h / 2, Math.max(e.w, e.h) * 0.6, { ...prm, power: prm.power * 0.8 }, 'burst', { noPlayer: true, noField: true, noGrid: true });
+      doBurst(spec, ex - dx * 6, ey - dy * 6, 24 * prm.size, { noPlayer: true, noField: core !== 'lumiere' }, { x: dx, y: dy });
     }
+  }
+
+  // ---------- Esprit, Lien, Portails ----------
+  function controlCreature(c, t) {
+    st.control = { c, t }; c.sta.tame = true; c.controlled = true;
+    msg('Tu es dans la tête de ' + nomCreature(c.t).toLowerCase() + '. Flèches pour bouger, E pour revenir.');
+    part(c.x + c.w / 2, c.y, '#b08ad8', 14, 60, 0.9, 2, 0, 'spark');
+  }
+  function releaseControl() {
+    if (!st.control) return;
+    const c = st.control.c; c.controlled = false; c.sta.tame = false; c.sta.stun = 2;
+    part(c.x + c.w / 2, c.y, '#b08ad8', 8, 40); st.control = null; msg('Tu reviens dans ton corps, un peu étourdi(e).');
+  }
+  function attachLien(ent, x, y, dur) {
+    st.lien = { ent, x, y, t: 8 * dur, len: Math.max(40, dist(st.p.x + st.p.w / 2, st.p.y + st.p.h / 2, x, y)) };
+    Son.sfx('cast', 'lien'); msg('La corde tient. Espace pour lâcher.');
+  }
+  function placePortail(x, y) {
+    if (st.portails.length >= 2) { st.portails = []; msg('Les anciens portails se referment.'); }
+    st.portails.push({ x, y, r: 26, cd: new Map() });
+    part(x, y, '#4fb0a0', 16, 80, 0.8, 2, 0, 'spark');
+    msg(st.portails.length === 1 ? 'Premier portail ouvert. Lance-en un second.' : 'Le passage est ouvert.');
+  }
+  function updatePortails(dt) {
+    if (st.portails.length < 2) return;
+    const [A, B] = st.portails;
+    const tp = (b, from, to) => { b.x = to.x - b.w / 2; b.y = to.y - b.h / 2; part(from.x, from.y, '#4fb0a0', 6, 50); part(to.x, to.y, '#4fb0a0', 6, 50); };
+    const bodies = [st.p, ...st.crs.filter((c) => c.hp > 0), ...st.objs.filter((o) => o.dyn && !o.mort && !o.carried)];
+    for (const b of bodies) {
+      for (const [from, to] of [[A, B], [B, A]]) {
+        const now = time;
+        if (U.circleRect(from.x, from.y, from.r, b)) { const last = b.portT || -9; if (now - last > 0.6) { tp(b, from, to); b.portT = now; if (b === st.p) Son.sfx('door'); } }
+      }
+    }
+    for (const s of st.sp) if (s.k === 'proj') for (const [from, to] of [[A, B], [B, A]]) if (dist(s.x, s.y, from.x, from.y) < from.r && time - (s.portT || -9) > 0.6) { s.x = to.x + (s.x - from.x); s.y = to.y + (s.y - from.y); s.portT = time; }
+    // matières : liquides et poudres
+    Sim.forRadius(A.x, A.y, A.r, (x, y, i, m) => { const q = P[m]; if ((q.liquid || q.powder) && Math.random() < 0.5) { const tx = x + Math.round((B.x - A.x) / CS), ty = y + Math.round((B.y - A.y) / CS); if (Sim.get(tx, ty) === M.AIR) { Sim.set(tx, ty, m); Sim.set(x, y, M.AIR); } } });
+    Sim.forRadius(B.x, B.y, B.r, (x, y, i, m) => { const q = P[m]; if ((q.liquid || q.powder) && Math.random() < 0.5) { const tx = x + Math.round((A.x - B.x) / CS), ty = y + Math.round((A.y - B.y) / CS); if (Sim.get(tx, ty) === M.AIR) { Sim.set(tx, ty, m); Sim.set(x, y, M.AIR); } } });
+  }
+  function updateLien(dt, inp) {
+    const l = st.lien; if (!l) return;
+    l.t -= dt; const p = st.p;
+    if (l.ent) { if (l.ent.hp <= 0 || l.ent.mort) { st.lien = null; return; } l.x = l.ent.x + l.ent.w / 2; l.y = l.ent.y + l.ent.h / 2; }
+    if (l.t <= 0 || inp.jump) { st.lien = null; msg('La corde se dissipe.'); return; }
+    const pcx = p.x + p.w / 2, pcy = p.y + p.h / 2;
+    let dx = l.x - pcx, dy = l.y - pcy; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
+    if (inp.up) l.len = Math.max(30, l.len - 160 * dt);
+    if (inp.down) l.len += 120 * dt;
+    if (d > l.len) { const pull = (d - l.len) * 40; p.vx += dx * pull * dt * 10; p.vy += dy * pull * dt * 10; const vr = p.vx * dx + p.vy * dy; if (vr < 0) { p.vx -= dx * vr; p.vy -= dy * vr; } }
+    if (l.ent && !l.ent.controlled) { l.ent.vx -= dx * 200 * dt; l.ent.vy -= dy * 150 * dt; }
+    if (Math.random() < 0.2) part(pcx + dx * d * Math.random(), pcy + dy * d * Math.random(), '#c9a63a', 1, 10, 0.3, 1.5);
   }
 
   // ---------- Potions et fioles ----------
@@ -2046,7 +2425,7 @@ const World = (() => {
         case 'legerete': p.sta.lowgrav = 30; msg('Tu flottes presque.'); break;
         case 'petitesse': p.sta.small = 25; p.sta.geant = 0; msg('Tu rétrécis ! Le monde est immense.'); break;
         case 'peau': p.sta.stone = 45; msg('Dur comme le roc.'); break;
-        case 'vol': p.sta.vol = 35; p.onGround = false; msg('Tu t\'élèves ! Flèches ou ZQSD dans toutes les directions.'); break;
+        case 'vol': p.sta.vol = 35; p.onGround = false; msg('Tu t\'élèves ! Flèches ou ZQSD dans toutes les directions.'); evt('vol'); break;
         case 'respiration': p.sta.branchies = 60; msg('Des branchies ! L\'eau devient ton élément.'); break;
         case 'geant': p.sta.geant = 25; p.sta.small = 0; msg('Tu grandis, tu grandis...'); break;
       }
@@ -2123,6 +2502,7 @@ const World = (() => {
     return null;
   }
   function interact() {
+    if (st.control) { releaseControl(); return; }
     const it = findInteraction(); if (!it) return;
     const p = st.p; const pcx = p.x + p.w / 2, pcy = p.y + p.h / 2;
     switch (it.t) {
@@ -2138,7 +2518,7 @@ const World = (() => {
         if (m === M.ACIDE && !p.sta.stone) { p.hp -= 0.5; msg('Ça fume... attention aux doigts.', 'warn'); }
         break;
       }
-      case 'porter': p.carry = it.o; it.o.carried = true; Son.sfx('pickup'); break;
+      case 'porter': p.carry = it.o; it.o.carried = true; Son.sfx('pickup'); evt('porte'); break;
       case 'poser': drop(); break;
     }
   }
@@ -2146,7 +2526,7 @@ const World = (() => {
     const p = st.p; const o = p.carry; if (!o) return;
     p.carry = null; o.carried = false;
     o.x = p.x + p.w / 2 - o.w / 2; o.y = p.y - o.h - 2;
-    if (throwTo) { let dx = throwTo.x - (p.x + p.w / 2), dy = throwTo.y - p.y; const d = Math.hypot(dx, dy) || 1; o.vx = dx / d * 420; o.vy = dy / d * 420 - 120; Son.sfx('cast', 'vent'); }
+    if (throwTo) { let dx = throwTo.x - (p.x + p.w / 2), dy = throwTo.y - p.y; const d = Math.hypot(dx, dy) || 1; o.vx = dx / d * 420; o.vy = dy / d * 420 - 120; Son.sfx('cast', 'vent'); evt('lancer'); }
     else { o.vx = p.face * 60; o.vy = -60; }
   }
   function dig(aim, dt) {
@@ -2200,7 +2580,8 @@ const World = (() => {
     if (p.sta.dissous > 0) { Sim.forRadius(p.x + p.w / 2, p.y + p.h / 2, p.h * 0.7, (x, y, i, m) => { const q = P[m]; if (q.corrode > 0 && !q.liquid && Math.random() < q.corrode * 0.6) Sim.set(x, y, Math.random() < 0.5 ? M.FUMEE : M.AIR, 15); }); }
 
     // --- déplacement ---
-    const speedMul = (p.sta.vitesse > 0 ? 1.7 : 1) * (p.sta.small > 0 ? 0.8 : 1) * (p.liq === M.SEVE ? 0.25 : 1);
+    const speedMul = (p.sta.vitesse > 0 || p.sta.hate > 0 ? 1.7 : 1) * (p.sta.lent > 0 ? 0.4 : 1) * (p.sta.small > 0 ? 0.8 : 1) * (p.liq === M.SEVE ? 0.25 : 1);
+    if (p.sta.hate > 0) { p.ink = Math.min(p.inkMax, p.ink + dt * p.inkRegen * 2); st.tod = (st.tod + dt / DAY * 3) % 1; }
     const speed = (inWater ? (p.sta.branchies > 0 ? 220 : 130) : 250) * speedMul;
     const dirX = (inp.right ? 1 : 0) - (inp.left ? 1 : 0);
     const dirY = (inp.down ? 1 : 0) - (inp.up ? 1 : 0);
@@ -2235,19 +2616,24 @@ const World = (() => {
       }
       if (!inp.jumpHeld && p.vy < -150 && !inWater && !p.climbing) p.vy += 800 * dt;
     }
+    if (st.control) { p.vx = 0; }
     moveBody(p, dt);
+    updateLien(dt, inp);
+    updatePortails(dt);
     // pousser une caisse
     if (dirX !== 0) for (const o of st.objs) if (o.t === 'caisse' && !o.mort && !o.carried) { const probe = { x: p.x + dirX * 2, y: p.y, w: p.w, h: p.h }; if (U.rectsOverlap(probe, o)) o.vx = dirX * (p.sta.geant > 0 ? 160 : 70); }
     if (p.y > L.h + 50) { msg('Tu tombes dans l\'encre noire... et te réveilles devant ta porte.'); respawn(); }
     if (p.onGround && Math.abs(p.vx) > 30 && Math.random() < dt * 6) Son.sfx('step', 'terre');
-    if (p.selfTimer) { p.selfTimer.t -= dt; if (p.selfTimer.t <= 0) { applySelf(p.selfTimer.core, p.selfTimer.prm, p.selfTimer.aim); p.selfTimer = null; } }
+    if (p.selfTimer) { p.selfTimer.t -= dt; if (p.selfTimer.t <= 0) { const q = p.selfTimer; p.selfTimer = null; selfCast(q.spec, q.aim); } }
     if (p.hp <= 0) { msg('Tu t\'évanouis... et te réveilles devant ta porte, un peu honteux(se).', 'warn'); Son.sfx('hurt'); respawn(); }
     // objet porté
     if (p.carry) { const o = p.carry; o.x = p.x + p.w / 2 - o.w / 2; o.y = p.y - o.h - 4; o.vx = 0; o.vy = 0; }
     // creuser
     if (inp.dig) dig(aim, dt);
     // électricité sur le joueur
-    if (p.sta.vitesse <= 0 && !p.sta.stone && Sim.rectHas(p, (m, i) => Sim.elec[i] > 0) && p.inv <= 0) { p.hp -= 1; p.inv = 1; p.vy -= 250; msg('Zap !', 'warn'); Son.sfx('hurt'); part(p.x + p.w / 2, p.y + p.h / 2, '#e0c43a', 10, 100, 0.4, 2, 0, 'spark'); }
+    if (p.sta.vitesse <= 0 && !p.sta.stone && !p.sta.armure && Sim.rectHas(p, (m, i) => Sim.elec[i] > 0) && p.inv <= 0) { p.hp -= 1; p.inv = 1; p.vy -= 250; msg('Zap !', 'warn'); Son.sfx('hurt'); part(p.x + p.w / 2, p.y + p.h / 2, '#e0c43a', 10, 100, 0.4, 2, 0, 'spark'); }
+    // contrôle d'une créature
+    if (st.control) { st.control.t -= dt; const c = st.control.c; if (st.control.t <= 0 || c.hp <= 0) releaseControl(); else { c.ctl = { dirX, jump: inp.jump, dirY }; } }
     // observation : île volante
     if (p.onGround && p.y < 85 * CS) { if (st.ileT <= 0) { st.ileT = 120; game.observe('ile'); } } if (st.ileT > 0) st.ileT -= dt;
     // zone courante
@@ -2260,7 +2646,8 @@ const World = (() => {
     updateParts(dt);
     updatePickups(dt);
     // caméra
-    const tx = clamp(p.x + p.w / 2 - VW / 2, 0, L.w - VW), ty = clamp(p.y + p.h / 2 - VH * 0.66, 0, L.h - VH);
+    const foc = st.control ? st.control.c : p;
+    const tx = clamp(foc.x + foc.w / 2 - VW / 2, 0, L.w - VW), ty = clamp(foc.y + foc.h / 2 - VH * 0.66, 0, L.h - VH);
     st.cam.x = lerp(st.cam.x, tx, Math.min(1, dt * 6)); st.cam.y = lerp(st.cam.y, ty, Math.min(1, dt * 5));
     if (st.shake > 0) st.shake -= dt;
     if (st.flash > 0) st.flash -= dt;
@@ -2279,6 +2666,7 @@ const World = (() => {
     Sim.sunny = m.type === 'clair' && daylight() > 0.4;
     if (m.type === 'pluie' || m.type === 'orage') {
       st.rainT += dt;
+      if (st.p.y < (Sim.surf ? Sim.surf[clamp(Math.floor(st.p.x / CS), 0, Sim.W - 1)] * CS + 20 : 1e9)) { st.pluieT += dt; if (st.pluieT > 4) { st.pluieT = -120; game.observe('pluie'); } }
       const n = m.type === 'orage' ? 2 : 1;
       for (let k = 0; k < n; k++) {
         const x = Math.floor((st.cam.x - 300 + Math.random() * (VW + 600)) / CS);
@@ -2314,6 +2702,7 @@ const World = (() => {
       if (o.mort) continue;
       switch (o.t) {
         case 'caisse': case 'rocher':
+          if (o.ench) { o.ench.t -= dt; if (o.ench.t <= 0) o.ench = null; else { doContinuous(o.ench.spec, o.x + o.w / 2, o.y + o.h / 2, 50 * (o.ench.spec.prm.size || 1), dt, { noPlayer: true, noField: true }); if (Math.random() < 0.3) part(o.x + Math.random() * o.w, o.y + Math.random() * o.h, o.ench.spec.color, 1, 20, 0.5, 2, -40, 'spark'); } }
           if (o.carried) break;
           o.vy = Math.min(o.vy + GRAV * dt * (gravField(o) ? -0.6 : 1), 1000);
           o.vx *= Math.max(0, 1 - (o.onGround ? 6 : 1) * dt);
@@ -2346,7 +2735,10 @@ const World = (() => {
     for (const c of st.crs) {
       if (c.hp <= 0) { c.respawn -= dt; if (c.respawn <= 0) { c.hp = c.hpMax; c.x = c.x0; c.y = c.y0; c.vx = 0; c.vy = 0; c.size = 1; c.sta.tame = false; if (c.t === 'limace') { c.w = 36; c.h = 24; } } continue; }
       if (c.carried) { c.sta.burn = 0; continue; }
-      for (const k of ['burn', 'stun', 'sleep', 'wet', 'glisse']) if (c.sta[k] > 0) c.sta[k] = Math.max(0, c.sta[k] - dt);
+      for (const k of ['burn', 'stun', 'sleep', 'wet', 'glisse', 'lent']) if (c.sta[k] > 0) c.sta[k] = Math.max(0, c.sta[k] - dt);
+      if (c.curieux) { c.curieux.t -= dt; if (c.curieux.t <= 0) c.curieux = null; }
+      if (c.ench) { c.ench.t -= dt; c.ench.tick += dt; if (c.ench.t <= 0) c.ench = null; else { doContinuous(c.ench.spec, c.x + c.w / 2, c.y + c.h / 2, 50 * (c.ench.spec.prm.size || 1), dt, { noPlayer: true, noField: true }); if (Math.random() < 0.3) part(c.x + Math.random() * c.w, c.y + Math.random() * c.h, c.ench.spec.color, 1, 20, 0.5, 2, -40, 'spark'); } }
+      if (c.t === 'familier') { updateFamilier(c, dt, p); continue; }
       if (c.hurt > 0) c.hurt -= dt;
       if (c.sta.burn > 0) { hurt(c, dt * 0.7); if (Math.random() < 0.4) part(c.x + Math.random() * c.w, c.y, '#d9622b', 1, 30, 0.5, 3, -200); if (c.hp <= 0) continue; }
       const lq = liquidOf(c);
@@ -2359,6 +2751,7 @@ const World = (() => {
       const dpx = pcx - ccx, dpy = pcy - ccy, dp = Math.hypot(dpx, dpy);
       const actif = c.sta.stun <= 0 && c.sta.sleep <= 0;
       const aggro = actif && !c.sta.tame && p.sta.invisible <= 0 && dp < (c.t === 'golem' ? 260 : c.t === 'follet' ? 300 : 280);
+      const lentMul = c.sta.lent > 0 ? 0.3 : 1;
       c.phase += dt;
       if (c.vole) {
         const sinY = Math.sin(c.phase * 2) * 30;
@@ -2366,15 +2759,20 @@ const World = (() => {
         if (aggro) { tx = p.x; ty = p.y - 20; }
         if (c.sta.tame) { tx = p.x - p.face * 50; ty = p.y - 30; }
         if (c.sta.burn > 0) tx = c.x0;
-        if (actif) { c.vx += (tx - c.x) * 2.4 * dt; c.vy += (ty - c.y) * 2.4 * dt; }
+        if (c.curieux && !aggro) { tx = c.curieux.x; ty = c.curieux.y - 30; }
+        if (c.controlled && c.ctl) { c.vx += c.ctl.dirX * 900 * dt; c.vy += c.ctl.dirY * 900 * dt; if (c.ctl.dirX) c.dir = c.ctl.dirX; }
+        else if (actif) { c.vx += (tx - c.x) * 2.4 * dt * lentMul; c.vy += (ty - c.y) * 2.4 * dt * lentMul; }
         c.vx *= Math.max(0, 1 - 3 * dt); c.vy *= Math.max(0, 1 - 3 * dt);
         c.canStep = false; moveBody(c, dt);
         if (Math.random() < 0.3) part(ccx, ccy, '#3f9c9b', 1, 20, 0.5, 2, -40, 'spark');
       } else {
         c.vy = Math.min(c.vy + GRAV * dt * (gravField(c) ? -0.6 : 1) * (lq ? 0.2 : 1), 1000);
         if (lq) c.vy *= Math.max(0, 1 - 1.5 * dt);
-        if (actif) {
-          if (c.t === 'limace') {
+        if (c.controlled && c.ctl) {
+          const sp = c.t === 'golem' ? 150 : 200; c.vx = c.ctl.dirX * sp; if (c.ctl.dirX) c.dir = c.ctl.dirX; if (c.ctl.jump && c.onGround) c.vy = -420; c.ctl.jump = false;
+        } else if (actif) {
+          if (c.curieux && !aggro && c.t !== 'follet') { const ddx = c.curieux.x - ccx; if (Math.abs(ddx) > 30) { if (c.t === 'limace') { if (c.onGround && c.hop <= 0) { c.hop = 0.8; c.vx = Math.sign(ddx) * 90; c.vy = -260; c.dir = Math.sign(ddx); } c.hop -= dt; } else c.vx = lerp(c.vx, Math.sign(ddx) * 60, Math.min(1, dt * 4)); } }
+          else if (c.t === 'limace') {
             c.hop -= dt;
             if (c.onGround && c.hop <= 0) {
               c.hop = aggro ? 0.9 : 2 + Math.random() * 2;
@@ -2391,6 +2789,7 @@ const World = (() => {
             if (c.hitX && c.onGround && Math.random() < 0.3) c.vy = -300;
             if (c.onGround && Math.abs(c.vx) > 20 && Math.random() < dt * 2) st.shake = 0.1;
           }
+          c.vx *= lentMul === 1 ? 1 : (1 - (1 - lentMul) * Math.min(1, dt * 10));
         } else c.vx *= Math.max(0, 1 - 6 * dt);
         if (c.onGround) c.vx *= Math.max(0, 1 - (c.sta.glisse > 0 ? 0.2 : 2) * dt);
         c.hitX = false;
@@ -2398,17 +2797,31 @@ const World = (() => {
         if (c.y > L.h + 50) { c.hp = 0; c.respawn = 10; }
       }
       // contact joueur
-      if (U.rectsOverlap(c, p) && actif && !c.sta.tame && p.inv <= 0 && p.sta.geant <= 0) {
+      if (U.rectsOverlap(c, p) && actif && !c.sta.tame && !c.controlled && p.inv <= 0 && p.sta.geant <= 0) {
         const dx = Math.sign(pcx - ccx) || 1;
         p.vx = dx * 320; p.vy = -260; p.inv = 1;
-        if (p.sta.stone <= 0) { p.hp -= c.dmg; Son.sfx('hurt'); msg(nomCreature(c.t) + ' te bouscule !', 'warn'); st.shake = 0.25; }
-        else msg('Ta peau de pierre encaisse le choc.');
+        if (p.sta.stone <= 0 && p.sta.armure <= 0) { p.hp -= c.dmg; Son.sfx('hurt'); msg(nomCreature(c.t) + ' te bouscule !', 'warn'); st.shake = 0.25; }
+        else msg('Ton armure encaisse le choc.');
         c.vx = -dx * 150;
-        if (p.trap) { applyEffect(p.trap.core, pcx, pcy, 80 * (p.trap.prm.size || 1), p.trap.prm, 'burst', { noPlayer: true }); p.trap = null; msg('Le sceau sur ta peau éclate !'); }
+        if (p.trap) { doBurst(p.trap.spec, pcx, pcy, 80 * (p.trap.spec.prm.size || 1), { noPlayer: true }); p.trap = null; msg('Le sceau sur ta peau éclate !'); }
       } else if (U.rectsOverlap(c, p) && p.sta.geant > 0 && !c.sta.tame) { c.vx = Math.sign(ccx - pcx) * 300; c.vy = -200; }
     }
   }
 
+  function updateFamilier(c, dt, p) {
+    c.life -= dt; c.cd -= dt;
+    if (c.life <= 0 || c.hp <= 0) { c.hp = 0; c.respawn = 1e9; c.mort = true; part(c.x + c.w / 2, c.y + c.h / 2, c.spec.color, 10, 60); return; }
+    // cible : créature hostile proche ; sinon suit le joueur
+    let target = null, bd = 220;
+    for (const q of st.crs) if (q !== c && q.hp > 0 && !q.sta.tame && q.t !== 'familier') { const d = dist(c.x, c.y, q.x, q.y); if (d < bd) { bd = d; target = q; } }
+    const tx = target ? target.x + target.w / 2 : p.x + p.w / 2 - p.face * 40, ty = target ? target.y : p.y - 30 + Math.sin(c.phase * 3) * 10;
+    c.phase += dt;
+    c.vx += (tx - c.x - c.w / 2) * 3 * dt; c.vy += (ty - c.y) * 3 * dt;
+    c.vx *= Math.max(0, 1 - 2.5 * dt); c.vy *= Math.max(0, 1 - 2.5 * dt);
+    c.canStep = false; moveBody(c, dt);
+    if (target && c.cd <= 0 && dist(c.x, c.y, target.x, target.y) < 40) { c.cd = 1.2; doBurst(c.spec, target.x + target.w / 2, target.y + target.h / 2, 40, { noPlayer: true, noField: true, noEcho: true }); }
+    if (Math.random() < 0.4) part(c.x + c.w / 2, c.y + c.h / 2, c.spec.color, 1, 20, 0.5, 2, -30, 'spark');
+  }
   function updateSpells(dt) {
     const sols = dynSolids();
     for (const s of st.sp) {
@@ -2417,6 +2830,8 @@ const World = (() => {
           s.life -= dt; if (s.life <= 0) { s.mort = true; part(s.x, s.y, s.color, 5, 30, 0.4); break; }
           s.vy += s.grav * dt;
           const nx = s.x + s.vx * dt, ny = s.y + s.vy * dt;
+          if (s.guide) { const aim = toWorld(game.inp.mouse.x, game.inp.mouse.y); const want = Math.atan2(aim.y - s.y, aim.x - s.x), cur = Math.atan2(s.vy, s.vx); let da = want - cur; while (da > Math.PI) da -= TAU; while (da < -Math.PI) da += TAU; const na = cur + clamp(da, -4 * dt, 4 * dt); const sp = Math.hypot(s.vx, s.vy); s.vx = Math.cos(na) * sp; s.vy = Math.sin(na) * sp; }
+          const dirv = { x: s.vx / (Math.hypot(s.vx, s.vy) || 1), y: s.vy / (Math.hypot(s.vx, s.vy) || 1) };
           const hitS = Sim.solidAt(nx, ny) ? { t: P[Sim.matAt(nx, ny)].nom } : sols.find((o) => nx >= o.x - s.r && nx <= o.x + o.w + s.r && ny >= o.y - s.r && ny <= o.y + o.h + s.r);
           if (hitS) {
             if (s.bounces > 0) {
@@ -2425,9 +2840,9 @@ const World = (() => {
               part(s.x, s.y, s.color, 4, 40, 0.3);
             } else if (s.potion) { potionBurst(s.potion, s.x, s.y); s.mort = true; }
             else if (s.liquide) { spawnLiquid(s.liquide, s.x, s.y, 26); part(s.x, s.y, s.color, 10, 60, 0.6); Son.sfx('burst', 'eau'); s.mort = true; }
-            else if (s.trig === 'contact') { applyEffect(s.core, s.x, s.y, 50 * s.prm.size, s.prm, 'burst'); s.mort = true; }
+            else if (s.trig === 'contact') { doBurst(s.spec, s.x, s.y, 50 * s.prm.size, {}, dirv); s.mort = true; }
             else if (s.trig === 'retarde') { s.k = 'timer'; s.t = 2; s.r = 60 * s.prm.size; }
-            else { applyEffect(s.core, s.x, s.y, 28 * s.prm.size, { ...s.prm, power: s.prm.power * 0.6 }, 'burst', { noField: s.core !== 'lumiere' }); s.mort = true; }
+            else { doBurst(s.spec, s.x, s.y, 28 * s.prm.size, { noField: s.core !== 'lumiere' }, dirv); s.mort = true; }
             if (hitS.t) evt('hit', 'objet:' + hitS.t);
             break;
           }
@@ -2444,13 +2859,23 @@ const World = (() => {
           for (const c of st.crs) if (c.hp > 0 && U.circleRect(s.x, s.y, s.r, c) && !s.hits.has(c)) { touche = c; break; }
           if (!touche) for (const o of st.objs) if (!o.mort && o.t !== 'porte' && o.t !== 'pancarte' && !o.solid && U.circleRect(s.x, s.y, s.r, o) && !s.hits.has(o)) { touche = o; break; }
           if (touche) {
+            if (touche.hp !== undefined && touche.t) evt('creatureTouchee');
             if (s.potion) { potionBurst(s.potion, s.x, s.y); s.mort = true; }
             else if (s.liquide) { spawnLiquid(s.liquide, s.x, s.y, 26); s.mort = true; }
-            else if (s.trig === 'contact') { applyEffect(s.core, s.x, s.y, 50 * s.prm.size, s.prm, 'burst'); s.mort = true; }
+            else if (s.chain > 0) {
+              s.hits.add(touche); s.chain--;
+              doBurst(s.spec, s.x, s.y, 36 * s.prm.size, { noPlayer: true, noField: true, noEcho: true }, dirv); Son.sfx('hit', s.core);
+              let next = null, bd = 180;
+              for (const c of st.crs) if (c.hp > 0 && !s.hits.has(c)) { const d = dist(s.x, s.y, c.x + c.w / 2, c.y + c.h / 2); if (d < bd) { bd = d; next = c; } }
+              if (!next) for (const o of st.objs) if (!o.mort && !s.hits.has(o) && (o.t === 'caisse' || o.t === 'mannequin' || o.t === 'torche')) { const d = dist(s.x, s.y, o.x + o.w / 2, o.y + o.h / 2); if (d < bd) { bd = d; next = o; } }
+              if (next && s.chain > 0) { const ddx = next.x + next.w / 2 - s.x, ddy = next.y + next.h / 2 - s.y; const dd = Math.hypot(ddx, ddy) || 1; const sp = 520; s.vx = ddx / dd * sp; s.vy = ddy / dd * sp; s.grav = 0; s.life = 1.5; }
+              else { s.mort = true; }
+            }
+            else if (s.trig === 'contact') { doBurst(s.spec, s.x, s.y, 50 * s.prm.size, {}, dirv); s.mort = true; }
             else if (s.trig === 'retarde') { s.k = 'timer'; s.t = 2; s.r = 60 * s.prm.size; s.vx = 0; s.vy = 0; }
-            else { s.hits.add(touche); applyEffect(s.core, s.x, s.y, s.r + 10, { ...s.prm, power: s.prm.power * 0.9 }, 'burst', { noField: true, noPlayer: true, noGrid: true }); Son.sfx('hit', s.core); }
+            else { s.hits.add(touche); for (const c of s.spec.cores) applyEffect(c, s.x, s.y, s.r + 10, { ...s.prm, power: s.prm.power * 0.9 }, 'burst', { noField: true, noPlayer: true, noGrid: true }); Son.sfx('hit', s.core); }
           }
-          if (s.trig === 'immediat' && !s.potion && !s.liquide && Math.random() < 0.5) gridEffect(s.core, s.x, s.y, s.r + 4, { ...s.prm, power: s.prm.power * 0.5 }, false, dt * 3);
+          if (s.trig === 'immediat' && !s.potion && !s.liquide && Math.random() < 0.5) for (const c of s.spec.cores) gridEffect(c, s.x, s.y, s.r + 4, { ...s.prm, power: s.prm.power * 0.5 }, false, dt * 3);
           s.trail += dt; if (s.trail > 0.03) { s.trail = 0; part(s.x, s.y, s.color, 1, 10, 0.35, s.r * 0.5, 0, s.core === 'lumiere' || s.core === 'foudre' ? 'spark' : 'dot'); }
           if (s.y > L.h + 50 || s.y < -50) s.mort = true;
           break;
@@ -2458,17 +2883,56 @@ const World = (() => {
         case 'trap': {
           s.life -= dt; s.t += dt; if (s.life <= 0) { s.mort = true; break; }
           const hit = st.crs.some((c) => c.hp > 0 && U.circleRect(s.x, s.y, s.r, c)) || st.objs.some((o) => o.dyn && !o.carried && U.circleRect(s.x, s.y, s.r, o));
-          if (hit) { applyEffect(s.core, s.x, s.y, s.r * 1.2, s.prm, 'burst'); s.mort = true; }
+          if (hit) { doBurst(s.spec, s.x, s.y, s.r * 1.2); s.mort = true; }
           break;
         }
-        case 'timer': s.t -= dt; if (s.t <= 0) { applyEffect(s.core, s.x, s.y, s.r || 60 * s.prm.size, s.prm, 'burst'); s.mort = true; } break;
-        case 'beamtimer': s.t -= dt; if (s.t <= 0) { const p = st.p; fireBeam(s.core, p.x + p.w / 2, p.y + p.h * 0.45, s.dx, s.dy, s.prm, 'immediat', s.color); s.mort = true; } break;
+        case 'timer': s.t -= dt; if (s.t <= 0) { doBurst(s.spec, s.x, s.y, s.r || 60 * s.spec.prm.size, s.noField ? { noField: true, noEcho: true } : {}); s.mort = true; } break;
+        case 'beamtimer': s.t -= dt; if (s.t <= 0) { const p = st.p; fireBeam(s.spec, p.x + p.w / 2, p.y + p.h * 0.45, s.dx, s.dy, 'immediat'); s.mort = true; } break;
+        case 'echo': s.t -= dt; if (s.t <= 0) { doBurst(s.spec, s.x, s.y, s.r, s.opts); s.left--; s.t = 0.5; if (s.left <= 0) s.mort = true; } break;
+        case 'canal': {
+          s.t += dt; s.tick -= dt;
+          if (!game.inp.mouse.down || s.t > 6 || st.p.ink < s.cost) { s.mort = true; break; }
+          const p = st.p; const pcx = p.x + p.w / 2, pcy = p.y + p.h * 0.45; const aim = toWorld(game.inp.mouse.x, game.inp.mouse.y);
+          let ddx = aim.x - pcx, ddy = aim.y - pcy; const dd = Math.hypot(ddx, ddy) || 1; const k = Math.min(dd, s.range) / dd; s.x = pcx + ddx * k; s.y = pcy + ddy * k;
+          if (s.tick <= 0) { s.tick = 0.2; p.ink -= s.cost * 0.2; doBurst(s.spec, s.x, s.y, s.r, { noEcho: true, noField: true }); }
+          break;
+        }
+        case 'orbit': {
+          s.life -= dt; if (s.life <= 0) { s.mort = true; break; }
+          const p = st.p; s.a += dt * 3.5; s.x = p.x + p.w / 2 + Math.cos(s.a) * 70; s.y = p.y + p.h / 2 + Math.sin(s.a) * 70;
+          for (const c of st.crs) if (c.hp > 0 && !c.sta.tame && U.circleRect(s.x, s.y, s.r + 6, c) && (s.hits.get(c) || -9) < time - 0.8) { s.hits.set(c, time); doBurst(s.spec, s.x, s.y, 30 * s.spec.prm.size, { noPlayer: true, noField: true, noEcho: true }); }
+          for (const c of s.spec.cores) if (Math.random() < 0.3) gridEffect(c, s.x, s.y, s.r + 4, { ...s.spec.prm, power: s.spec.prm.power * 0.4 }, false, dt * 3);
+          if (Math.random() < 0.5) part(s.x, s.y, s.color, 1, 10, 0.3, 3);
+          break;
+        }
+        case 'totem': {
+          s.life -= dt; s.t -= dt; if (s.life <= 0) { s.mort = true; part(s.x, s.y - 20, s.color, 10, 50); break; }
+          if (s.t <= 0) { s.t = 2; doBurst(s.spec, s.x, s.y - 20, s.r, { noPlayer: true, noEcho: true }); }
+          break;
+        }
+        case 'rain': {
+          s.life -= dt; s.t -= dt; if (s.life <= 0) { s.mort = true; break; }
+          if (s.t <= 0) {
+            s.t = 0.05;
+            const x = s.x - s.w / 2 + Math.random() * s.w;
+            const core = s.spec.cores[Math.floor(Math.random() * s.spec.cores.length)];
+            const cx = Math.floor(x / CS), cy = Math.floor(s.yTop / CS);
+            const MAT = { eau: M.EAU, acide: M.ACIDE, froid: M.NEIGE, feu: M.FEU, terre: M.SABLE, metal: M.SABLE, vie: null };
+            if (MAT[core] && Sim.get(cx, cy) === M.AIR) { Sim.set(cx, cy, MAT[core], core === 'feu' ? 40 : 0); }
+            else st.sp.push({ k: 'proj', spec: s.spec, core, x, y: s.yTop, vx: 0, vy: 200, r: 5, prm: s.spec.prm, trig: 'contact', bounces: 0, life: 3, grav: 500, hits: new Set(), color: s.color, trail: 0, petit: true });
+          }
+          break;
+        }
+        case 'label': s.life -= dt; s.y -= 20 * dt; if (s.life <= 0) s.mort = true; break;
         case 'field': {
           s.life -= dt; if (s.life <= 0) { s.mort = true; break; }
+          if (s.follow) { const p = st.p; s.x = p.x + p.w / 2; s.y = p.y + p.h / 2; }
+          if (s.vx) { s.x += s.vx * dt; if (Sim.solidAt(s.x + Math.sign(s.vx) * s.r * 0.5, s.y)) s.vx = -s.vx; }
           if (s.faible) break;
           if (s.grav) { applyEffect('gravite', s.x, s.y, s.r, { ...s.prm, power: 1 }, dt, { noField: true }); break; }
-          applyEffect(s.core, s.x, s.y, s.r, { ...s.prm, power: s.prm.power * 0.5 }, dt, { noField: true });
-          if (Math.random() < 0.6) { const a = Math.random() * TAU, rr = Math.random() * s.r; part(s.x + Math.cos(a) * rr, s.y + Math.sin(a) * rr * 0.5, DATA.CORES[s.core].couleur, 1, 20, 0.7, 3, s.core === 'feu' ? -200 : s.core === 'eau' ? 100 : -30, s.core === 'lumiere' ? 'spark' : 'dot'); }
+          if (s.spec) { doContinuous(s.spec, s.x, s.y, s.r, dt, { noField: true, noPlayer: !!s.follow }); }
+          else applyEffect(s.core, s.x, s.y, s.r, { ...s.prm, power: s.prm.power * 0.5 }, dt, { noField: true });
+          if (Math.random() < 0.6) { const a = Math.random() * TAU, rr = Math.random() * s.r; part(s.x + Math.cos(a) * rr, s.y + Math.sin(a) * rr * 0.5, colorOf(s.core), 1, 20, 0.7, 3, s.core === 'feu' ? -200 : s.core === 'eau' ? 100 : -30, s.core === 'lumiere' ? 'spark' : 'dot'); }
           break;
         }
         case 'ring': case 'beam': s.life -= dt; if (s.life <= 0) s.mort = true; break;
@@ -2477,6 +2941,7 @@ const World = (() => {
     }
     if (st.p.sta.lumiere > 0) for (const o of st.objs) if (o.t === 'rune' && dist(o.x + 20, o.y + 30, st.p.x, st.p.y) < 220) o.revele = Math.min(1, o.revele + dt * 0.8);
     st.sp = st.sp.filter((s) => !s.mort);
+    st.crs = st.crs.filter((c) => !c.mort);
   }
   function updateParts(dt) {
     for (const q of st.parts) { q.life -= dt; q.vy += q.grav * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= Math.max(0, 1 - 2 * dt); }
@@ -2507,6 +2972,9 @@ const World = (() => {
     for (const k of st.pickups) { const ing = DATA.INGREDIENTS[k.ing]; const yy = k.y - 10 + Math.sin(k.bob * 4) * 3; ctx.save(); ctx.fillStyle = ing.couleur; ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(k.x, yy, 7, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.arc(k.x - 2, yy - 2, 2, 0, TAU); ctx.fill(); ctx.restore(); }
     for (const c of st.crs) if (c.hp > 0) drawCreature(ctx, c);
     drawPlayer(ctx, p);
+    for (const q of st.portails) { ctx.save(); ctx.strokeStyle = '#4fb0a0'; ctx.lineWidth = 3; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.ellipse(q.x, q.y, q.r * 0.55, q.r, 0, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.2; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.ellipse(q.x, q.y, q.r * 0.3, q.r * 0.7, time * 2, 0, TAU); ctx.stroke(); ctx.restore(); if (Math.random() < 0.3) part(q.x + (Math.random() - 0.5) * 20, q.y + (Math.random() - 0.5) * 40, '#4fb0a0', 1, 10, 0.5, 2, 0, 'spark'); }
+    if (st.lien) { ctx.save(); ctx.strokeStyle = '#c9a63a'; ctx.lineWidth = 2.5; U.inkLine(ctx, p.x + p.w / 2, p.y + p.h * 0.4, st.lien.x, st.lien.y, Math.floor(time * 3), 2); ctx.fillStyle = '#c9a63a'; ctx.beginPath(); ctx.arc(st.lien.x, st.lien.y, 4, 0, TAU); ctx.fill(); ctx.restore(); }
+    if (st.control) { const c = st.control.c; ctx.save(); ctx.strokeStyle = '#b08ad8'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); U.inkCircle(ctx, c.x + c.w / 2, c.y + c.h / 2, Math.max(c.w, c.h) * 0.8, 2, 1.5); ctx.setLineDash([]); ctx.globalAlpha = 0.5; U.inkLine(ctx, p.x + p.w / 2, p.y + 10, c.x + c.w / 2, c.y, 3, 3); ctx.restore(); }
     for (const s of st.sp) drawSpell(ctx, s);
     for (const q of st.parts) drawPart(ctx, q);
     for (const e of st.eclairs) { ctx.save(); ctx.strokeStyle = '#fff8d0'; ctx.lineWidth = 4 * e.life / 0.35 + 1; ctx.globalAlpha = Math.min(1, e.life * 4); ctx.lineJoin = 'round'; ctx.beginPath(); e.pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); ctx.strokeStyle = '#e0c43a'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore(); }
@@ -2709,6 +3177,7 @@ const World = (() => {
     ctx.strokeStyle = c.hurt > 0 ? '#9a2a2a' : INK; ctx.lineWidth = 2; ctx.lineCap = 'round';
     const cx = c.x + c.w / 2, by = c.y + c.h;
     switch (c.t) {
+      case 'familier': { const r = 9; const g = ctx.createRadialGradient(cx, c.y + c.h / 2, 2, cx, c.y + c.h / 2, r * 3); g.addColorStop(0, U.hexA(c.spec.color, 0.5)); g.addColorStop(1, U.hexA(c.spec.color, 0)); ctx.fillStyle = g; ctx.fillRect(cx - r * 3, c.y + c.h / 2 - r * 3, r * 6, r * 6); ctx.fillStyle = c.spec.color; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, c.y + c.h / 2 + Math.sin(c.phase * 4) * 2, r, 0, TAU); ctx.fill(); ctx.stroke(); Seal.glyph(ctx, c.core, cx, c.y + c.h / 2 + Math.sin(c.phase * 4) * 2, r * 0.6, '#efe3c4', 1); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(cx - 3, c.y + c.h / 2 - 2, 1.3, 0, TAU); ctx.arc(cx + 3, c.y + c.h / 2 - 2, 1.3, 0, TAU); ctx.fill(); break; }
       case 'limace': {
         const sq = c.onGround ? 1 : 0.85;
         ctx.fillStyle = c.sta.tame ? 'rgba(196,90,138,0.55)' : 'rgba(31,26,22,0.75)';
@@ -2747,7 +3216,8 @@ const World = (() => {
     }
     if (c.sta.sleep > 0) U.txt(ctx, 'z z', cx + 14, c.y - 10 + Math.sin(time * 3) * 3, 14, 'left', '#5a4a7d', 'IM Fell English', 'italic');
     if (c.sta.stun > 0) { ctx.strokeStyle = '#d8a63a'; ctx.lineWidth = 1.5; for (let i = 0; i < 3; i++) { const a = time * 5 + (i / 3) * TAU; ctx.beginPath(); ctx.arc(cx + Math.cos(a) * 14, c.y - 8 + Math.sin(a) * 4, 2, 0, TAU); ctx.stroke(); } }
-    if (c.sta.tame) { ctx.fillStyle = '#c45a8a'; ctx.font = '14px serif'; ctx.textAlign = 'center'; ctx.fillText('♥', cx, c.y - 8 + Math.sin(time * 3) * 2); }
+    if (c.sta.tame && c.t !== 'familier' && !c.controlled) { ctx.fillStyle = '#c45a8a'; ctx.font = '14px serif'; ctx.textAlign = 'center'; ctx.fillText('♥', cx, c.y - 8 + Math.sin(time * 3) * 2); }
+    if (c.sta.lent > 0) { ctx.strokeStyle = '#8a8f9a'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); U.inkCircle(ctx, cx, c.y + c.h / 2, Math.max(c.w, c.h) * 0.7, 1, 1); ctx.setLineDash([]); }
     if (c.sta.wet > 0 && Math.random() < 0.05) part(cx, by - 4, '#6aa0d8', 1, 10, 0.6, 2, 300);
     if (c.hp < c.hpMax) { ctx.fillStyle = 'rgba(31,26,22,0.3)'; ctx.fillRect(c.x, c.y - 6, c.w, 3); ctx.fillStyle = '#9a4a3a'; ctx.fillRect(c.x, c.y - 6, c.w * c.hp / c.hpMax, 3); }
     ctx.restore();
@@ -2787,8 +3257,8 @@ const World = (() => {
     if (p.sta.lumiere > 0) { const g = ctx.createRadialGradient(p.x + p.w / 2, p.y + p.h / 2, 5, p.x + p.w / 2, p.y + p.h / 2, 80); g.addColorStop(0, 'rgba(216,166,58,0.35)'); g.addColorStop(1, 'rgba(216,166,58,0)'); ctx.fillStyle = g; ctx.fillRect(p.x - 80, p.y - 60, 200, 200); }
     if (p.sta.vol > 0) { ctx.save(); ctx.strokeStyle = '#6c5ab8'; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.6; U.inkCircle(ctx, p.x + p.w / 2, p.y + p.h / 2, p.h * 0.7, 3 + Math.floor(time * 4), 2); ctx.restore(); }
     drawApprenti(ctx, p.x + p.w / 2, p.y + p.h, p.h, game.look, p.face, p.anim, p.sta, moving);
-    if (p.trap) { ctx.save(); ctx.strokeStyle = DATA.CORES[p.trap.core].couleur; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(p.x + p.w / 2, p.y + p.h / 2, 30, time * 2, time * 2 + TAU); ctx.stroke(); ctx.restore(); }
-    if (p.selfTimer) { ctx.save(); ctx.strokeStyle = DATA.CORES[p.selfTimer.core].couleur; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x + p.w / 2, p.y + p.h / 2, 34, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - p.selfTimer.t / 2)); ctx.stroke(); ctx.restore(); }
+    if (p.trap) { ctx.save(); ctx.strokeStyle = p.trap.spec.color; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(p.x + p.w / 2, p.y + p.h / 2, 30, time * 2, time * 2 + TAU); ctx.stroke(); ctx.restore(); }
+    if (p.selfTimer) { ctx.save(); ctx.strokeStyle = p.selfTimer.spec.color; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x + p.w / 2, p.y + p.h / 2, 34, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - p.selfTimer.t / 2)); ctx.stroke(); ctx.restore(); }
     if (p.air !== undefined && p.air < 8 && p.liq === M.EAU) { ctx.save(); ctx.fillStyle = 'rgba(31,26,22,0.4)'; ctx.fillRect(p.x - 6, p.y - 14, p.w + 12, 4); ctx.fillStyle = '#3b6fb6'; ctx.fillRect(p.x - 6, p.y - 14, (p.w + 12) * clamp(p.air / 8, 0, 1), 4); ctx.restore(); }
   }
   function drawSpell(ctx, s) {
@@ -2798,6 +3268,7 @@ const World = (() => {
         const g = ctx.createRadialGradient(s.x, s.y, 1, s.x, s.y, s.r * 2.5); g.addColorStop(0, U.hexA(s.color, 0.5)); g.addColorStop(1, U.hexA(s.color, 0)); ctx.fillStyle = g; ctx.fillRect(s.x - s.r * 2.5, s.y - s.r * 2.5, s.r * 5, s.r * 5);
         ctx.fillStyle = s.color; ctx.strokeStyle = INK; ctx.lineWidth = 1.5;
         if (s.potion || s.liquide) { ctx.beginPath(); ctx.moveTo(s.x - 4, s.y - 8); ctx.lineTo(s.x - 4, s.y - 3); ctx.quadraticCurveTo(s.x - 9, s.y + 3, s.x - 7, s.y + 7); ctx.lineTo(s.x + 7, s.y + 7); ctx.quadraticCurveTo(s.x + 9, s.y + 3, s.x + 4, s.y - 3); ctx.lineTo(s.x + 4, s.y - 8); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+        else if (s.petit) { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill(); }
         else { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill(); ctx.stroke(); Seal.glyph(ctx, s.core, s.x, s.y, s.r * 0.6, '#efe3c4', 1); }
         break;
       }
@@ -2806,13 +3277,18 @@ const World = (() => {
       case 'beamtimer': { const p = st.p; const px = p.x + p.w / 2, py = p.y + p.h * 0.45; ctx.strokeStyle = s.color; ctx.lineWidth = 1 + (2 - s.t) * 2; ctx.globalAlpha = 0.5; ctx.setLineDash([4, 8]); ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + s.dx * 300 * s.prm.range, py + s.dy * 300 * s.prm.range); ctx.stroke(); break; }
       case 'field': {
         const a = clamp(s.life / Math.max(0.1, s.max) * 2, 0, 1) * (s.faible ? 0.3 : 0.5);
-        const C = DATA.CORES[s.core].couleur;
+        const C = colorOf(s.core);
         const g = ctx.createRadialGradient(s.x, s.y, 2, s.x, s.y, s.r); g.addColorStop(0, U.hexA(C, a)); g.addColorStop(1, U.hexA(C, 0));
         ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(s.x, s.y, s.r, s.r * (s.grav ? 1 : 0.6), 0, 0, TAU); ctx.fill();
         ctx.strokeStyle = U.hexA(C, a); ctx.lineWidth = 1.5; ctx.setLineDash([3, 6]); ctx.beginPath(); ctx.ellipse(s.x, s.y, s.r, s.r * (s.grav ? 1 : 0.6), 0, 0, TAU); ctx.stroke();
         if (s.grav) { for (let i = 0; i < 5; i++) { const yy = s.y + s.r - ((time * 60 + i * s.r * 0.4) % (s.r * 2)); const xx = s.x + Math.sin(i * 2.1) * s.r * 0.6; ctx.beginPath(); ctx.moveTo(xx, yy + 6); ctx.lineTo(xx, yy - 4); ctx.moveTo(xx - 3, yy - 1); ctx.lineTo(xx, yy - 4); ctx.lineTo(xx + 3, yy - 1); ctx.setLineDash([]); ctx.stroke(); } }
         break;
       }
+      case 'canal': ctx.strokeStyle = s.spec.color; ctx.lineWidth = 2; ctx.globalAlpha = 0.6 + Math.sin(time * 12) * 0.2; ctx.setLineDash([5, 5]); U.inkCircle(ctx, s.x, s.y, s.r, 3 + Math.floor(time * 6), 2); ctx.setLineDash([]); { const p = st.p; ctx.globalAlpha = 0.4; ctx.beginPath(); ctx.moveTo(p.x + p.w / 2, p.y + p.h * 0.45); ctx.lineTo(s.x, s.y); ctx.stroke(); } break;
+      case 'orbit': ctx.fillStyle = s.color; ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill(); ctx.stroke(); Seal.glyph(ctx, s.spec.core, s.x, s.y, s.r * 0.6, '#efe3c4', 1); break;
+      case 'totem': { ctx.strokeStyle = INK; ctx.lineWidth = 2.5; U.inkLine(ctx, s.x, s.y, s.x, s.y - 44, 3, 0.8); ctx.fillStyle = s.color; ctx.strokeStyle = INK; U.inkPolyPath(ctx, [[s.x - 10, s.y - 44], [s.x + 10, s.y - 44], [s.x, s.y - 60]], 4, 0.6); ctx.fill(); ctx.stroke(); Seal.glyph(ctx, s.spec.core, s.x, s.y - 30, 7, s.color, 2); const pulse = 1 - s.t / 2; ctx.globalAlpha = 0.35 * (1 - pulse); ctx.strokeStyle = s.color; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(s.x, s.y - 20, s.r * pulse, s.r * 0.5 * pulse, 0, 0, TAU); ctx.stroke(); break; }
+      case 'rain': ctx.strokeStyle = s.color; ctx.lineWidth = 1.2; ctx.globalAlpha = 0.5; for (let k = 0; k < 5; k++) U.inkCircle(ctx, s.x - s.w / 2 + k * s.w / 4, s.yTop - 10 + (k % 2) * 6, 14, k, 1.2); break;
+      case 'label': ctx.globalAlpha = Math.min(1, s.life * 2); U.txt(ctx, s.txt, s.x, s.y, 20, 'center', INK, 'IM Fell English SC'); break;
       case 'ring': { const t = 1 - s.life / s.max; ctx.strokeStyle = s.color; ctx.globalAlpha = 1 - t; ctx.lineWidth = 3 * (1 - t) + 0.5; U.inkCircle(ctx, s.x, s.y, s.r * (0.3 + t * 0.9), 3, 2); ctx.lineWidth = 1; U.inkCircle(ctx, s.x, s.y, s.r * (0.1 + t * 0.6), 4, 1.5); break; }
       case 'beam': { const t = s.life / s.max; ctx.strokeStyle = s.color; ctx.globalAlpha = t; ctx.lineWidth = s.w * t + 1; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); ctx.strokeStyle = '#efe3c4'; ctx.lineWidth = Math.max(0.5, s.w * t * 0.3); ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); break; }
     }
@@ -2833,7 +3309,7 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize };
+  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl };
 })();
 
 </script>
@@ -3073,7 +3549,7 @@ const Lab = (() => {
 // ---------- Interface DOM : création du personnage, éditeur de sceaux, chaudron, grimoire, HUD ----------
 const UI = (() => {
   let game = null, open = null, selSlot = null, time = 0;
-  let caulIngr = [null, null, null], caulSteps = [], grimTab = 'decouvertes';
+  let caulIngr = [null, null, null], caulSteps = [], grimTab = 'decouvertes', subSlot = null;
   let look = { nom: '', chapeau: 0, cape: 0, acc: 0 };
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -3164,6 +3640,7 @@ const UI = (() => {
     $$('.panel').forEach((p) => p.classList.add('hidden'));
     $('#panels').classList.add('hidden');
     $('#seal-slots').classList.add('hidden');
+    const sl = $('#seal-sublist'); if (sl) sl.classList.add('hidden');
   }
   function isOpen() { return open; }
 
@@ -3183,32 +3660,52 @@ const UI = (() => {
     const hit = (sl) => U.dist(x, y, sl.x, sl.y) <= sl.r * 1.3;
     let id = null;
     if (hit(lay.core)) id = 'core'; else if (hit(lay.shape)) id = 'shape'; else if (hit(lay.trigger)) id = 'trigger';
+    else if (game.progress.fusion && hit(lay.core2)) id = 'core2';
     else for (let i = 0; i < 3; i++) if (hit(lay.mods[i])) id = 'mod' + i;
     if (!id) { selSlot = null; refreshSeal(); return; }
     if (id.startsWith('mod') && +id[3] >= game.progress.slots) { toast('Cet emplacement est encore scellé. Voir le grimoire.', 'warn'); return; }
     if (right || selSlot === id) {
       // vider
-      if (id === 'core') s.core = null; else if (id === 'shape') s.shape = null; else if (id === 'trigger') s.trigger = null; else s.mods[+id[3]] = null;
+      if (id === 'core') s.core = null; else if (id === 'core2') s.core2 = null; else if (id === 'shape') s.shape = null; else if (id === 'trigger') s.trigger = null; else s.mods[+id[3]] = null;
       selSlot = null; Son.sfx('click');
     } else selSlot = id;
     refreshSeal();
   }
   function placeInSeal(kind, id) {
     const s = game.editSeal;
-    if (kind === 'core') { s.core = id; if (selSlot === 'core') selSlot = null; }
+    if (kind === 'core') {
+      if (selSlot === 'core2' || (game.progress.fusion && s.core && s.core !== id && !s.core2 && selSlot !== 'core')) { s.core2 = id; selSlot = null; }
+      else { s.core = id; if (selSlot === 'core') selSlot = null; }
+    }
     else if (kind === 'shape') { s.shape = id; if (selSlot === 'shape') selSlot = null; }
     else if (kind === 'trigger') { s.trigger = id; if (selSlot === 'trigger') selSlot = null; }
     else {
       let i = selSlot && selSlot.startsWith('mod') ? +selSlot[3] : s.mods.findIndex((m, k) => !m && k < game.progress.slots);
       if (i < 0) i = 0;
       if (i >= game.progress.slots) { toast('Aucun emplacement de modificateur libre.', 'warn'); return; }
+      if (id === 'sous') { subSlot = i; showSubList(); return; }
       s.mods[i] = id; selSlot = null;
     }
     Son.sfx('cast', s.core || 'vent');
     refreshSeal();
   }
+  function showSubList() {
+    const box = $('#seal-sublist'); box.innerHTML = '<p class="intro">Quel sceau consigné emboîter ? Il sera lancé là où celui-ci éclate (deux niveaux au plus).</p>';
+    const cands = game.seals.filter((q) => q.core && q.shape && Seal.depth(q) < 1 && q.nom !== game.editSeal.nom);
+    if (!cands.length) box.appendChild(el('p', 'muted', 'Consigne d\'abord un sceau complet (sans sous-sceau).'));
+    for (const q of cands) {
+      const it = el('div', 'seal-item');
+      const cv = document.createElement('canvas'); cv.width = 40; cv.height = 40; Seal.drawMini(cv.getContext('2d'), q, 20, 20, 17, 0);
+      it.appendChild(cv); it.appendChild(el('span', '', q.nom + ' <small>(' + Seal.cost(q) + ')</small>'));
+      it.addEventListener('click', () => { game.editSeal.mods[subSlot] = { sub: Seal.clone(q) }; selSlot = null; box.classList.add('hidden'); refreshSeal(); Son.sfx('cast', q.core); });
+      box.appendChild(it);
+    }
+    const b = el('button', '', 'Annuler'); b.addEventListener('click', () => box.classList.add('hidden')); box.appendChild(b);
+    box.classList.remove('hidden');
+  }
   function refreshSeal() {
     const s = game.editSeal, p = game.progress;
+    if (!('core2' in s)) s.core2 = null;
     $('#seal-nom').value = s.nom || '';
     $('#seal-nom').placeholder = Seal.autoNom(s);
     $('#seal-cost').textContent = Seal.cost(s);
@@ -3262,8 +3759,9 @@ const UI = (() => {
     const c = $('#seal-canvas'); if (!c || open !== 'seal') return;
     const ctx = c.getContext('2d');
     ctx.clearRect(0, 0, c.width, c.height);
-    Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, 150, { t: time, slots: game.progress.slots, highlight: selSlot, empty: true });
-    const hint = selSlot ? 'Choisis un glyphe dans la palette, ou clique à nouveau pour vider.' : 'Clique un emplacement, puis un glyphe. Clic droit : vider.';
+    Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, 150, { t: time, slots: game.progress.slots, highlight: selSlot, empty: true, fusion: game.progress.fusion });
+    const combo = Seal.comboName(game.editSeal);
+    const hint = combo ? 'Fusion : ' + combo + '. ' + (DATA.COMBOS[[game.editSeal.core, game.editSeal.core2].sort().join('|')].desc || '') : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot ? 'Choisis un glyphe dans la palette, ou clique à nouveau pour vider.' : game.progress.fusion ? 'Centre, formes, modificateurs, pointes. En bas : un second effet à fusionner.' : 'Clique un emplacement, puis un glyphe. Clic droit : vider.';
     U.txt(ctx, hint, c.width / 2, 16, 13, 'center', '#6b4f2a', 'IM Fell English', 'italic');
   }
 
@@ -3364,6 +3862,13 @@ const UI = (() => {
       grp('Formes (premier anneau)', DATA.SHAPES, p.shapes, 'shape');
       grp('Modificateurs (second anneau) — ' + p.slots + ' emplacement(s)', DATA.MODS, p.mods, 'mod');
       grp('Déclencheurs (pointes)', DATA.TRIGGERS, p.triggers, 'trigger');
+      if (p.fusion) {
+        c.appendChild(el('h3', '', 'Fusions connues'));
+        const known = Object.keys(DATA.COMBOS).filter((k) => k.split('|').every((q) => p.cores.includes(q)));
+        if (!known.length) c.appendChild(el('p', 'muted', 'Aucune : il faut posséder les deux glyphes.'));
+        for (const k of known) { const [a, b] = k.split('|'); const Cm = DATA.COMBOS[k]; c.appendChild(el('div', 'recette', '<b>' + Cm.nom + '</b> : ' + DATA.CORES[a].nom + ' + ' + DATA.CORES[b].nom + (Cm.desc ? ' — ' + Cm.desc : ''))); }
+        c.appendChild(el('p', 'intro', 'Toute autre paire fusionne aussi : les deux effets s\'appliquent ensemble.'));
+      }
       c.appendChild(el('p', 'intro', 'Déclencheurs : <b>Immédiat</b> agit en continu sur ce que le sort touche (un projectile traverse les créatures). <b>Au contact</b> éclate en zone à la première chose touchée. <b>Retardé</b> se fixe et éclate après deux secondes.'));
     } else if (grimTab === 'recettes') {
       c.appendChild(el('p', 'intro', 'Le chaudron accepte jusqu\'à trois ingrédients et trois étapes, dans l\'ordre. Les recettes inconnues ne sont que des énigmes.'));
@@ -3418,7 +3923,7 @@ const UI = (() => {
     $('#hp-fill').style.width = (100 * Math.max(0, p.hp) / p.hpMax) + '%';
     if (g) { const need = DATA.XP.parNiveau(g.niveau); $('#xp-fill').style.width = (100 * g.xp / need) + '%'; $('#xp-txt').textContent = 'Niveau ' + g.niveau; }
     const sts = [];
-    const names = { wet: 'Trempé(e)', stone: 'Peau de pierre', invisible: 'Invisible', lowgrav: 'Léger(ère)', jump: 'Bonds', small: 'Minuscule', vision: 'Vision', burning: 'En feu !', glide: 'Planeur', lumiere: 'Lumineux(se)', patins: 'Patins de givre', vitesse: 'Foudroyé(e)', dissous: 'Mains d\'acide', vol: 'En vol', branchies: 'Branchies', geant: 'Géant(e)', glisse: 'Savonné(e)' };
+    const names = { wet: 'Trempé(e)', stone: 'Peau de pierre', invisible: 'Invisible', lowgrav: 'Léger(ère)', jump: 'Bonds', small: 'Minuscule', vision: 'Vision', burning: 'En feu !', glide: 'Planeur', lumiere: 'Lumineux(se)', patins: 'Patins de givre', vitesse: 'Foudroyé(e)', dissous: 'Mains d\'acide', vol: 'En vol', branchies: 'Branchies', geant: 'Géant(e)', glisse: 'Savonné(e)', hate: 'Hâte', lent: 'Englué(e)', armure: 'Armure' };
     for (const k in p.sta) if (p.sta[k] > 0) sts.push('<span class="st ' + k + '">' + names[k] + ' ' + Math.ceil(p.sta[k]) + 's</span>');
     $('#statuts').innerHTML = sts.join('');
   }
@@ -3462,13 +3967,14 @@ const UI = (() => {
   let last = 0, worldSaveT = 0;
 
   const inp = { left: false, right: false, up: false, down: false, jump: false, jumpHeld: false, interact: false, dig: false, mouse: { x: 640, y: 360, down: false } };
+  window.__inp = inp;
 
   // ---------- Progression ----------
   function makeProgress() {
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
-      recettes: [], ingredientsVus: [], done: [], nouveau: false, obs: {},
-      compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0 },
+      recettes: [], ingredientsVus: [], done: [], nouveau: false, obs: {}, fusion: false,
+      compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0, terre: 0, creaturesTouchees: 0, vols: 0, portes: 0, lancers: 0, niveau: 1, sceaux: 0 },
       event(name, data) {
         const k = this.compteurs;
         switch (name) {
@@ -3481,6 +3987,11 @@ const UI = (() => {
           case 'rune': k.runes++; break;
           case 'tame': k.tames++; break;
           case 'sort': k.sorts++; break;
+          case 'terre': k.terre++; break;
+          case 'creatureTouchee': k.creaturesTouchees++; break;
+          case 'vol': k.vols++; break;
+          case 'porte': k.portes++; break;
+          case 'lancer': k.lancers++; break;
           case 'ingredient': if (!this.ingredientsVus.includes(data)) { this.ingredientsVus.push(data); game.addXp(DATA.XP.ingredient); } break;
           case 'recette': if (!this.recettes.includes(data)) { this.recettes.push(data); game.addXp(DATA.XP.recette); } k.potions++; break;
         }
@@ -3496,6 +4007,7 @@ const UI = (() => {
           else if (u.type === 'trigger') { if (!this.triggers.includes(u.item)) this.triggers.push(u.item); }
           else if (u.type === 'mods') for (const m of u.item) { if (!this.mods.includes(m)) this.mods.push(m); }
           else if (u.type === 'slot') this.slots = Math.max(this.slots, u.item);
+          else if (u.type === 'fusion') this.fusion = true;
           this.nouveau = true;
           game.toast('✦ Découverte : ' + u.titre, 'unlock');
           Son.sfx('unlock');
@@ -3539,6 +4051,7 @@ const UI = (() => {
       while (this.xp >= need) {
         this.xp -= need; this.niveau++;
         this.toast('✦ Niveau ' + this.niveau + ' : ton encre s\'approfondit.', 'unlock'); Son.sfx('unlock');
+        this.progress.compteurs.niveau = this.niveau; this.progress.check();
         need = DATA.XP.parNiveau(this.niveau);
       }
       this.applyNiveau();
@@ -3625,9 +4138,10 @@ const UI = (() => {
       }
     },
     save() {
+      this.progress.compteurs.sceaux = this.seals.length;
       try {
         const data = { look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
-          progress: { cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs } };
+          progress: { cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs } };
         localStorage.setItem(SAVE_KEY, JSON.stringify(data));
       } catch (e) { /* stockage indisponible */ }
     },
@@ -3639,11 +4153,14 @@ const UI = (() => {
         this.xp = d.xp || 0; this.niveau = d.niveau || 1;
         if (d.progress) Object.assign(this.progress, d.progress);
         if (!this.progress.obs) this.progress.obs = {};
+        const K = this.progress.compteurs; for (const k of ['terre', 'creaturesTouchees', 'vols', 'portes', 'lancers', 'sceaux']) if (K[k] == null) K[k] = 0; K.niveau = this.niveau;
+        this.hotbar = this.hotbar.map((e) => (e && e.type === 'seal' ? { type: 'seal', seal: Seal.clone(e.seal) } : e)); this.seals = this.seals.map((q) => Seal.clone(q));
         return this.started;
       } catch (e) { return false; }
     },
     reset() { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(WORLD_KEY); location.reload(); },
   };
+  game.inp = inp;
   window.game = game;
 
   // ---------- Entrées ----------
@@ -3683,6 +4200,7 @@ const UI = (() => {
     if (UI.isOpen()) return;
     if (e.button === 2) { if (game.state === 'world') World.throwCarried(World.toWorld(m.x, m.y)); return; }
     if (e.button !== 0) return;
+    inp.mouse.down = true;
     if (game.state === 'lab') {
       const id = Lab.click(m.x, m.y);
       if (!id) return;
@@ -3695,6 +4213,7 @@ const UI = (() => {
       else if (id === 'porte') game.goWorld();
     } else if (game.state === 'world') game.useSelected();
   });
+  window.addEventListener('mouseup', (e) => { if (e.button === 0) inp.mouse.down = false; });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('wheel', (e) => { if (game.state !== 'world' || UI.isOpen()) return; game.selected = (game.selected + (e.deltaY > 0 ? 1 : 4)) % 5; UI.refreshHotbar(); e.preventDefault(); }, { passive: false });
   window.addEventListener('blur', () => { inp.left = inp.right = inp.up = inp.down = inp.jumpHeld = inp.dig = false; });

@@ -104,6 +104,8 @@
   .glyph-btn small { opacity: 0.6; font-size: calc(11px * var(--s)); }
   .glyph-btn.locked { opacity: 0.5; cursor: help; background: transparent; box-shadow: none; border-style: dashed; }
   #pal-desc { min-height: 3em; margin-top: 10px; padding: 8px 10px; background: rgba(255,255,255,0.3); border-left: 3px solid var(--gold); font-style: italic; }
+  #seal-sublist { margin-top: 8px; padding: 8px; border: 1.5px dashed var(--ink); border-radius: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: rgba(255,255,255,0.3); }
+  #seal-sublist .intro { width: 100%; margin: 0 0 4px; }
   #seal-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: calc(90px * var(--s)); overflow: auto; }
   .seal-item { display: flex; align-items: center; gap: 6px; border: 1px solid var(--ink); border-radius: 6px; padding: 2px 8px 2px 4px; background: rgba(255,255,255,0.3); cursor: pointer; }
   .seal-item:hover { background: #fff8e4; }
@@ -200,6 +202,7 @@
             <button id="seal-tobar">Mettre dans la barre</button>
           </div>
           <div id="seal-slots" class="slotpick hidden"></div>
+          <div id="seal-sublist" class="hidden"></div>
           <h3>Sceaux consignés</h3>
           <div id="seal-list"></div>
         </div>
@@ -262,12 +265,14 @@
       <p><em>Mon cher apprenti, ma chère apprentie,</em></p>
       <p>Je pars quelques semaines. L'atelier est à toi. Un sceau se compose en cercles : au <b>centre</b>, le glyphe d'effet (ce que le sort fait). Sur le <b>premier anneau</b>, la forme (projectile, sur soi, zone, trait). Sur le <b>second</b>, les modificateurs. Aux <b>pointes</b>, le déclencheur. Un sceau incomplet ne tue personne : il fait de la fumée, et c'est déjà une leçon.</p>
       <p>Dehors, <b>tout réagit</b> : le feu brûle le bois et l'herbe, l'eau éteint et fait pousser, la glace fond, la lave fige l'eau en pierre noire, l'acide creuse, l'huile flotte et s'enflamme, la foudre court dans l'eau et le métal. Regarde bien : chaque phénomène observé trois fois fait germer un glyphe dans ta palette (onglet <b>Intuitions</b> du grimoire). Les orages sont de bons professeurs.</p>
+      <p>Avec l'expérience, la table s'enrichit : un <b>second glyphe d'effet</b> en bas du premier anneau fusionne avec le premier (feu + vent = tornade de feu, eau + froid = banquise, feu + terre = lave...), et un emplacement de modificateur peut recevoir un <b>sous-sceau</b> : un sceau consigné entier, lancé là où le premier éclate.</p>
       <p>Le <b>chaudron</b> accepte jusqu'à trois ingrédients et trois étapes dans l'ordre. Commence par <b>cendre + eau de source</b>, <b>chauffer</b> puis <b>remuer</b> : tu auras de l'encre à boire. Les ingrédients rares se trouvent dehors ; on peut aussi puiser n'importe quel liquide dans une fiole (<kbd>E</kbd>) pour le lancer ou le brasser.</p>
       <h3>Dehors</h3>
       <ul>
         <li><kbd>←</kbd><kbd>→</kbd> ou <kbd>Q</kbd><kbd>D</kbd> : marcher · <kbd>Espace</kbd> : sauter (maintenir pour un grand saut) · <kbd>↑</kbd> : grimper aux plantes · en vol : toutes les directions</li>
         <li><kbd>E</kbd> : agir (porte, cueillir, lire, remplir une fiole, porter / poser) · <kbd>Clic droit</kbd> : lancer ce qu'on porte · <kbd>X</kbd> maintenu : creuser ou cueillir vers la souris (terre, sable, neige, plantes, cristal)</li>
         <li><kbd>1</kbd>–<kbd>5</kbd> ou molette : choisir dans la barre · <kbd>Clic</kbd> : lancer vers la souris</li>
+        <li>Glyphe Esprit : flèches pour guider la créature, <kbd>E</kbd> pour revenir · Glyphe Lien : <kbd>↑</kbd><kbd>↓</kbd> pour raccourcir ou allonger la corde, <kbd>Espace</kbd> pour lâcher</li>
         <li><kbd>G</kbd> : grimoire · <kbd>H</kbd> : cette lettre · <kbd>M</kbd> : son · <kbd>Échap</kbd> : fermer</li>
         <li>Revenir au labo (la porte, ou le bouton 🏠) restaure encre et vitalité et sauvegarde le monde tel que tu l'as laissé. Rien ne meurt vraiment ici : on s'évanouit, on se réveille devant la porte.</li>
       </ul>

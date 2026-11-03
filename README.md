@@ -27,9 +27,11 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 
 ## Les sceaux
 
-- **Effets** : Feu, Vent, Eau, Terre au départ. Lumière, Ombre, Vie, Force, Froid, Foudre, Acide et Gravité se découvrent (par exploits ou par observation de phénomènes).
-- **Formes** : Projectile, Sur soi, puis Zone et Trait.
-- **Modificateurs** : Puissance, Portée, puis Durée, Taille, Rebond, Persistance, Vitesse, Double. Un à trois emplacements.
+- **Effets** (19) : Feu, Vent, Eau, Terre au départ. Lumière, Ombre, Vie, Force, Froid, Foudre, Acide, Gravité, Temps, Transmutation, Son, Esprit, Lien, Portail et Métal se découvrent (par exploits ou par observation de phénomènes).
+- **Fusion** : deux glyphes d'effet dans un sceau, avec des combos nommés (tornade de feu, banquise, lave, orage, blizzard...).
+- **Sous-sceaux** : un emplacement de modificateur peut contenir un sceau consigné entier, lancé là où le premier éclate (deux niveaux).
+- **Formes** : Projectile, Sur soi, puis Zone, Trait, Aura, Mur, Totem, Chaîne, Pluie, Sur objet, Invocation.
+- **Modificateurs** : Puissance, Portée, Durée, Taille, Rebond, Persistance, Vitesse, Double, Inverser, Écho, Téléguidé, Orbite, Canalisé. Un à trois emplacements.
 - **Déclencheurs** : Immédiat, Au contact, Retardé.
 - Chaque glyphe coûte de l'encre. L'expérience de découverte augmente l'encre et sa régénération.
 
