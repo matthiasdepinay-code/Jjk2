@@ -9,12 +9,15 @@ Exemples :
     python3 ghazrun.py mot vorz                                # (ghâzrûn → fr)
     python3 ghazrun.py bas "Mârokûth nâldhûmzhâ"               # registre bas
     python3 ghazrun.py analyse zârôluzardhûm                   # découpe une forme
+    python3 ghazrun.py verifie                                 # phonotactique de tout le lexique
+    python3 ghazrun.py verifie ghrûzk "thâl mârok"             # ... ou de mots nouveaux
 
 Le lexique est lu dans ../lexique.csv.
 """
 import argparse
 import csv
 import os
+import re
 import sys
 import unicodedata
 
@@ -127,6 +130,64 @@ def analyser(forme):
     r = rec(f, [])
     return (prefixe + r) if r else None
 
+# ---------- phonotactique ----------
+ONSETS = {"pr","br","tr","dr","kr","gr","thr","dhr","khr","ghr","zr","zhr","shr","vr","gl","kl","sl","zl","zg","zd"}
+CODAS = {"rz","rk","rg","rgh","rkh","rzh","rth","rsh","rd","rn","rm","lk","lg","lm","zg","sht","shk","st","nd","mb","ng"}
+CONS_TOK = re.compile(r"kh|gh|th|dh|sh|zh|[pbtdkgszhvmnrl]")
+
+def verifier(mot):
+    """Renvoie la liste des infractions aux règles de la langue pour un mot (vide = conforme)."""
+    m = mot.lower().replace("-", "")
+    pb = []
+    if re.search(r"[^aouiâôûîpbtdkgszhvmnrl ]", m):
+        pb.append("lettre étrangère à l'alphabet : " + "".join(sorted(set(re.findall(r"[^aouiâôûîpbtdkgszhvmnrl ]", m)))))
+    if re.search(r"[eéèêy]", m):
+        pb.append("voyelle interdite")
+    for w in m.split():
+        toks = []
+        i = 0
+        while i < len(w):
+            mt = CONS_TOK.match(w, i)
+            if mt:
+                toks.append(("C", mt.group())); i = mt.end()
+            else:
+                toks.append(("V", w[i])); i += 1
+        # groupes de consonnes
+        runs, cur = [], []
+        for t, v in toks + [("V", "")]:
+            if t == "C": cur.append(v)
+            else:
+                if cur: runs.append(cur)
+                cur = []
+        if toks and toks[0][0] == "C":
+            onset = runs[0]
+            if len(onset) == 2 and "".join(onset) not in ONSETS:
+                pb.append(f"attaque {''.join(onset)}- non admise")
+            if len(onset) > 2:
+                pb.append(f"attaque {''.join(onset)}- trop lourde")
+        if toks and toks[-1][0] == "C":
+            coda = runs[-1]
+            if len(coda) == 2 and "".join(coda) not in CODAS:
+                pb.append(f"finale -{''.join(coda)} non admise")
+            if len(coda) > 2:
+                pb.append(f"finale -{''.join(coda)} trop lourde")
+        medians = runs[1:-1] if toks[0][0] == "C" and toks[-1][0] == "C" else (runs[1:] if toks[0][0] == "C" else (runs[:-1] if toks[-1][0] == "C" else runs))
+        for r in medians:
+            if len(r) <= 2:
+                continue
+            # admis seulement à la frontière d'un composé : coda régulière + attaque régulière
+            ok = any((len(r[:i]) == 1 or "".join(r[:i]) in CODAS) and (len(r[i:]) == 1 or "".join(r[i:]) in ONSETS)
+                     for i in range(1, len(r)))
+            if not ok:
+                pb.append(f"groupe médian -{''.join(r)}- trop lourd")
+        vv = re.findall(r"[aouiâôûî]{2,}", w)
+        for v in vv:
+            if v not in ("ai", "au", "ôi"):
+                pb.append(f"voyelles en contact : {v}")
+        if not re.search(r"[aouiâôûî]", w):
+            pb.append("pas de voyelle")
+    return pb
+
 # ---------- lexique ----------
 def strip_accents(s):
     return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn").lower()
@@ -164,6 +225,8 @@ def main():
     m = sub.add_parser("mot", help="chercher dans le lexique (français ou ghâzrûn)"); m.add_argument("mot")
     b = sub.add_parser("bas", help="convertir au registre bas"); b.add_argument("texte")
     a = sub.add_parser("analyse", help="découper une forme en morphèmes"); a.add_argument("forme")
+    vf = sub.add_parser("verifie", help="vérifier qu'un mot respecte la phonotactique (sans argument : tout le lexique)")
+    vf.add_argument("mots", nargs="*")
     args = ap.parse_args()
 
     if args.cmd == "nom":
@@ -195,6 +258,14 @@ def main():
             if r.get("profondeur"): print(f"{'':28}↳ {r['profondeur']}")
     elif args.cmd == "bas":
         print(registre_bas(args.texte))
+    elif args.cmd == "verifie":
+        cibles = args.mots or [r["mot"] for r in charger_lexique()]
+        n = 0
+        for m in cibles:
+            pb = verifier(m)
+            if pb:
+                n += 1; print(f"{m:20} {' ; '.join(pb)}")
+        print(f"{len(cibles)} mot(s) vérifié(s), {n} non conforme(s)")
     elif args.cmd == "analyse":
         r = analyser(args.forme)
         if not r:

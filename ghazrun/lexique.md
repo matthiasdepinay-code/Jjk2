@@ -1,12 +1,12 @@
 # Lexique du Ghâzrûn
 
-380 entrées, classées par thème. Les formes sont celles du registre haut (toutes les longues notées) ; le thème « Parler bas » rassemble le vocabulaire des serviteurs, tel qu'on l'entend aboyé dans les garnisons.
+648 entrées, classées par thème. Les formes sont celles du registre haut (toutes les longues notées) ; le thème « Parler bas » rassemble le vocabulaire des serviteurs, tel qu'on l'entend aboyé dans les garnisons.
 
-Catégories : n. nom, n.pr. nom propre, v. verbe, adj. adjectif, adv. adverbe, pron. pronom, conj. conjonction, part. particule, num. nombre, loc. locution, interj. interjection.
+Catégories : n. nom, n.pr. nom propre, v. verbe, adj. adjectif, adv. adverbe, postp. postposition, pron. pronom, conj. conjonction, part. particule, num. nombre, loc. locution, interj. interjection.
 
 La colonne **Profondeur** donne, pour les racines majeures, les deux sens cachés sous le sens courant : le sens de serment (ce que le mot engage) et le sens de racine (ce que le mot *fait* quand une Voix le prononce). Voir `README.md`, § 7.
 
-Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
+Pour l'ordre alphabétique, l'usage par script ou la vérification d'un mot nouveau (`outils/ghazrun.py verifie`), voir `lexique.csv`.
 
 ## Parole et esprit
 
@@ -28,6 +28,9 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **lîthûth** | n. | beauté | lîth + -ûth |  |
 | **zrâgûth** | n. | quête, recherche | zrâg + -ûth |  |
 | **ghûmûth** | n. | la mort | ghûm + -ûth |  |
+| **kâghâzûth** | n. | question |  |  |
+| **dôrghâzûth** | n. | réponse |  |  |
+| **rûnthûlûth** | n. | mémoire, souvenir |  |  |
 
 ## Magie et pouvoir
 
@@ -35,7 +38,7 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 |---|---|---|---|---|
 | **ghâzûth** | n. | le Pouvoir : la magie, « ce que fait la voix » | ghâz + -ûth |  |
 | **rûnzhâd** | n. | mot de pouvoir | « mot profond » |  |
-| **dôth** | n./v. | décret, parole qui fait ; décréter | voir le mode du Décret | serment : loi ; racine : dire et que cela soit |
+| **dôth** | n./v. | décret, parole qui fait ; loi ; décréter | voir le mode du Décret | serment : loi ; racine : dire et que cela soit |
 | **khrâm** | v. | invoquer, appeler une puissance |  |  |
 | **khrâmûth** | n. | invocation, prière | khrâm + -ûth |  |
 | **zhûrk** | v. | maudire |  |  |
@@ -98,7 +101,7 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | Ghâzrûn | Cat. | Sens | Note | Profondeur |
 |---|---|---|---|---|
 | **varkhûth** | n. | guerre | varkh + -ûth |  |
-| **ghrâkh** | n. | bataille |  |  |
+| **ghrâkh** | n./v. | bataille ; se battre |  |  |
 | **zâl** | n. | armée, ost |  |  |
 | **thrômgor** | n. | lancier |  |  |
 | **drâkhgor** | n. | épéiste, bretteur |  |  |
@@ -110,14 +113,14 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **nîkdrâkh** | n. | dague, couteau | « petite épée » |  |
 | **brâng** | n. | bannière, étendard |  |  |
 | **gûrkdhâr** | n. | siège | « attendre au mur » |  |
-| **thrôkh** | n. | victoire |  |  |
+| **thrôkh** | n./v. | victoire ; vaincre, gagner |  |  |
 | **glûmûth** | n. | chute, défaite | glûm + -ûth |  |
 | **nîrg** | n. | blessure |  |  |
 | **varkhâr** | n. | chef de guerre, capitaine | varkh + khâr |  |
 | **drûz** | n. | butin |  |  |
 | **varkhdrîm** | n. | camp, garnison | « lieu des guerriers » |  |
 | **thrâmûth** | n. | charge, assaut | thrâm + -ûth |  |
-| **khrâ** | n./v. | cri ; crier |  |  |
+| **khrâ** | n./v. | cri, bruit ; crier |  |  |
 | **ghrûm** | n. | cadavre |  |  |
 | **rûmûth** | n. | peur | rûm + -ûth |  |
 | **hûrzdrâng** | adj. | courageux (« cœur-fort ») |  |  |
@@ -128,6 +131,7 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **mûrkdhûm** | v. | massacrer, exterminer | « tuer-tout » |  |
 | **zhûl** | v. | obéir, servir |  |  |
 | **dhârûth** | n. | paix, repos | dhâr + -ûth |  |
+| **drângûth** | n. | force, puissance |  |  |
 
 ## Parler bas
 
@@ -140,7 +144,7 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **gûrzh** | n. | tripes, boyaux |  |  |
 | **ghrak** | n./v. | charogne ; dévorer | mot bas (voyelle brève) |  |
 | **zgûr** | n. | griffe |  |  |
-| **zgâsh** | n./v. | croc ; mordre |  |  |
+| **zgâsh** | n./v. | croc, dent ; mordre |  |  |
 | **ghrok** | n. | gorge, gosier | mot bas |  |
 | **bagh** | n. | ordure, déchet | mot bas |  |
 | **zhub** | n. | crétin, idiot | mot bas |  |
@@ -160,6 +164,72 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **kôrgor** | n. | gens du soleil (méprisant) | kôr + gor |  |
 | **nârgslûg** | n. | buveur de sang (titre que se donnent les guerriers) | nârg + slûg |  |
 | **zûgzhag** | n. | esclave de gorge : le plus bas des serviteurs | zûga + zhag |  |
+
+## Sentiments
+
+| Ghâzrûn | Cat. | Sens | Note | Profondeur |
+|---|---|---|---|---|
+| **lômûth** | n. | joie | « ce qui chante » |  |
+| **nîlûth** | n. | tristesse, chagrin |  |  |
+| **vorzhûrz** | n. | colère | « cœur de feu » |  |
+| **vorzhûrzok** | adj. | en colère, furieux |  |  |
+| **ûkhûth** | n. | honneur, renom | « ce qui tient au nom » |  |
+| **lîkhûth** | n. | gloire |  |  |
+| **thîzûth** | n. | espoir | « ce qui guide » |  |
+| **ûrgûth** | n. | désir |  |  |
+| **nârkhûth** | n. | haine |  |  |
+| **dhôlûrg** | n. | fatigue | « envie de dormir » |  |
+| **dhôlûrgok** | adj. | fatigué |  |  |
+| **slûgûrg** | n. | soif |  |  |
+| **slûgûrgok** | adj. | assoiffé |  |  |
+| **gûlkok** | adj. | affamé |  |  |
+| **lômok** | adj. | heureux, joyeux |  |  |
+| **nîlok** | adj. | triste |  |  |
+| **îshbôrg** | adj. | étonné, surpris | « aux grands yeux » |  |
+| **lûmîshûth** | n. | pitié, compassion | « ce qui fait les larmes » |  |
+| **nîrgûth** | n. | douleur, souffrance |  |  |
+| **nîrgvîth** | v. | souffrir | « vivre la blessure » |  |
+| **khrâkhnîk** | v. | sourire | « petit rire » |  |
+| **mâlnîk** | v. | aimer bien, apprécier |  |  |
+| **mâlîr** | v. | préférer | « aimer plus » |  |
+| **rûmnîk** | v. | s'inquiéter | « petite peur » |  |
+| **hûrzbûl** | v. | oser | « faire son cœur » |  |
+
+## Temps et lieu
+
+| Ghâzrûn | Cat. | Sens | Note | Profondeur |
+|---|---|---|---|---|
+| **tâzdâl** | adv. | aujourd'hui | « ce jour » |  |
+| **dâlvôr** | adv. | hier | « depuis le jour » |  |
+| **dâltar** | adv. | demain | « vers le jour » |  |
+| **nâltar** | adv. | bientôt | « vers le temps » |  |
+| **nâlvôr** | adv. | déjà | « depuis le temps » |  |
+| **nâlzhâ** | adv. | pendant ce temps, alors |  |  |
+| **ûnnâl** | adv. | une fois |  |  |
+| **tâknâl** | adv. | deux fois |  |  |
+| **nâlnîk** | adv. | parfois, rarement | « peu de fois » |  |
+| **nâlbôrg** | adv. | souvent | « beaucoup de fois » |  |
+| **dâlthûzok** | adj./adv. | tôt, matinal |  |  |
+| **dâlghûmok** | adj./adv. | tard, tardif |  |  |
+| **thûznâl** | n. | début, commencement | « temps de naissance » |  |
+| **vôrknâl** | n. | fin | « temps d'arrière » |  |
+| **thînâl** | n. | printemps | « temps neuf » |  |
+| **dâlnâl** | n. | été | « temps du jour » |  |
+| **glûmnâl** | n. | automne | « temps de la chute » |  |
+| **krîlnâl** | n. | hiver | « temps du froid » |  |
+| **vôrk** | n. | dos, arrière |  |  |
+| **krûmzhâ** | adv./postp. | devant ; avant (temps) | « en tête » ; se place après le génitif : thâlôk krûmzhâ « devant la tour » |  |
+| **vôrkzhâ** | adv./postp. | derrière ; après (temps) | « dans le dos » |  |
+| **hûrzhâ** | adv./postp. | au milieu, au centre | « dans le cœur » |  |
+| **zhânzhâ** | adv./postp. | à côté ; presque | « dans la main » |  |
+| **nîkzhâ** | adv. | près, tout près | « dans le petit » |  |
+| **drûthzhâ** | adv. | loin, au loin | « sur la route » |  |
+| **ûlârzhâ** | adv./postp. | au-dessus, en haut |  |  |
+| **zhagzhâ** | adv./postp. | au-dessous, en bas |  |  |
+| **drîmzhâ** | adv. | à la maison, chez soi |  |  |
+| **zhârzhâ** | adv. | dehors, au seuil |  |  |
+| **gûrkzhâ** | adv. | dedans, à l'intérieur | « dans les murs » |  |
+| **thûmzhâ** | postp. | avec, en compagnie de | après le génitif : khârôk thûmzhâ « avec le seigneur » |  |
 
 ## Éléments et nature
 
@@ -196,6 +266,20 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **thânglûm** | n. | pluie | « eau du ciel » |  |
 | **vâshdhûm** | n. | tempête | « tout le vent » |  |
 | **shâkhlûm** | n. | brouillard | « eau de fumée » |  |
+| **gôrnzôr** | n. | argent (métal) | « or de lune » |  |
+| **lûmdrûth** | n. | rivière, fleuve | « route d'eau » |  |
+| **dhârlûm** | n. | lac | « eau qui demeure » |  |
+| **lûmthûz** | n. | source | « naissance d'eau » |  |
+| **ghôlkrâz** | n. | île | « pierre de mer » |  |
+| **ghôlzhâr** | n. | rivage, côte | « porte de la mer » |  |
+| **ghûrd** | n. | vallée |  |  |
+| **kôrdâgh** | n. | plaine | « terre de soleil » |  |
+| **nôkhdrîm** | n. | grotte, caverne | « demeure de nuit » |  |
+| **shâkhthâng** | n. | nuage | « fumée du ciel » |  |
+| **thângvorz** | n. | éclair | « feu du ciel » |  |
+| **thângkhrâ** | n. | tonnerre | « cri du ciel » |  |
+| **vorzûth** | n. | chaleur |  |  |
+| **thângûth** | n. | le temps qu'il fait |  |  |
 
 ## Créatures
 
@@ -205,6 +289,16 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **krâkh** | n. | corbeau |  |  |
 | **zlîsh** | n. | serpent |  |  |
 | **drôgh** | n. | dragon |  |  |
+| **vrâghnîk** | n. | chien | « petit loup » |  |
+| **zgûrnîk** | n. | chat | « petite griffe » |  |
+| **vâshnûk** | n. | oiseau | « enfant du vent » |  |
+| **vâshkhâr** | n. | aigle | « seigneur du vent » |  |
+| **bûrgh** | n. | ours |  |  |
+| **zgâshgor** | n. | sanglier | « celui au croc » |  |
+| **tharnkrûm** | n. | cerf | « tête d'arbre » |  |
+| **thrûngor** | n. | araignée | « la tisseuse » |  |
+| **shrûgbôrg** | n. | rat | « grosse vermine » |  |
+| **thûkgor** | n. | mouton, chèvre | « celui du vêtement » |  |
 
 ## Personnes
 
@@ -226,6 +320,21 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **zârgor** | n. | le Lieur (maître de serment) | zâr + -gor |  |
 | **shûlgor** | n. | gardien | shûl + -gor |  |
 | **lômgor** | n. | chanteur, barde | lôm + -gor |  |
+| **bôrggor** | n. | adulte | « grande personne » |  |
+| **rûnmâth** | n. | grand-mère |  |  |
+| **rûndâth** | n. | grand-père |  |  |
+| **thûldôrgor** | n. | maître, enseignant |  |  |
+| **thûlnâkhgor** | n. | élève, apprenti |  |  |
+| **zhângor** | n. | voisin | « celui d'à côté » |  |
+| **vorzdôrgor** | n. | hôte, celui qui accueille | « donneur de feu » |  |
+| **thôrngor** | n. | messager | « celui qui vient » |  |
+| **nôkhnâkhgor** | n. | voleur |  |  |
+| **slâkhgor** | n. | menteur |  |  |
+| **krâzgor** | n. | mineur |  |  |
+| **slûmgor** | n. | pêcheur |  |  |
+| **dâghgor** | n. | paysan, laboureur |  |  |
+| **vrâghgor** | n. | chasseur | « homme-loup » |  |
+| **zârdrîmgor** | n. | prisonnier |  |  |
 
 ## Lieux et objets
 
@@ -247,6 +356,13 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **zhâkghan** | n. | burin | zhâk + -ghan |  |
 | **khrûl** | n. | anneau |  | serment : alliance ; racine : ce qui n'a ni début ni fin |
 | **zhârkh** | n. | couronne |  |  |
+| **zârdrîm** | n. | prison | « lieu où l'on est lié » |  |
+| **krâzdrîm** | n. | mine, carrière |  |  |
+| **thûng** | n. | champ |  |  |
+| **lûmgûrth** | n. | puits |  |  |
+| **zhârkghan** | n. | clé | « outil qui ouvre » |  |
+| **vrôzthrôl** | n. | torche | « bâton de flamme » |  |
+| **drâzghan** | n. | chariot, char |  |  |
 
 ## Corps
 
@@ -255,13 +371,27 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **nârg** | n. | sang |  | serment : parenté ; racine : ce qui porte la vie |
 | **ghrôm** | n. | os ; au figuré, consonne | sens figuré ajouté |  |
 | **zhamb** | n. | chair, corps ; au figuré, voyelle | sens figuré ajouté |  |
-| **zhân** | n. | main |  |  |
+| **zhân** | n. | main ; côté |  |  |
 | **îsh** | n. | œil | pl. îshar | serment : témoignage ; racine : ce qui juge |
 | **lûmîsh** | n. | larme | « eau de l'œil » |  |
 | **hûrz** | n. | cœur |  |  |
 | **krûm** | n. | tête |  |  |
 | **ghâzdrîm** | n. | bouche | « lieu de la voix » |  |
 | **vîth** | n./v. | vie ; vivre |  | serment : devoir ; racine : ce qui pousse hors de la Nuit |
+| **nûkhdrîm** | n. | nez | « lieu de l'odeur » |  |
+| **khôrdrîm** | n. | oreille | « lieu de l'ouïe » |  |
+| **ghâzhamb** | n. | langue (organe) | « chair de la voix » |  |
+| **krûmghrân** | n. | cheveux, chevelure | « forêt de la tête » |  |
+| **dûkh** | n. | peau |  |  |
+| **zhândrûth** | n. | bras | « route de la main » |  |
+| **grâmdrûth** | n. | jambe | « route de la marche » |  |
+| **dâghzhân** | n. | pied | « main de terre » |  |
+| **gûrzhdrîm** | n. | ventre |  |  |
+| **zhânûk** | n. | doigt | « enfant de la main » |  |
+| **zhânzgûr** | n. | ongle | « griffe de la main » |  |
+| **vâshnîk** | n. | souffle, haleine | « petit vent » |  |
+| **dhôlûth** | n. | sommeil |  |  |
+| **vorzhamb** | n. | fièvre | « chair de feu » |  |
 
 ## Vie quotidienne
 
@@ -285,7 +415,7 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **thûk** | n. | vêtement |  |  |
 | **vâshghan** | n. | manteau | « instrument contre le vent » |  |
 | **grâmghan** | n. | botte, chaussure |  |  |
-| **ghan** | n. | outil, instrument | figé à partir du cas instrumental |  |
+| **ghan** | n. | outil, instrument ; manière, façon | figé à partir du cas instrumental |  |
 | **dhrâk** | n. | bois |  |  |
 | **khûlvorz** | n. | charbon | « feu noir » |  |
 | **dâlthûz** | n. | matin, aube | « naissance du jour » |  |
@@ -294,11 +424,11 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **kôrnâl** | n. | année | « temps du soleil » |  |
 | **gôrnâl** | n. | mois | « temps de la lune » |  |
 | **tâkdôr** | n./v. | échange, commerce ; échanger | « donner à deux » |  |
-| **nâkhdôr** | n. | prix | « prendre-donner » |  |
+| **nâkhdôr** | n./v. | prix ; payer | « prendre-donner » |  |
 | **tâkdôrgor** | n. | marchand |  |  |
 | **zôrnîk** | n. | monnaie, pièce | « petit or » |  |
 | **grâmûth** | n. | voyage | grâm + -ûth |  |
-| **zhârgor** | n. | étranger, voyageur | « celui de la porte » |  |
+| **zhârgor** | n. | étranger, voyageur, invité | « celui de la porte » |  |
 | **drîmdhûm** | n. | ville, cité | « toutes les demeures » |  |
 | **drîmnîk** | n. | village, hameau |  |  |
 | **vorzthûm** | n. | époux, épouse, compagnon de feu |  |  |
@@ -313,6 +443,16 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **dôrghâz** | v. | répondre | « donner la voix » |  |
 | **dhôlzhâl** | n. | rêve | « voir en dormant » |  |
 | **vorzghâz** | interj. | merci (« ta parole est feu ») |  |  |
+| **narzûgûth** | interj. | de rien (« pas de dette ») |  |  |
+| **narkrûshâ** | interj. | pardon, excuse-moi (« répare ! ») |  |  |
+| **bûlûn** | n. | chose, objet | « fait » |  |
+| **krûshûn** | n. | morceau, partie | « brisé » |  |
+| **zûgûth** | n. | dette | « état de qui est tenu » |  |
+| **mûkhûth** | n. | nourriture, repas |  |  |
+| **slûgûth** | n. | boisson |  |  |
+| **vorzmûkhdrîm** | n. | cuisine |  |  |
+| **tâkdôrdrîm** | n. | marché |  |  |
+| **zârthûk** | n. | ceinture |  |  |
 
 ## Verbes
 
@@ -343,11 +483,11 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **zhrôk** | v. | brûler |  |  |
 | **shûl** | v. | garder, veiller sur |  | serment : fidélité ; racine : retenir |
 | **ghîm** | v. | cacher |  | serment : secret ; racine : soustraire au jour |
-| **thûz** | v. | naître |  |  |
+| **thûz** | v. | naître ; commencer |  |  |
 | **ghûm** | v. | mourir |  | serment : retour ; racine : rendre à la Nuit |
 | **zhârk** | v. | ouvrir |  |  |
 | **krûz** | v. | fermer |  |  |
-| **dhâr** | v. | attendre, demeurer |  |  |
+| **dhâr** | v. | attendre, demeurer, rester ; s'arrêter |  |  |
 | **glûm** | v. | tomber |  |  |
 | **ûzg** | v. | se lever |  |  |
 | **nîl** | v. | pleurer |  |  |
@@ -357,6 +497,78 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **ûrg** | v. | vouloir |  |  |
 | **drâng** | v./adj. | pouvoir ; fort | dérivation zéro |  |
 | **mâl** | v. | aimer, chérir |  | serment : protection ; racine : tenir au chaud |
+| **lûmdôr** | v. | laver | « donner l'eau » |  |
+| **vorzmûkh** | v. | cuisiner, cuire |  |  |
+| **zôrdôr** | v. | acheter | « donner l'or » |  |
+| **zôrnâkh** | v. | vendre | « prendre l'or » |  |
+| **krâzbûl** | v. | bâtir, construire |  |  |
+| **shrâz** | v. | couper |  |  |
+| **thûg** | v. | porter |  |  |
+| **zhrûm** | v. | jeter, lancer |  |  |
+| **zgûrk** | v. | attraper, saisir au vol |  |  |
+| **dhûrk** | v. | pousser |  |  |
+| **ûlârgrâm** | v. | monter | « aller haut » |  |
+| **zhaggrâm** | v. | descendre | « aller bas » |  |
+| **zhârgrâm** | v. | entrer, passer le seuil |  |  |
+| **vôrgrâm** | v. | sortir | « aller hors » |  |
+| **lûmgrâm** | v. | nager |  |  |
+| **vâshgrâm** | v. | voler (dans les airs) | « aller par le vent » |  |
+| **zhorggrâm** | v. | grimper, escalader |  |  |
+| **brâzgrâm** | v. | traverser | « passer le pont » |  |
+| **drûthgrâm** | v. | partir, se mettre en route |  |  |
+| **vôrkgrâm** | v. | suivre | « aller derrière » |  |
+| **krûmgrâm** | v. | mener, guider | « aller en tête » |  |
+| **zhûngrâm** | v. | continuer | « aller encore » |  |
+| **grâmzrâg** | v. | rencontrer | « trouver en allant » |  |
+| **zhûnthôrn** | v. | revenir, retourner | « venir encore » |  |
+| **grâmdôr** | v. | envoyer |  |  |
+| **dôrnâkh** | v. | recevoir | « prendre le don » |  |
+| **dhâz** | v. | s'asseoir |  |  |
+| **dhôlk** | v. | s'allonger, se coucher |  |  |
+| **nardhôl** | v. | se réveiller, s'éveiller | « ne plus dormir » |  |
+| **zhândôr** | v. | aider | « donner la main » |  |
+| **zhândôrûth** | n. | aide, secours |  |  |
+| **îshdôr** | v. | montrer | « donner à l'œil » |  |
+| **thûldôr** | v. | enseigner | « donner le savoir » |  |
+| **thûlnâkh** | v. | apprendre | « prendre le savoir » |  |
+| **zhâkzhâl** | v. | lire | « voir les signes » |  |
+| **hûrzghâz** | v. | penser, réfléchir | « parler en son cœur » |  |
+| **hûrzghâzûth** | n. | pensée, idée |  |  |
+| **hûrzthûl** | v. | croire | « savoir du cœur » |  |
+| **thîzhâl** | v. | espérer | « voir l'étoile » |  |
+| **khâz** | v. | devoir, avoir besoin de | auxiliaire + infinitif |  |
+| **bûlnîk** | v. | essayer, tenter | « faire un peu » |  |
+| **dhûmbûl** | v. | finir, achever | « faire tout » |  |
+| **thrûk** | v. | remplir |  |  |
+| **gûrthbûl** | v. | vider | « faire gouffre » |  |
+| **thûkdôr** | v. | couvrir, vêtir |  |  |
+| **bôrgthûz** | v. | grandir, croître |  |  |
+| **slûgnîk** | v. | goûter, siroter |  |  |
+| **nûkh** | v. | sentir (une odeur) |  |  |
+| **nûkhûth** | n. | odeur |  |  |
+| **dhâkh** | v. | toucher |  |  |
+| **ûkhghâz** | v. | appeler, nommer |  |  |
+| **ûrzhdôr** | v. | promettre | « donner serment » |  |
+| **nûkbûl** | v. | jouer | « faire l'enfant » |  |
+| **nâkhgrâm** | v. | chasser | « aller prendre » |  |
+| **slûmnâkh** | v. | pêcher |  |  |
+| **dâghbûl** | v. | cultiver, labourer |  |  |
+| **thrûnthûk** | v. | coudre |  |  |
+| **krûkhbûl** | v. | forger |  |  |
+| **nôkhnâkh** | v. | voler, dérober | « prendre de nuit » |  |
+| **slâkhdôr** | v. | tromper | « donner un mensonge » |  |
+| **narkrûsh** | v. | pardonner, réparer | « dé-briser » |  |
+| **zrâgûrg** | v. | chercher | « vouloir trouver » |  |
+| **ûnnâkh** | v. | choisir | « prendre un » |  |
+| **zûlbûl** | v. | mesurer, compter précisément |  |  |
+| **narvorz** | v. | éteindre |  |  |
+| **vorzdôr** | v. | allumer |  |  |
+| **krîlbûl** | v. | geler |  |  |
+| **lûmglûm** | v. | pleuvoir |  |  |
+| **rûnghâz** | v. | signifier, vouloir dire | « parler profond » |  |
+| **rûnkhôr** | v. | comprendre | « entendre profond » |  |
+| **ghâzvrâkh** | v. | traduire | « changer la voix » |  |
+| **zhâlnîk** | v. | entrevoir, deviner |  |  |
 
 ## Qualités
 
@@ -370,15 +582,15 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **ûlâr** | adj. | haut, élevé, noble |  |  |
 | **zhag** | adj. | bas, grossier, guttural ; (interj.) à terre ! |  |  |
 | **thîn** | adj. | jeune, nouveau |  |  |
-| **bôrg** | adj./adv. | grand ; beaucoup, grandement |  |  |
-| **nîk** | adj. | petit |  |  |
+| **bôrg** | adj./adv. | grand ; beaucoup, très |  |  |
+| **nîk** | adj./adv. | petit ; peu, un peu |  |  |
 | **slîm** | adj. | faible |  |  |
 | **vorzok** | adj. | ardent | vorz + -ok |  |
 | **vorzân** | adj. | brûlant, chaud | participe de vorz |  |
 | **lîth** | adj. | beau |  |  |
 | **thîrok** | adj. | vrai | thîr + -ok |  |
 | **slâkhok** | adj. | faux, trompeur | slâkh + -ok |  |
-| **ûnok** | adj. | seul, unique | ûn + -ok |  |
+| **ûnok** | adj./adv. | seul, unique ; premier ; (adv.) seulement | ûn + -ok |  |
 | **nâldhûmok** | adj. | éternel | nâldhûm + -ok |  |
 | **narvîth** | adj. | inanimé | nar- + vîth |  |
 | **narlîth** | adj. | laid |  |  |
@@ -387,12 +599,55 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **gûrthok** | adj. | vide, creux | « comme un gouffre » |  |
 | **thrâmok** | adj. | rapide |  |  |
 | **dhârok** | adj. | lent |  |  |
-| **krâzok** | adj. | lourd, dur | « comme la pierre » |  |
+| **krâzok** | adj. | lourd, dur, épais | « comme la pierre » |  |
 | **vâshok** | adj. | léger | « comme le vent » |  |
 | **drûthok** | adj. | long, lointain |  |  |
-| **zôrok** | adj. | doré |  |  |
+| **zôrok** | adj. | doré ; riche |  |  |
 | **lûmok** | adj. | bleu, couleur d'eau |  |  |
 | **ghrânok** | adj. | vert | « couleur de forêt » |  |
+| **thâmok** | adj. | bon, bien | « béni » |  |
+| **zhûrkok** | adj. | mauvais, mal | « maudit » |  |
+| **ghôlok** | adj. | large, vaste | « comme la mer » |  |
+| **thrîk** | adj. | étroit, serré |  |  |
+| **thîkok** | adj. | mince, fin | « comme une flèche » |  |
+| **mâlok** | adj. | doux, tendre |  |  |
+| **narlûm** | adj. | sec | « sans eau » |  |
+| **slûgûn** | adj. | mouillé, trempé | « abreuvé » |  |
+| **ghîlok** | adj. | propre, pur |  |  |
+| **drâkhok** | adj. | tranchant, aiguisé |  |  |
+| **lîkhok** | adj. | brillant, lumineux |  |  |
+| **khrâhok** | adj. | bruyant | khrâ + -h- + -ok |  |
+| **hûshok** | adj. | silencieux |  |  |
+| **nûkok** | adj. | facile | « d'enfant » |  |
+| **zhorgok** | adj. | difficile, ardu | « comme une montagne » |  |
+| **narzôr** | adj. | pauvre |  |  |
+| **slîmûthok** | adj. | malade |  |  |
+| **vîthok** | adj. | sain, bien vivant |  |  |
+| **narzârûn** | adj. | libre | « non lié » |  |
+| **thîrdhûm** | adj. | certain, sûr | « tout vrai » |  |
+| **ûzgân** | adj. | prêt, dressé | participe de se lever |  |
+| **vorznîk** | adj. | tiède |  |  |
+| **zhânok** | adj. | proche, à portée de main |  |  |
+| **thûmok** | adj. | gentil, amical |  |  |
+| **zgûrok** | adj. | cruel | « comme une griffe » |  |
+| **rûnthûlok** | adj. | sage | « qui se souvient » |  |
+| **vâshkrûm** | adj. | fou | « tête de vent » |  |
+| **slûgvorzok** | adj. | ivre |  |  |
+| **ghûmûn** | adj. | mort | participe passif |  |
+| **ghûmok** | adj. | mortel, dangereux |  |  |
+| **vrâghok** | adj. | sauvage | « comme un loup » |  |
+| **dhârûthok** | adj. | paisible, tranquille |  |  |
+| **khrûlok** | adj. | rond | « comme un anneau » |  |
+| **thrômok** | adj. | droit | « comme une lance » |  |
+| **zlîshok** | adj. | courbe, tordu | « comme un serpent » |  |
+| **krîshok** | adj. | salé |  |  |
+| **zôrlûmok** | adj. | sucré | « comme le miel » |  |
+| **khrûgok** | adj. | amer | « à cracher » |  |
+| **dâghok** | adj. | brun | « couleur de terre » |  |
+| **kôrok** | adj. | jaune | « couleur de soleil » |  |
+| **zôrbôrg** | adj. | cher, coûteux |  |  |
+| **zhârkûn** | adj. | ouvert |  |  |
+| **krûzûn** | adj. | fermé |  |  |
 
 ## Pronoms et particules
 
@@ -406,7 +661,7 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **uzar** | pron. | ils, elles | gén. uzarôk |  |
 | **tâz** | pron./adv. | ceci, ici |  |  |
 | **dûz** | pron./adv. | cela, là |  |  |
-| **kâ** | pron./part. | quoi, qui ; particule interrogative finale |  |  |
+| **kâ** | pron./part. | quoi, qui (interrogatif) ; quelque chose, quelqu'un (indéfini, hors question) ; particule interrogative finale |  |  |
 | **kâzhâ** | adv. | où | kâ + locatif |  |
 | **kâtar** | adv. | vers où | kâ + allatif |  |
 | **kâvôr** | adv. | d'où ; pourquoi | kâ + ablatif |  |
@@ -427,6 +682,24 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **nar** | part. | non ; ne… pas (préfixe nar-) |  |  |
 | **ûn** | num./part. | un ; oui |  | serment : vérité ; racine : l'acte même d'être |
 | **ô** | part. | ô (exclamatif noble) ; ô + futur = souhait |  |  |
+| **nâlûl** | conj. | quand, lorsque | « le temps que » |  |
+| **khorûl** | conj. | bien que, même si |  |  |
+| **dokûl** | conj. | afin que, pour que |  |  |
+| **gûrnar** | conj. | sinon | « si non » |  |
+| **vaikâ** | adv. | peut-être | « ou quoi » |  |
+| **ghun** | adv. | aussi, également |  |  |
+| **shâl** | adv. | assez, suffisamment |  |  |
+| **bôrgîr** | adv. | trop | « plus que beaucoup » |  |
+| **nîkîr** | adv. | moins |  |  |
+| **narkâ** | pron. | rien, personne | « pas quoi » |  |
+| **kâdhûm** | pron. | tout, toute chose |  |  |
+| **gordhûm** | pron. | tout le monde |  |  |
+| **gorûn** | pron. | quelqu'un, un certain |  |  |
+| **dûzgor** | pron. | l'autre, autrui |  |  |
+| **ûndhûm** | adj. | chaque | « un-tout » |  |
+| **tâkîr** | adj. | plusieurs | « plus que deux » |  |
+| **tâzok** | adj. | même, identique |  |  |
+| **dûzok** | adj. | autre, différent |  |  |
 
 ## Nombres
 
@@ -440,9 +713,14 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **drî** | num. | sept |  |  |
 | **dhâk** | num. | huit |  |  |
 | **zhîk** | num. | neuf |  |  |
-| **zûl** | num. | dix |  |  |
+| **zûl** | num./v. | dix ; compter |  |  |
 | **mâz** | num. | cent |  |  |
 | **ûlmaz** | num. | mille |  |  |
+| **tâkok** | adj. | deuxième | ordinal : nombre + -ok |  |
+| **ghrumok** | adj. | troisième |  |  |
+| **vôrkok** | adj. | dernier | « d'arrière » |  |
+| **tâkghan** | n./adv. | moitié ; l'un l'autre, mutuellement | « par deux » |  |
+| **zûlûth** | n. | nombre, compte |  |  |
 
 ## Monde
 

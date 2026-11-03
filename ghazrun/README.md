@@ -9,7 +9,8 @@
 | `alphabet.md`, `alphabet.svg` | L'écriture gravée, dessinée : vingt signes taillés à la lame |
 | `outils/ghazrun.py` | Déclinaison, conjugaison, lexique, analyse de formes, registre bas |
 | `outils/zhakar.py` | Grave un texte dans l'écriture du Ghâzrûn (SVG) |
-| `lexique.md` | Lexique classé par thème (~380 entrées : parole, magie, religion, guerre, parler bas, nature, corps, vie quotidienne) |
+| `lexique.md` | Lexique classé par thème (~650 entrées : parole, magie, religion, guerre, parler bas, sentiments, temps et lieu, nature, créatures, corps, vie quotidienne) |
+| `conversation.md` | Guide de conversation par situation |
 | `lexique.csv` | Le même lexique, exploitable par script |
 | `textes.md` | Textes avec traduction et glose mot à mot, dont un dialogue de garnison et un chant de guerre |
 
@@ -76,9 +77,9 @@ Il n'y a ni *f*, ni *w*, ni *y*, ni consonnes doubles. Un *c*, *q* ou *x* n'exis
 
 (C)(C) V (C)(C)
 
-- **Attaques doubles** autorisées : consonne + *r* ou *l* (*kr-, gr-, dr-, thr-, khr-, ghr-, zr-, zhr-, shr-, gl-, kl-, sl-*), et *zg-, zd-, zl-*.
-- **Codas doubles** autorisées : *-rz, -rk, -rg, -rgh, -rkh, -lk, -lg, -zg, -sht, -nd, -mb, -ng, -rn, -rm*.
-- Interdits : trois consonnes de suite à l'intérieur d'un mot (on insère *-a-*), deux voyelles en contact (on insère *-h-*).
+- **Attaques doubles** autorisées : consonne + *r* (*pr-, br-, tr-, dr-, kr-, gr-, thr-, dhr-, khr-, ghr-, zr-, zhr-, shr-, vr-*), consonne + *l* (*gl-, kl-, sl-, zl-*), et *zg-, zd-*. L'outil `ghazrun.py verifie` contrôle ces règles.
+- **Codas doubles** autorisées : *-rz, -rk, -rg, -rgh, -rkh, -rzh, -rth, -rsh, -rd, -rn, -rm, -lk, -lg, -lm, -zg, -sht, -shk, -st, -nd, -mb, -ng*.
+- Interdits : trois consonnes de suite à l'intérieur d'un mot simple (on insère *-a-*), deux voyelles en contact (on insère *-h-*). À la **frontière d'un composé**, la rencontre est admise si la fin du premier élément et le début du second sont chacun réguliers : *varkh-drîm*, *vorz-krâz*.
 
 ### 2.4 Accent
 
@@ -320,7 +321,71 @@ Les mots pleins sont pour la plupart monosyllabiques, et les mots longs sont tou
 
 ---
 
-## 9. Noms propres
+## 9. Parler couramment
+
+Tout ce qu'il faut pour tenir une conversation, au-delà des cas et des temps. Le guide de phrases par situation est dans `conversation.md`.
+
+### 9.1 Vouloir, pouvoir, devoir
+
+Trois verbes servent d'auxiliaires, suivis de l'infinitif en *-ôl*. L'objet s'accroche à l'infinitif, pas à l'auxiliaire.
+
+| Ghâzrûn | Sens |
+|---|---|
+| *Ûrgagh grâmôl.* | Je veux partir. |
+| *Drângath thûlôl Ghâzrûn kâ ?* | Peux-tu apprendre le Ghâzrûn ? |
+| *Khâzaghar dhârôl.* | Nous devons attendre. |
+| *Ûrgagh zhâlôluz.* | Je veux le voir. |
+
+### 9.2 Être en train de, il y a, avoir
+
+- **Progressif** : le participe actif seul, avec le pronom. *Gha grâmân.* « Je suis en train de marcher. » Sans pronom, *grâmân* est l'adjectif « marchant ».
+- **Il y a** : le lieu au locatif, puis la chose. *Thâlzhâ varkh.* « Il y a un guerrier dans la tour. » *Tâz lûm kâ ?* « Y a-t-il de l'eau ici ? »
+- **Avoir** : « chez X est Y ». *Ghazhâ brûkh.* « J'ai du pain. » *Thazhâ zôrnîk kâ ?* « As-tu de l'argent ? »
+- **Phrase sans verbe, négative** : *nar* en fin de phrase. *Slûgvorz ghazhâ nar.* « Je n'ai pas d'alcool. » *Khâr thâlzhâ nar.* « Le seigneur n'est pas dans la tour. »
+
+### 9.3 Adverbes et degré
+
+- **Manière** : l'adjectif placé **après le verbe** devient adverbe. *Grâm thrâmok.* « Il marche vite. » *Ghâzâ hûshok.* « Parle doucement. »
+- **Degré**, après le mot modifié : *bôrg* « très », *nîk* « un peu », *shâl* « assez », *bôrgîr* « trop », *nîkîr* « moins », *ûnok* « seulement ». *Thâl mârok bôrg.* « La tour est très sombre. »
+- **Lieu et temps** : des noms au locatif. *Krûmzhâ* « devant, avant », *vôrkzhâ* « derrière, après », *hûrzhâ* « au milieu », *zhânzhâ* « à côté », *nîkzhâ* « près », *drûthzhâ* « loin », *ûlârzhâ* « au-dessus », *zhagzhâ* « au-dessous », *drîmzhâ* « à la maison », *zhârzhâ* « dehors », *gûrkzhâ* « dedans ». Avec un complément, celui-ci se met au génitif devant : *thâlôk krûmzhâ* « devant la tour ».
+- **Sans** : *nar-* + nom + *-ghan*. *Nardrâkhghan* « sans épée ». **Avec** : *-ghan* pour un instrument, *thûmzhâ* après le génitif pour une personne : *khârôk thûmzhâ* « avec le seigneur ».
+- **Temps** : *tâzdâl* « aujourd'hui », *dâlvôr* « hier », *dâltar* « demain », *tâznâl* « maintenant », *nâltar* « bientôt », *nâlvôr* « déjà », *zhûn* « encore », *nâlbôrg* « souvent », *nâlnîk* « parfois », *narnâl* « jamais », *nâldhûmzhâ* « toujours ».
+
+### 9.4 Relier les phrases
+
+| Conjonction | Sens | Exemple |
+|---|---|---|
+| *ûl* | que, qui ; ce qui | *Thûlagh ûl thôrnath.* « Je sais que tu viens. » |
+| *nâlûl* | quand | *Nâlûl kôr glûm, drûthgrâmaghar.* « Quand le soleil tombe, nous partons. » |
+| *gûr* | si | *Gûr ûrgath, thôrnâ.* « Si tu veux, viens. » |
+| *gûrnar* | sinon | *Thôrnâ, gûrnar ghûmath.* « Viens, sinon tu meurs. » |
+| *zûm* | parce que | *Dhôlagh zûm dhôlûrgok.* « Je dors parce que je suis fatigué. » |
+| *khorûl* | bien que | *Khorûl krîl, lûmgrâmagh.* « Bien qu'il fasse froid, je nage. » |
+| *dokûl* | afin que | *Ghâzâ dokûl khôrar.* « Parle, afin qu'ils entendent. » |
+| *ûnâl* | jusqu'à ce que | *Dhârâ ûnâl thôrnagh.* « Attends jusqu'à ce que je vienne. » |
+| *dok* | donc | *Krîl, dok vorzdôrâ.* « Il fait froid, donc allume le feu. » |
+
+La relative suit le nom : *varkh ûl drâkh thûg* « le guerrier qui porte une épée ». Le but se dit aussi par l'infinitif seul : *Thôrnagh zhâlôlot.* « Je viens pour te voir. »
+
+### 9.5 Pronoms indéfinis et réfléchis
+
+- *kâ* hors question = « quelque chose, quelqu'un » ; *narkâ* « rien, personne » ; *kâdhûm* « tout » ; *gordhûm* « tout le monde » ; *gorûn* « quelqu'un » ; *dûzgor* « l'autre » ; *ûndhûm* « chaque » ; *tâkîr* « plusieurs ».
+- **Réfléchi** : même personne en sujet et en objet. *Zhâlagham.* « Je me vois. » *Shûlathot.* « Tu te gardes. »
+- **Réciproque** : *tâkghan* « l'un l'autre ». *Mâlar tâkghan.* « Ils s'aiment. »
+- **Ordinaux** : nombre + *-ok* : *ûnok, tâkok, ghrumok…* ; *vôrkok* « dernier ». **Fois** : nombre + *nâl* : *ûnnâl, tâknâl*.
+
+### 9.6 Politesse et registre
+
+- **Demander** : *ô* + impératif adoucit l'ordre. *Ô ghûrkâ lûm.* « Apporte de l'eau, s'il te plaît. » Sans *ô*, c'est un ordre.
+- **Remercier** : *Vorzghâz.* « Merci » (ta parole est feu). Réponse : *Narzûgûth.* « De rien » (pas de dette).
+- **S'excuser** : *Narkrûshâ.* « Pardon » (répare !). Réponse : *Narkâ.* « Ce n'est rien. »
+- **Saluer** : *Vorz thatar* « salut » ; *Vorz tâzzhâ* « bienvenue » (feu ici) ; *Drûth zrâgot* « adieu, bonne route » ; *Nôkh shûlot* « bonne nuit ».
+- **Vouvoyer** n'existe pas : on s'adresse à un supérieur au **vocatif** d'abord, puis au singulier. *Khârâ, thûlath kâ ?* « Seigneur, le sais-tu ? »
+- **Registre haut** entre égaux de haut rang et dans tout ce qui engage ; **registre bas** pour les ordres, les comptes et les injures.
+
+---
+
+## 10. Noms propres
 
 Un nom se bâtit par composition ou par suffixe d'agent. Le registre haut aime les noms à deux voyelles longues.
 
@@ -344,7 +409,7 @@ Un nom se bâtit par composition ou par suffixe d'agent. Le registre haut aime l
 
 ---
 
-## 10. L'écriture : les *zhâkar*
+## 11. L'écriture : les *zhâkar*
 
 L'alphabet est dessiné dans `alphabet.svg` et décrit dans `alphabet.md`. En résumé :
 
@@ -357,7 +422,7 @@ L'alphabet est dessiné dans `alphabet.svg` et décrit dans `alphabet.md`. En r�
 
 ---
 
-## 11. Outils
+## 12. Outils
 
 Deux scripts Python sans dépendance, dans `outils/` :
 
@@ -369,12 +434,14 @@ python3 outils/ghazrun.py verbe vân --mode decret          # vânôth
 python3 outils/ghazrun.py mot feu                          # cherche en français ou en ghâzrûn
 python3 outils/ghazrun.py analyse zârôluzardhûm            # découpe en morphèmes
 python3 outils/ghazrun.py bas "Mârokûth nâldhûmzhâ"        # registre bas
+python3 outils/ghazrun.py verifie ghrûzk                   # un mot nouveau respecte-t-il la phonotactique ?
 python3 outils/zhakar.py "Vorzghan zâraghot" -o serment.svg   # écriture en SVG
 ```
 
-## 12. Pour aller plus loin
+## 13. Pour aller plus loin
 
 - L'univers (les Voix, ce que fait un mot, les serments) est dans `monde.md`.
+- Le guide de conversation est dans `conversation.md`.
 - L'écriture est dans `alphabet.md` et `alphabet.svg`.
 - Le lexique complet est dans `lexique.md` et `lexique.csv`.
 - Les textes glosés (inscription, serment, lamentation, phrases de tous les jours, bénédiction) sont dans `textes.md`.
