@@ -5,7 +5,7 @@ const Seal = (() => {
 
   const NMODS = 5;
   function create(taille = 'moyen') {
-    return { nom: '', taille, core: null, core2: null, shape: null, mods: [null, null, null, null, null], trigger: null, trigger2: null, filtre: null, cible: null, delai: 2, periode: 2, encre: null };
+    return { nom: '', taille, core: null, core2: null, shape: null, mods: [null, null, null, null, null], trigger: null, trigger2: null, filtre: null, cible: null, delai: 2, periode: 2, encre: null, dimL: 1, dimH: 1 };
   }
   function clone(s) {
     let mods = (s.mods || []).map((m) => (m && typeof m === 'object' && m.sub ? { sub: clone(m.sub) } : typeof m === 'string' ? (m in DATA.MIGR_MODS ? DATA.MIGR_MODS[m] : DATA.MODS[m] ? m : null) : null));
@@ -16,7 +16,7 @@ const Seal = (() => {
     const migrer = (c) => { const M2 = DATA.MIGRATION[c]; if (!M2) return c; if (!mods.includes(M2[1])) { let i = mods.findIndex((m, k) => !m && k < nbSlots({ taille: s.taille || 'moyen' }, 3)); if (i < 0) i = 0; mods[i] = M2[1]; } return M2[0]; };
     core = migrer(core); core2 = migrer(core2);
     return { nom: s.nom || '', taille: s.taille || 'moyen', core, core2, shape: s.shape || null, mods,
-      trigger: s.trigger || null, trigger2: s.trigger2 || null, filtre: s.filtre || null, cible: s.cible || null, delai: s.delai || 2, periode: s.periode || 2, encre: s.encre || null };
+      trigger: s.trigger || null, trigger2: s.trigger2 || null, filtre: s.filtre || null, cible: s.cible || null, delai: s.delai || 2, periode: s.periode || 2, encre: s.encre || null, dimL: s.dimL || 1, dimH: s.dimH || 1 };
   }
   const isSub = (m) => !!(m && typeof m === 'object' && m.sub);
   function subs(s) { return s.mods.filter(isSub).map((m) => m.sub); }
@@ -35,6 +35,8 @@ const Seal = (() => {
     if (s.filtre && s.taille !== 'petit') c += DATA.FILTRES[s.filtre].cout;
     if (s.cible && s.taille !== 'petit') c += DATA.CIBLES[s.cible].cout;
     const T = taille(s);
+    // la surface de la forme se paie : un grand mur coûte plus qu'un petit
+    if (s.taille !== 'petit' && DATA.DIMS[s.shape]) { const A = (s.dimL || 1) * (DATA.DIMS[s.shape].h ? s.dimH || 1 : 1); c += Math.max(-2, Math.round((Math.sqrt(A) - 1) * 3)); }
     return Math.max(s.core ? 1 : 0, Math.round(c * T.coutMul + T.coutAdd));
   }
   function count(s, mod) {
@@ -90,7 +92,8 @@ const Seal = (() => {
       lg: langues(s),
       asp: aspects(s),
       traj: n('boomerang') ? 'boomerang' : n('spirale') ? 'spirale' : n('zigzag') ? 'zigzag' : n('rasesol') ? 'rasesol' : n('cloche') ? 'cloche' : null,
-      percant: n('percant') > 0, gerbe: n('gerbe'),
+      percant: n('percant') > 0, gerbe: n('gerbe'), matiere: n('matiere') > 0, rafale: n('rafale'),
+      dimL: s.taille === 'petit' ? 1 : s.dimL || 1, dimH: s.taille === 'petit' ? 1 : s.dimH || 1,
     };
   }
 
@@ -167,6 +170,8 @@ const Seal = (() => {
       case 'peur': ctx.beginPath(); ctx.ellipse(0, 0, r * 0.85, r * 0.5, 0, 0, TAU); ctx.stroke(); C(0, 0, r * 0.32); dot(0, 0, r * 0.12); L(-r * 0.6, -r * 0.65, -r * 0.3, -r * 0.5); L(r * 0.6, -r * 0.65, r * 0.3, -r * 0.5); break;
       case 'lecture': C(0, -r * 0.15, r * 0.55); dot(-r * 0.18, -r * 0.25, r * 0.08); dot(r * 0.18, -r * 0.25, r * 0.08); for (let i = 0; i < 3; i++) L(-r * 0.6, r * 0.55 + i * r * 0.15, r * 0.6, r * 0.55 + i * r * 0.15); break;
       case 'revelation': ctx.beginPath(); ctx.ellipse(0, 0, r * 0.9, r * 0.45, 0, 0, TAU); ctx.stroke(); C(0, 0, r * 0.25); for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * 0.45; L(Math.cos(a) * r * 0.55, Math.sin(a) * r * 0.55, Math.cos(a) * r * 0.95, Math.sin(a) * r * 0.95); } break;
+      case 'matiere': P([[0, -r * 0.95], [r * 0.45, -r * 0.1], [r * 0.2, r * 0.9], [-r * 0.2, r * 0.9], [-r * 0.45, -r * 0.1]]); L(0, -r * 0.95, 0, r * 0.9); L(-r * 0.45, -r * 0.1, r * 0.45, -r * 0.1); break;
+      case 'rafale': for (let i = 0; i < 3; i++) { const yy = (i - 1) * r * 0.5, xo = (i - 1) * r * 0.2; L(-r * 0.8 + xo, yy, r * 0.5 + xo, yy); P([[r * 0.25 + xo, yy - r * 0.18], [r * 0.55 + xo, yy], [r * 0.25 + xo, yy + r * 0.18]], false); } break;
       case 'zigzag': P([[-r * 0.95, r * 0.2], [-r * 0.6, -r * 0.4], [-r * 0.2, r * 0.4], [r * 0.2, -r * 0.4], [r * 0.6, r * 0.4], [r * 0.95, -r * 0.2]], false); break;
       case 'cloche': ctx.beginPath(); ctx.moveTo(-r * 0.9, r * 0.6); ctx.quadraticCurveTo(0, -r * 1.4, r * 0.75, r * 0.5); ctx.stroke(); P([[r * 0.5, r * 0.35], [r * 0.78, r * 0.6], [r * 0.9, r * 0.25]], false); L(-r * 0.95, r * 0.75, r * 0.95, r * 0.75); break;
       case 'percant': C(0, 0, r * 0.4); L(-r * 0.95, 0, r * 0.95, 0); P([[r * 0.6, -r * 0.3], [r * 0.95, 0], [r * 0.6, r * 0.3]], false); break;

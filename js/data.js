@@ -99,6 +99,8 @@ const DATA = (() => {
     teleguide:   { id: 'teleguide',   nom: 'Téléguidé',   cout: 2, desc: 'Le projectile suit la souris.' },
     orbite:      { id: 'orbite',      nom: 'Orbite',      cout: 3, desc: 'Trois billes tournent autour de toi un moment.' },
     canalise:    { id: 'canalise',    nom: 'Canalisé',    cout: 2, desc: 'Tant que tu maintiens le clic, l\'effet suit la souris et consomme de l\'encre.' },
+    matiere:     { id: 'matiere',     nom: 'Matière',     cout: 2, desc: 'L\'effet devient matière solide. Un projectile devient une lame (glace, pierre, métal, cristal, bois...) qui frappe et transperce, puis laisse sa matière. Un mur, une zone, une colonne ou un trait se remplissent de cette matière : mur de glace, pont, pilier de cristal, bloc de pierre. Une pluie devient grêle.' },
+    rafale:      { id: 'rafale',      nom: 'Rafale',      cout: 3, desc: 'Le sort part plusieurs fois de suite, vers la souris : trois tirs (cinq avec deux Rafales).' },
     zigzag:      { id: 'zigzag',      nom: 'Zigzag',      cout: 1, desc: 'Le projectile file en zigzag, en angles vifs.' },
     cloche:      { id: 'cloche',      nom: 'Cloche',      cout: 1, desc: 'Le projectile est lancé en cloche et retombe juste là où tu vises, même derrière un mur.' },
     percant:     { id: 'percant',     nom: 'Perçant',     cout: 2, desc: 'Le projectile traverse les créatures et éclate sur chacune, sans s\'arrêter.' },
@@ -514,6 +516,9 @@ const DATA = (() => {
     { id: 'prise',      type: 'shape', item: 'prise', titre: 'Forme : Prise', indice: 'Possède le glyphe Force ou Gravité.', cond: (p) => p.cores.includes('force') || p.cores.includes('gravite') },
     { id: 'bouclier',   type: 'shape', item: 'bouclier', titre: 'Forme : Bouclier', indice: 'Fais-toi bousculer 5 fois par des créatures.', cond: (p) => (p.compteurs.bouscule || 0) >= 5 },
     { id: 'contre',     type: 'core', item: 'contre', titre: 'Glyphe : Contre-sort', indice: 'Possède 12 glyphes d\'effet.', cond: (p) => p.cores.length >= 12 },
+    // --- matière et rafale ---
+    { id: 'matiere', type: 'mods', item: ['matiere'], titre: 'Modificateur : Matière', indice: 'Atteins le niveau 2.', cond: (p) => p.compteurs.niveau >= 2 },
+    { id: 'rafale', type: 'mods', item: ['rafale'], titre: 'Modificateur : Rafale', indice: 'Lance 30 sceaux.', cond: (p) => p.compteurs.sorts >= 30 },
     // --- nouveaux glyphes de sort ---
     { id: 'zigzag', type: 'mods', item: ['zigzag'], titre: 'Trajectoire : Zigzag', indice: 'Lance 45 sceaux.', cond: (p) => p.compteurs.sorts >= 45 },
     { id: 'cloche', type: 'mods', item: ['cloche'], titre: 'Trajectoire : Cloche', indice: 'Atteins le niveau 3.', cond: (p) => p.compteurs.niveau >= 3 },
@@ -666,8 +671,13 @@ const DATA = (() => {
   );
   // nom lisible d'un effet, même devenu aspect : « Gel (Eau) »
   const nomEffet = (id) => { if (CORES[id] && !CORES[id].interne) return CORES[id].nom; const M2 = MIGRATION[id]; if (M2) return M2[1] === 'inverser' ? 'Ombre (Lumière inversée)' : MODS[M2[1]].nom + ' (' + CORES[M2[0]].nom + ')'; for (const m in MODS) if (MODS[m].devient === id) return MODS[m].nom + ' (' + CORES[MODS[m].aspect].nom + ')'; return (CORES[id] || PSEUDO[id] || { nom: id }).nom; };
+  // dimensions réglables de chaque forme (multiplicateurs)
+  const DIMS = { zone: { l: 'Rayon' }, mur: { l: 'Largeur', h: 'Hauteur' }, colonne: { l: 'Largeur', h: 'Hauteur' }, trait: { h: 'Longueur', l: 'Épaisseur' }, vague: { h: 'Hauteur', l: 'Distance' }, pluie: { l: 'Largeur' }, aura: { l: 'Rayon' }, totem: { l: 'Rayon' }, bouclier: { l: 'Taille' } };
+  const DIM_VALS = [0.25, 0.5, 1, 2, 3, 4, 6];
+  // la matière que devient chaque effet avec le glyphe Matière
+  const MATIERE = { froid: 'GLACE', eau: 'EAU', terre: 'PIERRE', metal: 'METAL', feu: 'LAVE', lumiere: 'CRISTAL', foudre: 'METAL', vie: 'BOIS', ombre: 'OBSIDIENNE', acide: 'ACIDE', transmutation: 'VERRE', fanaison: 'CENDRE', secheresse: 'SABLE', rouille: 'SABLE', creuser: 'AIR' };
   // affinité : combien un geste aimé rapproche (sur 100)
   const AFFINITE = { golem: { gain: 4, parJour: 20 }, follet: { gain: 12 }, limace: { gain: 15 }, salamandre: { gain: 14 }, chauve: { gain: 15 } };
 
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet };
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE };
 })();

@@ -52,10 +52,10 @@ function createSim() {
   const FLAMMABLE_SOLID = (m) => m === M.BOIS || m === M.PLANTE || m === M.HERBE;
   // gravité locale d'une cellule : [dx, dy, mag] ; mag 0 = apesanteur
   function gravAt(x, y) {
-    for (const z of gzones) { const dx = (x + 0.5) * CS - z.x, dy = (y + 0.5) * CS - z.y; if (dx * dx + dy * dy <= z.r * z.r) return [z.gx, z.gy, z.mag]; }
+    for (const z of gzones) { const px = (x + 0.5) * CS, py = (y + 0.5) * CS; if (z.rect ? px >= z.rect.x0 && px <= z.rect.x1 && py >= z.rect.y0 && py <= z.rect.y1 : (px - z.x) * (px - z.x) + (py - z.y) * (py - z.y) <= z.r * z.r) return [z.gx, z.gy, z.mag]; }
     return [0, 1, 1];
   }
-  function tempsAt(x, y) { const px = (x + 0.5) * CS, py = (y + 0.5) * CS; for (const z of tzones) { const dx = px - z.x, dy = py - z.y; if (dx * dx + dy * dy <= z.r * z.r) return z.f; } return 1; }
+  function tempsAt(x, y) { const px = (x + 0.5) * CS, py = (y + 0.5) * CS; for (const z of tzones) { if (z.rect ? px >= z.rect.x0 && px <= z.rect.x1 && py >= z.rect.y0 && py <= z.rect.y1 : (px - z.x) * (px - z.x) + (py - z.y) * (py - z.y) <= z.r * z.r) return z.f; } return 1; }
   function cellT(x, y, i, m, f) {
     if (tzones.length) { const t = tempsAt(x, y); if (t !== 1) { if (t <= 0) { upd[i] = f; return; } if (t < 1 && rnd() > t) return; } }
     cell(x, y, i, m, f);
@@ -125,7 +125,7 @@ function createSim() {
       const x0 = Math.max(0, Math.floor((z.x - z.r) / CS)), x1 = Math.min(W - 1, Math.floor((z.x + z.r) / CS)), y0 = Math.max(0, Math.floor((z.y - z.r) / CS)), y1 = Math.min(H - 1, Math.floor((z.y + z.r) / CS));
       for (let pass = 1; pass < Math.min(4, Math.round(z.f)); pass++) {
         const ff = (frame + 101 * pass) & 255;
-        for (let y = y1; y >= y0; y--) for (let x = x0; x <= x1; x++) { const dx = (x + 0.5) * CS - z.x, dy = (y + 0.5) * CS - z.y; if (dx * dx + dy * dy > z.r * z.r) continue; const i = y * W + x; if (upd[i] === ff) continue; const m = mat[i]; if (m) { upd[i] = ff; cell(x, y, i, m, ff); } }
+        for (let y = y1; y >= y0; y--) for (let x = x0; x <= x1; x++) { const px = (x + 0.5) * CS, py = (y + 0.5) * CS; if (z.rect ? px < z.rect.x0 || px > z.rect.x1 || py < z.rect.y0 || py > z.rect.y1 : (px - z.x) * (px - z.x) + (py - z.y) * (py - z.y) > z.r * z.r) continue; const i = y * W + x; if (upd[i] === ff) continue; const m = mat[i]; if (m) { upd[i] = ff; cell(x, y, i, m, ff); } }
       }
       for (let cy = Math.floor(y0 / CH); cy <= Math.floor(y1 / CH); cy++) for (let cx = Math.floor(x0 / CH); cx <= Math.floor(x1 / CH); cx++) { const c = cy * CW + cx; if (chunkActive[c] <= frame) chunkActive[c] = frame + 2; }
     }

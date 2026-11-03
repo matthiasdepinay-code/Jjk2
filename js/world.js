@@ -654,6 +654,39 @@ const World = (() => {
   }
   // au plus 24 répétitions vivantes : la plus ancienne s'arrête
   function capRepetitions() { const R = st.sp.filter((q) => q.k === 'repeat' && !q.mort); if (R.length >= 24) R[0].mort = true; }
+  // ---------- Champs en forme : la Gravité et le Temps épousent le rectangle d'une Colonne ou d'un Mur ----------
+  const CHAMPS = ['gravite', 'poids', 'temps', 'ralentir', 'figer'];
+  function champForme(spec, rect, dir) {
+    const prm = spec.prm, dur = prm.duration || 1, cx = (rect.x0 + rect.x1) / 2, cy = (rect.y0 + rect.y1) / 2, r = Math.hypot(rect.x1 - rect.x0, rect.y1 - rect.y0) / 2;
+    let fait = false;
+    for (const core of spec.cores) {
+      if (core === 'gravite' || core === 'poids') {
+        const [gx, gy] = dir ? snapDir(dir.x, dir.y) : [0, 1];
+        const lourd = 1.6 + 1.2 * Math.max(0, ((prm.power || 1) - 1) / 0.6) + ((prm.lg && prm.lg.gravite) || 0) * 0.8;
+        if (prm.gInv) addGField(cx, cy, r, -gx, -gy, 1.3, 6 * dur, rect); else addGField(cx, cy, r, gx, gy, core === 'poids' ? lourd + 1 : lourd, 6 * dur, rect);
+        fait = true;
+      } else if (core === 'temps' || core === 'ralentir' || core === 'figer') {
+        const mode = core === 'temps' ? 'vite' : core === 'ralentir' ? 'lent' : 'fige';
+        st.sp.push({ k: 'bulle', mode, x: cx, y: cy, r, rect, life: 5 * dur, max: 5 * dur, f: mode === 'vite' ? 5 * (prm.power || 1) : 0.25 }); fait = true;
+      }
+    }
+    if (fait) { Son.sfx('cast', spec.cores[0]); part(cx, cy, spec.color, 14, 80, 0.7, 3, 0, 'glow'); }
+    return fait && spec.cores.every((c) => CHAMPS.includes(c));
+  }
+  // ---------- Matière : l'effet devient solide ----------
+  function matiereDe(spec) { for (const c of spec.cores) { const m = DATA.MATIERE[c]; if (m) return M[m]; } return null; }
+  function occupe(x, y) { const b = { x: x * CS, y: y * CS, w: CS, h: CS }; return U.rectsOverlap(b, st.p) || st.crs.some((c) => c.hp > 0 && U.rectsOverlap(b, c)); }
+  function poserMatiere(m, cb) { let n = 0; cb((x, y) => { const q = Sim.get(x, y); if (m === M.AIR) { if (P[q].solid && q !== M.OBSIDIENNE && q !== M.METAL) { Sim.set(x, y, M.AIR); n++; } return; } if ((q === M.AIR || P[q].gas || (P[q].liquid && !P[m].liquid)) && !occupe(x, y)) { Sim.set(x, y, m, m === M.LAVE ? 0 : 0); if (m === M.METAL && spec0 && spec0.cores.includes('foudre')) { Sim.elec[y * Sim.W + x] = 60; } n++; } }); return n; }
+  let spec0 = null;
+  function matiereCercle(spec, x, y, r) { const m = matiereDe(spec); if (m == null) return 0; spec0 = spec; return poserMatiere(m, (put) => Sim.forRadius(x, y, r, (cx, cy) => put(cx, cy))); }
+  function matiereRect(spec, rect) { const m = matiereDe(spec); if (m == null) return 0; spec0 = spec; return poserMatiere(m, (put) => { for (let y = Math.floor(rect.y0 / CS); y <= Math.floor(rect.y1 / CS); y++) for (let x = Math.floor(rect.x0 / CS); x <= Math.floor(rect.x1 / CS); x++) put(x, y); }); }
+  function matiereLigne(spec, x1, y1, x2, y2, ep) { const m = matiereDe(spec); if (m == null) return 0; spec0 = spec; const L2 = Math.hypot(x2 - x1, y2 - y1); return poserMatiere(m, (put) => { for (let t = 0; t <= L2; t += CS * 0.7) { const x = x1 + (x2 - x1) * t / (L2 || 1), y = y1 + (y2 - y1) * t / (L2 || 1); Sim.forRadius(x, y, ep, (cx, cy) => put(cx, cy)); } }); }
+  // le rectangle d'un mur : des éclats alignés sur son grand côté
+  function murPoints(tx, ty, w, h) {
+    const pts = [], rb = Math.max(12, Math.min(w, h) / 2 + 4), vert = h >= w, L = vert ? h : w, n = Math.max(2, Math.ceil(L / (rb * 1.4)));
+    for (let k = 0; k < n; k++) { const f = n > 1 ? k / (n - 1) - 0.5 : 0; pts.push({ x: tx + (vert ? 0 : f * (w - rb)), y: ty + (vert ? f * (h - rb) : 0), r: rb }); }
+    return pts;
+  }
   // ---------- Bulles de temps ----------
   function poserBulle(mode, cx, cy, rad, prm) {
     const dur = prm.duration || 1, r = Math.max(50, rad * 1.1);
@@ -662,8 +695,9 @@ const World = (() => {
     Son.sfx('cast', 'temps'); part(cx, cy, mode === 'vite' ? '#c8ccd8' : '#8aa0d8', 16, 90, 0.7, 3, 0, 'glow');
   }
   // dt : la durée qui s'écoule dans la bulle à chaque image ; f : facteur
-  function vieillir(mode, cx, cy, r, dt, f = 5) {
-    const dans = (b) => U.circleRect(cx, cy, r, b);
+  function vieillir(mode, cx, cy, r, dt, f = 5, rect = null) {
+    const dans = (b) => (rect ? U.rectsOverlap({ x: rect.x0, y: rect.y0, w: rect.x1 - rect.x0, h: rect.y1 - rect.y0 }, b) : U.circleRect(cx, cy, r, b));
+    const Sim = rect ? Object.assign(Object.create(MainSim), { forRadius: (x, y, rr, cb) => { for (let yy = Math.floor(rect.y0 / CS); yy <= Math.floor(rect.y1 / CS); yy++) for (let xx = Math.floor(rect.x0 / CS); xx <= Math.floor(rect.x1 / CS); xx++) { if (xx < 0 || yy < 0 || xx >= MainSim.W || yy >= MainSim.H) continue; const i = yy * MainSim.W + xx; cb(xx, yy, i, MainSim.mat[i]); } } }) : MainSim;
     if (mode === 'vite') {
       const k = dt * f; // secondes « vécues » en plus
       Sim.forRadius(cx, cy, r, (x, y, i, m) => {
@@ -1225,6 +1259,7 @@ const World = (() => {
   }
   function doBurst(spec, x, y, r, opts = {}, dir = null) {
     if (spec.prm.gerbe && !opts.noGerbe && (spec.depth || 0) < 2) gerbe(spec, x, y);
+    if (spec.prm.matiere && !opts.noMatiere && !opts.ent && spec.shape !== 'projectile' && spec.shape !== 'chaine' && spec.shape !== 'trait') matiereCercle(spec, x, y, r * 0.7);
     const pm = spec.cores.length > 1 ? 0.85 : 1;
     if (spec.player && !opts.noCombo && spec.depth === 0) enchainement(spec, x, y, r);
     if (spec.repeat && !opts.noRepeat) capRepetitions();
@@ -1322,6 +1357,7 @@ const World = (() => {
     }
     switch (seal.shape) {
       case 'projectile': case 'chaine': {
+        if (prm.rafale && !o.suiteRafale) st.sp.push({ k: 'rafale', seal, o: { ...o, suiteRafale: true }, origin, aim: { ...aim }, left: prm.rafale > 1 ? 4 : 2, t: 0.12 });
         if (prm.orbite && o.player) {
           for (let i = 0; i < 3; i++) st.sp.push({ k: 'orbit', spec, a: (i / 3) * TAU, r: 10 * prm.size, life: 6 * prm.duration, hits: new Map(), color: C });
           break;
@@ -1336,6 +1372,7 @@ const World = (() => {
             r: 8 * prm.size, prm, trig, bounces: prm.bounces, life: 1.1 * prm.range * (prm.traj === 'boomerang' ? 2.2 : prm.traj === 'rasesol' ? 1.7 : 1), grav: prm.traj === 'boomerang' || prm.traj === 'rasesol' ? 0 : floats ? 40 : 420 / prm.speed, traj: chainOk(seal) ? prm.traj : null, off: 0, ph: 0, hits: new Set(), color: C, trail: 0, chaud: spec.chaud || 0,
             chain: seal.shape === 'chaine' ? 3 + (prm.extra ? 2 : 0) : 0, guide: prm.teleguide && o.player && !homing, homing });
           if (spec.filtre) st.sp[st.sp.length - 1].grav = 0;
+          if (prm.matiere) { const q = st.sp[st.sp.length - 1], m = matiereDe(spec); if (m != null && m !== M.AIR) { q.matiere = m; q.vx *= 1.25; q.vy *= 1.25; q.grav = Math.min(q.grav, 150); } }
           if (prm.traj === 'cloche' && seal.shape === 'projectile') { const q = st.sp[st.sp.length - 1]; const D = Math.min(d, 420 * prm.range), tx = ox + dx * D + (n > 1 ? (i - (n - 1) / 2) * 50 : 0), ty = oy + dy * D; const g = 900, Hc = Math.max(200, Math.abs(tx - ox) * 0.7) + Math.max(0, q.y - ty), T = clamp(Math.sqrt(2 * Hc / g) + Math.sqrt(2 * Math.max(20, Hc - (q.y - ty)) / g), 0.6, 2.2); q.x = ox; q.y = oy - 10; q.vx = (tx - ox) / T; q.vy = (ty - q.y - 0.5 * g * T * T) / T; q.grav = g; q.life = T + 0.8; }
           if (homing) { const q = st.sp[st.sp.length - 1]; q.life *= spec.cible === 'marque' ? 4 : 2; q.grav = 0; }
         }
@@ -1355,9 +1392,13 @@ const World = (() => {
           const tx = ox + dx * dd + -dy * off, ty = oy + dy * dd + dx * off;
           if (trig === 'commande') { st.sp.push({ k: 'attente', spec, x: tx, y: ty, life: 40, mur: seal.shape === 'mur', dir: { x: dx, y: dy } }); continue; }
           if (seal.shape === 'mur') {
-            for (let k = -2; k <= 2; k++) { const yy = ty + k * 36 * prm.size; if (trig === 'immediat') doBurst(spec, tx, yy, 24 * prm.size, { mur: true, noField: k !== 0, noEcho: k !== 0, noRepeat: k !== 0, noExpire: k !== 0, noCombo: k !== 0 }); else st.sp.push({ k: 'timer', spec, x: tx, y: yy, r: 24 * prm.size, t: trig === 'retarde' ? spec.delai : 0.1 + Math.abs(k) * 0.1, max: trig === 'retarde' ? spec.delai : 0.5, color: C, noField: k !== 0, mur: true }); }
+            const mw = 30 * prm.size * (prm.dimL || 1), mh = 180 * prm.size * (prm.dimH || 1), rect = { x0: tx - mw / 2, x1: tx + mw / 2, y0: ty - mh / 2, y1: ty + mh / 2 };
+            if (trig === 'immediat' && champForme(spec, rect, { x: dx, y: dy })) continue;
+            if (trig === 'immediat' && prm.matiere) matiereRect(spec, rect);
+            const pts = murPoints(tx, ty, mw, mh);
+            pts.forEach((q, k) => { const pr = k === Math.floor(pts.length / 2); if (trig === 'immediat') doBurst(spec, q.x, q.y, q.r, { mur: true, noMatiere: true, noField: !pr, noEcho: !pr, noRepeat: !pr, noExpire: !pr, noCombo: !pr }); else st.sp.push({ k: 'timer', spec, x: q.x, y: q.y, r: q.r, t: trig === 'retarde' ? spec.delai : 0.1 + Math.abs(k - pts.length / 2) * 0.05, max: trig === 'retarde' ? spec.delai : 0.5, color: C, noField: !pr, mur: true }); });
           } else {
-            const r = 70 * prm.size;
+            const r = 70 * prm.size * (prm.dimL || 1);
             if (trig === 'immediat') doBurst(spec, tx, ty, r, {}, { x: dx, y: dy });
             else if (trig === 'contact' || trig === 'proximite') st.sp.push({ k: 'trap', prox: trig === 'proximite', spec, x: tx, y: ty, r: r * (trig === 'proximite' ? 1.3 : 0.85), prm, life: 20 * prm.duration, color: C, t: 0, base: spec.filtre ? filtreCompte(spec.filtre, tx, ty, r * 0.6) : 0, chk: 0 });
             else st.sp.push({ k: 'timer', spec, x: tx, y: ty, r, t: spec.delai, max: spec.delai, color: C });
@@ -1367,19 +1408,20 @@ const World = (() => {
         break;
       }
       case 'trait':
+        if (prm.rafale && !o.suiteRafale && trig !== 'retarde' && trig !== 'commande') st.sp.push({ k: 'rafale', seal, o: { ...o, suiteRafale: true }, origin, aim: { ...aim }, left: prm.rafale > 1 ? 4 : 2, t: 0.15 });
         if (trig === 'retarde') { st.sp.push({ k: 'beamtimer', spec, x: ox, y: oy, dx, dy, prm, t: spec.delai, max: spec.delai, color: C }); if (o.player) msg('Le trait se charge...'); }
         else if (trig === 'commande') { st.sp.push({ k: 'attente', spec, trait: true, self: true, life: 40 }); if (o.player) msg('Le trait attend. Touche F pour le tirer vers la souris.'); }
         else { const n = 1 + prm.extra, a0 = Math.atan2(dy, dx); for (let i = 0; i < n; i++) { const a = a0 + (n > 1 ? (i - (n - 1) / 2) * 0.18 : 0); fireBeam(spec, ox, oy, Math.cos(a), Math.sin(a), trig); } }
         break;
-      case 'aura': st.sp.push({ k: 'field', spec, core: spec.core, x: ox, y: oy, r: 70 * prm.size, life: 6 * prm.duration, max: 6 * prm.duration, prm, follow: true }); if (o.player) msg('L\'effet t\'enveloppe un moment.'); break;
+      case 'aura': st.sp.push({ k: 'field', spec, core: spec.core, x: ox, y: oy, r: 70 * prm.size * (prm.dimL || 1), life: 6 * prm.duration, max: 6 * prm.duration, prm, follow: true }); if (o.player) msg('L\'effet t\'enveloppe un moment.'); break;
       case 'prise': {
         const dd = portee(300 * prm.range); const tx = ox + dx * dd, ty = oy + dy * dd;
         saisir(spec, tx, ty, !!o.player);
         break;
       }
-      case 'bouclier': st.sp.push({ k: 'bouclier', spec, self: !!o.player, x: ox, y: oy, a: Math.atan2(dy, dx), life: 4 * prm.duration, max: 4 * prm.duration, r: 46 * prm.size, color: C }); if (o.player) msg('Un bouclier de ' + (DATA.CORES[spec.core] || DATA.PSEUDO[spec.core]).nom.toLowerCase() + ' se lève devant toi.'); break;
-      case 'totem': { const range = 260 * prm.range; const dd = portee(range); const tx = ox + dx * dd, ty = oy + dy * dd; const g = groundBelow(tx, ty); st.sp.push({ k: 'totem', spec, x: tx, y: g != null ? g : ty, r: 60 * prm.size, life: 20 * prm.duration, max: 20 * prm.duration, t: 0.5, color: C }); break; }
-      case 'pluie': { const range = 320 * prm.range; const dd = portee(range); const tx = ox + dx * dd; st.sp.push({ k: 'rain', spec, x: tx, w: 120 * prm.size, yTop: Math.max(30, oy - 320), life: 3 * prm.duration, t: 0, color: C }); break; }
+      case 'bouclier': st.sp.push({ k: 'bouclier', spec, self: !!o.player, x: ox, y: oy, a: Math.atan2(dy, dx), life: 4 * prm.duration, max: 4 * prm.duration, r: 46 * prm.size * (prm.dimL || 1), color: C }); if (o.player) msg('Un bouclier de ' + (DATA.CORES[spec.core] || DATA.PSEUDO[spec.core]).nom.toLowerCase() + ' se lève devant toi.'); break;
+      case 'totem': { const range = 260 * prm.range; const dd = portee(range); const tx = ox + dx * dd, ty = oy + dy * dd; const g = groundBelow(tx, ty); st.sp.push({ k: 'totem', spec, x: tx, y: g != null ? g : ty, r: 60 * prm.size * (prm.dimL || 1), life: 20 * prm.duration, max: 20 * prm.duration, t: 0.5, color: C }); break; }
+      case 'pluie': { const range = 320 * prm.range; const dd = portee(range); const tx = ox + dx * dd; st.sp.push({ k: 'rain', spec, x: tx, w: 120 * prm.size * (prm.dimL || 1), yTop: Math.max(30, oy - 320), life: 3 * prm.duration, t: 0, color: C }); break; }
       case 'objet': {
         const range = 260 * prm.range; const dd = Math.min(d, range); const tx = ox + dx * dd, ty = oy + dy * dd;
         let best = null, bd = 140;
@@ -1391,12 +1433,15 @@ const World = (() => {
       }
       case 'vague': {
         const sx = ox + (Math.sign(dx) || 1) * 30, g = groundBelow(sx, oy - 10);
-        st.sp.push({ k: 'vague', spec, x: sx, y: g != null ? g : oy + 20, dir: Math.sign(dx) || 1, v: 280 * prm.speed, life: 1.4 * prm.range, max: 1.4 * prm.range, r: 34 * prm.size, color: C, tick: 0 });
+        st.sp.push({ k: 'vague', spec, x: sx, y: g != null ? g : oy + 20, dir: Math.sign(dx) || 1, v: 280 * prm.speed, life: 1.4 * prm.range * (prm.dimL || 1), max: 1.4 * prm.range * (prm.dimL || 1), r: 34 * prm.size * (prm.dimH || 1), color: C, tick: 0 });
         break;
       }
       case 'colonne': {
         const dd = portee(260 * prm.range); const tx = ox + dx * dd, ty = oy + dy * dd; const g = groundBelow(tx, ty - 20);
-        st.sp.push({ k: 'colonne', spec, x: tx, y: g != null ? g : ty, h: 200 * prm.size, w: 22 * prm.size, life: 2 * prm.duration, max: 2 * prm.duration, color: C, tick: 0 });
+        const cw = 22 * prm.size * (prm.dimL || 1), ch = 200 * prm.size * (prm.dimH || 1), gy0 = g != null ? g : ty, rect = { x0: tx - cw, x1: tx + cw, y0: gy0 - ch, y1: gy0 };
+        if (champForme(spec, rect, null)) break;
+        if (prm.matiere) { matiereRect(spec, { x0: tx - cw * 0.6, x1: tx + cw * 0.6, y0: gy0 - ch, y1: gy0 - 1 }); Son.sfx('burst', 'terre'); part(tx, gy0, spec.color, 14, 120, 0.6, 3, 300, 'eclat'); break; }
+        st.sp.push({ k: 'colonne', spec, x: tx, y: gy0, h: ch, w: cw, life: 2 * prm.duration, max: 2 * prm.duration, color: C, tick: 0 });
         break;
       }
       case 'invocation': {
@@ -1417,7 +1462,7 @@ const World = (() => {
   }
   function fireBeam(spec, x, y, dx, dy, trig) {
     const prm = spec.prm, C = spec.color, core = spec.core;
-    const len = 320 * prm.range;
+    const len = 320 * prm.range * (prm.dimH || 1);
     const sols = dynSolids();
     let ex = x, ey = y;
     const touched = new Set();
@@ -1430,11 +1475,12 @@ const World = (() => {
       for (const o of st.objs) if (!o.mort && o.t !== 'porte' && o.t !== 'pancarte' && px >= o.x && px <= o.x + o.w && py >= o.y && py <= o.y + o.h) { touched.add(o); if (trig === 'contact' && (o.solid || o.t === 'mannequin')) stop = true; }
       if (stop) break;
     }
-    st.sp.push({ k: 'beam', core, x1: x, y1: y, x2: ex, y2: ey, life: 0.35, max: 0.35, color: C, w: 6 * prm.size });
+    st.sp.push({ k: 'beam', core, x1: x, y1: y, x2: ex, y2: ey, life: 0.35, max: 0.35, color: C, w: 6 * prm.size * (prm.dimL || 1) });
+    if (prm.matiere) matiereLigne(spec, x + dx * 24, y + dy * 24, ex, ey, 5 * prm.size * (prm.dimL || 1));
     Son.sfx('cast', core);
     if (trig === 'contact') doBurst(spec, ex, ey, 55 * prm.size, { noPlayer: true }, { x: dx, y: dy });
     else {
-      for (let t = 10; t < Math.hypot(ex - x, ey - y); t += 14) for (const c of spec.cores) gridEffect(c, x + dx * t, y + dy * t, 9 * prm.size, { ...prm, power: prm.power * 0.6 }, true, 1);
+      for (let t = 10; t < Math.hypot(ex - x, ey - y); t += 14) for (const c of spec.cores) gridEffect(c, x + dx * t, y + dy * t, 9 * prm.size * (prm.dimL || 1), { ...prm, power: prm.power * 0.6 }, true, 1);
       for (const e of touched) for (const c of spec.cores) applyEffect(c, e.x + e.w / 2, e.y + e.h / 2, Math.max(e.w, e.h) * 0.6, { ...prm, power: prm.power * 0.8 }, 'burst', { noPlayer: true, noField: true, noGrid: true });
       doBurst(spec, ex - dx * 6, ey - dy * 6, 24 * prm.size, { noPlayer: true, noField: core !== 'lumiere' }, { x: dx, y: dy });
     }
@@ -1665,7 +1711,7 @@ const World = (() => {
     if (n > 0) { p.anim += 0.5; if (Math.random() < 0.3) Son.sfx('step', 'terre'); }
   }
 
-  const CAPS_SORTS = { trap: 30, expire: 40, totem: 12, field: 40, attente: 20, orbit: 9, bulle: 8, repeat: 24, timer: 30, beamtimer: 20, tornade: 6, singularite: 6, rain: 10, echo: 30, vague: 10, colonne: 10 };
+  const CAPS_SORTS = { trap: 30, expire: 40, totem: 12, field: 40, attente: 20, orbit: 9, bulle: 8, repeat: 24, timer: 30, beamtimer: 20, tornade: 6, singularite: 6, rain: 10, echo: 30, vague: 10, colonne: 10, rafale: 6 };
   // ---------- Mise à jour ----------
   function update(dt, inp, aim) {
     time += dt;
@@ -1846,13 +1892,14 @@ const World = (() => {
   }
   // ---- Gravité : champs locaux (st.gz, partagés avec la simulation) ----
   function snapDir(dx, dy) { return Math.abs(dx) > Math.abs(dy) ? [Math.sign(dx) || 1, 0] : [0, Math.sign(dy) || 1]; }
-  function addGField(x, y, r, gx, gy, mag, life) {
-    st.gz.push({ x, y, r, gx, gy, mag, life, max: life });
+  function addGField(x, y, r, gx, gy, mag, life, rect = null) {
+    st.gz.push({ x, y, r, gx, gy, mag, life, max: life, rect });
     part(x, y, '#6c5ab8', 14, 60, 0.8, 2, 0, 'spark');
   }
+  const dansZone = (z, x, y) => (z.rect ? x >= z.rect.x0 && x <= z.rect.x1 && y >= z.rect.y0 && y <= z.rect.y1 : (x - z.x) * (x - z.x) + (y - z.y) * (y - z.y) <= z.r * z.r);
   function gravOf(b) {
     const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
-    for (const z of st.gz) if ((cx - z.x) * (cx - z.x) + (cy - z.y) * (cy - z.y) <= z.r * z.r) return z;
+    for (const z of st.gz) if (dansZone(z, cx, cy)) return z;
     return null;
   }
   function gravField(b) { const z = gravOf(b); return !!(z && (z.mag === 0 || z.gy < 0)); }
@@ -1866,7 +1913,14 @@ const World = (() => {
     if (z.gy !== 1) b.onGround = false;
   }
   function updateGFields(dt) {
-    for (const z of st.gz) z.life -= dt;
+    for (const z of st.gz) {
+      z.life -= dt;
+      if (z.mag >= 2.2 && z.gy === 1) {
+        for (const c of st.crs) if (c.hp > 0 && c.onGround && gravOf(c) === z) { hurt(c, dt * 0.9 * z.mag * (c.t === 'golem' ? 0.5 : 1)); c.sta.stun = Math.max(c.sta.stun, 0.3); if (Math.random() < dt * 6) part(c.x + c.w / 2, c.y + c.h, '#8a7a6a', 2, 40, 0.5, 2, 200); }
+        for (const o of st.objs) if (o.t === 'caisse' && !o.mort && o.onGround && gravOf(o) === z) { o.hp -= dt * z.mag * 0.4; if (o.hp <= 0) { o.mort = true; part(o.x + o.w / 2, o.y + o.h / 2, '#8a6b2f', 12, 90); } }
+        const p = st.p; if (p.onGround && gravOf(p) === z && !(p.sta.stone > 0) && !(p.sta.armure > 0)) p.hp -= dt * 0.4 * z.mag;
+      }
+    }
     st.gz = st.gz.filter((z) => z.life > 0);
     Sim.gzones = st.gz;
   }
@@ -1990,8 +2044,8 @@ const World = (() => {
 
   // facteur de temps à un endroit : 1 dehors, 0 figé, < 1 ralenti, > 1 accéléré (le lanceur n'y est pas soumis)
   let bullesT = [];
-  function majBulles() { bullesT = []; for (const b of st.sp) if (b.k === 'bulle' && !b.mort) bullesT.push({ x: b.x, y: b.y, r: b.r, f: b.mode === 'vite' ? 3 : b.mode === 'lent' ? 0.3 : 0 }); Sim.tzones = bullesT; }
-  function tempsDe(x, y, vite = 3) { for (const z of bullesT) { const dx = x - z.x, dy = y - z.y; if (dx * dx + dy * dy <= z.r * z.r) return z.f > 1 ? vite : z.f; } return 1; }
+  function majBulles() { bullesT = []; for (const b of st.sp) if (b.k === 'bulle' && !b.mort) bullesT.push({ x: b.x, y: b.y, r: b.r, rect: b.rect || null, f: b.mode === 'vite' ? 3 : b.mode === 'lent' ? 0.3 : 0 }); Sim.tzones = bullesT; }
+  function tempsDe(x, y, vite = 3) { for (const z of bullesT) if (dansZone(z, x, y)) return z.f > 1 ? vite : z.f; return 1; }
   function updateObjs(dtG) {
     let dt = dtG;
     for (const o of st.objs) {
@@ -2196,6 +2250,7 @@ const World = (() => {
     if (s.trig === 'retarde') { s.k = 'timer'; s.t = s.spec.delai; s.max = s.spec.delai; s.r = 60 * s.prm.size; s.vx = 0; s.vy = 0; return; }
     if (s.trig === 'commande') { st.sp.push({ k: 'attente', spec: s.spec, x: s.x, y: s.y, ent, life: 40 }); s.mort = true; return; }
     let rad = 50 * s.prm.size;
+    if (s.matiere != null) { const m = s.matiere; spec0 = s.spec; poserMatiere(m, (put) => Sim.forRadius(s.x - s.vx * 0.01, s.y - s.vy * 0.01, 7 * (s.prm.size || 1), (cx, cy) => { if (Math.random() < 0.7) put(cx, cy); })); part(s.x, s.y, P[m].color, 10, 140, 0.6, 2.4, 700, 'eclat'); }
     if (s.trig === 'proximite' && ent && ent.w) rad = Math.max(rad, dist(s.x, s.y, ent.x + ent.w / 2, ent.y + ent.h / 2) + Math.max(ent.w, ent.h) * 0.3);
     doBurst(s.spec, s.x, s.y, rad, { ent }, dirv); s.mort = true;
   }
@@ -2337,7 +2392,7 @@ const World = (() => {
       if (a.trait) { let dx = aim.x - pc.x, dy = aim.y - pc.y; const d = Math.hypot(dx, dy) || 1; fireBeam(sp, pc.x, pc.y, dx / d, dy / d, 'immediat'); }
       else if (a.self) selfCast(sp, a.aim || aim);
       else if (a.relance) { const q = Seal.clone(sp.seal); q.trigger = 'immediat'; if (q.trigger2 === 'commande') q.trigger2 = null; launch(q, pc, { x: a.x, y: a.y }, { depth: sp.depth, player: true, charge: sp.charge }); }
-      else if (a.mur) { for (let k = -2; k <= 2; k++) doBurst(sp, a.x, a.y + k * 36 * sp.prm.size, 24 * sp.prm.size, { mur: true, noField: k !== 0, noEcho: k !== 0, noRepeat: k !== 0, noExpire: k !== 0, noCombo: k !== 0 }); }
+      else if (a.mur) { const mw = 30 * sp.prm.size * (sp.prm.dimL || 1), mh = 180 * sp.prm.size * (sp.prm.dimH || 1); const rect = { x0: a.x - mw / 2, x1: a.x + mw / 2, y0: a.y - mh / 2, y1: a.y + mh / 2 }; if (!champForme(sp, rect, a.dir)) { if (sp.prm.matiere) matiereRect(sp, rect); for (const q of murPoints(a.x, a.y, mw, mh)) doBurst(sp, q.x, q.y, q.r, { mur: true, noMatiere: true, noEcho: true, noRepeat: true, noExpire: true, noCombo: true }); } } else if (false) { for (let k = -2; k <= 2; k++) doBurst(sp, a.x, a.y + k * 36 * sp.prm.size, 24 * sp.prm.size, { mur: true, noField: k !== 0, noEcho: k !== 0, noRepeat: k !== 0, noExpire: k !== 0, noCombo: k !== 0 }); }
       else doBurst(sp, a.x, a.y, (a.ent ? 50 : 70) * sp.prm.size, { ent: a.ent }, a.dir || null);
     }
     Son.sfx('burst', 'force'); return att.length;
@@ -2431,6 +2486,7 @@ const World = (() => {
           }
           if (touche) {
             if (touche.hp !== undefined && touche.t) evt('creatureTouchee');
+            if (s.matiere != null && touche.hp !== undefined && !s.hits.has(touche)) { hurt(touche, 1.5 + 1.5 * (s.prm.power || 1)); touche.vx += s.vx * 0.25; touche.vy -= 80; part(s.x, s.y, P[s.matiere].color, 8, 120, 0.5, 2.4, 600, 'eclat'); }
             if (s.potion) { potionBurst(s.potion, s.x, s.y, s.forte); s.mort = true; }
             else if (s.liquide) { spawnLiquid(s.liquide, s.x, s.y, 26); s.mort = true; }
             else if (s.chain > 0) {
@@ -2509,12 +2565,21 @@ const World = (() => {
             const core = s.spec.cores[Math.floor(Math.random() * s.spec.cores.length)];
             const cx = Math.floor(x / CS), cy = Math.floor(s.yTop / CS);
             const MAT = { eau: M.EAU, acide: M.ACIDE, froid: M.NEIGE, feu: M.FEU, terre: M.SABLE, metal: M.SABLE, vie: null };
-            if (MAT[core] && Sim.get(cx, cy) === M.AIR) { Sim.set(cx, cy, MAT[core], core === 'feu' ? 40 : 0); }
+            const mg = s.spec.prm.matiere ? matiereDe(s.spec) : null;
+            if (mg != null && mg !== M.AIR && Math.random() < 0.35) st.sp.push({ k: 'proj', spec: { ...s.spec, prm: { ...s.spec.prm, matiere: false, gerbe: 0, size: 0.6 } }, core, x, y: s.yTop, vx: (Math.random() - 0.5) * 40, vy: 300, r: 4, prm: { ...s.spec.prm, matiere: false, gerbe: 0, size: 0.6, power: (s.spec.prm.power || 1) * 0.5 }, trig: 'contact', bounces: 0, life: 2, grav: 700, hits: new Set(), color: P[mg].color, trail: 0, chain: 0, matiere: mg, off: 0, ph: 0 });
+            else if (MAT[core] && Sim.get(cx, cy) === M.AIR) { Sim.set(cx, cy, MAT[core], core === 'feu' ? 40 : 0); }
             else st.sp.push({ k: 'proj', spec: s.spec, core, x, y: s.yTop, vx: 0, vy: 200, r: 5, prm: s.spec.prm, trig: 'contact', bounces: 0, life: 3, grav: 500, hits: new Set(), color: s.color, trail: 0, petit: true });
           }
           break;
         }
         case 'label': s.life -= dt; s.y -= 20 * dt; if (s.life <= 0) s.mort = true; break;
+        case 'rafale': {
+          s.t -= dt; if (s.t > 0) break;
+          s.t = 0.12; s.left--;
+          const p = st.p; const org = s.o.player ? { x: p.x + p.w / 2, y: p.y + p.h * 0.45 } : s.origin; const am = s.o.player ? toWorld(game.inp.mouse.x, game.inp.mouse.y) : s.aim;
+          launch(s.seal, org, am, s.o); if (s.left <= 0) s.mort = true;
+          break;
+        }
         case 'vague': {
           s.life -= dt; if (s.life <= 0) { s.mort = true; break; }
           s.x += s.dir * s.v * dt;
@@ -2539,8 +2604,8 @@ const World = (() => {
         }
         case 'bulle': {
           s.life -= dt; if (s.life <= 0) { s.mort = true; if (s.mode === 'fige') for (const q of st.sp) if (q.gelV) { [q.vx, q.vy, q.grav] = q.gelV; q.gelV = null; } break; }
-          if (s.mode !== 'vite') vieillir(s.mode, s.x, s.y, s.r, dt, s.f);
-          else { s.acc = (s.acc || 0) + dt; if (s.acc >= 0.05) { vieillir(s.mode, s.x, s.y, s.r, s.acc, s.f); s.acc = 0; } } // 20 fois par seconde suffit
+          if (s.mode !== 'vite') vieillir(s.mode, s.x, s.y, s.r, dt, s.f, s.rect);
+          else { s.acc = (s.acc || 0) + dt; if (s.acc >= 0.05) { vieillir(s.mode, s.x, s.y, s.r, s.acc, s.f, s.rect); s.acc = 0; } } // 20 fois par seconde suffit
           if (Math.random() < 0.5) { const a = Math.random() * TAU, rr = s.r * (0.3 + Math.random() * 0.7); st.parts.push({ x: s.x + Math.cos(a) * rr, y: s.y + Math.sin(a) * rr, vx: s.mode === 'vite' ? -Math.sin(a) * 160 : -Math.sin(a) * 12, vy: s.mode === 'vite' ? Math.cos(a) * 160 : Math.cos(a) * 12, life: 0.6, max: 0.6, color: s.mode === 'vite' ? '#c8ccd8' : '#8aa0d8', size: 2, grav: 0, type: 'glow' }); }
           break;
         }
@@ -3081,6 +3146,7 @@ const World = (() => {
           ctx.beginPath(); ctx.moveTo(-4, -8); ctx.lineTo(-4, -3); ctx.quadraticCurveTo(-9, 3, -7, 7); ctx.lineTo(7, 7); ctx.quadraticCurveTo(9, 3, 4, -3); ctx.lineTo(4, -8); ctx.closePath(); ctx.fill(); ctx.stroke();
           ctx.fillStyle = '#6b4f2a'; ctx.fillRect(-4.5, -11, 9, 3.5); break;
         }
+        if (s.matiere != null) { const a = Math.atan2(s.vy, s.vx), col = P[s.matiere].color, L2 = s.r * 2.6, W2 = s.r * 0.75; FX.ruban(ctx, s.tr, col, s.r * 0.9, 0.4); ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(a); ctx.fillStyle = col; ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(L2, 0); ctx.lineTo(0, -W2); ctx.lineTo(-L2 * 0.8, 0); ctx.lineTo(0, W2); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.globalAlpha = 0.7; ctx.strokeStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(L2 * 0.7, -1); ctx.lineTo(-L2 * 0.3, -W2 * 0.4); ctx.stroke(); ctx.restore(); break; }
         FX.ruban(ctx, s.tr, s.color, s.r * 1.4, 0.55);
         FX.glow(ctx, s.x, s.y, s.r * 3.2, s.color, 0.55);
         if (s.traj === 'boomerang') { ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(time * 16); ctx.strokeStyle = s.color; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, 0, s.r * 1.9, 0.3, 2.6); ctx.stroke(); ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, s.r * 2.2, 3.4, 5.6); ctx.stroke(); ctx.restore(); }
@@ -3133,6 +3199,10 @@ const World = (() => {
         ctx.beginPath(); ctx.moveTo(s.x - s.w, s.y); for (let i = 0; i <= 12; i++) { const f = i / 12; ctx.lineTo(s.x - s.w * (1 - f * 0.3) + Math.sin(time * 9 + f * 8) * 3, s.y - f * s.h); } for (let i = 12; i >= 0; i--) { const f = i / 12; ctx.lineTo(s.x + s.w * (1 - f * 0.3) + Math.sin(time * 9 + f * 8 + 2) * 3, s.y - f * s.h); } ctx.closePath(); ctx.fill();
         ctx.globalAlpha = 0.8 * k; ctx.strokeStyle = s.color; ctx.lineWidth = 1.5; for (let j = -1; j <= 1; j += 2) { ctx.beginPath(); for (let i = 0; i <= 12; i++) { const f = i / 12; const xx = s.x + j * s.w * 0.5 + Math.sin(time * 12 + f * 10 + j) * 4, yy = s.y - ((f + time * 1.5) % 1) * s.h; if (i) ctx.lineTo(xx, yy); else ctx.moveTo(xx, yy); } ctx.stroke(); } ctx.restore(); break; }
       case 'bulle': {
+        if (s.rect) { const kk = Math.min(1, s.life / 0.5, (s.max - s.life) / 0.3), R2 = s.rect, w = R2.x1 - R2.x0, h = R2.y1 - R2.y0, C2 = s.mode === 'vite' ? '#9aa0ae' : s.mode === 'fige' ? '#9aa8c8' : '#6a80c0';
+          ctx.save(); ctx.globalAlpha = 0.13 * kk; ctx.fillStyle = s.mode === 'vite' ? '#e8e4d8' : '#a8b8e8'; ctx.fillRect(R2.x0, R2.y0, w, h); ctx.globalAlpha = 0.7 * kk; ctx.strokeStyle = C2; ctx.lineWidth = 2; ctx.strokeRect(R2.x0, R2.y0, w, h);
+          const nc = Math.max(1, Math.round(Math.max(w, h) / 90)); for (let i = 0; i < nc; i++) { const f = (i + 0.5) / nc, cx2 = w > h ? R2.x0 + f * w : R2.x0 + w / 2, cy2 = w > h ? R2.y0 + h / 2 : R2.y0 + f * h, rr = Math.min(w, h) * 0.32; ctx.lineWidth = 1.2; U.inkCircle(ctx, cx2, cy2, rr, 5 + i, 1); const t2 = s.mode === 'vite' ? time * 9 : s.mode === 'fige' ? 0.6 : time * 0.15; ctx.beginPath(); ctx.moveTo(cx2, cy2); ctx.lineTo(cx2 + Math.cos(t2 - Math.PI / 2) * rr * 0.8, cy2 + Math.sin(t2 - Math.PI / 2) * rr * 0.8); ctx.stroke(); }
+          ctx.restore(); break; }
         const kk = Math.min(1, s.life / 0.5, (s.max - s.life) / 0.3), vite = s.mode === 'vite', C = vite ? '#9aa0ae' : '#6a80c0';
         ctx.save(); ctx.globalAlpha = 0.12 * kk; ctx.fillStyle = vite ? '#e8e4d8' : '#a8b8e8'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill();
         ctx.globalAlpha = 0.75 * kk; ctx.strokeStyle = C; ctx.lineWidth = 2; U.inkCircle(ctx, s.x, s.y, s.r, 4, 1.2); ctx.lineWidth = 1; U.inkCircle(ctx, s.x, s.y, s.r * 0.88, 5, 1);
@@ -3167,6 +3237,14 @@ const World = (() => {
   function drawGField(ctx, z) {
     ctx.save();
     const a = clamp(z.life / Math.max(0.1, z.max) * 3, 0, 1);
+    if (z.rect) {
+      const R2 = z.rect, w = R2.x1 - R2.x0, h = R2.y1 - R2.y0;
+      ctx.globalAlpha = (0.08 + 0.04 * Math.min(2, z.mag)) * a; ctx.fillStyle = '#6c5ab8'; ctx.fillRect(R2.x0, R2.y0, w, h);
+      ctx.globalAlpha = 0.6 * a; ctx.strokeStyle = '#6c5ab8'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 6]); ctx.strokeRect(R2.x0, R2.y0, w, h); ctx.setLineDash([]);
+      const n = Math.max(4, Math.round(w * h / 2500));
+      for (let i = 0; i < n; i++) { const u = U.hash2(i, 3), v = (time * (0.4 + z.mag * 0.35) + U.hash2(i, 5)) % 1; const ax = R2.x0 + (z.gx === 0 ? u * w : (z.gx > 0 ? v : 1 - v) * w), ay = R2.y0 + (z.gy === 0 ? u * h : (z.gy > 0 ? v : 1 - v) * h); if (z.mag === 0) { ctx.beginPath(); ctx.arc(ax, ay, 2.5, 0, TAU); ctx.stroke(); continue; } const px = -z.gy, py = z.gx; ctx.beginPath(); ctx.moveTo(ax - z.gx * 9, ay - z.gy * 9); ctx.lineTo(ax, ay); ctx.moveTo(ax - z.gx * 4 + px * 3, ay - z.gy * 4 + py * 3); ctx.lineTo(ax, ay); ctx.lineTo(ax - z.gx * 4 - px * 3, ay - z.gy * 4 - py * 3); ctx.stroke(); }
+      ctx.restore(); return;
+    }
     ctx.strokeStyle = '#6c5ab8'; ctx.globalAlpha = 0.55 * a; ctx.lineWidth = 1.5; ctx.setLineDash([4, 6]);
     U.inkCircle(ctx, z.x, z.y, z.r, 7, 2); ctx.setLineDash([]);
     ctx.globalAlpha = 0.08 * a; ctx.fillStyle = '#6c5ab8'; ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, TAU); ctx.fill();
