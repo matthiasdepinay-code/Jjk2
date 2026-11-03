@@ -6,12 +6,12 @@
 |---|---|
 | `README.md` | Présentation, phonologie, grammaire complète, formation des noms |
 | `monde.md` | L'univers : la Première Voix, les Voix déchues, ce que fait un mot, les serments, la voyelle volée |
-| `alphabet.md`, `alphabet.svg` | L'écriture, dessinée : un abugida de vingt signes |
+| `alphabet.md`, `alphabet.svg` | L'écriture gravée, dessinée : vingt signes taillés à la lame |
 | `outils/ghazrun.py` | Déclinaison, conjugaison, lexique, analyse de formes, registre bas |
-| `outils/zhakar.py` | Rend un texte dans l'écriture du Ghâzrûn (SVG) |
-| `lexique.md` | Lexique classé par thème (~350 entrées : parole, magie, religion, guerre, nature, corps, vie quotidienne) |
+| `outils/zhakar.py` | Grave un texte dans l'écriture du Ghâzrûn (SVG) |
+| `lexique.md` | Lexique classé par thème (~380 entrées : parole, magie, religion, guerre, parler bas, nature, corps, vie quotidienne) |
 | `lexique.csv` | Le même lexique, exploitable par script |
-| `textes.md` | Textes avec traduction et glose mot à mot |
+| `textes.md` | Textes avec traduction et glose mot à mot, dont un dialogue de garnison et un chant de guerre |
 
 ---
 
@@ -24,7 +24,9 @@ Le Ghâzrûn (*ghâz* « voix » + *rûn* « profond, ancien ») est la langue d
 
 > *Mârokûth nâldhûmzhâ* (haut) → *Mârokuth nâldhumzha* (bas) — « les ténèbres, pour toujours »
 
-Ce qui rend la langue « ancienne et belle » tient à quelques choix délibérés :
+**Le modèle sonore est le Noir Parler tel qu'on l'entend dans les films** : ce que les orques aboient entre eux, et l'inscription de l'Anneau lue à voix basse. Rauque, guttural, primitif, comme venu du premier âge du monde. La beauté cherchée ici est celle-là : archaïque, pesante, taillée à la hache. Pas la grâce elfique.
+
+Ce qui rend la langue « ancienne et profonde » tient à quelques choix délibérés :
 
 1. **Pas de voyelle *e*.** Le système est fermé, grave : *a, o, u* et leurs longues. Les Voix ne peuvent pas prononcer ce son, « la voyelle volée » (`monde.md`, § 5).
 2. **Les voyelles longues portent l'accent** et donnent au discours un rythme lent, psalmodié.
@@ -84,7 +86,20 @@ L'accent frappe **la première voyelle longue** du mot. S'il n'y en a pas, il fr
 
 > *ghâzrûn* → GHÂZ-rûn ; *zârôluzardhûm* → ZÂ-rô-lu-zar-dhûm ; *varkh* → VARKH
 
-### 2.5 Règles de contact (morphophonologie)
+### 2.5 Le dire à voix haute
+
+Pour que ça sonne comme dans les films, tout se joue dans la gorge et dans le rythme.
+
+- **kh** et **gh** viennent du fond de la gorge, comme un raclement ; *gh* est un grondement, pas un « r ».
+- **r** est roulé dur, avec la pointe de la langue, même en fin de mot : *khâr*, *zâr*.
+- **Les groupes finaux se détachent** : *vorz* se dit « vor-z », *zhorg* « zhor-g », *ushk* « ush-k ». On ne les avale jamais.
+- **Les voyelles longues se tiennent**, basses, dans la poitrine, sans chanter : *mâr* n'est pas « mar » mais « maaar », grondé.
+- **L'accent est un coup** : la première voyelle longue reçoit un aboiement, le reste du mot retombe.
+- **Registre bas** : chaque mot est un coup, sec, et la phrase est courte. *Zhag ! Grâmâr !*
+- **Registre haut** : lent, grave, chaque longue tenue un temps, les vers par paires. Pensez à l'inscription de l'Anneau lue à voix basse, depuis la poitrine.
+- **Jamais de *e*, jamais de nasale française** : *ghan* se dit « ghann », *ûn* « oun ».
+
+### 2.6 Règles de contact (morphophonologie)
 
 | Règle | Exemple |
 |---|---|
@@ -333,11 +348,12 @@ Un nom se bâtit par composition ou par suffixe d'agent. Le registre haut aime l
 
 L'alphabet est dessiné dans `alphabet.svg` et décrit dans `alphabet.md`. En résumé :
 
-- C'est un **abugida** : on écrit les consonnes, les voyelles se posent dessus en marques. Une marque = brève, deux = longue, trois = vocatif.
-- **Vingt signes** tracés d'un seul souffle, par familles : hampe pour les occlusives, racine sous la ligne pour les sonores, boucle fermée pour les fricatives de gorge, serpent pour les sifflantes, arches pour les nasales, volute et crosse pour les liquides.
-- Un mot qui commence par une voyelle s'appuie sur **le signe muet**, une volute.
-- Un **losange** ferme le mot, une **ligne ondulée** sépare les vers. Sur la pierre on grave de droite à gauche, « vers la porte ».
-- Les signes furent inventés pour les serviteurs : un mot écrit lie, mais ne fait pas (`monde.md`, § 7).
+- Une écriture **taillée à la lame** dans la pierre, le fer et l'os : entailles droites, traits lourds, angles vifs, jamais tout à fait nets. Pas de courbe, la lame ne tourne pas.
+- C'est un **abugida** : on grave les consonnes, les voyelles se taillent dessus. Une entaille = brève, deux = longue, trois = vocatif.
+- **Vingt signes**, par familles : hampe pour les occlusives, racine sous la ligne pour les sonores, griffe refermée pour les fricatives de gorge, foudre pour les sifflantes, portique pour les nasales, crochet et talon pour les liquides.
+- Un mot qui commence par une voyelle s'appuie sur **le signe muet**, un coup de lame brisé.
+- Un **coup de pointe** ferme le mot, une **ligne brisée** sépare les vers. Sur la pierre on grave de droite à gauche, « vers la porte ».
+- Les signes furent inventés pour les serviteurs : un mot gravé lie, mais ne fait pas (`monde.md`, § 7).
 
 ---
 

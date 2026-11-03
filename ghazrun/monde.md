@@ -50,6 +50,8 @@ C'est aussi pourquoi la langue est **dense**. Pas d'article, pas de pronom sujet
 
 Un zûga qui parvient, par un effort immense, à tenir toutes les longues d'une phrase sent brièvement la deuxième profondeur. C'est de cette façon que naissent les rares traîtres, et les rares chanteurs.
 
+C'est ce registre qu'on entend dans les garnisons : des ordres, des comptes, des injures, un chant de guerre scandé sur deux notes. Les zûgar ont leur propre vocabulaire, bas, concret, sans voyelle longue ou presque (*ghrak* « charogne », *zhub* « crétin », *bagh* « ordure »), et ils répètent sans les comprendre les formules de Décret gravées sur les seuils : *Ûkh thôk narvânôth*, « ton nom n'est plus », est chez eux une simple menace de corps de garde. Voir `textes.md`, textes 7 et 8.
+
 ---
 
 ## 5. La voyelle volée
@@ -70,11 +72,11 @@ Les Mârghâzar ont fait des serments leur instrument de règne. Le **Serment de
 
 ---
 
-## 7. Les signes
+## 7. Les signes gravés
 
-Le Ghâzrûn n'a pas besoin d'écriture, car une Voix n'a pas besoin d'écrire : le mot dit suffit. Les **zhâkar**, « marques », furent inventés pour les serviteurs et les vassaux, pour que les serments tiennent dans une mémoire mortelle. Un signe écrit est un mot **arrêté à la deuxième profondeur** : il lie, mais il ne fait pas. C'est pourquoi les Voix méprisent l'écriture et pourquoi les mortels la vénèrent.
+Le Ghâzrûn n'a pas besoin d'écriture, car une Voix n'a pas besoin d'écrire : le mot dit suffit. Les **zhâkar**, « marques », furent inventés pour les serviteurs et les vassaux, pour que les serments tiennent dans une mémoire mortelle. Un signe gravé est un mot **arrêté à la deuxième profondeur** : il lie, mais il ne fait pas. C'est pourquoi les Voix méprisent l'écriture et pourquoi les mortels la vénèrent.
 
-Chaque signe se trace d'un seul souffle, sans lever la main, et l'on dit qu'il reproduit le chemin de la voix dans la gorge : les consonnes sont « l'os » du mot (*ghrôm*), les voyelles sa « chair » (*zhamb*), posées en marques au-dessus de l'os. Les consonnes sonores descendent sous la ligne par une boucle qu'on appelle la racine ; un serment écrit sans racine ne tient pas. L'alphabet complet est décrit dans `alphabet.md` et dessiné dans `alphabet.svg`.
+Les signes sont taillés à la lame, en entailles droites, dans la pierre, le fer et l'os : la lame ne tourne pas, il n'y a pas de courbe. Les consonnes sont « l'os » du mot (*ghrôm*), les voyelles sa « chair » (*zhamb*), taillées en entailles au-dessus de l'os. Les consonnes sonores descendent sous la ligne par une pointe qu'on appelle la racine ; un serment gravé sans racine ne tient pas. L'alphabet complet est décrit dans `alphabet.md` et dessiné dans `alphabet.svg`.
 
 ---
 

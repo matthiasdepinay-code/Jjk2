@@ -1,6 +1,6 @@
 # Lexique du Ghâzrûn
 
-352 entrées, classées par thème. Les formes sont celles du registre haut (toutes les longues notées).
+380 entrées, classées par thème. Les formes sont celles du registre haut (toutes les longues notées) ; le thème « Parler bas » rassemble le vocabulaire des serviteurs, tel qu'on l'entend aboyé dans les garnisons.
 
 Catégories : n. nom, n.pr. nom propre, v. verbe, adj. adjectif, adv. adverbe, pron. pronom, conj. conjonction, part. particule, num. nombre, loc. locution, interj. interjection.
 
@@ -72,6 +72,7 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 
 | Ghâzrûn | Cat. | Sens | Note | Profondeur |
 |---|---|---|---|---|
+| **dhûm** | n. | le Tout, la totalité (suffixe -dhûm « tous ») |  | serment : totalité ; racine : ce qui ferme le cercle |
 | **sûl** | n. | âme, souffle |  | serment : vie intérieure ; racine : ce qui reste quand le corps tombe |
 | **narsûl** | adj. | sans âme |  |  |
 | **lîkh** | n. | lumière |  |  |
@@ -127,6 +128,38 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **mûrkdhûm** | v. | massacrer, exterminer | « tuer-tout » |  |
 | **zhûl** | v. | obéir, servir |  |  |
 | **dhârûth** | n. | paix, repos | dhâr + -ûth |  |
+
+## Parler bas
+
+| Ghâzrûn | Cat. | Sens | Note | Profondeur |
+|---|---|---|---|---|
+| **shrûg** | n. | vermine, asticot (insulte) |  |  |
+| **zhrâgh** | adj. | puant, pourri |  |  |
+| **krûgh** | n. | crâne |  |  |
+| **dûrgh** | n. | boue, fange |  |  |
+| **gûrzh** | n. | tripes, boyaux |  |  |
+| **ghrak** | n./v. | charogne ; dévorer | mot bas (voyelle brève) |  |
+| **zgûr** | n. | griffe |  |  |
+| **zgâsh** | n./v. | croc ; mordre |  |  |
+| **ghrok** | n. | gorge, gosier | mot bas |  |
+| **bagh** | n. | ordure, déchet | mot bas |  |
+| **zhub** | n. | crétin, idiot | mot bas |  |
+| **grâsh** | v. | écraser, broyer |  |  |
+| **zhrak** | v. | déchirer | mot bas |  |
+| **gûlk** | v. | avaler, bouffer |  |  |
+| **gûlkûth** | n. | faim | gûlk + -ûth |  |
+| **khrûg** | v. | cracher |  |  |
+| **dhrâgh** | v. | traîner (un corps, une charge) |  |  |
+| **vrash** | n./v. | fouet ; fouetter | mot bas |  |
+| **khrûm** | v. | grogner |  |  |
+| **bûrk** | v. | hurler |  |  |
+| **pakh** | interj. | pff (mépris) |  |  |
+| **ghâ** | interj. | ho ! allez ! en avant ! |  |  |
+| **narûkh** | n. | sans-nom (insulte : qui n'a pas de nom haut) | nar- + ûkh |  |
+| **ghîlzhamb** | n. | chair-pâle (insulte pour les hommes et les elfes) | ghîl + zhamb |  |
+| **kôrgor** | n. | gens du soleil (méprisant) | kôr + gor |  |
+| **nârgslûg** | n. | buveur de sang (titre que se donnent les guerriers) | nârg + slûg |  |
+| **zûgzhag** | n. | esclave de gorge : le plus bas des serviteurs | zûga + zhag |  |
 
 ## Éléments et nature
 
@@ -335,9 +368,9 @@ Pour l'ordre alphabétique ou l'usage par script, voir `lexique.csv`.
 | **ghîl** | adj. | blanc, pâle |  |  |
 | **nârgok** | adj. | rouge, sanglant | nârg + -ok |  |
 | **ûlâr** | adj. | haut, élevé, noble |  |  |
-| **zhag** | adj. | bas, grossier, guttural |  |  |
+| **zhag** | adj. | bas, grossier, guttural ; (interj.) à terre ! |  |  |
 | **thîn** | adj. | jeune, nouveau |  |  |
-| **bôrg** | adj. | grand |  |  |
+| **bôrg** | adj./adv. | grand ; beaucoup, grandement |  |  |
 | **nîk** | adj. | petit |  |  |
 | **slîm** | adj. | faible |  |  |
 | **vorzok** | adj. | ardent | vorz + -ok |  |

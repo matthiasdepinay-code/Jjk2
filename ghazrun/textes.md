@@ -171,7 +171,82 @@ Le dernier vers est la formule que les Voix de la Nuit ont fait graver sur chaqu
 
 ---
 
-## 7. Phrases de magie, de guerre et de prière
+## 7. Corps de garde (registre bas)
+
+*Deux zûgar à la Porte-de-Tout. C'est ce qu'on entend dans les garnisons : des coups de voix, pas des phrases. Orthographe du registre bas : seule la première longue de chaque mot subsiste. La forme haute est donnée dans la glose.*
+
+> — **Ghâ ! Zhârtar, zûgar ! Thrâmar !**
+> — **Kâvôr ?**
+> — **Ghîlzhambar thôrnar. Nâk zûl.**
+> — **Nâk zûl ! Khrâkhagh. Drâkh ghôk nârg ûrg.**
+> — **Narkhrâkha, zhub. Khâr khôr.**
+> — **Khâr narzhâl, khâr narkhôr. Khâr thâlzha dhôl.**
+> — **Hûsha ! Ûkh thôk narvânoth, gûr khâr khôr.**
+> — **Pakh. Gûlkaghuzardhum, ghîlzhambar. Ghrôm dha nârg.**
+> — **Zhag ! Grâmar ! Mûrkaruzardhum !**
+
+— Ho ! À la porte, esclaves ! Courez !
+— Pourquoi ?
+— Les chairs-pâles arrivent. Quarante.
+— Quarante ! Je ris. Mon épée veut du sang.
+— Ris pas, crétin. Le seigneur entend.
+— Le seigneur voit pas, entend pas. Il dort dans la tour.
+— Ferme-la ! Ton nom n'est plus, si le seigneur entend.
+— Pff. Je les bouffe tous, les chairs-pâles. Os et sang.
+— À terre ! Marchez ! Tuez-les tous !
+
+| Registre bas | Forme haute | Glose |
+|---|---|---|
+| Zhârtar | zhâr-tar | porte-ALL |
+| Thrâmar | thrâm-âr | courir-IMP.PL |
+| Kâvôr | kâ-vôr | quoi-ABL (« d'où », « pourquoi ») |
+| Ghîlzhambar | ghîlzhamb-ar | chair.pâle-PL |
+| Nâk zûl | | quatre dix |
+| Khrâkhagh | khrâkh-agh | rire-1s |
+| nârg ûrg | | sang vouloir-3s |
+| Narkhrâkha | nar-khrâkh-â | NÉG-rire-IMP |
+| narzhâl | nar-zhâl | NÉG-voir-3s |
+| thâlzha dhôl | thâl-zhâ dhôl | tour-LOC dormir-3s |
+| Hûsha | hûsh-â | se.taire-IMP |
+| narvânoth | nar-vân-ôth | néant-DÉCRET (formule des seuils, répétée sans pouvoir) |
+| Gûlkaghuzardhum | gûlk-agh-uzar-dhûm | bouffer-1s-3p.OBJ-TOT |
+| Grâmar | grâm-âr | aller-IMP.PL |
+| Mûrkaruzardhum | mûrk-âr-uzar-dhûm | tuer-IMP.PL-3p.OBJ-TOT |
+
+La menace *Ûkh thôk narvânoth* est une formule de Décret que les zûgar ont lue sur les seuils du Mârdrîm. Dans leur bouche, elle ne fait rien ; ils le savent, et la disent quand même.
+
+---
+
+## 8. Chant de guerre des zûgar
+
+*Scandé sur deux notes, en marchant. Chaque vers est un coup de pied dans le sol.*
+
+> **Nârg ! Nârg ! Ghrôm dha nârg !**
+> **Krâz glûm, thâl glûm,**
+> **zûgar narglûmar !**
+> **Khâr ghâz, ghar grâmaghar.**
+> **Ghâ ! Ghâ !**
+
+Sang ! Sang ! Os et sang !
+La pierre tombe, la tour tombe,
+les esclaves ne tombent pas !
+Le seigneur parle, nous marchons.
+Ho ! Ho !
+
+| Ghâzrûn | Glose |
+|---|---|
+| Nârg | sang |
+| Ghrôm dha nârg | os et sang |
+| Krâz glûm | pierre tomber-3s |
+| zûgar nar-glûm-ar | esclave-PL NÉG-tomber-3p |
+| Khâr ghâz | seigneur parler-3s |
+| ghar grâm-aghar | nous aller-1p (pronom exprimé pour marteler) |
+
+Le chant est le seul moment où les zûgar prononcent le pronom *ghar*, « nous » : partout ailleurs, le sujet est dans le verbe. Les Lieurs n'aiment pas ce chant, parce qu'un chant ne se lie pas.
+
+---
+
+## 9. Phrases de magie, de guerre et de prière
 
 *Registre haut, pour montrer le lexique étendu en situation.*
 
@@ -194,7 +269,7 @@ Le dernier vers est la formule que les Voix de la Nuit ont fait graver sur chaqu
 
 ---
 
-## 8. Clin d'œil au modèle
+## 10. Clin d'œil au modèle
 
 Pour montrer la mécanique héritée du Noir Parler, voici la phrase la plus célèbre de ce dernier rendue en Ghâzrûn :
 
