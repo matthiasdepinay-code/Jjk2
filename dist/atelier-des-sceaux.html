@@ -143,6 +143,11 @@
   table.journal td:last-child { font-size: calc(18px * var(--s)); }
 
   #bac-canvas { width: calc(720px * var(--s)); height: calc(360px * var(--s)); display: block; margin: 8px auto; border: 2px solid var(--ink); background: var(--paper2); cursor: crosshair; }
+  .lettre { font-style: italic; font-size: calc(17px * var(--s)); line-height: 1.5; padding: 10px 14px; background: rgba(255,255,255,0.35); border-left: 3px solid var(--red); }
+  .commande { margin: 10px 0; padding: 8px 12px; border: 1.5px dashed var(--ink); border-radius: 6px; }
+  .courrier-out { min-height: 1.4em; margin: 6px 0; font-style: italic; }
+  .seal-list-c { display: flex; flex-wrap: wrap; gap: 6px; }
+  button:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: none; }
   /* aide */
   #panel-help { width: calc(760px * var(--s)); }
   #panel-help p, #panel-help li { line-height: 1.45; }
@@ -261,11 +266,18 @@
         <button data-tab="bestiaire">Bestiaire</button>
         <button data-tab="pages">Pages</button>
         <button data-tab="defis">Défis</button>
+        <button data-tab="lettres">Lettres</button>
         <button data-tab="journal">Journal</button>
       </div>
       <div id="grim-content"></div>
     </section>
 
+    <!-- Courrier -->
+    <section id="panel-courrier" class="panel hidden" style="width: calc(720px * var(--s))">
+      <button class="fermer" title="Fermer (Échap)">✕</button>
+      <h2>Une lettre du maître</h2>
+      <div id="courrier-content"></div>
+    </section>
     <!-- Alambic -->
     <section id="panel-alambic" class="panel hidden" style="width: calc(760px * var(--s))">
       <button class="fermer" title="Fermer (Échap)">✕</button>
@@ -620,6 +632,11 @@ const DATA = (() => {
     acide:      { id: 'acide',      nom: 'Fiole d\'acide', couleur: '#8fbf2a', liquide: 'ACIDE', desc: 'Puisée dans une mare d\'acide (E). Ronge presque tout.' },
     lave:       { id: 'lave',       nom: 'Fiole de lave',  couleur: '#d9622b', liquide: 'LAVE', desc: 'Puisée dans la lave (E). Ne pas boire.' },
     seve:       { id: 'seve',       nom: 'Fiole de sève',  couleur: '#c9a63a', liquide: 'SEVE', desc: 'Puisée dans une flaque de sève collante (E).' },
+    // rares : offerts par le maître
+    larme_lune:   { id: 'larme_lune',   nom: 'Larme de lune',   couleur: '#cfd8e8', rare: true, desc: 'Offerte par le maître. Une goutte qui luit faiblement.' },
+    coeur_chene:  { id: 'coeur_chene',  nom: 'Cœur de chêne',   couleur: '#7a5a2a', rare: true, desc: 'Offert par le maître. Un nœud de bois qui bat lentement.' },
+    sable_temps:  { id: 'sable_temps',  nom: 'Sable du temps',  couleur: '#d8c08a', rare: true, desc: 'Offert par le maître. Il coule vers le haut.' },
+    plume_phenix: { id: 'plume_phenix', nom: 'Plume de phénix', couleur: '#e8842a', rare: true, desc: 'Offerte par le maître. Tiède, même dans la neige.' },
   };
 
   // Familles sensorielles des ingrédients (pour les indices du chaudron)
@@ -629,6 +646,7 @@ const DATA = (() => {
     plume: 'aérien', lueur: 'aérien', eclat: 'minéral', poussiere: 'minéral',
     racine: 'vivant', fil: 'vivant', champignon: 'sombre',
     huile: 'visqueux', seve: 'visqueux', acide: 'acide',
+    larme_lune: 'frais', coeur_chene: 'vivant', sable_temps: 'minéral', plume_phenix: 'chaud',
   };
   const ODEURS = { frais: 'ça sent la pluie', chaud: 'ça sent la fumée', 'aérien': 'ça sent l\'orage', 'minéral': 'ça sent la pierre mouillée', vivant: 'ça sent la forêt', sombre: 'ça sent la cave', visqueux: 'ça sent le vieux bois', acide: 'ça pique le nez' };
   const BRUITS = { chauffer: 'ça bouillonne', remuer: 'ça clapote', infuser: 'ça murmure', refroidir: 'ça craque' };
@@ -686,6 +704,14 @@ const DATA = (() => {
                   desc: 'Tu grandis pendant 25 s : rien ne te bouscule, tu pousses les caisses du pied.', enigme: 'Racine, poussière et braise, chauffées et remuées : on voit loin.' },
     gregeois:   { id: 'gregeois',   nom: 'Feu grégeois',       couleur: '#b84a1b', usage: 'lancer', ingr: ['huile', 'braise'], etapes: ['chauffer'],
                   desc: 'Se jette : une nappe d\'huile enflammée.', enigme: 'De l\'huile puisée et une braise, simplement chauffées. Ça brûle même sur l\'eau.' },
+    encre_eternelle: { id: 'encre_eternelle', nom: 'Encre éternelle', couleur: '#2f2a4a', usage: 'boire', ingr: ['larme_lune', 'cendre', 'eau_source'], etapes: ['chauffer', 'infuser', 'refroidir'],
+                  desc: 'À boire : +6 points d\'encre maximum, pour toujours.', enigme: 'Une larme de lune, de la cendre et de l\'eau : chauffer, infuser, refroidir. L\'encre ne s\'épuise plus tout à fait.' },
+    vitalite:   { id: 'vitalite',   nom: 'Sève de vigueur',    couleur: '#7a5a2a', usage: 'boire', ingr: ['coeur_chene', 'racine'], etapes: ['infuser', 'infuser'],
+                  desc: 'À boire : +2 de vitalité maximum, pour toujours.', enigme: 'Un cœur de chêne et une racine, infusés longuement.' },
+    sablier:    { id: 'sablier',    nom: 'Sablier liquide',    couleur: '#d8c08a', usage: 'boire', ingr: ['sable_temps', 'lueur'], etapes: ['refroidir'],
+                  desc: 'Le monde ralentit autour de toi pendant 30 s.', enigme: 'Du sable du temps et une lueur, refroidis : les secondes s\'étirent.' },
+    phenix:     { id: 'phenix',     nom: 'Souffle de phénix',  couleur: '#e8842a', usage: 'boire', ingr: ['plume_phenix', 'braise'], etapes: ['chauffer'],
+                  desc: 'Pendant 5 minutes, ta prochaine défaillance te relève sur place, en pleine forme.', enigme: 'Une plume de phénix sur une braise. Rien d\'autre.' },
     savon:      { id: 'savon',      nom: 'Savon de sorcier',   couleur: '#e8e0c0', usage: 'lancer', ingr: ['cendre', 'huile'], etapes: ['chauffer', 'remuer'],
                   desc: 'Se jette : tout glisse alentour pendant un moment.', enigme: 'Cendre et huile, chauffées puis remuées : c\'est la vraie recette du savon.' },
   };
@@ -727,6 +753,59 @@ const DATA = (() => {
     lapin:    { id: 'lapin',    nom: 'Lapin de neige',      mode: 'hop',   w: 22, h: 20, hp: 2, dmg: 0, hostile: false, aime: 'froid',   craint: 'feu',     drop: 'flocon',     desc: 'Bondit dans la poudreuse, fuit la moindre flamme.', couleur: '#f6f8fa', peur: 110, diurne: true },
     familier: { id: 'familier', nom: 'Familier',            mode: 'fly',   w: 20, h: 20, hp: 4, dmg: 0, hostile: false, aime: null, craint: null, drop: null, desc: 'Un petit élémentaire invoqué.' },
   };
+
+  // Trophées : souvenirs offerts par le maître, exposés au labo
+  const TROPHEES = {
+    seau:     { id: 'seau',     nom: 'Seau des pompiers', couleur: '#8d6a3c', desc: 'Les villageois te remercient pour la grange.' },
+    banquise: { id: 'banquise', nom: 'Patin du marché d\'hiver', couleur: '#7fb4d8', desc: 'Le lac a tenu tout le marché.' },
+    volcan:   { id: 'volcan',   nom: 'Pierre de volcan', couleur: '#2d2830', desc: 'Encore tiède.' },
+    pont:     { id: 'pont',     nom: 'Clou du vieux moulin', couleur: '#737e86', desc: 'Le meunier traverse de nouveau.' },
+    globe:    { id: 'globe',    nom: 'Globe des vents',  couleur: '#3f9c9b', desc: 'Il tourne seul quand il va pleuvoir.' },
+    cristal:  { id: 'cristal',  nom: 'Cristal géant',    couleur: '#b58fd8', desc: 'Il chante quand on le frôle.' },
+    medaille: { id: 'medaille', nom: 'Médaille de fusion', couleur: '#d8a63a', desc: 'Décernée par la guilde des sceaux.' },
+    epouvantail: { id: 'epouvantail', nom: 'Chapeau d\'épouvantail', couleur: '#a3782e', desc: 'Les trois épouvantails te saluent.' },
+    paix:     { id: 'paix',     nom: 'Collier de golem', couleur: '#8a6b2f', desc: 'Les bêtes du monde te connaissent.' },
+    diplome:  { id: 'diplome',  nom: 'Diplôme de sorcier(e)', couleur: '#9a4a3a', desc: 'Signé de la main du maître.' },
+  };
+  // Épreuves de sceaux : « invente un sort qui... » ; spec = sceau évalué
+  const EPREUVES = {
+    eteindre_loin: { texte: 'un sort qui éteigne un feu de loin', test: (s) => !['soi', 'aura'].includes(s.shape) && s.cores.some((c) => ['eau', 'froid', 'vent', 'neutraliser', 'secheresse'].includes(c)), indice: 'Il faut un effet qui éteint (Eau, Froid, Vent...) et une forme qui porte loin.' },
+    pont:          { texte: 'un sort qui fasse un pont au-dessus de l\'eau', test: (s) => !['soi', 'aura'].includes(s.shape) && (s.cores.includes('froid') || s.cores.includes('metal') || (s.cores.includes('terre') && s.persist > 0) || s.combo === 'eau|froid'), indice: 'Geler l\'eau, faire surgir du métal, ou de la terre qui dure (Persistance).' },
+    trois_cibles:  { texte: 'un sort qui touche trois épouvantails d\'un coup', test: (s) => s.shape === 'chaine' || s.shape === 'pluie' || s.extra > 0 || s.echo > 0 || (s.shape === 'zone' && s.size >= 1.5), indice: 'Une Chaîne, une Pluie, un Double, un Écho, ou une très grande Zone.' },
+    fusion:        { texte: 'un sort qui fusionne deux éléments', test: (s) => s.cores.length >= 2, indice: 'Un second glyphe d\'effet en bas du premier anneau.' },
+    emboite:       { texte: 'un sort qui en lance un autre', test: (s) => s.subs > 0, indice: 'Un sous-sceau dans un emplacement de modificateur.' },
+    endormir:      { texte: 'un sort qui endorme tout un troupeau', test: (s) => (s.cores.includes('ombre') || s.cores.includes('silence') || s.combo === 'acide|feu') && ['zone', 'pluie', 'aura', 'totem', 'mur'].includes(s.shape), indice: 'L\'Ombre, sur une forme qui couvre large.' },
+  };
+  // Lettres du maître, apportées par le corbeau, dans l'ordre
+  const LETTRES = [
+    { id: 'l1', titre: 'Première lettre', texte: 'Mon apprenti(e), j\'espère que l\'atelier ne brûle pas encore. Je suis au col des Brumes, et j\'ai oublié mes potions d\'encre sur l\'étagère. Renvoie-m\'en deux par le corbeau, il est plus fiable que moi.',
+      cmd: { type: 'potion', id: 'encre', n: 2 }, don: [{ type: 'encre_max', n: 4 }], merci: 'Merci ! En échange, une encre de seiche de mon pays : ton encre s\'approfondit pour de bon.' },
+    { id: 'l2', titre: 'Le col des Brumes', texte: 'Il fait un froid de loup ici. Les gens du col prétendent qu\'un flocon de notre montagne ne fond jamais. Prouve-le-leur : deux flocons éternels, grattés dans la neige.',
+      cmd: { type: 'ingredient', id: 'flocon', n: 2 }, don: [{ type: 'ingredient', id: 'larme_lune', n: 2 }, { type: 'recette', id: 'encre_eternelle' }], merci: 'Ils n\'ont pas fondu ! Voici deux larmes de lune et ma recette d\'encre éternelle.' },
+    { id: 'l3', titre: 'La grange', texte: 'Au village du bas, une grange prend feu chaque été, et les pompiers sont trop lents. Invente-leur un sceau qui éteigne un feu de loin, et envoie-m\'en le dessin. Je le recopierai.',
+      cmd: { type: 'sceau', epreuve: 'eteindre_loin' }, don: [{ type: 'trophee', id: 'seau' }, { type: 'xp', n: 60 }], merci: 'Les pompiers l\'ont appris en une journée. Ils t\'envoient leur plus vieux seau, en souvenir.' },
+    { id: 'l4', titre: 'Le marché d\'hiver', texte: 'Le marché d\'hiver se tient sur notre lac, d\'habitude. Cette année il ne gèle pas. Fais-moi ça : gèle une grande partie du lac. Ne te gèle pas avec.',
+      cmd: { type: 'exploit', texte: 'Geler une grande partie du lac', cond: (p, w) => w.glaceLac >= 300 }, don: [{ type: 'ingredient', id: 'coeur_chene', n: 1 }, { type: 'recette', id: 'vitalite' }, { type: 'trophee', id: 'banquise' }], merci: 'On a patiné trois jours. Voici un cœur de chêne, et de quoi en faire une sève de vigueur.' },
+    { id: 'l5', titre: 'Le forgeron', texte: 'Un forgeron de ma connaissance jure qu\'aucune flamme ne vaut la lave de notre volcan. Rapporte-m\'en une fiole. Avec des gants.',
+      cmd: { type: 'ingredient', id: 'lave', n: 1 }, don: [{ type: 'encre_max', n: 4 }, { type: 'trophee', id: 'volcan' }], merci: 'Il en a fait une lame magnifique. Tiens, un éclat de la pierre du volcan, et encore un peu d\'encre.' },
+    { id: 'l6', titre: 'Le moulin', texte: 'Le pont du vieux moulin s\'est effondré dans la rivière. Le meunier pleure. Trouve un sceau qui fasse un pont au-dessus de l\'eau.',
+      cmd: { type: 'sceau', epreuve: 'pont' }, don: [{ type: 'ingredient', id: 'sable_temps', n: 2 }, { type: 'recette', id: 'sablier' }, { type: 'trophee', id: 'pont' }], merci: 'Le meunier traverse en chantant. Voici du sable du temps : il coule vers le haut, c\'est normal.' },
+    { id: 'l7', titre: 'Les épouvantails', texte: 'Trois épouvantails gardent un champ à l\'est, et les corbeaux (pas le mien) se moquent d\'eux. Il faut un sort qui touche les trois d\'un coup. Ce sera leur porte-bonheur.',
+      cmd: { type: 'sceau', epreuve: 'trois_cibles' }, don: [{ type: 'encre_max', n: 6 }, { type: 'trophee', id: 'epouvantail' }], merci: 'Plus un corbeau. Mon corbeau à moi est vexé, mais il s\'en remettra.' },
+    { id: 'l8', titre: 'Le ciel', texte: 'Je veux voir le monde d\'en haut avant d\'être trop vieux. Envoie-moi un élixir de vol. La recette est dans une page que j\'ai perdue sur une île... désolé.',
+      cmd: { type: 'potion', id: 'vol', n: 1 }, don: [{ type: 'trophee', id: 'globe' }, { type: 'xp', n: 80 }], merci: 'J\'ai survolé trois royaumes. Voici un globe des vents, il tourne quand il va pleuvoir.' },
+    { id: 'l9', titre: 'La paix des bêtes', texte: 'Un golem de pierre garde un col, et personne ne passe. On dit qu\'un golem apprivoisé se laisse convaincre. Apprivoise-en un chez nous, pour t\'entraîner.',
+      cmd: { type: 'exploit', texte: 'Apprivoiser un golem', cond: (p, w) => w.golemTame }, don: [{ type: 'ingredient', id: 'plume_phenix', n: 1 }, { type: 'recette', id: 'phenix' }, { type: 'trophee', id: 'paix' }], merci: 'Le golem du col m\'a laissé passer en souriant. Voici une plume de phénix : garde-la pour un mauvais jour.' },
+    { id: 'l10', titre: 'Le chant des cristaux', texte: 'Les cristaux des grottes chantent, paraît-il. J\'en voudrais trois éclats pour un ami musicien.',
+      cmd: { type: 'ingredient', id: 'eclat', n: 3 }, don: [{ type: 'trophee', id: 'cristal' }, { type: 'encre_max', n: 4 }], merci: 'Mon ami en a fait un carillon. Il t\'envoie le plus gros cristal, celui qui chante le mieux.' },
+    { id: 'l11', titre: 'La guilde', texte: 'La guilde des sceaux me demande si mon élève sait fusionner deux éléments. Je leur ai dit oui. Ne me fais pas mentir.',
+      cmd: { type: 'sceau', epreuve: 'fusion' }, don: [{ type: 'trophee', id: 'medaille' }, { type: 'xp', n: 100 }], merci: 'La guilde est impressionnée. Voici ta médaille. Tu la porteras le dimanche.' },
+    { id: 'l12', titre: 'Le troupeau', texte: 'Un troupeau de moutons insomniaques empêche tout un village de dormir. Il faudrait un sort qui endorme tout le troupeau. Doucement.',
+      cmd: { type: 'sceau', epreuve: 'endormir' }, don: [{ type: 'encre_max', n: 6 }, { type: 'xp', n: 80 }], merci: 'Tout le village a dormi douze heures. Les moutons aussi.' },
+    { id: 'l13', titre: 'Le fond du monde', texte: 'Dernière épreuve, la plus vieille : descends tout en bas du monde, sous la dernière pierre, et reviens. Ensuite, nous parlerons de ton avenir.',
+      cmd: { type: 'exploit', texte: 'Descendre tout en bas du monde (sous la cellule 240)', cond: (p, w) => w.profondeur >= 240 }, don: [{ type: 'trophee', id: 'diplome' }, { type: 'xp', n: 150 }],
+      merci: 'Tu as vu le fond du monde, et tu es remonté(e). Je ne rentrerai pas tout de suite : l\'atelier est à toi, désormais. Voici ton diplôme. Continue d\'inventer. — Ton maître, fier.' },
+  ];
 
   // Pages déchirées du grimoire du maître, cachées dans le monde
   const PAGES = [
@@ -837,7 +916,7 @@ const DATA = (() => {
   const ACCESSOIRES = ['Bâton', 'Plume', 'Grimoire'];
 
   Object.assign(POTIONS, BIZARRES);
-  return { CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
+  return { TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
 })();
 
 </script>
@@ -1891,7 +1970,7 @@ const World = (() => {
   function makePlayer(x, y) {
     return { x, y, w: 26, h: 50, vx: 0, vy: 0, face: 1, onGround: false, coyote: 0, jumpBuf: 0, anim: 0, canStep: true,
       hp: 10, hpMax: 10, ink: 40, inkMax: 40, inkRegen: 1.8, inv: 0, climbing: false, liq: 0,
-      sta: { wet: 0, stone: 0, invisible: 0, lowgrav: 0, jump: 0, small: 0, vision: 0, burning: 0, glide: 0, lumiere: 0, patins: 0, vitesse: 0, dissous: 0, vol: 0, branchies: 0, geant: 0, glisse: 0, hate: 0, lent: 0, armure: 0, hoquet: 0, glouglou: 0, boussole: 0 },
+      sta: { wet: 0, stone: 0, invisible: 0, lowgrav: 0, jump: 0, small: 0, vision: 0, burning: 0, glide: 0, lumiere: 0, patins: 0, vitesse: 0, dissous: 0, vol: 0, branchies: 0, geant: 0, glisse: 0, hate: 0, lent: 0, armure: 0, hoquet: 0, glouglou: 0, boussole: 0, phenix: 0 },
       trap: null, selfTimer: null, carry: null, digT: 0 };
   }
   function makeObj(o) {
@@ -2677,6 +2756,10 @@ const World = (() => {
         case 'respiration': p.sta.branchies = 60 * F; msg('Des branchies ! L\'eau devient ton élément.'); break;
         case 'geant': p.sta.geant = 25 * F; p.sta.small = 0; msg('Tu grandis, tu grandis...'); break;
         case 'hoquet': p.sta.hoquet = 30 * F; msg('Hic. Hic. De la fumée ?'); break;
+        case 'encre_eternelle': game.bonusPermanent('encre', 6 * F); p.ink = p.inkMax; msg('L\'encre s\'approfondit en toi, pour toujours.'); break;
+        case 'vitalite': game.bonusPermanent('vie', 2 * F); p.hp = p.hpMax; msg('Ton cœur bat plus fort, pour toujours.'); break;
+        case 'sablier': p.sta.hate = 30 * F; msg('Les secondes s\'étirent autour de toi.'); break;
+        case 'phenix': p.sta.phenix = 300 * F; msg('Une chaleur de plume te traverse. Elle veille sur toi.'); break;
         case 'grenouille': p.sta.small = 25 * F; p.sta.jump = 25 * F; p.sta.geant = 0; msg('Coa. Tu es toute petite, et tu bondis.'); break;
         case 'glouglou': p.sta.glouglou = 20 * F; msg('Tu fuis de partout. Littéralement.'); break;
         case 'ballon': p.sta.geant = 20 * F; p.sta.lowgrav = 20 * F; p.sta.small = 0; msg('Tu gonfles comme une baudruche.'); break;
@@ -2925,6 +3008,7 @@ const World = (() => {
     if (p.y > L.h + 50) { msg('Tu tombes dans l\'encre noire... et te réveilles devant ta porte.'); respawn(); }
     if (p.onGround && Math.abs(p.vx) > 30 && Math.random() < dt * 6) Son.sfx('step', 'terre');
     if (p.selfTimer) { p.selfTimer.t -= dt; if (p.selfTimer.t <= 0) { const q = p.selfTimer; p.selfTimer = null; selfCast(q.spec, q.aim); } }
+    if (p.hp <= 0 && p.sta.phenix > 0) { p.sta.phenix = 0; p.hp = p.hpMax; p.inv = 2; p.sta.burning = 0; part(p.x + p.w / 2, p.y + p.h / 2, '#e8842a', 30, 140, 1, 4, -120); Son.sfx('unlock'); msg('Tu te relèves dans un battement d\'ailes de feu.'); }
     if (p.hp <= 0) { msg('Tu t\'évanouis... et te réveilles devant ta porte, un peu honteux(se).', 'warn'); Son.sfx('hurt'); respawn(); }
     // objet porté
     if (p.carry) { const o = p.carry; const g = p.G && p.G.mag > 0 ? p.G : { gx: 0, gy: 1 }; const cx = p.x + p.w / 2 - g.gx * (p.w / 2 + o.w / 2 + 4), cy = p.y + p.h / 2 - g.gy * (p.h / 2 + o.h / 2 + 4); o.x = cx - o.w / 2; o.y = cy - o.h / 2; o.vx = 0; o.vy = 0; }
@@ -3814,6 +3898,8 @@ const Lab = (() => {
     { id: 'grimoire', nom: 'Grimoire des découvertes', x: 860, y: 360, w: 150, h: 220 },
     { id: 'lettre', nom: 'Lettre du maître (aide)', x: 560, y: 120, w: 120, h: 90 },
     { id: 'porte', nom: 'Sortir sur le terrain d\'essai', x: 1090, y: 300, w: 130, h: 280 },
+    { id: 'corbeau', nom: 'Le corbeau du maître : une lettre !', x: 400, y: 190, w: 80, h: 80, corbeau: true },
+    { id: 'trophees', nom: 'Étagère des trophées', x: 495, y: 222, w: 200, h: 46 },
     { id: 'bac', nom: 'Bac d\'essai', x: 30, y: 70, w: 160, h: 120, labo: true },
     { id: 'alambic', nom: 'Alambic : distiller les potions', x: 200, y: 110, w: 110, h: 110, labo: true },
     { id: 'presse', nom: 'Presse à glyphes : parchemins sans encre', x: 700, y: 240, w: 150, h: 110, labo: true },
@@ -3821,7 +3907,8 @@ const Lab = (() => {
   ];
 
   function init(g) { game = g; }
-  function spotAt(x, y) { return SPOTS.find((s) => x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h) || null; }
+  const corbeauLa = () => game.courrier && (game.courrier.pret || game.courrier.active);
+  function spotAt(x, y) { return SPOTS.find((s) => (!s.corbeau || corbeauLa()) && x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h) || null; }
   function locked(id) { return !(game.progress.labo && game.progress.labo[id]); }
   function update(dt, inp) {
     time += dt;
@@ -4006,6 +4093,30 @@ const Lab = (() => {
       terr.slice(0, 4).forEach((q, i) => { const sp = DATA.ESPECES[q.t]; if (!sp) return; const cx = x + 50 + i * 32, by = y + h - 22; ctx.fillStyle = sp.couleur || '#1f1a16'; ctx.beginPath(); ctx.ellipse(cx, by - 8 + Math.sin(time * 2 + i) * 2, 10, 7, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.arc(cx + 4, by - 10, 2, 0, TAU); ctx.fill(); });
       U.txt(ctx, 'terrarium', x + w / 2, y + 12, 12, 'center', '#6b4f2a', 'IM Fell English', 'italic');
     });
+    // étagère des trophées
+    drawShelf(ctx, 500, 262, 190);
+    (game.trophees || []).slice(0, 10).forEach((id, i) => {
+      const T = DATA.TROPHEES[id]; if (!T) return; const x = 512 + i * 18, y = 262;
+      ctx.save(); ctx.strokeStyle = INK; ctx.lineWidth = 1.3; ctx.fillStyle = T.couleur;
+      if (i % 3 === 0) { ctx.beginPath(); ctx.arc(x, y - 9, 7, 0, TAU); ctx.fill(); ctx.stroke(); }
+      else if (i % 3 === 1) { ctx.fillRect(x - 6, y - 16, 12, 16); U.inkRect(ctx, x - 6, y - 16, 12, 16, i, 0.4); }
+      else { ctx.beginPath(); ctx.moveTo(x - 7, y); ctx.lineTo(x, y - 18); ctx.lineTo(x + 7, y); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+      ctx.restore();
+    });
+    // le corbeau sur le rebord de la fenêtre
+    if (corbeauLa()) {
+      const bx = 440, by = 258 + Math.sin(time * 3) * 1.5;
+      ctx.save(); ctx.strokeStyle = INK; ctx.lineWidth = 1.8; ctx.fillStyle = '#1f1a16';
+      ctx.beginPath(); ctx.ellipse(bx, by - 16, 14, 11, -0.2, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(bx + 12, by - 28, 7, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(bx - 10, by - 18); ctx.lineTo(bx - 26, by - 8); ctx.lineTo(bx - 8, by - 10); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#d8a63a'; ctx.beginPath(); ctx.moveTo(bx + 18, by - 29); ctx.lineTo(bx + 27, by - 26); ctx.lineTo(bx + 18, by - 24); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.arc(bx + 14, by - 30, 1.8, 0, TAU); ctx.fill();
+      U.inkLine(ctx, bx - 3, by - 6, bx - 5, by, 1, 0.3); U.inkLine(ctx, bx + 4, by - 6, bx + 5, by, 2, 0.3);
+      if (game.courrier.pret) { ctx.fillStyle = '#f6eed8'; ctx.save(); ctx.translate(bx + 30, by - 24); ctx.rotate(0.2); ctx.fillRect(-9, -6, 18, 12); U.inkRect(ctx, -9, -6, 18, 12, 3, 0.4); ctx.fillStyle = '#9a4a3a'; ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, TAU); ctx.fill(); ctx.restore();
+        ctx.fillStyle = '#d8a63a'; ctx.beginPath(); ctx.arc(bx + 6, by - 56 + Math.sin(time * 4) * 3, 8, 0, TAU); ctx.fill(); ctx.stroke(); U.txt(ctx, '!', bx + 6, by - 56 + Math.sin(time * 4) * 3, 13, 'center', INK); }
+      ctx.restore();
+    }
     // l'apprenti(e), debout au milieu, qui respire
     World.drawApprenti(ctx, 570, FLOOR, 84, game.look, hover && hover.x > 570 ? 1 : -1, 0, null, false);
 
@@ -4164,6 +4275,7 @@ const UI = (() => {
     if (name === 'seal') refreshSeal();
     if (name === 'cauldron') refreshCauldron();
     if (name === 'grimoire') { game.progress.nouveau = false; refreshGrimoire(); }
+    if (name === 'courrier') refreshCourrier();
     if (name === 'alambic') refreshAlambic();
     if (name === 'presse') refreshPresse();
     if (name === 'terrarium') refreshTerrarium();
@@ -4447,6 +4559,15 @@ const UI = (() => {
         const g = O.glyphe ? DATA.CORES[O.glyphe] : null; const connu = g && p.cores.includes(O.glyphe);
         c.appendChild(el('div', 'decouverte' + (n > 0 ? ' ok' : ''), '<span class="check">' + (n >= 3 || connu ? '✓' : n > 0 ? n : '○') + '</span><div><b>' + (n > 0 ? O.nom : '???') + '</b> ' + (g ? '<small>→ glyphe ' + (connu ? g.nom : '???') + '</small>' : '<small>(expérience)</small>') + '<br><em>' + O.desc + '</em></div>'));
       }
+    } else if (grimTab === 'lettres') {
+      c.appendChild(el('p', 'intro', 'Les lettres du maître auxquelles tu as répondu, et les souvenirs qu\'il t\'a envoyés.'));
+      const faites = DATA.LETTRES.filter((l) => game.courrier.faites.includes(l.id));
+      if (!faites.length) c.appendChild(el('p', 'muted', 'Aucune lettre pour l\'instant. Le corbeau passe quand tu es dehors depuis un moment.'));
+      for (const l of faites) c.appendChild(el('div', 'decouverte ok', '<span class="check">✉</span><div><b>' + l.titre + '</b><br><em>« ' + l.merci + ' »</em></div>'));
+      c.appendChild(el('h3', '', 'Trophées'));
+      if (!game.trophees.length) c.appendChild(el('p', 'muted', 'L\'étagère est vide.'));
+      for (const id of game.trophees) { const T = DATA.TROPHEES[id]; c.appendChild(el('div', 'decouverte ok', '<span class="check"><i class="dot" style="background:' + T.couleur + '"></i></span><div><b>' + T.nom + '</b><br><em>' + T.desc + '</em></div>')); }
+      c.appendChild(el('p', 'muted', 'Encre en plus, pour toujours : +' + (game.bonus.encre || 0) + ' · Vitalité en plus : +' + (game.bonus.vie || 0)));
     } else if (grimTab === 'bestiaire') {
       c.appendChild(el('p', 'intro', 'Les créatures du monde. Chacune aime un élément (qui l\'apprivoise) et en craint un autre (qui la fait fuir). Une créature apprivoisée te suit et t\'offre un cadeau de temps en temps.'));
       for (const id in DATA.ESPECES) {
@@ -4475,6 +4596,47 @@ const UI = (() => {
     }
   }
 
+  // ---------- Courrier ----------
+  function descCmd(m) {
+    if (m.type === 'potion') return m.n + ' × ' + DATA.POTIONS[m.id].nom + ' <small>(tu en as ' + (game.inv.potions[m.id] || 0) + ')</small>';
+    if (m.type === 'ingredient') return m.n + ' × ' + DATA.INGREDIENTS[m.id].nom + ' <small>(tu en as ' + (game.inv.ingredients[m.id] || 0) + ')</small>';
+    if (m.type === 'exploit') return m.texte + (game.courrier.exploitOk ? ' <b class="ok">✓ accompli</b>' : ' <small>(à accomplir dehors)</small>');
+    if (m.type === 'sceau') return 'Inventer ' + DATA.EPREUVES[m.epreuve].texte + ' <small>(n\'importe quel sceau consigné qui y parvient)</small>';
+    return '';
+  }
+  function refreshCourrier(resultat) {
+    const c = $('#courrier-content'); c.innerHTML = '';
+    const l = game.lettreCourante();
+    if (resultat && resultat.ok) {
+      c.appendChild(el('p', 'lettre', '« ' + resultat.merci + ' »'));
+      c.appendChild(el('h3', '', 'Le corbeau t\'a laissé'));
+      c.appendChild(el('ul', '', resultat.recu.map((r) => '<li>' + r + '</li>').join('')));
+      const suiv = game.lettreSuivante(); c.appendChild(el('p', 'muted', suiv ? 'Il reviendra avec une autre lettre quand tu auras passé un moment dehors.' : 'C\'était la dernière lettre. L\'atelier est à toi.'));
+      return;
+    }
+    if (!l) { c.appendChild(el('p', 'muted', game.lettreSuivante() ? 'Pas de lettre pour l\'instant. Le corbeau passe quand tu es dehors depuis un moment.' : 'Toutes les lettres ont reçu réponse. Le maître est fier de toi.')); return; }
+    c.appendChild(el('h3', '', l.titre));
+    c.appendChild(el('p', 'lettre', '« ' + l.texte + ' »'));
+    c.appendChild(el('div', 'commande', '<b>Commande :</b> ' + descCmd(l.cmd)));
+    const recompenses = l.don.map((d) => d.type === 'encre_max' ? 'de l\'encre en plus, pour toujours' : d.type === 'ingredient' ? 'un ingrédient rare' : d.type === 'recette' ? 'une recette' : d.type === 'trophee' ? 'un souvenir pour le labo' : 'de l\'expérience');
+    c.appendChild(el('p', 'muted', 'En échange : ' + [...new Set(recompenses)].join(', ') + '.'));
+    const out = el('div', 'courrier-out'); c.appendChild(out);
+    if (l.cmd.type === 'sceau') {
+      c.appendChild(el('h3', '', 'Envoyer un sceau consigné'));
+      const list = el('div', 'seal-list-c'); c.appendChild(list);
+      if (!game.seals.length) list.appendChild(el('p', 'muted', 'Aucun sceau consigné : compose-en un à la table des sceaux.'));
+      for (const q of game.seals) {
+        const it = el('div', 'seal-item'); const cv = document.createElement('canvas'); cv.width = 40; cv.height = 40; Seal.drawMini(cv.getContext('2d'), q, 20, 20, 17, 0);
+        it.appendChild(cv); it.appendChild(el('span', '', q.nom));
+        it.addEventListener('click', () => { const r = game.livrer(q); if (r.ok) refreshCourrier(r); else { out.innerHTML = r.msg; out.className = 'courrier-out warn'; } });
+        list.appendChild(it);
+      }
+    } else {
+      const b = el('button', '', 'Remettre au corbeau'); b.disabled = !game.peutLivrer();
+      b.addEventListener('click', () => { const r = game.livrer(); if (r.ok) refreshCourrier(r); else { out.innerHTML = r.msg; out.className = 'courrier-out warn'; } });
+      c.appendChild(b);
+    }
+  }
   // ---------- Alambic, presse, terrarium ----------
   function slotPicker(entry, label) {
     const bar = el('div', 'slotpick'); bar.innerHTML = '<span>→ barre :</span>';
@@ -4600,7 +4762,8 @@ const UI = (() => {
     $$('#hotbar .slot').forEach((s, i) => { const e = game.hotbar[i]; if (e && e.type === 'seal') { const ctx = s.querySelector('canvas').getContext('2d'); ctx.clearRect(0, 0, 56, 56); Seal.drawMini(ctx, e.seal, 28, 28, 22, time); } });
   }
 
-  return { init, openPanel, close, isOpen, refreshSeal, refreshCauldron, refreshGrimoire, refreshHotbar, refreshHud, toast, zoneTitle, tick, setMode };
+  function setGrimTab(t) { grimTab = t; refreshGrimoire(); }
+  return { grimTab: setGrimTab, init, openPanel, close, isOpen, refreshSeal, refreshCauldron, refreshGrimoire, refreshHotbar, refreshHud, toast, zoneTitle, tick, setMode };
 })();
 
 </script>
@@ -4687,6 +4850,7 @@ const UI = (() => {
     seals: [], hotbar: [null, null, null, null, null], selected: 0,
     editSeal: Seal.create(), lastPotion: null, started: false,
     xp: 0, niveau: 1,
+    courrier: { active: null, faites: [], pret: false, t: 0, exploitOk: false }, bonus: { encre: 0, vie: 0 }, trophees: [],
     toast(m, k) { UI.toast(m, k); },
     zoneChange(nom) { UI.zoneTitle(nom); },
     gainIngredient(id) {
@@ -4721,8 +4885,65 @@ const UI = (() => {
       }
       this.save();
     },
+    // ---------- Courrier du maître ----------
+    lettreCourante() { return DATA.LETTRES.find((l) => l.id === this.courrier.active) || null; },
+    lettreSuivante() { return DATA.LETTRES.find((l) => !this.courrier.faites.includes(l.id)) || null; },
+    tickCourrier(dt) {
+      const c = this.courrier;
+      if (c.active || c.pret) return;
+      const next = this.lettreSuivante(); if (!next) return;
+      c.t += dt;
+      if (c.t >= (c.faites.length === 0 ? 40 : 110)) { c.pret = true; this.toast('Un corbeau survole le monde, une lettre dans le bec. Il t\'attend au labo.', 'unlock'); Son.sfx('unlock'); this.save(); }
+    },
+    ouvrirCourrier() {
+      const c = this.courrier;
+      if (c.pret && !c.active) { const l = this.lettreSuivante(); if (l) { c.active = l.id; c.pret = false; c.exploitOk = false; this.save(); } }
+      UI.openPanel('courrier');
+    },
+    specEpreuve(seal) {
+      const prm = Seal.params(seal);
+      let cores = [seal.core]; if (seal.core2) cores.push(seal.core2);
+      if (prm.inverse) cores = cores.map((q) => (q === 'gravite' ? q : DATA.INVERSE[q] || q));
+      return { cores: cores.filter(Boolean), shape: seal.shape, persist: prm.persist, extra: prm.extra, echo: prm.echo, size: prm.size, combo: seal.core2 ? [seal.core, seal.core2].sort().join('|') : null, subs: Seal.subs(seal).length };
+    },
+    peutLivrer() {
+      const l = this.lettreCourante(); if (!l) return false; const m = l.cmd;
+      if (m.type === 'potion') return (this.inv.potions[m.id] || 0) >= m.n;
+      if (m.type === 'ingredient') return (this.inv.ingredients[m.id] || 0) >= m.n;
+      if (m.type === 'exploit') return this.courrier.exploitOk;
+      return false;
+    },
+    livrer(seal) {
+      const l = this.lettreCourante(); if (!l) return { ok: false };
+      const m = l.cmd;
+      if (m.type === 'sceau') {
+        if (!seal || !seal.core || !seal.shape) return { ok: false, msg: 'Ce sceau est incomplet : le maître ne saura qu\'en faire.' };
+        const E = DATA.EPREUVES[m.epreuve];
+        if (!E.test(this.specEpreuve(seal))) { Son.sfx('fail'); return { ok: false, msg: 'Le corbeau revient avec un mot : « Pas tout à fait. ' + E.indice + ' »' }; }
+      } else {
+        if (!this.peutLivrer()) return { ok: false, msg: 'Il te manque encore ce que le maître demande.' };
+        if (m.type === 'potion') this.inv.potions[m.id] -= m.n;
+        if (m.type === 'ingredient') this.inv.ingredients[m.id] -= m.n;
+      }
+      // récompenses
+      const recu = [];
+      for (const d of l.don) {
+        if (d.type === 'encre_max') { this.bonus.encre += d.n; recu.push('+' + d.n + ' d\'encre maximum'); }
+        else if (d.type === 'ingredient') { this.inv.ingredients[d.id] = (this.inv.ingredients[d.id] || 0) + d.n; if (!this.progress.ingredientsVus.includes(d.id)) this.progress.ingredientsVus.push(d.id); recu.push(d.n + ' × ' + DATA.INGREDIENTS[d.id].nom); }
+        else if (d.type === 'recette') { if (!this.progress.recettes.includes(d.id)) this.progress.recettes.push(d.id); recu.push('recette : ' + DATA.POTIONS[d.id].nom); }
+        else if (d.type === 'trophee') { if (!this.trophees.includes(d.id)) this.trophees.push(d.id); recu.push('trophée : ' + DATA.TROPHEES[d.id].nom); }
+        else if (d.type === 'xp') { this.addXp(d.n); recu.push('+' + d.n + ' d\'expérience'); }
+      }
+      this.courrier.faites.push(l.id); this.courrier.active = null; this.courrier.t = 0; this.courrier.exploitOk = false;
+      this.applyNiveau(); this.addXp(DATA.XP.decouverte);
+      Son.sfx('unlock'); this.toast('✉ Le corbeau repart. ' + l.merci, 'unlock');
+      this.save();
+      return { ok: true, merci: l.merci, recu };
+    },
+    bonusPermanent(k, n) { this.bonus[k] = (this.bonus[k] || 0) + n; this.applyNiveau(); this.save(); },
     checkDefis(w) {
       const p = this.progress;
+      { const l = this.lettreCourante(); if (l && l.cmd.type === 'exploit' && !this.courrier.exploitOk) { let ok = false; try { ok = l.cmd.cond(p, w); } catch (e) { ok = false; } if (ok) { this.courrier.exploitOk = true; this.toast('✉ Exploit accompli : « ' + l.cmd.texte + ' ». Le corbeau attend ta réponse au labo.', 'unlock'); Son.sfx('unlock'); this.save(); } } }
       for (const d of DATA.DEFIS) {
         if (p.defisFaits.includes(d.id)) continue;
         let ok = false; try { ok = d.cond(p, w); } catch (e) { ok = false; }
@@ -4745,7 +4966,8 @@ const UI = (() => {
     },
     applyNiveau() {
       const w = World.state(); if (!w) return;
-      w.p.inkMax = 40 + (this.niveau - 1) * DATA.XP.encreParNiveau;
+      w.p.inkMax = 40 + (this.niveau - 1) * DATA.XP.encreParNiveau + (this.bonus.encre || 0);
+      w.p.hpMax = 10 + (this.bonus.vie || 0);
       w.p.inkRegen = 1.8 + (this.niveau - 1) * DATA.XP.regenParNiveau;
     },
     setLook(l) {
@@ -4901,7 +5123,7 @@ const UI = (() => {
     save() {
       this.progress.compteurs.sceaux = this.seals.length;
       try {
-        const data = { look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
+        const data = { courrier: this.courrier, bonus: this.bonus, trophees: this.trophees, look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
           progress: { labo: this.progress.labo, cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs, pagesLues: this.progress.pagesLues, defisFaits: this.progress.defisFaits, bizarresVues: this.progress.bizarresVues || [], bestiaire: this.progress.bestiaire, especesVues: this.progress.especesVues } };
         localStorage.setItem(SAVE_KEY, JSON.stringify(data));
       } catch (e) { /* stockage indisponible */ }
@@ -4912,6 +5134,7 @@ const UI = (() => {
         const d = JSON.parse(raw);
         this.look = d.look || this.look; this.started = !!d.started; this.inv = d.inv || this.inv; this.seals = d.seals || []; this.hotbar = d.hotbar || this.hotbar; this.lastPotion = d.lastPotion || null;
         this.xp = d.xp || 0; this.niveau = d.niveau || 1;
+        if (d.courrier) this.courrier = Object.assign(this.courrier, d.courrier); if (d.bonus) this.bonus = Object.assign(this.bonus, d.bonus); if (d.trophees) this.trophees = d.trophees;
         if (d.progress) Object.assign(this.progress, d.progress);
         if (!this.progress.obs) this.progress.obs = {};
         if (!this.progress.pagesLues) this.progress.pagesLues = []; if (!this.progress.defisFaits) this.progress.defisFaits = [];
@@ -4976,6 +5199,8 @@ const UI = (() => {
       else if (id === 'miroir') UI.openPanel('create');
       else if (id === 'lettre') UI.openPanel('help');
       else if (id === 'porte') game.goWorld();
+      else if (id === 'corbeau') game.ouvrirCourrier();
+      else if (id === 'trophees') { UI.openPanel('grimoire'); UI.grimTab('lettres'); }
       else if (id === 'alambic' || id === 'presse' || id === 'terrarium' || id === 'bac') { if (game.progress.labo[id]) UI.openPanel(id); else { const u = DATA.UNLOCKS.find((q) => q.item === id && q.type === 'labo'); game.toast('Ce poste est encore scellé. ' + (u ? 'Indice : ' + u.indice : ''), 'warn'); } }
     } else if (game.state === 'world') game.useSelected();
   });
@@ -5005,6 +5230,7 @@ const UI = (() => {
         World.update(dt, inp, World.toWorld(inp.mouse.x, inp.mouse.y));
         if (inp.interact) World.interact();
         worldSaveT += dt; if (worldSaveT > 30) { worldSaveT = 0; game.saveWorld(); }
+        game.tickCourrier(dt);
       }
       if (game.state === 'world') { World.draw(ctx, paperPat, inp, game.hotbar[game.selected]); UI.refreshHud(World.state().p, game); }
     } else {

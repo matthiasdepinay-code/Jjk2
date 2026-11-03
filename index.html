@@ -143,6 +143,11 @@
   table.journal td:last-child { font-size: calc(18px * var(--s)); }
 
   #bac-canvas { width: calc(720px * var(--s)); height: calc(360px * var(--s)); display: block; margin: 8px auto; border: 2px solid var(--ink); background: var(--paper2); cursor: crosshair; }
+  .lettre { font-style: italic; font-size: calc(17px * var(--s)); line-height: 1.5; padding: 10px 14px; background: rgba(255,255,255,0.35); border-left: 3px solid var(--red); }
+  .commande { margin: 10px 0; padding: 8px 12px; border: 1.5px dashed var(--ink); border-radius: 6px; }
+  .courrier-out { min-height: 1.4em; margin: 6px 0; font-style: italic; }
+  .seal-list-c { display: flex; flex-wrap: wrap; gap: 6px; }
+  button:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: none; }
   /* aide */
   #panel-help { width: calc(760px * var(--s)); }
   #panel-help p, #panel-help li { line-height: 1.45; }
@@ -261,11 +266,18 @@
         <button data-tab="bestiaire">Bestiaire</button>
         <button data-tab="pages">Pages</button>
         <button data-tab="defis">Défis</button>
+        <button data-tab="lettres">Lettres</button>
         <button data-tab="journal">Journal</button>
       </div>
       <div id="grim-content"></div>
     </section>
 
+    <!-- Courrier -->
+    <section id="panel-courrier" class="panel hidden" style="width: calc(720px * var(--s))">
+      <button class="fermer" title="Fermer (Échap)">✕</button>
+      <h2>Une lettre du maître</h2>
+      <div id="courrier-content"></div>
+    </section>
     <!-- Alambic -->
     <section id="panel-alambic" class="panel hidden" style="width: calc(760px * var(--s))">
       <button class="fermer" title="Fermer (Échap)">✕</button>

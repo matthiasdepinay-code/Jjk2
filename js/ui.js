@@ -87,6 +87,7 @@ const UI = (() => {
     if (name === 'seal') refreshSeal();
     if (name === 'cauldron') refreshCauldron();
     if (name === 'grimoire') { game.progress.nouveau = false; refreshGrimoire(); }
+    if (name === 'courrier') refreshCourrier();
     if (name === 'alambic') refreshAlambic();
     if (name === 'presse') refreshPresse();
     if (name === 'terrarium') refreshTerrarium();
@@ -370,6 +371,15 @@ const UI = (() => {
         const g = O.glyphe ? DATA.CORES[O.glyphe] : null; const connu = g && p.cores.includes(O.glyphe);
         c.appendChild(el('div', 'decouverte' + (n > 0 ? ' ok' : ''), '<span class="check">' + (n >= 3 || connu ? '✓' : n > 0 ? n : '○') + '</span><div><b>' + (n > 0 ? O.nom : '???') + '</b> ' + (g ? '<small>→ glyphe ' + (connu ? g.nom : '???') + '</small>' : '<small>(expérience)</small>') + '<br><em>' + O.desc + '</em></div>'));
       }
+    } else if (grimTab === 'lettres') {
+      c.appendChild(el('p', 'intro', 'Les lettres du maître auxquelles tu as répondu, et les souvenirs qu\'il t\'a envoyés.'));
+      const faites = DATA.LETTRES.filter((l) => game.courrier.faites.includes(l.id));
+      if (!faites.length) c.appendChild(el('p', 'muted', 'Aucune lettre pour l\'instant. Le corbeau passe quand tu es dehors depuis un moment.'));
+      for (const l of faites) c.appendChild(el('div', 'decouverte ok', '<span class="check">✉</span><div><b>' + l.titre + '</b><br><em>« ' + l.merci + ' »</em></div>'));
+      c.appendChild(el('h3', '', 'Trophées'));
+      if (!game.trophees.length) c.appendChild(el('p', 'muted', 'L\'étagère est vide.'));
+      for (const id of game.trophees) { const T = DATA.TROPHEES[id]; c.appendChild(el('div', 'decouverte ok', '<span class="check"><i class="dot" style="background:' + T.couleur + '"></i></span><div><b>' + T.nom + '</b><br><em>' + T.desc + '</em></div>')); }
+      c.appendChild(el('p', 'muted', 'Encre en plus, pour toujours : +' + (game.bonus.encre || 0) + ' · Vitalité en plus : +' + (game.bonus.vie || 0)));
     } else if (grimTab === 'bestiaire') {
       c.appendChild(el('p', 'intro', 'Les créatures du monde. Chacune aime un élément (qui l\'apprivoise) et en craint un autre (qui la fait fuir). Une créature apprivoisée te suit et t\'offre un cadeau de temps en temps.'));
       for (const id in DATA.ESPECES) {
@@ -398,6 +408,47 @@ const UI = (() => {
     }
   }
 
+  // ---------- Courrier ----------
+  function descCmd(m) {
+    if (m.type === 'potion') return m.n + ' × ' + DATA.POTIONS[m.id].nom + ' <small>(tu en as ' + (game.inv.potions[m.id] || 0) + ')</small>';
+    if (m.type === 'ingredient') return m.n + ' × ' + DATA.INGREDIENTS[m.id].nom + ' <small>(tu en as ' + (game.inv.ingredients[m.id] || 0) + ')</small>';
+    if (m.type === 'exploit') return m.texte + (game.courrier.exploitOk ? ' <b class="ok">✓ accompli</b>' : ' <small>(à accomplir dehors)</small>');
+    if (m.type === 'sceau') return 'Inventer ' + DATA.EPREUVES[m.epreuve].texte + ' <small>(n\'importe quel sceau consigné qui y parvient)</small>';
+    return '';
+  }
+  function refreshCourrier(resultat) {
+    const c = $('#courrier-content'); c.innerHTML = '';
+    const l = game.lettreCourante();
+    if (resultat && resultat.ok) {
+      c.appendChild(el('p', 'lettre', '« ' + resultat.merci + ' »'));
+      c.appendChild(el('h3', '', 'Le corbeau t\'a laissé'));
+      c.appendChild(el('ul', '', resultat.recu.map((r) => '<li>' + r + '</li>').join('')));
+      const suiv = game.lettreSuivante(); c.appendChild(el('p', 'muted', suiv ? 'Il reviendra avec une autre lettre quand tu auras passé un moment dehors.' : 'C\'était la dernière lettre. L\'atelier est à toi.'));
+      return;
+    }
+    if (!l) { c.appendChild(el('p', 'muted', game.lettreSuivante() ? 'Pas de lettre pour l\'instant. Le corbeau passe quand tu es dehors depuis un moment.' : 'Toutes les lettres ont reçu réponse. Le maître est fier de toi.')); return; }
+    c.appendChild(el('h3', '', l.titre));
+    c.appendChild(el('p', 'lettre', '« ' + l.texte + ' »'));
+    c.appendChild(el('div', 'commande', '<b>Commande :</b> ' + descCmd(l.cmd)));
+    const recompenses = l.don.map((d) => d.type === 'encre_max' ? 'de l\'encre en plus, pour toujours' : d.type === 'ingredient' ? 'un ingrédient rare' : d.type === 'recette' ? 'une recette' : d.type === 'trophee' ? 'un souvenir pour le labo' : 'de l\'expérience');
+    c.appendChild(el('p', 'muted', 'En échange : ' + [...new Set(recompenses)].join(', ') + '.'));
+    const out = el('div', 'courrier-out'); c.appendChild(out);
+    if (l.cmd.type === 'sceau') {
+      c.appendChild(el('h3', '', 'Envoyer un sceau consigné'));
+      const list = el('div', 'seal-list-c'); c.appendChild(list);
+      if (!game.seals.length) list.appendChild(el('p', 'muted', 'Aucun sceau consigné : compose-en un à la table des sceaux.'));
+      for (const q of game.seals) {
+        const it = el('div', 'seal-item'); const cv = document.createElement('canvas'); cv.width = 40; cv.height = 40; Seal.drawMini(cv.getContext('2d'), q, 20, 20, 17, 0);
+        it.appendChild(cv); it.appendChild(el('span', '', q.nom));
+        it.addEventListener('click', () => { const r = game.livrer(q); if (r.ok) refreshCourrier(r); else { out.innerHTML = r.msg; out.className = 'courrier-out warn'; } });
+        list.appendChild(it);
+      }
+    } else {
+      const b = el('button', '', 'Remettre au corbeau'); b.disabled = !game.peutLivrer();
+      b.addEventListener('click', () => { const r = game.livrer(); if (r.ok) refreshCourrier(r); else { out.innerHTML = r.msg; out.className = 'courrier-out warn'; } });
+      c.appendChild(b);
+    }
+  }
   // ---------- Alambic, presse, terrarium ----------
   function slotPicker(entry, label) {
     const bar = el('div', 'slotpick'); bar.innerHTML = '<span>→ barre :</span>';
@@ -523,5 +574,6 @@ const UI = (() => {
     $$('#hotbar .slot').forEach((s, i) => { const e = game.hotbar[i]; if (e && e.type === 'seal') { const ctx = s.querySelector('canvas').getContext('2d'); ctx.clearRect(0, 0, 56, 56); Seal.drawMini(ctx, e.seal, 28, 28, 22, time); } });
   }
 
-  return { init, openPanel, close, isOpen, refreshSeal, refreshCauldron, refreshGrimoire, refreshHotbar, refreshHud, toast, zoneTitle, tick, setMode };
+  function setGrimTab(t) { grimTab = t; refreshGrimoire(); }
+  return { grimTab: setGrimTab, init, openPanel, close, isOpen, refreshSeal, refreshCauldron, refreshGrimoire, refreshHotbar, refreshHud, toast, zoneTitle, tick, setMode };
 })();

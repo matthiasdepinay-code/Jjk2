@@ -80,6 +80,7 @@
     seals: [], hotbar: [null, null, null, null, null], selected: 0,
     editSeal: Seal.create(), lastPotion: null, started: false,
     xp: 0, niveau: 1,
+    courrier: { active: null, faites: [], pret: false, t: 0, exploitOk: false }, bonus: { encre: 0, vie: 0 }, trophees: [],
     toast(m, k) { UI.toast(m, k); },
     zoneChange(nom) { UI.zoneTitle(nom); },
     gainIngredient(id) {
@@ -114,8 +115,65 @@
       }
       this.save();
     },
+    // ---------- Courrier du maître ----------
+    lettreCourante() { return DATA.LETTRES.find((l) => l.id === this.courrier.active) || null; },
+    lettreSuivante() { return DATA.LETTRES.find((l) => !this.courrier.faites.includes(l.id)) || null; },
+    tickCourrier(dt) {
+      const c = this.courrier;
+      if (c.active || c.pret) return;
+      const next = this.lettreSuivante(); if (!next) return;
+      c.t += dt;
+      if (c.t >= (c.faites.length === 0 ? 40 : 110)) { c.pret = true; this.toast('Un corbeau survole le monde, une lettre dans le bec. Il t\'attend au labo.', 'unlock'); Son.sfx('unlock'); this.save(); }
+    },
+    ouvrirCourrier() {
+      const c = this.courrier;
+      if (c.pret && !c.active) { const l = this.lettreSuivante(); if (l) { c.active = l.id; c.pret = false; c.exploitOk = false; this.save(); } }
+      UI.openPanel('courrier');
+    },
+    specEpreuve(seal) {
+      const prm = Seal.params(seal);
+      let cores = [seal.core]; if (seal.core2) cores.push(seal.core2);
+      if (prm.inverse) cores = cores.map((q) => (q === 'gravite' ? q : DATA.INVERSE[q] || q));
+      return { cores: cores.filter(Boolean), shape: seal.shape, persist: prm.persist, extra: prm.extra, echo: prm.echo, size: prm.size, combo: seal.core2 ? [seal.core, seal.core2].sort().join('|') : null, subs: Seal.subs(seal).length };
+    },
+    peutLivrer() {
+      const l = this.lettreCourante(); if (!l) return false; const m = l.cmd;
+      if (m.type === 'potion') return (this.inv.potions[m.id] || 0) >= m.n;
+      if (m.type === 'ingredient') return (this.inv.ingredients[m.id] || 0) >= m.n;
+      if (m.type === 'exploit') return this.courrier.exploitOk;
+      return false;
+    },
+    livrer(seal) {
+      const l = this.lettreCourante(); if (!l) return { ok: false };
+      const m = l.cmd;
+      if (m.type === 'sceau') {
+        if (!seal || !seal.core || !seal.shape) return { ok: false, msg: 'Ce sceau est incomplet : le maître ne saura qu\'en faire.' };
+        const E = DATA.EPREUVES[m.epreuve];
+        if (!E.test(this.specEpreuve(seal))) { Son.sfx('fail'); return { ok: false, msg: 'Le corbeau revient avec un mot : « Pas tout à fait. ' + E.indice + ' »' }; }
+      } else {
+        if (!this.peutLivrer()) return { ok: false, msg: 'Il te manque encore ce que le maître demande.' };
+        if (m.type === 'potion') this.inv.potions[m.id] -= m.n;
+        if (m.type === 'ingredient') this.inv.ingredients[m.id] -= m.n;
+      }
+      // récompenses
+      const recu = [];
+      for (const d of l.don) {
+        if (d.type === 'encre_max') { this.bonus.encre += d.n; recu.push('+' + d.n + ' d\'encre maximum'); }
+        else if (d.type === 'ingredient') { this.inv.ingredients[d.id] = (this.inv.ingredients[d.id] || 0) + d.n; if (!this.progress.ingredientsVus.includes(d.id)) this.progress.ingredientsVus.push(d.id); recu.push(d.n + ' × ' + DATA.INGREDIENTS[d.id].nom); }
+        else if (d.type === 'recette') { if (!this.progress.recettes.includes(d.id)) this.progress.recettes.push(d.id); recu.push('recette : ' + DATA.POTIONS[d.id].nom); }
+        else if (d.type === 'trophee') { if (!this.trophees.includes(d.id)) this.trophees.push(d.id); recu.push('trophée : ' + DATA.TROPHEES[d.id].nom); }
+        else if (d.type === 'xp') { this.addXp(d.n); recu.push('+' + d.n + ' d\'expérience'); }
+      }
+      this.courrier.faites.push(l.id); this.courrier.active = null; this.courrier.t = 0; this.courrier.exploitOk = false;
+      this.applyNiveau(); this.addXp(DATA.XP.decouverte);
+      Son.sfx('unlock'); this.toast('✉ Le corbeau repart. ' + l.merci, 'unlock');
+      this.save();
+      return { ok: true, merci: l.merci, recu };
+    },
+    bonusPermanent(k, n) { this.bonus[k] = (this.bonus[k] || 0) + n; this.applyNiveau(); this.save(); },
     checkDefis(w) {
       const p = this.progress;
+      { const l = this.lettreCourante(); if (l && l.cmd.type === 'exploit' && !this.courrier.exploitOk) { let ok = false; try { ok = l.cmd.cond(p, w); } catch (e) { ok = false; } if (ok) { this.courrier.exploitOk = true; this.toast('✉ Exploit accompli : « ' + l.cmd.texte + ' ». Le corbeau attend ta réponse au labo.', 'unlock'); Son.sfx('unlock'); this.save(); } } }
       for (const d of DATA.DEFIS) {
         if (p.defisFaits.includes(d.id)) continue;
         let ok = false; try { ok = d.cond(p, w); } catch (e) { ok = false; }
@@ -138,7 +196,8 @@
     },
     applyNiveau() {
       const w = World.state(); if (!w) return;
-      w.p.inkMax = 40 + (this.niveau - 1) * DATA.XP.encreParNiveau;
+      w.p.inkMax = 40 + (this.niveau - 1) * DATA.XP.encreParNiveau + (this.bonus.encre || 0);
+      w.p.hpMax = 10 + (this.bonus.vie || 0);
       w.p.inkRegen = 1.8 + (this.niveau - 1) * DATA.XP.regenParNiveau;
     },
     setLook(l) {
@@ -294,7 +353,7 @@
     save() {
       this.progress.compteurs.sceaux = this.seals.length;
       try {
-        const data = { look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
+        const data = { courrier: this.courrier, bonus: this.bonus, trophees: this.trophees, look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
           progress: { labo: this.progress.labo, cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs, pagesLues: this.progress.pagesLues, defisFaits: this.progress.defisFaits, bizarresVues: this.progress.bizarresVues || [], bestiaire: this.progress.bestiaire, especesVues: this.progress.especesVues } };
         localStorage.setItem(SAVE_KEY, JSON.stringify(data));
       } catch (e) { /* stockage indisponible */ }
@@ -305,6 +364,7 @@
         const d = JSON.parse(raw);
         this.look = d.look || this.look; this.started = !!d.started; this.inv = d.inv || this.inv; this.seals = d.seals || []; this.hotbar = d.hotbar || this.hotbar; this.lastPotion = d.lastPotion || null;
         this.xp = d.xp || 0; this.niveau = d.niveau || 1;
+        if (d.courrier) this.courrier = Object.assign(this.courrier, d.courrier); if (d.bonus) this.bonus = Object.assign(this.bonus, d.bonus); if (d.trophees) this.trophees = d.trophees;
         if (d.progress) Object.assign(this.progress, d.progress);
         if (!this.progress.obs) this.progress.obs = {};
         if (!this.progress.pagesLues) this.progress.pagesLues = []; if (!this.progress.defisFaits) this.progress.defisFaits = [];
@@ -369,6 +429,8 @@
       else if (id === 'miroir') UI.openPanel('create');
       else if (id === 'lettre') UI.openPanel('help');
       else if (id === 'porte') game.goWorld();
+      else if (id === 'corbeau') game.ouvrirCourrier();
+      else if (id === 'trophees') { UI.openPanel('grimoire'); UI.grimTab('lettres'); }
       else if (id === 'alambic' || id === 'presse' || id === 'terrarium' || id === 'bac') { if (game.progress.labo[id]) UI.openPanel(id); else { const u = DATA.UNLOCKS.find((q) => q.item === id && q.type === 'labo'); game.toast('Ce poste est encore scellé. ' + (u ? 'Indice : ' + u.indice : ''), 'warn'); } }
     } else if (game.state === 'world') game.useSelected();
   });
@@ -398,6 +460,7 @@
         World.update(dt, inp, World.toWorld(inp.mouse.x, inp.mouse.y));
         if (inp.interact) World.interact();
         worldSaveT += dt; if (worldSaveT > 30) { worldSaveT = 0; game.saveWorld(); }
+        game.tickCourrier(dt);
       }
       if (game.state === 'world') { World.draw(ctx, paperPat, inp, game.hotbar[game.selected]); UI.refreshHud(World.state().p, game); }
     } else {

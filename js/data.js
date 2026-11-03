@@ -118,6 +118,11 @@ const DATA = (() => {
     acide:      { id: 'acide',      nom: 'Fiole d\'acide', couleur: '#8fbf2a', liquide: 'ACIDE', desc: 'Puisée dans une mare d\'acide (E). Ronge presque tout.' },
     lave:       { id: 'lave',       nom: 'Fiole de lave',  couleur: '#d9622b', liquide: 'LAVE', desc: 'Puisée dans la lave (E). Ne pas boire.' },
     seve:       { id: 'seve',       nom: 'Fiole de sève',  couleur: '#c9a63a', liquide: 'SEVE', desc: 'Puisée dans une flaque de sève collante (E).' },
+    // rares : offerts par le maître
+    larme_lune:   { id: 'larme_lune',   nom: 'Larme de lune',   couleur: '#cfd8e8', rare: true, desc: 'Offerte par le maître. Une goutte qui luit faiblement.' },
+    coeur_chene:  { id: 'coeur_chene',  nom: 'Cœur de chêne',   couleur: '#7a5a2a', rare: true, desc: 'Offert par le maître. Un nœud de bois qui bat lentement.' },
+    sable_temps:  { id: 'sable_temps',  nom: 'Sable du temps',  couleur: '#d8c08a', rare: true, desc: 'Offert par le maître. Il coule vers le haut.' },
+    plume_phenix: { id: 'plume_phenix', nom: 'Plume de phénix', couleur: '#e8842a', rare: true, desc: 'Offerte par le maître. Tiède, même dans la neige.' },
   };
 
   // Familles sensorielles des ingrédients (pour les indices du chaudron)
@@ -127,6 +132,7 @@ const DATA = (() => {
     plume: 'aérien', lueur: 'aérien', eclat: 'minéral', poussiere: 'minéral',
     racine: 'vivant', fil: 'vivant', champignon: 'sombre',
     huile: 'visqueux', seve: 'visqueux', acide: 'acide',
+    larme_lune: 'frais', coeur_chene: 'vivant', sable_temps: 'minéral', plume_phenix: 'chaud',
   };
   const ODEURS = { frais: 'ça sent la pluie', chaud: 'ça sent la fumée', 'aérien': 'ça sent l\'orage', 'minéral': 'ça sent la pierre mouillée', vivant: 'ça sent la forêt', sombre: 'ça sent la cave', visqueux: 'ça sent le vieux bois', acide: 'ça pique le nez' };
   const BRUITS = { chauffer: 'ça bouillonne', remuer: 'ça clapote', infuser: 'ça murmure', refroidir: 'ça craque' };
@@ -184,6 +190,14 @@ const DATA = (() => {
                   desc: 'Tu grandis pendant 25 s : rien ne te bouscule, tu pousses les caisses du pied.', enigme: 'Racine, poussière et braise, chauffées et remuées : on voit loin.' },
     gregeois:   { id: 'gregeois',   nom: 'Feu grégeois',       couleur: '#b84a1b', usage: 'lancer', ingr: ['huile', 'braise'], etapes: ['chauffer'],
                   desc: 'Se jette : une nappe d\'huile enflammée.', enigme: 'De l\'huile puisée et une braise, simplement chauffées. Ça brûle même sur l\'eau.' },
+    encre_eternelle: { id: 'encre_eternelle', nom: 'Encre éternelle', couleur: '#2f2a4a', usage: 'boire', ingr: ['larme_lune', 'cendre', 'eau_source'], etapes: ['chauffer', 'infuser', 'refroidir'],
+                  desc: 'À boire : +6 points d\'encre maximum, pour toujours.', enigme: 'Une larme de lune, de la cendre et de l\'eau : chauffer, infuser, refroidir. L\'encre ne s\'épuise plus tout à fait.' },
+    vitalite:   { id: 'vitalite',   nom: 'Sève de vigueur',    couleur: '#7a5a2a', usage: 'boire', ingr: ['coeur_chene', 'racine'], etapes: ['infuser', 'infuser'],
+                  desc: 'À boire : +2 de vitalité maximum, pour toujours.', enigme: 'Un cœur de chêne et une racine, infusés longuement.' },
+    sablier:    { id: 'sablier',    nom: 'Sablier liquide',    couleur: '#d8c08a', usage: 'boire', ingr: ['sable_temps', 'lueur'], etapes: ['refroidir'],
+                  desc: 'Le monde ralentit autour de toi pendant 30 s.', enigme: 'Du sable du temps et une lueur, refroidis : les secondes s\'étirent.' },
+    phenix:     { id: 'phenix',     nom: 'Souffle de phénix',  couleur: '#e8842a', usage: 'boire', ingr: ['plume_phenix', 'braise'], etapes: ['chauffer'],
+                  desc: 'Pendant 5 minutes, ta prochaine défaillance te relève sur place, en pleine forme.', enigme: 'Une plume de phénix sur une braise. Rien d\'autre.' },
     savon:      { id: 'savon',      nom: 'Savon de sorcier',   couleur: '#e8e0c0', usage: 'lancer', ingr: ['cendre', 'huile'], etapes: ['chauffer', 'remuer'],
                   desc: 'Se jette : tout glisse alentour pendant un moment.', enigme: 'Cendre et huile, chauffées puis remuées : c\'est la vraie recette du savon.' },
   };
@@ -225,6 +239,59 @@ const DATA = (() => {
     lapin:    { id: 'lapin',    nom: 'Lapin de neige',      mode: 'hop',   w: 22, h: 20, hp: 2, dmg: 0, hostile: false, aime: 'froid',   craint: 'feu',     drop: 'flocon',     desc: 'Bondit dans la poudreuse, fuit la moindre flamme.', couleur: '#f6f8fa', peur: 110, diurne: true },
     familier: { id: 'familier', nom: 'Familier',            mode: 'fly',   w: 20, h: 20, hp: 4, dmg: 0, hostile: false, aime: null, craint: null, drop: null, desc: 'Un petit élémentaire invoqué.' },
   };
+
+  // Trophées : souvenirs offerts par le maître, exposés au labo
+  const TROPHEES = {
+    seau:     { id: 'seau',     nom: 'Seau des pompiers', couleur: '#8d6a3c', desc: 'Les villageois te remercient pour la grange.' },
+    banquise: { id: 'banquise', nom: 'Patin du marché d\'hiver', couleur: '#7fb4d8', desc: 'Le lac a tenu tout le marché.' },
+    volcan:   { id: 'volcan',   nom: 'Pierre de volcan', couleur: '#2d2830', desc: 'Encore tiède.' },
+    pont:     { id: 'pont',     nom: 'Clou du vieux moulin', couleur: '#737e86', desc: 'Le meunier traverse de nouveau.' },
+    globe:    { id: 'globe',    nom: 'Globe des vents',  couleur: '#3f9c9b', desc: 'Il tourne seul quand il va pleuvoir.' },
+    cristal:  { id: 'cristal',  nom: 'Cristal géant',    couleur: '#b58fd8', desc: 'Il chante quand on le frôle.' },
+    medaille: { id: 'medaille', nom: 'Médaille de fusion', couleur: '#d8a63a', desc: 'Décernée par la guilde des sceaux.' },
+    epouvantail: { id: 'epouvantail', nom: 'Chapeau d\'épouvantail', couleur: '#a3782e', desc: 'Les trois épouvantails te saluent.' },
+    paix:     { id: 'paix',     nom: 'Collier de golem', couleur: '#8a6b2f', desc: 'Les bêtes du monde te connaissent.' },
+    diplome:  { id: 'diplome',  nom: 'Diplôme de sorcier(e)', couleur: '#9a4a3a', desc: 'Signé de la main du maître.' },
+  };
+  // Épreuves de sceaux : « invente un sort qui... » ; spec = sceau évalué
+  const EPREUVES = {
+    eteindre_loin: { texte: 'un sort qui éteigne un feu de loin', test: (s) => !['soi', 'aura'].includes(s.shape) && s.cores.some((c) => ['eau', 'froid', 'vent', 'neutraliser', 'secheresse'].includes(c)), indice: 'Il faut un effet qui éteint (Eau, Froid, Vent...) et une forme qui porte loin.' },
+    pont:          { texte: 'un sort qui fasse un pont au-dessus de l\'eau', test: (s) => !['soi', 'aura'].includes(s.shape) && (s.cores.includes('froid') || s.cores.includes('metal') || (s.cores.includes('terre') && s.persist > 0) || s.combo === 'eau|froid'), indice: 'Geler l\'eau, faire surgir du métal, ou de la terre qui dure (Persistance).' },
+    trois_cibles:  { texte: 'un sort qui touche trois épouvantails d\'un coup', test: (s) => s.shape === 'chaine' || s.shape === 'pluie' || s.extra > 0 || s.echo > 0 || (s.shape === 'zone' && s.size >= 1.5), indice: 'Une Chaîne, une Pluie, un Double, un Écho, ou une très grande Zone.' },
+    fusion:        { texte: 'un sort qui fusionne deux éléments', test: (s) => s.cores.length >= 2, indice: 'Un second glyphe d\'effet en bas du premier anneau.' },
+    emboite:       { texte: 'un sort qui en lance un autre', test: (s) => s.subs > 0, indice: 'Un sous-sceau dans un emplacement de modificateur.' },
+    endormir:      { texte: 'un sort qui endorme tout un troupeau', test: (s) => (s.cores.includes('ombre') || s.cores.includes('silence') || s.combo === 'acide|feu') && ['zone', 'pluie', 'aura', 'totem', 'mur'].includes(s.shape), indice: 'L\'Ombre, sur une forme qui couvre large.' },
+  };
+  // Lettres du maître, apportées par le corbeau, dans l'ordre
+  const LETTRES = [
+    { id: 'l1', titre: 'Première lettre', texte: 'Mon apprenti(e), j\'espère que l\'atelier ne brûle pas encore. Je suis au col des Brumes, et j\'ai oublié mes potions d\'encre sur l\'étagère. Renvoie-m\'en deux par le corbeau, il est plus fiable que moi.',
+      cmd: { type: 'potion', id: 'encre', n: 2 }, don: [{ type: 'encre_max', n: 4 }], merci: 'Merci ! En échange, une encre de seiche de mon pays : ton encre s\'approfondit pour de bon.' },
+    { id: 'l2', titre: 'Le col des Brumes', texte: 'Il fait un froid de loup ici. Les gens du col prétendent qu\'un flocon de notre montagne ne fond jamais. Prouve-le-leur : deux flocons éternels, grattés dans la neige.',
+      cmd: { type: 'ingredient', id: 'flocon', n: 2 }, don: [{ type: 'ingredient', id: 'larme_lune', n: 2 }, { type: 'recette', id: 'encre_eternelle' }], merci: 'Ils n\'ont pas fondu ! Voici deux larmes de lune et ma recette d\'encre éternelle.' },
+    { id: 'l3', titre: 'La grange', texte: 'Au village du bas, une grange prend feu chaque été, et les pompiers sont trop lents. Invente-leur un sceau qui éteigne un feu de loin, et envoie-m\'en le dessin. Je le recopierai.',
+      cmd: { type: 'sceau', epreuve: 'eteindre_loin' }, don: [{ type: 'trophee', id: 'seau' }, { type: 'xp', n: 60 }], merci: 'Les pompiers l\'ont appris en une journée. Ils t\'envoient leur plus vieux seau, en souvenir.' },
+    { id: 'l4', titre: 'Le marché d\'hiver', texte: 'Le marché d\'hiver se tient sur notre lac, d\'habitude. Cette année il ne gèle pas. Fais-moi ça : gèle une grande partie du lac. Ne te gèle pas avec.',
+      cmd: { type: 'exploit', texte: 'Geler une grande partie du lac', cond: (p, w) => w.glaceLac >= 300 }, don: [{ type: 'ingredient', id: 'coeur_chene', n: 1 }, { type: 'recette', id: 'vitalite' }, { type: 'trophee', id: 'banquise' }], merci: 'On a patiné trois jours. Voici un cœur de chêne, et de quoi en faire une sève de vigueur.' },
+    { id: 'l5', titre: 'Le forgeron', texte: 'Un forgeron de ma connaissance jure qu\'aucune flamme ne vaut la lave de notre volcan. Rapporte-m\'en une fiole. Avec des gants.',
+      cmd: { type: 'ingredient', id: 'lave', n: 1 }, don: [{ type: 'encre_max', n: 4 }, { type: 'trophee', id: 'volcan' }], merci: 'Il en a fait une lame magnifique. Tiens, un éclat de la pierre du volcan, et encore un peu d\'encre.' },
+    { id: 'l6', titre: 'Le moulin', texte: 'Le pont du vieux moulin s\'est effondré dans la rivière. Le meunier pleure. Trouve un sceau qui fasse un pont au-dessus de l\'eau.',
+      cmd: { type: 'sceau', epreuve: 'pont' }, don: [{ type: 'ingredient', id: 'sable_temps', n: 2 }, { type: 'recette', id: 'sablier' }, { type: 'trophee', id: 'pont' }], merci: 'Le meunier traverse en chantant. Voici du sable du temps : il coule vers le haut, c\'est normal.' },
+    { id: 'l7', titre: 'Les épouvantails', texte: 'Trois épouvantails gardent un champ à l\'est, et les corbeaux (pas le mien) se moquent d\'eux. Il faut un sort qui touche les trois d\'un coup. Ce sera leur porte-bonheur.',
+      cmd: { type: 'sceau', epreuve: 'trois_cibles' }, don: [{ type: 'encre_max', n: 6 }, { type: 'trophee', id: 'epouvantail' }], merci: 'Plus un corbeau. Mon corbeau à moi est vexé, mais il s\'en remettra.' },
+    { id: 'l8', titre: 'Le ciel', texte: 'Je veux voir le monde d\'en haut avant d\'être trop vieux. Envoie-moi un élixir de vol. La recette est dans une page que j\'ai perdue sur une île... désolé.',
+      cmd: { type: 'potion', id: 'vol', n: 1 }, don: [{ type: 'trophee', id: 'globe' }, { type: 'xp', n: 80 }], merci: 'J\'ai survolé trois royaumes. Voici un globe des vents, il tourne quand il va pleuvoir.' },
+    { id: 'l9', titre: 'La paix des bêtes', texte: 'Un golem de pierre garde un col, et personne ne passe. On dit qu\'un golem apprivoisé se laisse convaincre. Apprivoise-en un chez nous, pour t\'entraîner.',
+      cmd: { type: 'exploit', texte: 'Apprivoiser un golem', cond: (p, w) => w.golemTame }, don: [{ type: 'ingredient', id: 'plume_phenix', n: 1 }, { type: 'recette', id: 'phenix' }, { type: 'trophee', id: 'paix' }], merci: 'Le golem du col m\'a laissé passer en souriant. Voici une plume de phénix : garde-la pour un mauvais jour.' },
+    { id: 'l10', titre: 'Le chant des cristaux', texte: 'Les cristaux des grottes chantent, paraît-il. J\'en voudrais trois éclats pour un ami musicien.',
+      cmd: { type: 'ingredient', id: 'eclat', n: 3 }, don: [{ type: 'trophee', id: 'cristal' }, { type: 'encre_max', n: 4 }], merci: 'Mon ami en a fait un carillon. Il t\'envoie le plus gros cristal, celui qui chante le mieux.' },
+    { id: 'l11', titre: 'La guilde', texte: 'La guilde des sceaux me demande si mon élève sait fusionner deux éléments. Je leur ai dit oui. Ne me fais pas mentir.',
+      cmd: { type: 'sceau', epreuve: 'fusion' }, don: [{ type: 'trophee', id: 'medaille' }, { type: 'xp', n: 100 }], merci: 'La guilde est impressionnée. Voici ta médaille. Tu la porteras le dimanche.' },
+    { id: 'l12', titre: 'Le troupeau', texte: 'Un troupeau de moutons insomniaques empêche tout un village de dormir. Il faudrait un sort qui endorme tout le troupeau. Doucement.',
+      cmd: { type: 'sceau', epreuve: 'endormir' }, don: [{ type: 'encre_max', n: 6 }, { type: 'xp', n: 80 }], merci: 'Tout le village a dormi douze heures. Les moutons aussi.' },
+    { id: 'l13', titre: 'Le fond du monde', texte: 'Dernière épreuve, la plus vieille : descends tout en bas du monde, sous la dernière pierre, et reviens. Ensuite, nous parlerons de ton avenir.',
+      cmd: { type: 'exploit', texte: 'Descendre tout en bas du monde (sous la cellule 240)', cond: (p, w) => w.profondeur >= 240 }, don: [{ type: 'trophee', id: 'diplome' }, { type: 'xp', n: 150 }],
+      merci: 'Tu as vu le fond du monde, et tu es remonté(e). Je ne rentrerai pas tout de suite : l\'atelier est à toi, désormais. Voici ton diplôme. Continue d\'inventer. — Ton maître, fier.' },
+  ];
 
   // Pages déchirées du grimoire du maître, cachées dans le monde
   const PAGES = [
@@ -335,5 +402,5 @@ const DATA = (() => {
   const ACCESSOIRES = ['Bâton', 'Plume', 'Grimoire'];
 
   Object.assign(POTIONS, BIZARRES);
-  return { CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
+  return { TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
 })();

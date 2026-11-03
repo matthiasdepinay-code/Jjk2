@@ -13,6 +13,8 @@ const Lab = (() => {
     { id: 'grimoire', nom: 'Grimoire des découvertes', x: 860, y: 360, w: 150, h: 220 },
     { id: 'lettre', nom: 'Lettre du maître (aide)', x: 560, y: 120, w: 120, h: 90 },
     { id: 'porte', nom: 'Sortir sur le terrain d\'essai', x: 1090, y: 300, w: 130, h: 280 },
+    { id: 'corbeau', nom: 'Le corbeau du maître : une lettre !', x: 400, y: 190, w: 80, h: 80, corbeau: true },
+    { id: 'trophees', nom: 'Étagère des trophées', x: 495, y: 222, w: 200, h: 46 },
     { id: 'bac', nom: 'Bac d\'essai', x: 30, y: 70, w: 160, h: 120, labo: true },
     { id: 'alambic', nom: 'Alambic : distiller les potions', x: 200, y: 110, w: 110, h: 110, labo: true },
     { id: 'presse', nom: 'Presse à glyphes : parchemins sans encre', x: 700, y: 240, w: 150, h: 110, labo: true },
@@ -20,7 +22,8 @@ const Lab = (() => {
   ];
 
   function init(g) { game = g; }
-  function spotAt(x, y) { return SPOTS.find((s) => x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h) || null; }
+  const corbeauLa = () => game.courrier && (game.courrier.pret || game.courrier.active);
+  function spotAt(x, y) { return SPOTS.find((s) => (!s.corbeau || corbeauLa()) && x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h) || null; }
   function locked(id) { return !(game.progress.labo && game.progress.labo[id]); }
   function update(dt, inp) {
     time += dt;
@@ -205,6 +208,30 @@ const Lab = (() => {
       terr.slice(0, 4).forEach((q, i) => { const sp = DATA.ESPECES[q.t]; if (!sp) return; const cx = x + 50 + i * 32, by = y + h - 22; ctx.fillStyle = sp.couleur || '#1f1a16'; ctx.beginPath(); ctx.ellipse(cx, by - 8 + Math.sin(time * 2 + i) * 2, 10, 7, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.arc(cx + 4, by - 10, 2, 0, TAU); ctx.fill(); });
       U.txt(ctx, 'terrarium', x + w / 2, y + 12, 12, 'center', '#6b4f2a', 'IM Fell English', 'italic');
     });
+    // étagère des trophées
+    drawShelf(ctx, 500, 262, 190);
+    (game.trophees || []).slice(0, 10).forEach((id, i) => {
+      const T = DATA.TROPHEES[id]; if (!T) return; const x = 512 + i * 18, y = 262;
+      ctx.save(); ctx.strokeStyle = INK; ctx.lineWidth = 1.3; ctx.fillStyle = T.couleur;
+      if (i % 3 === 0) { ctx.beginPath(); ctx.arc(x, y - 9, 7, 0, TAU); ctx.fill(); ctx.stroke(); }
+      else if (i % 3 === 1) { ctx.fillRect(x - 6, y - 16, 12, 16); U.inkRect(ctx, x - 6, y - 16, 12, 16, i, 0.4); }
+      else { ctx.beginPath(); ctx.moveTo(x - 7, y); ctx.lineTo(x, y - 18); ctx.lineTo(x + 7, y); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+      ctx.restore();
+    });
+    // le corbeau sur le rebord de la fenêtre
+    if (corbeauLa()) {
+      const bx = 440, by = 258 + Math.sin(time * 3) * 1.5;
+      ctx.save(); ctx.strokeStyle = INK; ctx.lineWidth = 1.8; ctx.fillStyle = '#1f1a16';
+      ctx.beginPath(); ctx.ellipse(bx, by - 16, 14, 11, -0.2, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(bx + 12, by - 28, 7, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(bx - 10, by - 18); ctx.lineTo(bx - 26, by - 8); ctx.lineTo(bx - 8, by - 10); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#d8a63a'; ctx.beginPath(); ctx.moveTo(bx + 18, by - 29); ctx.lineTo(bx + 27, by - 26); ctx.lineTo(bx + 18, by - 24); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.arc(bx + 14, by - 30, 1.8, 0, TAU); ctx.fill();
+      U.inkLine(ctx, bx - 3, by - 6, bx - 5, by, 1, 0.3); U.inkLine(ctx, bx + 4, by - 6, bx + 5, by, 2, 0.3);
+      if (game.courrier.pret) { ctx.fillStyle = '#f6eed8'; ctx.save(); ctx.translate(bx + 30, by - 24); ctx.rotate(0.2); ctx.fillRect(-9, -6, 18, 12); U.inkRect(ctx, -9, -6, 18, 12, 3, 0.4); ctx.fillStyle = '#9a4a3a'; ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, TAU); ctx.fill(); ctx.restore();
+        ctx.fillStyle = '#d8a63a'; ctx.beginPath(); ctx.arc(bx + 6, by - 56 + Math.sin(time * 4) * 3, 8, 0, TAU); ctx.fill(); ctx.stroke(); U.txt(ctx, '!', bx + 6, by - 56 + Math.sin(time * 4) * 3, 13, 'center', INK); }
+      ctx.restore();
+    }
     // l'apprenti(e), debout au milieu, qui respire
     World.drawApprenti(ctx, 570, FLOOR, 84, game.look, hover && hover.x > 570 ? 1 : -1, 0, null, false);
 
