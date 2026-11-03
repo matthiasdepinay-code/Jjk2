@@ -59,6 +59,7 @@ const UI = (() => {
     $('#btn-help').addEventListener('click', () => openPanel('help'));
     $('#btn-grim').addEventListener('click', () => openPanel('grimoire'));
     $('#btn-lab').addEventListener('click', () => { if (game.state === 'world') game.goLab(); });
+    $('#btn-restaurer').addEventListener('click', () => { if (confirm('Remettre le monde à neuf ? Tes découvertes et ton inventaire sont conservés.')) { close(); game.restaurerMonde(); } });
   }
 
   function buildChoices(sel, noms, cb, colors) {
@@ -230,6 +231,16 @@ const UI = (() => {
       it.appendChild(bar);
       pots.appendChild(it);
     }
+    // fioles de liquide (lançables)
+    for (const id in DATA.INGREDIENTS) {
+      const I = DATA.INGREDIENTS[id]; const n = game.inv.ingredients[id] || 0;
+      if (!I.liquide || n <= 0) continue;
+      const it = el('div', 'potion-item');
+      it.innerHTML = '<i style="background:' + I.couleur + '"></i><div><b>' + I.nom + '</b> ×' + n + '<br><small>' + I.desc + ' <em>(à lancer)</em></small></div>';
+      const bar = el('div', 'slotpick'); bar.innerHTML = '<span>→ barre :</span>';
+      for (let i = 0; i < 5; i++) { const b = el('button', 'btn-slot', String(i + 1)); b.addEventListener('click', () => { game.hotbar[i] = { type: 'liquide', id }; game.save(); refreshHotbar(); toast(I.nom + ' prête dans l\'emplacement ' + (i + 1) + '.'); Son.sfx('pickup'); }); bar.appendChild(b); }
+      it.appendChild(bar); pots.appendChild(it);
+    }
     // recettes connues
     const rec = $('#caul-recettes'); rec.innerHTML = '';
     if (!game.progress.recettes.length) rec.appendChild(el('p', 'muted', 'Aucune recette connue. Essaie : cendre + eau de source, chauffer puis remuer.'));
@@ -294,9 +305,16 @@ const UI = (() => {
         const I = DATA.INGREDIENTS[id]; const vu = I.infini || p.ingredientsVus.includes(id); const n = I.infini ? '∞' : (game.inv.ingredients[id] || 0);
         c.appendChild(el('div', 'decouverte' + (vu ? ' ok' : ''), '<span class="check"><i class="dot" style="background:' + (vu ? I.couleur : '#aaa') + '"></i></span><div><b>' + (vu ? I.nom : '???') + '</b> <small>×' + n + '</small><br><em>' + I.desc + '</em></div>'));
       }
+    } else if (grimTab === 'intuitions') {
+      c.appendChild(el('p', 'intro', 'Les phénomènes observés dehors font germer des glyphes. Trois observations suffisent. Les orages, la lave, la glace et l\'acide sont de bons professeurs.'));
+      for (const id in DATA.OBSERVATIONS) {
+        const O = DATA.OBSERVATIONS[id]; const n = p.obs[id] || 0;
+        const g = O.glyphe ? DATA.CORES[O.glyphe] : null; const connu = g && p.cores.includes(O.glyphe);
+        c.appendChild(el('div', 'decouverte' + (n > 0 ? ' ok' : ''), '<span class="check">' + (n >= 3 || connu ? '✓' : n > 0 ? n : '○') + '</span><div><b>' + (n > 0 ? O.nom : '???') + '</b> ' + (g ? '<small>→ glyphe ' + (connu ? g.nom : '???') + '</small>' : '<small>(expérience)</small>') + '<br><em>' + O.desc + '</em></div>'));
+      }
     } else if (grimTab === 'journal') {
       const k = p.compteurs;
-      c.appendChild(el('p', 'intro', 'Ce que ' + (game.look.nom || 'l\'apprenti(e)') + ' a accompli jusqu\'ici.'));
+      c.appendChild(el('p', 'intro', 'Ce que ' + (game.look.nom || 'l\'apprenti(e)') + ' a accompli jusqu\'ici. Niveau ' + game.niveau + ', ' + game.xp + ' / ' + DATA.XP.parNiveau(game.niveau) + ' d\'expérience.'));
       const lines = [['Choses différentes touchées', k.kindsHit.length], ['Coups sur les mannequins', k.mannequin], ['Torches allumées', k.torches], ['Graines éveillées', k.graines], ['Golems repoussés par le vent', k.golemPousse], ['Blocs de glace fondus', k.glace], ['Runes déchiffrées', k.runes], ['Créatures apprivoisées', k.tames || 0], ['Potions brassées', k.potions || 0], ['Sceaux lancés', k.sorts || 0]];
       const t = el('table', 'journal'); for (const [a, b] of lines) t.appendChild(el('tr', '', '<td>' + a + '</td><td>' + b + '</td>')); c.appendChild(t);
     }
@@ -314,7 +332,8 @@ const UI = (() => {
       s.classList.remove('empty-potion');
       if (!e) return;
       if (e.type === 'seal') { Seal.drawMini(ctx, e.seal, 28, 28, 22, time); s.title = Seal.nom(e.seal) + ' (' + Seal.cost(e.seal) + ' encre)'; }
-      else { const P = DATA.POTIONS[e.id]; const n = game.inv.potions[e.id] || 0; drawFlaskIcon(ctx, 28, 30, P.couleur); cnt.textContent = '×' + n; s.title = P.nom; if (n <= 0) s.classList.add('empty-potion'); }
+      else if (e.type === 'potion') { const P = DATA.POTIONS[e.id]; const n = game.inv.potions[e.id] || 0; drawFlaskIcon(ctx, 28, 30, P.couleur); cnt.textContent = '×' + n; s.title = P.nom; if (n <= 0) s.classList.add('empty-potion'); }
+      else if (e.type === 'liquide') { const I = DATA.INGREDIENTS[e.id]; const n = game.inv.ingredients[e.id] || 0; drawFlaskIcon(ctx, 28, 30, I.couleur); cnt.textContent = '×' + n; s.title = I.nom + ' (à lancer)'; if (n <= 0) s.classList.add('empty-potion'); }
     });
   }
   function drawFlaskIcon(ctx, x, y, color) {
@@ -322,12 +341,13 @@ const UI = (() => {
     ctx.beginPath(); ctx.moveTo(x - 5, y - 20); ctx.lineTo(x - 5, y - 8); ctx.quadraticCurveTo(x - 16, y + 2, x - 14, y + 12); ctx.lineTo(x + 14, y + 12); ctx.quadraticCurveTo(x + 16, y + 2, x + 5, y - 8); ctx.lineTo(x + 5, y - 20); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
     ctx.fillStyle = '#6b4f2a'; ctx.fillRect(x - 6, y - 24, 12, 5); ctx.restore();
   }
-  function refreshHud(p) {
+  function refreshHud(p, g) {
     $('#ink-fill').style.width = (100 * p.ink / p.inkMax) + '%';
     $('#ink-txt').textContent = Math.floor(p.ink) + ' / ' + p.inkMax;
     $('#hp-fill').style.width = (100 * Math.max(0, p.hp) / p.hpMax) + '%';
+    if (g) { const need = DATA.XP.parNiveau(g.niveau); $('#xp-fill').style.width = (100 * g.xp / need) + '%'; $('#xp-txt').textContent = 'Niveau ' + g.niveau; }
     const sts = [];
-    const names = { wet: 'Trempé(e)', stone: 'Peau de pierre', invisible: 'Invisible', lowgrav: 'Léger(ère)', jump: 'Bonds', small: 'Minuscule', vision: 'Vision', burning: 'En feu !', glide: 'Planeur', lumiere: 'Lumineux(se)' };
+    const names = { wet: 'Trempé(e)', stone: 'Peau de pierre', invisible: 'Invisible', lowgrav: 'Léger(ère)', jump: 'Bonds', small: 'Minuscule', vision: 'Vision', burning: 'En feu !', glide: 'Planeur', lumiere: 'Lumineux(se)', patins: 'Patins de givre', vitesse: 'Foudroyé(e)', dissous: 'Mains d\'acide', vol: 'En vol', branchies: 'Branchies', geant: 'Géant(e)', glisse: 'Savonné(e)' };
     for (const k in p.sta) if (p.sta[k] > 0) sts.push('<span class="st ' + k + '">' + names[k] + ' ' + Math.ceil(p.sta[k]) + 's</span>');
     $('#statuts').innerHTML = sts.join('');
   }

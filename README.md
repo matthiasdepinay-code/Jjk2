@@ -1,18 +1,18 @@
 # L'Atelier des Sceaux
 
-Un bac à sable de magie dans l'esprit de *L'Atelier des Sorciers* : on compose des sceaux en emboîtant des glyphes préfabriqués, on brasse des potions, puis on sort tester le tout sur un terrain d'essai en side-scroller.
+Un bac à sable de magie dans l'esprit de *L'Atelier des Sorciers* : on compose des sceaux en emboîtant des glyphes préfabriqués, on brasse des potions, puis on sort dans un grand monde où **toute la matière réagit** : eau, huile, acide, lave, glace, neige, feu, vapeur, bois, plantes, sable, verre, métal, cristal.
 
-Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegarde automatique locale.
+Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegarde automatique locale (personnage, découvertes, inventaire et monde modifié).
 
 ## Lancer le jeu
 
 - Ouvrir `index.html` dans un navigateur récent (Chrome, Firefox, Edge, Safari).
-- Ou bien la version mono-fichier : `dist/atelier-des-sceaux.html` (régénérée par `./build.sh`).
+- Ou la version mono-fichier : `dist/atelier-des-sceaux.html` (régénérée par `./build.sh`).
 
 ## Direction artistique
 
-- **Encre et parchemin** : traits de plume tremblés, hachures, grain de papier. Seuls les sceaux et les effets portent la couleur de leur élément.
-- **Ambiance cosy** : nappe sonore générative douce, aucun stress, aucun vrai échec. Les ratés font de la fumée et donnent un indice.
+- **Encre et parchemin** : traits de plume tremblés, hachures, grain de papier. Les matières simulées sont dessinées en formes lissées hachurées. Seuls les sceaux et les effets portent la couleur de leur élément.
+- **Ambiance cosy** : nappe sonore générative, jour/nuit, pluie et orages, aucun vrai échec. Les ratés font de la fumée et donnent un indice.
 
 ## Le labo
 
@@ -20,24 +20,24 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 | --- | --- |
 | Miroir | Changer d'apparence (chapeau, cape, objet en main). |
 | Table des sceaux | Composer un sceau : **centre** = glyphe d'effet, **premier anneau** = forme, **second anneau** = modificateurs, **pointes** = déclencheur. Consigner, puis « Mettre dans la barre ». |
-| Chaudron | Jusqu'à trois ingrédients et trois étapes dans l'ordre (chauffer, remuer, infuser, refroidir). Les recettes se découvrent par essai. |
-| Grimoire | Découvertes, glyphes connus, recettes, ingrédients, journal. |
-| Lettre du maître | L'aide et les contrôles. |
-| Porte | Sortir sur le terrain d'essai. Revenir restaure encre et vitalité. |
+| Chaudron | Jusqu'à trois ingrédients et trois étapes dans l'ordre. Les fioles de liquide puisées dehors sont des ingrédients et se lancent depuis la barre. |
+| Grimoire | Découvertes, glyphes, recettes, ingrédients, intuitions (phénomènes observés), journal. |
+| Lettre du maître | L'aide, les contrôles, et « Restaurer le monde ». |
+| Porte | Sortir. Revenir restaure encre et vitalité et sauvegarde le monde. |
 
 ## Les sceaux
 
-- **Effets** : Feu, Vent, Eau, Terre au départ. Lumière, Ombre, Vie et Force se débloquent.
+- **Effets** : Feu, Vent, Eau, Terre au départ. Lumière, Ombre, Vie, Force, Froid, Foudre, Acide et Gravité se découvrent (par exploits ou par observation de phénomènes).
 - **Formes** : Projectile, Sur soi, puis Zone et Trait.
-- **Modificateurs** : Puissance, Portée, puis Durée, Taille, Rebond, Persistance, Vitesse, Double. Un seul emplacement au départ, trois à terme.
-- **Déclencheurs** : Immédiat (agit en continu sur ce qu'il touche), Au contact (éclate en zone), Retardé (se fixe, éclate après deux secondes).
-- Chaque glyphe coûte de l'encre. L'encre se régénère lentement dehors, entièrement au labo.
+- **Modificateurs** : Puissance, Portée, puis Durée, Taille, Rebond, Persistance, Vitesse, Double. Un à trois emplacements.
+- **Déclencheurs** : Immédiat, Au contact, Retardé.
+- Chaque glyphe coûte de l'encre. L'expérience de découverte augmente l'encre et sa régénération.
 
 ## Dehors
 
-Cinq zones : le Jardin, la Rivière, la Falaise, la Grotte, la Clairière. Mannequins, caisses, torches, graines, buissons, rochers fissurés, glace, runes cachées, mares. Trois créatures : limaces d'encre, feux follets, golems. Tout réagit aux éléments (le feu brûle, l'eau fait pousser, le vent repousse, la lumière révèle, l'ombre endort, la vie apprivoise, la force attire).
+Un seul grand monde : jardin, forêt, lac, montagne enneigée, volcan, clairière, ruines de métal, désert ; des îles volantes dans le ciel ; des grottes à cristaux, un lac souterrain, une poche d'acide et une nappe d'huile sous terre. Le monde est une grille de matières : on creuse, on inonde, on gèle, on brûle, et le tout persiste.
 
-Contrôles : flèches ou ZQSD, Espace pour sauter, haut pour grimper aux vignes, E pour interagir, 1 à 5 ou molette pour la barre, clic pour lancer vers la souris, G grimoire, H aide, M son, Échap pour fermer.
+Contrôles : flèches ou ZQSD, Espace pour sauter (maintenir pour un grand saut), haut pour grimper aux plantes, E pour agir (porte, cueillir, lire, remplir une fiole, porter), clic droit pour lancer ce qu'on porte, X maintenu pour creuser vers la souris, 1 à 5 ou molette pour la barre, clic pour lancer, G grimoire, H aide, M son, Échap pour fermer.
 
 Pour tout recommencer : Ctrl + Maj + R.
 
@@ -46,12 +46,15 @@ Pour tout recommencer : Ctrl + Maj + R.
 ```
 index.html      page, styles, panneaux DOM
 js/util.js      maths, aléatoire déterministe, dessin « encre »
-js/data.js      glyphes, ingrédients, recettes, découvertes, niveau
+js/data.js      glyphes, ingrédients, recettes, découvertes, observations
 js/seal.js      modèle de sceau, icônes de glyphes, rendu du cercle
 js/audio.js     sons génératifs (WebAudio)
-js/world.js     monde extérieur : physique, effets, créatures, rendu
+js/sim.js       simulation de matières (grille) et rendu encre par morceaux
+js/gen.js       génération du grand monde
+js/world.js     monde extérieur : entités, effets, créatures, météo, rendu
 js/lab.js       scène du labo
 js/ui.js        éditeur de sceaux, chaudron, grimoire, HUD
-js/main.js      boucle, états, progression, sauvegarde
+js/main.js      boucle, états, progression, expérience, sauvegarde
+docs/DESIGN.md  décisions de design et étapes à venir
 build.sh        fabrique dist/atelier-des-sceaux.html
 ```

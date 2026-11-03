@@ -1,16 +1,20 @@
 'use strict';
-// ---------- Données du jeu : glyphes, ingrédients, recettes, découvertes, niveau ----------
+// ---------- Données du jeu : glyphes, ingrédients, recettes, découvertes, observations ----------
 const DATA = (() => {
   // Glyphes d'effet (centre du sceau)
   const CORES = {
-    feu:     { id: 'feu',     nom: 'Feu',      couleur: '#d9622b', cout: 3, desc: 'Brûle le bois, allume les torches, fait fondre la glace.' },
-    vent:    { id: 'vent',    nom: 'Vent',     couleur: '#3f9c9b', cout: 2, desc: 'Repousse tout ce qui bouge, souffle les flammes. Sur soi : bond aérien.' },
-    eau:     { id: 'eau',     nom: 'Eau',      couleur: '#3b6fb6', cout: 2, desc: 'Éteint le feu, fait pousser les graines, dissipe les feux follets.' },
-    terre:   { id: 'terre',   nom: 'Terre',    couleur: '#8a6b2f', cout: 3, desc: 'Fait surgir un bloc de pierre. Sur soi : peau de pierre.' },
-    lumiere: { id: 'lumiere', nom: 'Lumière',  couleur: '#d8a63a', cout: 2, desc: 'Éclaire, étourdit les créatures, révèle les runes cachées.' },
-    ombre:   { id: 'ombre',   nom: 'Ombre',    couleur: '#5a4a7d', cout: 3, desc: 'Endort les créatures. Sur soi : tu deviens invisible.' },
-    vie:     { id: 'vie',     nom: 'Vie',      couleur: '#5c8f3e', cout: 4, desc: 'Soigne, fait pousser, apprivoise les créatures.' },
-    force:   { id: 'force',   nom: 'Force',    couleur: '#9a4a8c', cout: 4, desc: 'Attire objets et créatures vers un point. Sur soi : élan.' },
+    feu:     { id: 'feu',     nom: 'Feu',      couleur: '#d9622b', cout: 3, desc: 'Enflamme le bois, l\'herbe, l\'huile. Fait fondre glace et neige, évapore l\'eau.' },
+    vent:    { id: 'vent',    nom: 'Vent',     couleur: '#3f9c9b', cout: 2, desc: 'Repousse créatures, objets, gaz et poudres ; souffle les flammes. Sur soi : bond aérien et planeur.' },
+    eau:     { id: 'eau',     nom: 'Eau',      couleur: '#3b6fb6', cout: 2, desc: 'Fait jaillir de l\'eau : éteint, arrose, dissipe les follets. Sur soi : trempé(e), respiration sous l\'eau.' },
+    terre:   { id: 'terre',   nom: 'Terre',    couleur: '#8a6b2f', cout: 3, desc: 'Fait surgir de la terre (de la pierre avec Persistance). Sur soi : peau de pierre.' },
+    lumiere: { id: 'lumiere', nom: 'Lumière',  couleur: '#d8a63a', cout: 2, desc: 'Éclaire, étourdit les créatures, révèle les runes.' },
+    ombre:   { id: 'ombre',   nom: 'Ombre',    couleur: '#5a4a7d', cout: 3, desc: 'Endort les créatures. Sur soi : invisible.' },
+    vie:     { id: 'vie',     nom: 'Vie',      couleur: '#5c8f3e', cout: 4, desc: 'Soigne, fait pousser les plantes, apprivoise.' },
+    force:   { id: 'force',   nom: 'Force',    couleur: '#9a4a8c', cout: 4, desc: 'Attire tout vers un point, même les liquides et le sable. Sur soi : élan.' },
+    froid:   { id: 'froid',   nom: 'Froid',    couleur: '#7fb4d8', cout: 3, desc: 'Gèle l\'eau en glace, fige la lave, condense la vapeur. Sur soi : patins de glace sur l\'eau.' },
+    foudre:  { id: 'foudre',  nom: 'Foudre',   couleur: '#e0c43a', cout: 4, desc: 'Électrise : l\'eau et le métal conduisent, l\'huile s\'embrase, les créatures sont secouées. Sur soi : vitesse.' },
+    acide:   { id: 'acide',   nom: 'Acide',    couleur: '#8fbf2a', cout: 3, desc: 'Fait couler de l\'acide qui ronge pierre, terre, bois et métal. Sur soi : tu dissous ce que tu touches.' },
+    gravite: { id: 'gravite', nom: 'Gravité',  couleur: '#6c5ab8', cout: 5, desc: 'Inverse la pesanteur dans une zone : tout flotte. Sur soi : vol libre.' },
   };
   // Formes (anneau intérieur)
   const SHAPES = {
@@ -26,7 +30,7 @@ const DATA = (() => {
     duree:       { id: 'duree',       nom: 'Durée',       cout: 2, desc: 'L\'effet dure plus longtemps.' },
     taille:      { id: 'taille',      nom: 'Taille',      cout: 2, desc: 'Zone d\'effet plus grande.' },
     rebond:      { id: 'rebond',      nom: 'Rebond',      cout: 1, desc: 'Le projectile rebondit sur les murs.' },
-    persistance: { id: 'persistance', nom: 'Persistance', cout: 3, desc: 'Laisse une trace d\'énergie sur place (flammes, flaque, lueur...).' },
+    persistance: { id: 'persistance', nom: 'Persistance', cout: 3, desc: 'Laisse une trace durable (flammes, pierre au lieu de terre, lueur...).' },
     vitesse:     { id: 'vitesse',     nom: 'Vitesse',     cout: 1, desc: 'Projectile plus rapide et plus droit.' },
     double:      { id: 'double',      nom: 'Double',      cout: 3, desc: 'Deux fois l\'effet, en éventail.' },
   };
@@ -37,17 +41,25 @@ const DATA = (() => {
     retarde:  { id: 'retarde',  nom: 'Retardé',  cout: 1, desc: 'Se fixe, puis éclate après deux secondes.' },
   };
 
+  // Ingrédients. `liquide` : une matière qu'on puise en fiole, lançable depuis la barre.
   const INGREDIENTS = {
     eau_source: { id: 'eau_source', nom: 'Eau de source', couleur: '#3b6fb6', infini: true, desc: 'Toujours disponible au labo.' },
     cendre:     { id: 'cendre',     nom: 'Cendre',         couleur: '#555049', infini: true, desc: 'Toujours disponible au labo.' },
     braise:     { id: 'braise',     nom: 'Pétale de braise', couleur: '#d9622b', desc: 'Reste d\'un buisson brûlé.' },
-    rosee:      { id: 'rosee',      nom: 'Goutte de rosée', couleur: '#6aa0d8', desc: 'Se recueille dans une mare (E).' },
+    rosee:      { id: 'rosee',      nom: 'Goutte de rosée', couleur: '#6aa0d8', desc: 'Se recueille au bord de l\'eau (E).' },
     plume:      { id: 'plume',      nom: 'Plume de vent',  couleur: '#3f9c9b', desc: 'Tombe d\'un feu follet dissipé par l\'eau.' },
     poussiere:  { id: 'poussiere',  nom: 'Poussière de pierre', couleur: '#8a6b2f', desc: 'Sort d\'un rocher fissuré brisé par la puissance.' },
     lueur:      { id: 'lueur',      nom: 'Lueur captive',  couleur: '#d8a63a', desc: 'Offerte par une rune révélée (E).' },
-    racine:     { id: 'racine',     nom: 'Racine vive',    couleur: '#5c8f3e', desc: 'Se cueille sur une plante adulte (E).' },
-    champignon: { id: 'champignon', nom: 'Champignon d\'ombre', couleur: '#5a4a7d', desc: 'Pousse dans la grotte.' },
+    racine:     { id: 'racine',     nom: 'Racine vive',    couleur: '#5c8f3e', desc: 'Se cueille sur une vigne adulte (E).' },
+    champignon: { id: 'champignon', nom: 'Champignon d\'ombre', couleur: '#5a4a7d', desc: 'Pousse dans les grottes.' },
     fil:        { id: 'fil',        nom: 'Fil de vie',     couleur: '#c45a8a', desc: 'Offert par une créature apprivoisée.' },
+    flocon:     { id: 'flocon',     nom: 'Flocon éternel', couleur: '#bfe3f5', desc: 'Se gratte dans la neige (X).' },
+    eclat:      { id: 'eclat',      nom: 'Éclat de cristal', couleur: '#b58fd8', desc: 'Se gratte sur un cristal des grottes (X).' },
+    eau:        { id: 'eau',        nom: 'Fiole d\'eau',   couleur: '#3b6fb6', liquide: 'EAU', desc: 'Puisée dans une mare (E). Vaut de l\'eau de source au chaudron.' },
+    huile:      { id: 'huile',      nom: 'Fiole d\'huile', couleur: '#4a3a20', liquide: 'HUILE', desc: 'Puisée dans une nappe d\'huile (E). Flotte et brûle.' },
+    acide:      { id: 'acide',      nom: 'Fiole d\'acide', couleur: '#8fbf2a', liquide: 'ACIDE', desc: 'Puisée dans une mare d\'acide (E). Ronge presque tout.' },
+    lave:       { id: 'lave',       nom: 'Fiole de lave',  couleur: '#d9622b', liquide: 'LAVE', desc: 'Puisée dans la lave (E). Ne pas boire.' },
+    seve:       { id: 'seve',       nom: 'Fiole de sève',  couleur: '#c9a63a', liquide: 'SEVE', desc: 'Puisée dans une flaque de sève collante (E).' },
   };
 
   const STEPS = {
@@ -60,11 +72,11 @@ const DATA = (() => {
   // Potions : ingrédients (ensemble non ordonné) + étapes (ordonnées)
   const POTIONS = {
     encre:      { id: 'encre',      nom: 'Potion d\'encre',    couleur: '#1f1a16', usage: 'boire', ingr: ['cendre', 'eau_source'], etapes: ['chauffer', 'remuer'],
-                  desc: 'Restaure 20 points d\'encre.', enigme: 'Ce qui reste du feu, noyé dans l\'eau claire, chauffé puis remué : l\'encre revient.' },
+                  desc: 'Restaure 25 points d\'encre.', enigme: 'Ce qui reste du feu, noyé dans l\'eau claire, chauffé puis remué : l\'encre revient.' },
     soin:       { id: 'soin',       nom: 'Potion de soin',     couleur: '#c45a5a', usage: 'boire', ingr: ['racine', 'eau_source'], etapes: ['infuser'],
                   desc: 'Soigne complètement.', enigme: 'Une racine encore vivante, laissée à infuser dans l\'eau de source.' },
     saut:       { id: 'saut',       nom: 'Élixir de saut',     couleur: '#3f9c9b', usage: 'boire', ingr: ['plume', 'eau_source'], etapes: ['remuer', 'remuer'],
-                  desc: 'Sauts très hauts pendant 25 s.', enigme: 'Une plume dans l\'eau, qu\'on remue, et remue encore.' },
+                  desc: 'Sauts très hauts pendant 30 s.', enigme: 'Une plume dans l\'eau, qu\'on remue, et remue encore.' },
     flamme:     { id: 'flamme',     nom: 'Fiole de flamme',    couleur: '#d9622b', usage: 'lancer', ingr: ['braise', 'cendre'], etapes: ['chauffer', 'chauffer'],
                   desc: 'Se jette : éclate en flammes.', enigme: 'La braise et la cendre, chauffées deux fois : attention aux doigts.' },
     vision:     { id: 'vision',     nom: 'Potion de vision',   couleur: '#d8a63a', usage: 'boire', ingr: ['lueur', 'rosee'], etapes: ['infuser', 'refroidir'],
@@ -74,11 +86,40 @@ const DATA = (() => {
     calme:      { id: 'calme',      nom: 'Philtre de calme',   couleur: '#c45a8a', usage: 'lancer', ingr: ['fil', 'rosee'], etapes: ['refroidir'],
                   desc: 'Se jette : apprivoise les créatures alentour.', enigme: 'Un fil de vie dans la rosée, simplement refroidi.' },
     legerete:   { id: 'legerete',   nom: 'Potion de légèreté', couleur: '#8fb8d8', usage: 'boire', ingr: ['plume', 'champignon'], etapes: ['refroidir', 'remuer'],
-                  desc: 'Gravité réduite pendant 25 s.', enigme: 'Plume et champignon d\'ombre, refroidis puis remués : on flotte.' },
+                  desc: 'Gravité réduite pendant 30 s.', enigme: 'Plume et champignon d\'ombre, refroidis puis remués : on flotte.' },
     petitesse:  { id: 'petitesse',  nom: 'Potion de petitesse', couleur: '#5a4a7d', usage: 'boire', ingr: ['champignon', 'poussiere'], etapes: ['chauffer', 'refroidir'],
-                  desc: 'Tu rétrécis pendant 20 s : passe sous les obstacles bas.', enigme: 'Champignon et poussière de pierre, chauffés puis refroidis : on se sent tout petit.' },
+                  desc: 'Tu rétrécis pendant 25 s : passe dans les boyaux étroits.', enigme: 'Champignon et poussière de pierre, chauffés puis refroidis : on se sent tout petit.' },
     peau:       { id: 'peau',       nom: 'Baume de pierre',    couleur: '#8a6b2f', usage: 'boire', ingr: ['poussiere', 'cendre'], etapes: ['chauffer', 'remuer', 'refroidir'],
-                  desc: 'Peau de pierre pendant 40 s : les créatures ne te blessent plus.', enigme: 'Poussière et cendre, chauffées, remuées, refroidies : dur comme le roc.' },
+                  desc: 'Peau de pierre pendant 45 s : ni bousculade, ni brûlure.', enigme: 'Poussière et cendre, chauffées, remuées, refroidies : dur comme le roc.' },
+    vol:        { id: 'vol',        nom: 'Élixir de vol',      couleur: '#6c5ab8', usage: 'boire', ingr: ['plume', 'lueur', 'rosee'], etapes: ['infuser', 'remuer'],
+                  desc: 'Vol libre pendant 35 s (flèches ou ZQSD dans toutes les directions).', enigme: 'Une plume, une lueur, une goutte de rosée : infuser, remuer, et le ciel s\'ouvre.' },
+    respiration: { id: 'respiration', nom: 'Potion de branchies', couleur: '#3b6fb6', usage: 'boire', ingr: ['rosee', 'fil', 'racine'], etapes: ['infuser', 'refroidir'],
+                  desc: 'Respirer sous l\'eau et nager vite pendant 60 s.', enigme: 'Rosée, fil de vie et racine : infuser, puis refroidir. On respire l\'eau.' },
+    gel:        { id: 'gel',        nom: 'Fiole de gel',       couleur: '#7fb4d8', usage: 'lancer', ingr: ['flocon', 'rosee'], etapes: ['refroidir', 'refroidir'],
+                  desc: 'Se jette : gèle l\'eau et fige tout alentour.', enigme: 'Un flocon éternel dans la rosée, refroidi deux fois : l\'hiver en fiole.' },
+    orage:      { id: 'orage',      nom: 'Orage en bouteille', couleur: '#e0c43a', usage: 'lancer', ingr: ['lueur', 'eclat', 'plume'], etapes: ['chauffer', 'chauffer', 'refroidir'],
+                  desc: 'Se jette : décharge de foudre.', enigme: 'Lueur, éclat de cristal et plume, chauffés deux fois puis refroidis : ça crépite.' },
+    vitriol:    { id: 'vitriol',    nom: 'Vitriol',            couleur: '#8fbf2a', usage: 'lancer', ingr: ['cendre', 'champignon', 'eau_source'], etapes: ['chauffer', 'infuser'],
+                  desc: 'Se jette : une mare d\'acide qui ronge la pierre.', enigme: 'Cendre, champignon et eau, chauffés puis infusés : ça fume et ça creuse.' },
+    geant:      { id: 'geant',      nom: 'Potion de géant',    couleur: '#9a4a3a', usage: 'boire', ingr: ['racine', 'poussiere', 'braise'], etapes: ['chauffer', 'remuer'],
+                  desc: 'Tu grandis pendant 25 s : rien ne te bouscule, tu pousses les caisses du pied.', enigme: 'Racine, poussière et braise, chauffées et remuées : on voit loin.' },
+    gregeois:   { id: 'gregeois',   nom: 'Feu grégeois',       couleur: '#b84a1b', usage: 'lancer', ingr: ['huile', 'braise'], etapes: ['chauffer'],
+                  desc: 'Se jette : une nappe d\'huile enflammée.', enigme: 'De l\'huile puisée et une braise, simplement chauffées. Ça brûle même sur l\'eau.' },
+    savon:      { id: 'savon',      nom: 'Savon de sorcier',   couleur: '#e8e0c0', usage: 'lancer', ingr: ['cendre', 'huile'], etapes: ['chauffer', 'remuer'],
+                  desc: 'Se jette : tout glisse alentour pendant un moment.', enigme: 'Cendre et huile, chauffées puis remuées : c\'est la vraie recette du savon.' },
+  };
+
+  // Observations : des phénomènes vus à l'écran font germer les glyphes
+  const OBSERVATIONS = {
+    fonte:      { id: 'fonte',      nom: 'La glace fond',           glyphe: 'froid',   desc: 'De la glace ou de la neige redevient eau.' },
+    gel:        { id: 'gel',        nom: 'L\'eau gèle',             glyphe: 'froid',   desc: 'De l\'eau devient glace.' },
+    foudre:     { id: 'foudre',     nom: 'La foudre frappe',        glyphe: 'foudre',  desc: 'Un éclair touche le sol ou l\'eau. Les orages en apportent.' },
+    corrosion:  { id: 'corrosion',  nom: 'L\'acide ronge',          glyphe: 'acide',   desc: 'De l\'acide dissout de la matière.' },
+    ile:        { id: 'ile',        nom: 'Une île dans le ciel',    glyphe: 'gravite', desc: 'Poser le pied sur une île volante.' },
+    vapeur:     { id: 'vapeur',     nom: 'L\'eau et le feu',        glyphe: null,      desc: 'Le feu rencontre l\'eau : vapeur.' },
+    obsidienne: { id: 'obsidienne', nom: 'La lave et l\'eau',       glyphe: null,      desc: 'La lave touche l\'eau et se fige en pierre noire.' },
+    verre:      { id: 'verre',      nom: 'Le sable et la lave',     glyphe: null,      desc: 'Le sable chauffé par la lave devient verre.' },
+    incendie:   { id: 'incendie',   nom: 'Le feu se propage',       glyphe: null,      desc: 'Une flamme en allume une autre.' },
   };
 
   // Découvertes : ce qui est débloqué et comment
@@ -87,14 +128,18 @@ const DATA = (() => {
     { id: 'trait',  type: 'shape', item: 'trait',  titre: 'Forme : Trait', indice: 'Touche 5 fois un mannequin d\'entraînement.', cond: (p) => p.compteurs.mannequin >= 5 },
     { id: 'lumiere', type: 'core', item: 'lumiere', titre: 'Glyphe : Lumière', indice: 'Allume 3 torches.', cond: (p) => p.compteurs.torches >= 3 },
     { id: 'vie',    type: 'core', item: 'vie',    titre: 'Glyphe : Vie',   indice: 'Fais pousser une graine avec de l\'eau.', cond: (p) => p.compteurs.graines >= 1 },
-    { id: 'ombre',  type: 'core', item: 'ombre',  titre: 'Glyphe : Ombre', indice: 'Ramasse un champignon d\'ombre dans la grotte.', cond: (p) => (p.ingredientsVus.includes('champignon')) },
+    { id: 'ombre',  type: 'core', item: 'ombre',  titre: 'Glyphe : Ombre', indice: 'Ramasse un champignon d\'ombre dans une grotte.', cond: (p) => (p.ingredientsVus.includes('champignon')) },
     { id: 'force',  type: 'core', item: 'force',  titre: 'Glyphe : Force', indice: 'Repousse un golem avec le vent, 3 fois.', cond: (p) => p.compteurs.golemPousse >= 3 },
+    { id: 'froid',  type: 'core', item: 'froid',  titre: 'Glyphe : Froid', indice: 'Observe 3 fois la glace qui fond ou l\'eau qui gèle.', cond: (p) => (p.obs.fonte || 0) + (p.obs.gel || 0) >= 3 },
+    { id: 'foudre', type: 'core', item: 'foudre', titre: 'Glyphe : Foudre', indice: 'Observe 3 éclairs frapper (les orages en apportent).', cond: (p) => (p.obs.foudre || 0) >= 3 },
+    { id: 'acide',  type: 'core', item: 'acide',  titre: 'Glyphe : Acide', indice: 'Observe 3 fois l\'acide ronger la matière.', cond: (p) => (p.obs.corrosion || 0) >= 3 },
+    { id: 'gravite', type: 'core', item: 'gravite', titre: 'Glyphe : Gravité', indice: 'Pose le pied sur une île volante.', cond: (p) => (p.obs.ile || 0) >= 1 },
     { id: 'retarde', type: 'trigger', item: 'retarde', titre: 'Déclencheur : Retardé', indice: 'Prépare ta première potion.', cond: (p) => p.recettes.length >= 1 },
     { id: 'mods1',  type: 'mods', item: ['duree', 'taille'], titre: 'Modificateurs : Durée & Taille', indice: 'Découvre 3 recettes.', cond: (p) => p.recettes.length >= 3 },
-    { id: 'mods2',  type: 'mods', item: ['rebond', 'persistance'], titre: 'Modificateurs : Rebond & Persistance', indice: 'Fais fondre un bloc de glace.', cond: (p) => p.compteurs.glace >= 1 },
-    { id: 'mods3',  type: 'mods', item: ['vitesse', 'double'], titre: 'Modificateurs : Vitesse & Double', indice: 'Lis la rune cachée de la clairière.', cond: (p) => p.compteurs.runes >= 2 },
+    { id: 'mods2',  type: 'mods', item: ['rebond', 'persistance'], titre: 'Modificateurs : Rebond & Persistance', indice: 'Fais fondre de la glace.', cond: (p) => p.compteurs.glace >= 1 },
+    { id: 'mods3',  type: 'mods', item: ['vitesse', 'double'], titre: 'Modificateurs : Vitesse & Double', indice: 'Lis deux runes cachées.', cond: (p) => p.compteurs.runes >= 2 },
     { id: 'slot2',  type: 'slot', item: 2, titre: 'Deuxième emplacement de modificateur', indice: 'Possède 6 glyphes d\'effet.', cond: (p) => p.cores.length >= 6 },
-    { id: 'slot3',  type: 'slot', item: 3, titre: 'Troisième emplacement de modificateur', indice: 'Possède les 8 glyphes d\'effet.', cond: (p) => p.cores.length >= 8 },
+    { id: 'slot3',  type: 'slot', item: 3, titre: 'Troisième emplacement de modificateur', indice: 'Possède 10 glyphes d\'effet.', cond: (p) => p.cores.length >= 10 },
   ];
 
   const DEBUT = {
@@ -103,7 +148,15 @@ const DATA = (() => {
     mods: ['puissance', 'portee'],
     triggers: ['immediat', 'contact'],
     slots: 1,
+    sceaux: [
+      { nom: 'Étincelle', core: 'feu', shape: 'projectile', mods: [null, null, null], trigger: 'contact' },
+      { nom: 'Goutte', core: 'eau', shape: 'projectile', mods: [null, null, null], trigger: 'contact' },
+      { nom: 'Souffle', core: 'vent', shape: 'soi', mods: [null, null, null], trigger: 'immediat' },
+    ],
   };
+
+  // Expérience : chaque découverte en donne ; les niveaux augmentent l'encre.
+  const XP = { observation: 6, recette: 15, decouverte: 25, ingredient: 4, parNiveau: (n) => 40 + n * 30, encreParNiveau: 6, regenParNiveau: 0.15 };
 
   const CHAPEAUX = ['Pointu', 'Large', 'Tordu'];
   const CAPES = [
@@ -112,106 +165,5 @@ const DATA = (() => {
   ];
   const ACCESSOIRES = ['Bâton', 'Plume', 'Grimoire'];
 
-  // ---------- Niveau extérieur (side-scroller) ----------
-  const G = 600; // sol
-  const W = 5000, H = 720;
-  const LEVEL = {
-    w: W, h: H, sol: G,
-    spawn: { x: 160, y: G - 60 },
-    zones: [
-      { nom: 'Le Jardin', x: 0, w: 950 },
-      { nom: 'La Rivière', x: 950, w: 800 },
-      { nom: 'La Falaise', x: 1750, w: 900 },
-      { nom: 'La Grotte', x: 2650, w: 950 },
-      { nom: 'La Clairière', x: 3600, w: 1400 },
-    ],
-    grottes: [{ x: 2650, y: 0, w: 950, h: H }],
-    solides: [
-      // sol par segments (trous pour l'eau)
-      { x: 0, y: G, w: 1020, h: 120, t: 'sol' },
-      { x: 1260, y: G, w: 1500, h: 120, t: 'sol' },
-      { x: 1020, y: G + 100, w: 240, h: 20, t: 'roc' }, // fond de la mare
-      { x: 2760, y: G, w: 2240, h: 120, t: 'sol' },
-      // mur gauche du labo
-      { x: -40, y: 0, w: 40, h: H, t: 'roc' },
-      { x: W, y: 0, w: 40, h: H, t: 'roc' },
-      // Jardin : petit muret, plateforme
-      { x: 560, y: G - 40, w: 90, h: 40, t: 'roc' },
-      // Rivière : pierres de gué (dans l'eau)
-      { x: 1080, y: G + 10, w: 50, h: 110, t: 'roc' },
-      { x: 1170, y: G - 10, w: 50, h: 130, t: 'roc' },
-      // Falaise : marches et corniches
-      { x: 1900, y: G - 80, w: 160, h: 80, t: 'roc' },
-      { x: 2060, y: G - 160, w: 140, h: 160, t: 'roc' },
-      { x: 2150, y: G - 220, w: 50, h: 220, t: 'roc' },  // marche intermédiaire
-      { x: 2200, y: G - 260, w: 400, h: 260, t: 'roc' }, // haut plateau
-      { x: 2600, y: G - 220, w: 40, h: 220, t: 'roc' },  // descente vers la grotte
-      { x: 2640, y: G - 160, w: 50, h: 160, t: 'roc' },
-      { x: 2690, y: G - 80, w: 50, h: 80, t: 'roc' },
-      { x: 2420, y: G - 420, w: 120, h: 24, t: 'roc' },  // corniche haute (vigne nécessaire)
-      // Grotte : plafond et stalactites
-      { x: 2650, y: 0, w: 950, h: 150, t: 'roc' },
-      { x: 3000, y: 150, w: 60, h: 120, t: 'roc' },
-      { x: 3300, y: 150, w: 40, h: 90, t: 'roc' },
-      { x: 3100, y: G - 70, w: 120, h: 70, t: 'roc' },
-      { x: 3380, y: G - 110, w: 90, h: 110, t: 'roc' },
-      // Clairière : plateformes légères
-      { x: 3900, y: G - 90, w: 120, h: 24, t: 'roc' },
-      { x: 4100, y: G - 170, w: 120, h: 24, t: 'roc' },
-      { x: 4500, y: G - 60, w: 200, h: 60, t: 'roc' },
-    ],
-    eaux: [
-      { x: 1020, y: G + 10, w: 240, h: 110 },
-    ],
-    objets: [
-      { t: 'porte', x: 60, y: G - 110 },
-      { t: 'mannequin', x: 380, y: G - 70 },
-      { t: 'caisse', x: 480, y: G - 36 },
-      { t: 'torche', x: 700, y: G - 80 },
-      { t: 'graine', x: 760, y: G - 10 },
-      { t: 'buisson', x: 860, y: G - 44 },
-      { t: 'pancarte', x: 220, y: G - 70, texte: 'Terrain d\'essai. Vise à la souris, lance avec le clic.' },
-      // Rivière
-      { t: 'torche', x: 1320, y: G - 80 },
-      { t: 'rocher', x: 1420, y: G - 56 },
-      { t: 'torche', x: 1560, y: G - 80 },
-      { t: 'glace', x: 1660, y: G - 110 },
-      { t: 'buisson', x: 1800, y: G - 44 },
-      // Falaise
-      { t: 'graine', x: 2080, y: G - 170 },
-      { t: 'caisse', x: 1930, y: G - 116 },
-      { t: 'pancarte', x: 2260, y: G - 330, texte: 'La vigne grimpe si on l\'arrose. Ou bien... un bloc de terre ?' },
-      { t: 'graine', x: 2470, y: G - 270 },
-      { t: 'torche', x: 2480, y: G - 420 - 80 },
-      { t: 'buisson', x: 2560, y: G - 304 },
-      // Grotte
-      { t: 'champignon', x: 2900, y: G - 26 },
-      { t: 'rune', x: 3240, y: G - 160 },
-      { t: 'champignon', x: 3440, y: G - 136 },
-      { t: 'torche', x: 3520, y: G - 80 },
-      // Clairière
-      { t: 'rocher', x: 3700, y: G - 56 },
-      { t: 'buisson', x: 3800, y: G - 44 },
-      { t: 'mannequin', x: 4000, y: G - 70 },
-      { t: 'caisse', x: 4150, y: G - 206 },
-      { t: 'torche', x: 4300, y: G - 80 },
-      { t: 'graine', x: 4400, y: G - 10 },
-      { t: 'rune', x: 4600, y: G - 150 },
-      { t: 'pancarte', x: 4480, y: G - 130, texte: 'La stèle garde un secret que seule la lumière révèle.' },
-      { t: 'buisson', x: 4850, y: G - 44 },
-    ],
-    creatures: [
-      { t: 'limace', x: 620, y: G - 30 },
-      { t: 'limace', x: 1800, y: G - 30 },
-      { t: 'limace', x: 2300, y: G - 290 },
-      { t: 'follet', x: 2850, y: G - 200 },
-      { t: 'follet', x: 3150, y: G - 250 },
-      { t: 'limace', x: 3300, y: G - 30 },
-      { t: 'golem', x: 3850, y: G - 70 },
-      { t: 'limace', x: 4200, y: G - 30 },
-      { t: 'golem', x: 4700, y: G - 130 },
-    ],
-  };
-
-  return { CORES, SHAPES, MODS, TRIGGERS, INGREDIENTS, STEPS, POTIONS, UNLOCKS, DEBUT, CHAPEAUX, CAPES, ACCESSOIRES, LEVEL };
+  return { CORES, SHAPES, MODS, TRIGGERS, INGREDIENTS, STEPS, POTIONS, OBSERVATIONS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
 })();

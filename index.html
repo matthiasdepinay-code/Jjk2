@@ -32,6 +32,9 @@
   .bar > div { height: 100%; transition: width 0.15s; }
   #ink-fill { background: linear-gradient(90deg, #2a2521, #4b3a6b); }
   #hp-fill { background: linear-gradient(90deg, #9a4a3a, #c45a5a); }
+  .bar.xp { height: calc(10px * var(--s)); }
+  #xp-fill { background: linear-gradient(90deg, #a3782e, #d8a63a); }
+  .bar.xp span { line-height: calc(8px * var(--s)); font-size: calc(9px * var(--s)); }
   .bar span { position: absolute; left: 0; right: 0; top: 0; bottom: 0; text-align: center; font-size: calc(11px * var(--s)); line-height: calc(14px * var(--s)); color: var(--paper); mix-blend-mode: difference; }
   .label { font-variant: small-caps; letter-spacing: 1px; font-size: calc(13px * var(--s)); color: var(--sepia); }
   #statuts { margin-top: calc(6px * var(--s)); display: flex; flex-wrap: wrap; gap: 4px; width: calc(260px * var(--s)); }
@@ -39,8 +42,12 @@
   .st.burning { background: #d9622b; color: #fff; }
   .st.stone { background: #8a6b2f; color: #fff; }
   .st.invisible { background: #5a4a7d; color: #fff; }
+  .st.vol { background: #6c5ab8; color: #fff; }
+  .st.dissous { background: #8fbf2a; }
+  .st.vitesse { background: #e0c43a; }
   #zone-name { position: absolute; left: 0; right: 0; top: calc(90px * var(--s)); text-align: center; font-family: "IM Fell English SC", "IM Fell English", Georgia, serif; font-size: calc(40px * var(--s)); color: var(--ink); opacity: 0; letter-spacing: 3px; text-shadow: 0 0 20px rgba(239,227,196,1); }
   #zone-name.show { animation: zone 3.5s ease forwards; }
+  body:not([data-state="world"]) #zone-name { display: none; }
   @keyframes zone { 0% { opacity: 0; transform: translateY(10px); } 15% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
   #topright { position: absolute; right: calc(16px * var(--s)); top: calc(12px * var(--s)); display: flex; gap: 6px; pointer-events: auto; }
   #topright button { padding: 4px 10px; font-size: calc(16px * var(--s)); }
@@ -146,6 +153,8 @@
       <div class="bar"><div id="ink-fill"></div><span id="ink-txt"></span></div>
       <div class="label">Vitalité</div>
       <div class="bar"><div id="hp-fill"></div></div>
+      <div class="label">Expérience</div>
+      <div class="bar xp"><div id="xp-fill"></div><span id="xp-txt"></span></div>
       <div id="statuts"></div>
     </div>
     <div id="zone-name"></div>
@@ -240,6 +249,7 @@
         <button data-tab="glyphes">Glyphes</button>
         <button data-tab="recettes">Recettes</button>
         <button data-tab="ingredients">Ingrédients</button>
+        <button data-tab="intuitions">Intuitions</button>
         <button data-tab="journal">Journal</button>
       </div>
       <div id="grim-content"></div>
@@ -251,16 +261,17 @@
       <h2>Lettre du maître</h2>
       <p><em>Mon cher apprenti, ma chère apprentie,</em></p>
       <p>Je pars quelques semaines. L'atelier est à toi. Un sceau se compose en cercles : au <b>centre</b>, le glyphe d'effet (ce que le sort fait). Sur le <b>premier anneau</b>, la forme (projectile, sur soi, zone, trait). Sur le <b>second</b>, les modificateurs. Aux <b>pointes</b>, le déclencheur. Un sceau incomplet ne tue personne : il fait de la fumée, et c'est déjà une leçon.</p>
-      <p>Le <b>chaudron</b> accepte jusqu'à trois ingrédients et trois étapes dans l'ordre. Commence par <b>cendre + eau de source</b>, <b>chauffer</b> puis <b>remuer</b> : tu auras de l'encre à boire. Le reste, découvre-le. Les ingrédients rares se trouvent dehors.</p>
-      <p>Chaque chose nouvelle que tu réussis dehors ouvre une page du <b>grimoire</b> : nouveaux glyphes, nouveaux emplacements. Expérimente, rate, recommence.</p>
+      <p>Dehors, <b>tout réagit</b> : le feu brûle le bois et l'herbe, l'eau éteint et fait pousser, la glace fond, la lave fige l'eau en pierre noire, l'acide creuse, l'huile flotte et s'enflamme, la foudre court dans l'eau et le métal. Regarde bien : chaque phénomène observé trois fois fait germer un glyphe dans ta palette (onglet <b>Intuitions</b> du grimoire). Les orages sont de bons professeurs.</p>
+      <p>Le <b>chaudron</b> accepte jusqu'à trois ingrédients et trois étapes dans l'ordre. Commence par <b>cendre + eau de source</b>, <b>chauffer</b> puis <b>remuer</b> : tu auras de l'encre à boire. Les ingrédients rares se trouvent dehors ; on peut aussi puiser n'importe quel liquide dans une fiole (<kbd>E</kbd>) pour le lancer ou le brasser.</p>
       <h3>Dehors</h3>
       <ul>
-        <li><kbd>←</kbd><kbd>→</kbd> ou <kbd>Q</kbd><kbd>D</kbd> : marcher · <kbd>Espace</kbd> : sauter · <kbd>↑</kbd> : grimper aux vignes · <kbd>E</kbd> : interagir (porte, cueillir, lire)</li>
+        <li><kbd>←</kbd><kbd>→</kbd> ou <kbd>Q</kbd><kbd>D</kbd> : marcher · <kbd>Espace</kbd> : sauter (maintenir pour un grand saut) · <kbd>↑</kbd> : grimper aux plantes · en vol : toutes les directions</li>
+        <li><kbd>E</kbd> : agir (porte, cueillir, lire, remplir une fiole, porter / poser) · <kbd>Clic droit</kbd> : lancer ce qu'on porte · <kbd>X</kbd> maintenu : creuser ou cueillir vers la souris (terre, sable, neige, plantes, cristal)</li>
         <li><kbd>1</kbd>–<kbd>5</kbd> ou molette : choisir dans la barre · <kbd>Clic</kbd> : lancer vers la souris</li>
         <li><kbd>G</kbd> : grimoire · <kbd>H</kbd> : cette lettre · <kbd>M</kbd> : son · <kbd>Échap</kbd> : fermer</li>
-        <li>Revenir au labo (la porte, ou le bouton 🏠) restaure encre et vitalité. Rien ne meurt vraiment ici : on s'évanouit, on se réveille devant la porte.</li>
+        <li>Revenir au labo (la porte, ou le bouton 🏠) restaure encre et vitalité et sauvegarde le monde tel que tu l'as laissé. Rien ne meurt vraiment ici : on s'évanouit, on se réveille devant la porte.</li>
       </ul>
-      <p class="muted">Pour tout recommencer : <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>R</kbd>.</p>
+      <p class="muted">Tout inondé, tout brûlé ? <button id="btn-restaurer">Restaurer le monde</button> (les découvertes restent). Pour tout recommencer : <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>R</kbd>.</p>
     </section>
   </div>
 </div>
@@ -268,6 +279,8 @@
 <script src="js/data.js"></script>
 <script src="js/seal.js"></script>
 <script src="js/audio.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/gen.js"></script>
 <script src="js/world.js"></script>
 <script src="js/lab.js"></script>
 <script src="js/ui.js"></script>
