@@ -237,6 +237,12 @@ const UI = (() => {
       else d.innerHTML = '<span class="muted">vide</span>';
       slots.appendChild(d);
     });
+    // aperçu sensoriel
+    const sens = game.sens(caulIngr.filter(Boolean), caulSteps);
+    const sb = $('#caul-sens');
+    if (!sens) sb.innerHTML = '<span class="muted">Le chaudron attend. Dépose des ingrédients : il te dira ce qu\'il sent.</span>';
+    else sb.innerHTML = '<div class="sens-lines">' + sens.lines.map((l) => '<div>' + l + '</div>').join('') + '</div>';
+    drawCaulCanvas(sens);
     const seq = $('#caul-seq'); seq.innerHTML = '';
     if (!caulSteps.length) seq.appendChild(el('span', 'muted', 'Aucune étape (clique ci-dessous).'));
     caulSteps.forEach((id, i) => { const b = el('button', 'step', (i + 1) + '. ' + DATA.STEPS[id].icone + ' ' + DATA.STEPS[id].nom); b.addEventListener('click', () => { caulSteps.splice(i, 1); refreshCauldron(); }); seq.appendChild(b); });
@@ -247,7 +253,7 @@ const UI = (() => {
     for (const [id, n] of have) {
       const P = DATA.POTIONS[id];
       const it = el('div', 'potion-item');
-      it.innerHTML = '<i style="background:' + P.couleur + '"></i><div><b>' + P.nom + '</b> ×' + n + '<br><small>' + P.desc + ' <em>(' + (P.usage === 'boire' ? 'à boire' : 'à lancer') + ')</em></small></div>';
+      it.innerHTML = '<i style="background:' + P.couleur + '"></i><div><b>' + P.nom + '</b> ×' + n + (P.bizarre ? ' <small class="muted">(bizarre)</small>' : '') + '<br><small>' + P.desc + ' <em>(' + (P.usage === 'boire' ? 'à boire' : 'à lancer') + ')</em></small></div>';
       const bar = el('div', 'slotpick'); bar.innerHTML = '<span>→ barre :</span>';
       for (let i = 0; i < 5; i++) { const b = el('button', 'btn-slot', String(i + 1)); b.addEventListener('click', () => { game.hotbar[i] = { type: 'potion', id }; game.save(); refreshHotbar(); toast(P.nom + ' prête dans l\'emplacement ' + (i + 1) + '.'); Son.sfx('pickup'); }); bar.appendChild(b); }
       it.appendChild(bar);
@@ -267,6 +273,23 @@ const UI = (() => {
     const rec = $('#caul-recettes'); rec.innerHTML = '';
     if (!game.progress.recettes.length) rec.appendChild(el('p', 'muted', 'Aucune recette connue. Essaie : cendre + eau de source, chauffer puis remuer.'));
     for (const id of game.progress.recettes) { const P = DATA.POTIONS[id]; rec.appendChild(el('div', 'recette', '<b>' + P.nom + '</b> : ' + P.ingr.map((i) => DATA.INGREDIENTS[i].nom).join(' + ') + ' → ' + P.etapes.map((s) => DATA.STEPS[s].nom).join(', '))); }
+  }
+  let caulSens = null;
+  function drawCaulCanvas(sens) {
+    caulSens = sens;
+    const c = $('#caul-canvas'); if (!c) return; const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, c.width, c.height);
+    const cx = c.width / 2, cy = c.height / 2 + 6;
+    ctx.save(); ctx.lineCap = 'round'; ctx.strokeStyle = U.INK; ctx.lineWidth = 2;
+    ctx.fillStyle = 'rgba(40,34,30,0.85)';
+    ctx.beginPath(); ctx.moveTo(cx - 40, cy - 14); ctx.quadraticCurveTo(cx - 46, cy + 30, cx, cy + 32); ctx.quadraticCurveTo(cx + 46, cy + 30, cx + 40, cy - 14); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(60,52,46,0.9)'; ctx.beginPath(); ctx.ellipse(cx, cy - 14, 42, 8, 0, 0, U.TAU); ctx.fill(); ctx.stroke();
+    const cols = sens ? sens.couleur : ['#5c8f3e'];
+    const g = ctx.createLinearGradient(cx - 36, 0, cx + 36, 0); cols.forEach((q, i) => g.addColorStop(cols.length === 1 ? 0 : i / (cols.length - 1), q)); if (cols.length === 1) g.addColorStop(1, cols[0]);
+    ctx.fillStyle = g; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.ellipse(cx, cy - 14, 36, 5, 0, 0, U.TAU); ctx.fill(); ctx.globalAlpha = 1;
+    const n = sens ? 3 + caulSteps.length * 2 : 1;
+    for (let i = 0; i < n; i++) { const t = (time * 0.7 + i * 0.37) % 1; const bx = cx - 30 + ((i * 23) % 60), by = cy - 14 - t * 26; ctx.globalAlpha = 1 - t; ctx.strokeStyle = cols[i % cols.length]; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(bx, by, 2 + t * 4, 0, U.TAU); ctx.stroke(); }
+    ctx.restore();
   }
   function brew() {
     const ingr = caulIngr.filter(Boolean);
@@ -324,9 +347,10 @@ const UI = (() => {
       }
       c.appendChild(el('p', 'intro', 'Déclencheurs : <b>Immédiat</b> agit en continu sur ce que le sort touche (un projectile traverse les créatures). <b>Au contact</b> éclate en zone à la première chose touchée. <b>Retardé</b> se fixe et éclate après deux secondes.'));
     } else if (grimTab === 'recettes') {
-      c.appendChild(el('p', 'intro', 'Le chaudron accepte jusqu\'à trois ingrédients et trois étapes, dans l\'ordre. Les recettes inconnues ne sont que des énigmes.'));
+      c.appendChild(el('p', 'intro', 'Le chaudron accepte jusqu\'à trois ingrédients et trois étapes, dans l\'ordre. Les recettes inconnues ne sont que des énigmes ; le chaudron lui-même te guide par l\'odeur et le bruit.'));
+      const bz = (p.bizarresVues || []); if (bz.length) { c.appendChild(el('h3', '', 'Potions bizarres rencontrées')); for (const id of bz) { const B = DATA.BIZARRES[id]; if (B) c.appendChild(el('div', 'recette', '<b>' + B.nom + '</b> — ' + B.desc)); } }
       for (const id in DATA.POTIONS) {
-        const P = DATA.POTIONS[id]; const ok = p.recettes.includes(id);
+        const P = DATA.POTIONS[id]; if (P.bizarre) continue; const ok = p.recettes.includes(id);
         c.appendChild(el('div', 'decouverte' + (ok ? ' ok' : ''), '<span class="check" style="color:' + P.couleur + '">' + (ok ? '●' : '○') + '</span><div><b>' + (ok ? P.nom : '???') + '</b><br>' + (ok ? P.ingr.map((i) => DATA.INGREDIENTS[i].nom).join(' + ') + ' → ' + P.etapes.map((s) => DATA.STEPS[s].nom).join(', ') + '<br><small>' + P.desc + '</small>' : '<em>' + P.enigme + '</em>') + '</div>'));
       }
     } else if (grimTab === 'ingredients') {
@@ -388,7 +412,7 @@ const UI = (() => {
     $('#hp-fill').style.width = (100 * Math.max(0, p.hp) / p.hpMax) + '%';
     if (g) { const need = DATA.XP.parNiveau(g.niveau); $('#xp-fill').style.width = (100 * g.xp / need) + '%'; $('#xp-txt').textContent = 'Niveau ' + g.niveau; }
     const sts = [];
-    const names = { wet: 'Trempé(e)', stone: 'Peau de pierre', invisible: 'Invisible', lowgrav: 'Léger(ère)', jump: 'Bonds', small: 'Minuscule', vision: 'Vision', burning: 'En feu !', glide: 'Planeur', lumiere: 'Lumineux(se)', patins: 'Patins de givre', vitesse: 'Foudroyé(e)', dissous: 'Mains d\'acide', vol: 'En vol', branchies: 'Branchies', geant: 'Géant(e)', glisse: 'Savonné(e)', hate: 'Hâte', lent: 'Englué(e)', armure: 'Armure' };
+    const names = { wet: 'Trempé(e)', stone: 'Peau de pierre', invisible: 'Invisible', lowgrav: 'Léger(ère)', jump: 'Bonds', small: 'Minuscule', vision: 'Vision', burning: 'En feu !', glide: 'Planeur', lumiere: 'Lumineux(se)', patins: 'Patins de givre', vitesse: 'Foudroyé(e)', dissous: 'Mains d\'acide', vol: 'En vol', branchies: 'Branchies', geant: 'Géant(e)', glisse: 'Savonné(e)', hate: 'Hâte', lent: 'Englué(e)', armure: 'Armure', hoquet: 'Hoquet', glouglou: 'Glouglou', boussole: 'Boussole folle' };
     for (const k in p.sta) if (p.sta[k] > 0) sts.push('<span class="st ' + k + '">' + names[k] + ' ' + Math.ceil(p.sta[k]) + 's</span>');
     $('#statuts').innerHTML = sts.join('');
   }
@@ -408,6 +432,7 @@ const UI = (() => {
   function tick(dt) {
     time += dt;
     if (open === 'seal') drawSealCanvas();
+    if (open === 'cauldron' && Math.floor(time * 30) % 2 === 0) drawCaulCanvas(caulSens);
     if (open === 'create' && Math.floor(time * 10) % 3 === 0) refreshCreate();
     if (Math.floor(time * 30) % 2 === 0) refreshHotbarIcons();
   }

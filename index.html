@@ -118,6 +118,9 @@
   .ingr-btn small { margin-left: auto; opacity: 0.7; }
   .ingr-btn.locked { opacity: 0.45; cursor: default; }
   #caul-ingr { display: flex; gap: 8px; }
+  .caul-preview { display: flex; gap: 12px; align-items: center; margin-top: 8px; padding: 6px 8px; background: rgba(255,255,255,0.3); border-left: 3px solid var(--sepia); font-style: italic; }
+  .caul-preview canvas { flex: none; width: calc(120px * var(--s)); height: calc(90px * var(--s)); }
+  .sens-lines div { margin: 2px 0; }
   .caul-slot { flex: 1; border: 1.5px dashed var(--ink); border-radius: 8px; padding: 10px 8px; display: flex; align-items: center; gap: 8px; min-height: calc(48px * var(--s)); background: rgba(31,26,22,0.06); }
   .caul-slot.full { border-style: solid; cursor: pointer; background: rgba(255,255,255,0.35); }
   #caul-seq { display: flex; gap: 6px; flex-wrap: wrap; min-height: 2.4em; align-items: center; }
@@ -228,6 +231,7 @@
         <div style="flex:1.3">
           <h3>Dans le chaudron (3 au plus)</h3>
           <div id="caul-ingr"></div>
+          <div class="caul-preview"><canvas id="caul-canvas" width="120" height="90"></canvas><div id="caul-sens" class="muted"></div></div>
           <h3>Préparation, dans l'ordre (3 étapes au plus)</h3>
           <div id="caul-seq"></div>
           <div id="caul-stepbtns"></div>

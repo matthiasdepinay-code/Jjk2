@@ -178,7 +178,7 @@
     brew(ingr, steps) {
       const norm = ingr.map((i) => (i === 'eau' ? 'eau_source' : i));
       const set = norm.slice().sort().join('|');
-      const found = Object.values(DATA.POTIONS).find((P) => P.ingr.slice().sort().join('|') === set && P.etapes.join('|') === steps.join('|'));
+      const found = Object.values(DATA.POTIONS).find((P) => P.ingr && P.ingr.slice().sort().join('|') === set && P.etapes.join('|') === steps.join('|'));
       if (found) {
         for (const i of ingr) if (!DATA.INGREDIENTS[i].infini) this.inv.ingredients[i] = Math.max(0, (this.inv.ingredients[i] || 0) - 1);
         this.inv.potions[found.id] = (this.inv.potions[found.id] || 0) + 1;
@@ -188,15 +188,58 @@
         this.toast((nouvelle ? 'Nouvelle recette : ' : 'Brassé : ') + found.nom + ' !');
         return { ok: true, id: found.id, nouvelle };
       }
-      const candidates = Object.values(DATA.POTIONS).filter((P) => !this.progress.recettes.includes(P.id) && P.ingr.some((i) => norm.includes(i)));
-      const partial = Object.values(DATA.POTIONS).find((P) => P.ingr.slice().sort().join('|') === set);
-      const fails = ['Une bouillie grise qui sent la chaussette. Rien n\'est perdu, le chaudron a tout recraché.', 'Ça fume violet, puis plus rien. Le chaudron te regarde avec reproche.', 'Un gargouillis, une bulle énorme, pof. Les ingrédients retombent intacts.', 'Le mélange se solidifie en caillou, puis redevient poudre. Curieux.'];
+      const candidates = Object.values(DATA.POTIONS).filter((P) => P.ingr && !this.progress.recettes.includes(P.id) && P.ingr.some((i) => norm.includes(i)));
+      const partial = Object.values(DATA.POTIONS).find((P) => P.ingr && P.ingr.slice().sort().join('|') === set);
+      const fails = ['Une bouillie qui sent la chaussette. Les ingrédients rares sont recrachés intacts.', 'Ça fume violet, puis ça se calme. Le chaudron te regarde avec reproche.', 'Un gargouillis, une bulle énorme, pof.', 'Le mélange se solidifie en caillou, puis redevient liquide. Curieux.'];
       let msg = fails[Math.floor(Math.random() * fails.length)];
       let enigme = null;
       if (partial) { msg = 'Les ingrédients s\'accordent, mais la préparation n\'y est pas. ' + msg; enigme = partial.enigme; }
       else if (candidates.length) enigme = candidates[Math.floor(Math.random() * candidates.length)].enigme;
-      Son.sfx('fail');
-      return { ok: false, msg, enigme };
+      // potion bizarre selon la famille dominante
+      const fam = {}; for (const i of norm) { const f = DATA.FAMILLES[i] || 'frais'; fam[f] = (fam[f] || 0) + 1; }
+      const dom = Object.keys(fam).sort((a, b) => fam[b] - fam[a])[0];
+      const biz = Object.values(DATA.BIZARRES).find((B) => B.famille === dom) || DATA.BIZARRES.hoquet;
+      this.inv.potions[biz.id] = (this.inv.potions[biz.id] || 0) + 1;
+      this.lastPotion = biz.id;
+      if (!this.progress.bizarresVues) this.progress.bizarresVues = [];
+      if (!this.progress.bizarresVues.includes(biz.id)) { this.progress.bizarresVues.push(biz.id); this.addXp(DATA.XP.ingredient); }
+      msg += ' Il en reste tout de même une fiole : <b>' + biz.nom + '</b>.';
+      Son.sfx('fail'); this.save();
+      return { ok: false, msg, enigme, bizarre: biz.id };
+    },
+    // Indices sensoriels du chaudron pour la préparation en cours
+    sens(ingr, steps) {
+      const norm = ingr.map((i) => (i === 'eau' ? 'eau_source' : i));
+      if (!norm.length) return null;
+      const fam = {}; for (const i of norm) { const f = DATA.FAMILLES[i] || 'frais'; fam[f] = (fam[f] || 0) + 1; }
+      const dom = Object.keys(fam).sort((a, b) => fam[b] - fam[a])[0];
+      const cols = norm.map((i) => DATA.INGREDIENTS[i].couleur);
+      // meilleure recette candidate
+      let best = null, bs = -1;
+      for (const P of Object.values(DATA.POTIONS)) {
+        if (!P.ingr) continue;
+        const inter = P.ingr.filter((i) => norm.includes(i)).length;
+        const extra = norm.filter((i) => !P.ingr.includes(i)).length;
+        let sc = inter * 2 - extra * 1.5;
+        for (let k = 0; k < steps.length; k++) sc += steps[k] === P.etapes[k] ? 1 : -2;
+        if (sc > bs) { bs = sc; best = P; }
+      }
+      const lines = [];
+      lines.push((DATA.ODEURS[dom] || 'ça sent bizarre') + '.');
+      if (steps.length) lines.push(steps.map((st) => DATA.BRUITS[st]).join(', ') + '.');
+      if (best && bs > 0) {
+        const exact = best.ingr.slice().sort().join('|') === norm.slice().sort().join('|');
+        const stepsOk = steps.every((st, k) => st === best.etapes[k]);
+        if (exact && stepsOk && steps.length === best.etapes.length) lines.push('Le mélange frémit et prend une teinte franche : c\'est prêt à brasser.');
+        else if (exact && stepsOk) lines.push('Les ingrédients s\'accordent. ' + (steps.length ? 'La préparation prend bonne tournure, il manque encore une étape.' : 'Reste à trouver la préparation.'));
+        else if (exact && !stepsOk) lines.push('Les ingrédients s\'accordent, mais la dernière étape a fait tourner le mélange.');
+        else if (!exact && stepsOk && best.ingr.filter((i) => norm.includes(i)).length >= 1) {
+          const manque = best.ingr.find((i) => !norm.includes(i)); const extra = norm.find((i) => !best.ingr.includes(i));
+          if (extra) lines.push('Quelque chose de ' + (DATA.FAMILLES[extra] || 'bizarre') + ' est de trop.');
+          else if (manque) lines.push('Il manque quelque chose de ' + (DATA.FAMILLES[manque] || 'bizarre') + (this.progress.ingredientsVus.includes(manque) || DATA.INGREDIENTS[manque].infini ? '' : ', que tu n\'as encore jamais vu') + '.');
+        } else lines.push('Le mélange reste terne.');
+      } else lines.push('Le mélange reste terne : rien ne s\'accorde vraiment.');
+      return { couleur: cols, lines, dom };
     },
     useSelected() {
       const e = this.hotbar[this.selected];
@@ -217,7 +260,7 @@
       this.progress.compteurs.sceaux = this.seals.length;
       try {
         const data = { look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
-          progress: { cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs, pagesLues: this.progress.pagesLues, defisFaits: this.progress.defisFaits } };
+          progress: { cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs, pagesLues: this.progress.pagesLues, defisFaits: this.progress.defisFaits, bizarresVues: this.progress.bizarresVues || [] } };
         localStorage.setItem(SAVE_KEY, JSON.stringify(data));
       } catch (e) { /* stockage indisponible */ }
     },

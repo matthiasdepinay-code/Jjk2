@@ -116,6 +116,27 @@ const DATA = (() => {
     seve:       { id: 'seve',       nom: 'Fiole de sève',  couleur: '#c9a63a', liquide: 'SEVE', desc: 'Puisée dans une flaque de sève collante (E).' },
   };
 
+  // Familles sensorielles des ingrédients (pour les indices du chaudron)
+  const FAMILLES = {
+    eau_source: 'frais', eau: 'frais', rosee: 'frais', flocon: 'frais',
+    cendre: 'chaud', braise: 'chaud', lave: 'chaud',
+    plume: 'aérien', lueur: 'aérien', eclat: 'minéral', poussiere: 'minéral',
+    racine: 'vivant', fil: 'vivant', champignon: 'sombre',
+    huile: 'visqueux', seve: 'visqueux', acide: 'acide',
+  };
+  const ODEURS = { frais: 'ça sent la pluie', chaud: 'ça sent la fumée', 'aérien': 'ça sent l\'orage', 'minéral': 'ça sent la pierre mouillée', vivant: 'ça sent la forêt', sombre: 'ça sent la cave', visqueux: 'ça sent le vieux bois', acide: 'ça pique le nez' };
+  const BRUITS = { chauffer: 'ça bouillonne', remuer: 'ça clapote', infuser: 'ça murmure', refroidir: 'ça craque' };
+  // Potions bizarres : produites par les ratés, selon la famille dominante
+  const BIZARRES = {
+    hoquet:     { id: 'hoquet',     nom: 'Hoquet de fumée',      couleur: '#6e6660', usage: 'boire', bizarre: true, famille: 'chaud',    desc: 'Tu hoquettes de la fumée pendant 30 s. Pas très digne.' },
+    grenouille: { id: 'grenouille', nom: 'Potion de grenouille', couleur: '#5c8f3e', usage: 'boire', bizarre: true, famille: 'vivant',   desc: 'Petit(e) et bondissant(e) pendant 25 s. Coa.' },
+    glouglou:   { id: 'glouglou',   nom: 'Glouglou',             couleur: '#6aa0d8', usage: 'boire', bizarre: true, famille: 'frais',    desc: 'Tu fuis de partout : de l\'eau coule de toi pendant 20 s.' },
+    ballon:     { id: 'ballon',     nom: 'Potion ballon',        couleur: '#d08ab0', usage: 'boire', bizarre: true, famille: 'aérien',   desc: 'Tu gonfles : énorme et léger(ère) pendant 20 s.' },
+    boussole:   { id: 'boussole',   nom: 'Boussole folle',       couleur: '#8a8f9a', usage: 'boire', bizarre: true, famille: 'minéral',  desc: 'Gauche et droite s\'échangent pendant 15 s.' },
+    luciole:    { id: 'luciole',    nom: 'Potion luciole',       couleur: '#e0c43a', usage: 'boire', bizarre: true, famille: 'sombre',   desc: 'Tu brilles comme une lanterne pendant 40 s. Utile, en fait.' },
+    glu:        { id: 'glu',        nom: 'Glu de sorcier',       couleur: '#c9a63a', usage: 'lancer', bizarre: true, famille: 'visqueux', desc: 'Se jette : une flaque de sève collante.' },
+    petard:     { id: 'petard',     nom: 'Pétard mouillé',       couleur: '#8fbf2a', usage: 'lancer', bizarre: true, famille: 'acide',    desc: 'Se jette : un grand nuage de fumée et un bruit ridicule.' },
+  };
   const STEPS = {
     chauffer:  { id: 'chauffer',  nom: 'Chauffer',  icone: '🔥' },
     remuer:    { id: 'remuer',    nom: 'Remuer',    icone: '🥄' },
@@ -286,5 +307,6 @@ const DATA = (() => {
   ];
   const ACCESSOIRES = ['Bâton', 'Plume', 'Grimoire'];
 
-  return { CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, STEPS, POTIONS, OBSERVATIONS, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
+  Object.assign(POTIONS, BIZARRES);
+  return { CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
 })();

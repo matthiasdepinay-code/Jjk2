@@ -20,7 +20,7 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 | --- | --- |
 | Miroir | Changer d'apparence (chapeau, cape, objet en main). |
 | Table des sceaux | Composer un sceau : **centre** = glyphe d'effet, **premier anneau** = forme, **second anneau** = modificateurs, **pointes** = déclencheur. Consigner, puis « Mettre dans la barre ». |
-| Chaudron | Jusqu'à trois ingrédients et trois étapes dans l'ordre. Les fioles de liquide puisées dehors sont des ingrédients et se lancent depuis la barre. |
+| Chaudron | Jusqu'à trois ingrédients et trois étapes dans l'ordre. Le chaudron guide par l'odeur, le bruit et la couleur ; un raté donne une potion bizarre (hoquet de fumée, grenouille, ballon, boussole folle...). Les fioles de liquide puisées dehors sont des ingrédients et se lancent depuis la barre. |
 | Grimoire | Découvertes, glyphes et fusions, recettes, ingrédients, encyclopédie des réactions, pages déchirées retrouvées, défis du maître, journal. |
 | Lettre du maître | L'aide, les contrôles, et « Restaurer le monde ». |
 | Porte | Sortir. Revenir restaure encre et vitalité et sauvegarde le monde. |

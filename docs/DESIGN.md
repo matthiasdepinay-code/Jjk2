@@ -30,6 +30,6 @@ Un vrai bac à sable de magie, style encre & parchemin, ambiance cosy. On compos
 1. **Moteur de matières** + grand monde + météo + fioles/portage/creusage + Froid/Foudre/Acide/Gravité + observation minimale. *(fait)*
 2. Nouveaux glyphes, Fusion, Sous-sceaux, nouvelles formes et modificateurs. *(fait)*
 3. Apprentissage complet : observations, pages déchirées, défis du maître, encyclopédie des réactions. *(fait)*
-4. Brassage sensoriel, potions bizarres, nouvelles potions.
+4. Brassage sensoriel, potions bizarres, nouvelles potions. *(fait)*
 5. Écosystème de créatures.
 6. Labo qui grandit.

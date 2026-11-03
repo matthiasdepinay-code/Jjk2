@@ -40,7 +40,7 @@ const World = (() => {
   function makePlayer(x, y) {
     return { x, y, w: 26, h: 50, vx: 0, vy: 0, face: 1, onGround: false, coyote: 0, jumpBuf: 0, anim: 0, canStep: true,
       hp: 10, hpMax: 10, ink: 40, inkMax: 40, inkRegen: 1.8, inv: 0, climbing: false, liq: 0,
-      sta: { wet: 0, stone: 0, invisible: 0, lowgrav: 0, jump: 0, small: 0, vision: 0, burning: 0, glide: 0, lumiere: 0, patins: 0, vitesse: 0, dissous: 0, vol: 0, branchies: 0, geant: 0, glisse: 0, hate: 0, lent: 0, armure: 0 },
+      sta: { wet: 0, stone: 0, invisible: 0, lowgrav: 0, jump: 0, small: 0, vision: 0, burning: 0, glide: 0, lumiere: 0, patins: 0, vitesse: 0, dissous: 0, vol: 0, branchies: 0, geant: 0, glisse: 0, hate: 0, lent: 0, armure: 0, hoquet: 0, glouglou: 0, boussole: 0 },
       trap: null, selfTimer: null, carry: null, digT: 0 };
   }
   function makeObj(o) {
@@ -751,6 +751,12 @@ const World = (() => {
         case 'vol': p.sta.vol = 35; p.onGround = false; msg('Tu t\'élèves ! Flèches ou ZQSD dans toutes les directions.'); evt('vol'); break;
         case 'respiration': p.sta.branchies = 60; msg('Des branchies ! L\'eau devient ton élément.'); break;
         case 'geant': p.sta.geant = 25; p.sta.small = 0; msg('Tu grandis, tu grandis...'); break;
+        case 'hoquet': p.sta.hoquet = 30; msg('Hic. Hic. De la fumée ?'); break;
+        case 'grenouille': p.sta.small = 25; p.sta.jump = 25; p.sta.geant = 0; msg('Coa. Tu es toute petite, et tu bondis.'); break;
+        case 'glouglou': p.sta.glouglou = 20; msg('Tu fuis de partout. Littéralement.'); break;
+        case 'ballon': p.sta.geant = 20; p.sta.lowgrav = 20; p.sta.small = 0; msg('Tu gonfles comme une baudruche.'); break;
+        case 'boussole': p.sta.boussole = 15; msg('La gauche est à droite. Ou l\'inverse.'); break;
+        case 'luciole': p.sta.lumiere = 40; msg('Tu brilles. Les runes n\'ont qu\'à bien se tenir.'); break;
       }
       return true;
     }
@@ -782,6 +788,8 @@ const World = (() => {
       case 'orage': applyEffect('foudre', x, y, 80, prm, 'burst'); break;
       case 'vitriol': applyEffect('acide', x, y, 60, { ...prm, size: 1.6 }, 'burst'); break;
       case 'gregeois': spawnLiquid(M.HUILE, x, y, 40); setTimeout(() => {}, 0); Sim.forRadius(x, y - 10, 30, (cx, cy, i, q) => { if (q === M.AIR && Math.random() < 0.3) Sim.set(cx, cy, M.FEU, 30); }); applyEffect('feu', x, y, 50, { ...prm, power: 1 }, 'burst', { noGrid: true }); break;
+      case 'glu': spawnLiquid(M.SEVE, x, y, 30); msg('Une flaque de sève. Qui va marcher dedans ?'); break;
+      case 'petard': Sim.forRadius(x, y, 60, (cx, cy, i, q) => { if (q === M.AIR && Math.random() < 0.5) Sim.set(cx, cy, M.FUMEE, 90); }); Son.sfx('fizzle'); for (const c of st.crs) if (U.circleRect(x, y, 160, c)) { c.sta.sleep = 0; c.curieux = { x, y, t: 6 }; } msg('Pof. Un bruit ridicule, et beaucoup de fumée.'); break;
       case 'savon': { const ps = st.p; if (U.circleRect(x, y, 120, ps)) ps.sta.glisse = 15; for (const c of st.crs) if (U.circleRect(x, y, 120, c)) c.sta.glisse = 15; part(x, y, '#ffffff', 30, 90, 1.2, 4, -80); st.sp.push({ k: 'ring', core: 'eau', x, y, r: 120, life: 0.5, max: 0.5, color: '#e8e0c0' }); msg('Tout glisse ! Même toi.'); break; }
     }
     Son.sfx('burst', 'eau');
@@ -892,6 +900,8 @@ const World = (() => {
     if (p.sta.burning > 0 && !p.sta.stone) { p.hp -= dt * 0.8; if (Math.random() < 0.3) part(p.x + p.w / 2, p.y + p.h * 0.3, '#d9622b', 1, 40, 0.5, 3, -150); }
     if (p.sta.lumiere > 0 && Math.random() < 0.2) part(p.x + p.w / 2, p.y + p.h * 0.4, '#d8a63a', 1, 30, 0.6, 2, -40, 'spark');
     if (p.sta.invisible > 0 && Math.random() < 0.2) part(p.x + p.w / 2, p.y + p.h * 0.5, '#5a4a7d', 1, 30, 0.6, 2, -30);
+    if (p.sta.hoquet > 0 && Math.random() < dt * 2) { const cx = Math.floor((p.x + p.w / 2) / CS), cy = Math.floor(p.y / CS) - 1; if (Sim.get(cx, cy) === M.AIR) Sim.set(cx, cy, M.FUMEE, 60); Son.sfx('click'); }
+    if (p.sta.glouglou > 0 && Math.random() < dt * 6) { const cx = Math.floor((p.x + Math.random() * p.w) / CS), cy = Math.floor((p.y + p.h) / CS); if (Sim.get(cx, cy) === M.AIR) Sim.set(cx, cy, M.EAU); }
     if (p.sta.vol > 0) { p.ink -= dt * 1.2; if (p.ink <= 0) { p.ink = 0; p.sta.vol = 0; msg('Plus d\'encre : tu retombes.', 'warn'); } if (Math.random() < 0.3) part(p.x + p.w / 2, p.y + p.h, '#6c5ab8', 1, 30, 0.6, 2, 60, 'spark'); }
     // liquide où l'on se trouve
     p.liq = liquidOf(p);
@@ -909,7 +919,7 @@ const World = (() => {
     const speedMul = (p.sta.vitesse > 0 || p.sta.hate > 0 ? 1.7 : 1) * (p.sta.lent > 0 ? 0.4 : 1) * (p.sta.small > 0 ? 0.8 : 1) * (p.liq === M.SEVE ? 0.25 : 1);
     if (p.sta.hate > 0) { p.ink = Math.min(p.inkMax, p.ink + dt * p.inkRegen * 2); st.tod = (st.tod + dt / DAY * 3) % 1; }
     const speed = (inWater ? (p.sta.branchies > 0 ? 220 : 130) : 250) * speedMul;
-    const dirX = (inp.right ? 1 : 0) - (inp.left ? 1 : 0);
+    const dirX = ((inp.right ? 1 : 0) - (inp.left ? 1 : 0)) * (p.sta.boussole > 0 ? -1 : 1);
     const dirY = (inp.down ? 1 : 0) - (inp.up ? 1 : 0);
     const friction = p.sta.glisse > 0 ? 0.6 : 14;
     if (p.sta.vol > 0) {
