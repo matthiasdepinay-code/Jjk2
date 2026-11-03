@@ -443,7 +443,7 @@
         if (d.progress) Object.assign(this.progress, d.progress);
         if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {};
         { // refonte : les anciennes essences deviennent des aspects
-          const p = this.progress;
+          const p = this.progress; if (!p.mods.includes('reduire')) p.mods.push('reduire');
           for (const c of p.cores.slice()) { const M2 = DATA.MIGRATION[c]; if (!M2) continue; p.cores = p.cores.filter((q) => q !== c); if (!p.mods.includes(M2[1])) p.mods.push(M2[1]); if (p.maitrise[c]) { p.maitrise[M2[0]] = (p.maitrise[M2[0]] || 0) + p.maitrise[c]; delete p.maitrise[c]; } }
           p.cores = p.cores.filter((c) => DATA.CORES[c] && !DATA.CORES[c].interne);
           p.mods = p.mods.map((m) => (m in DATA.MIGR_MODS ? DATA.MIGR_MODS[m] : m)).filter((m, i, a) => m && DATA.MODS[m] && a.indexOf(m) === i);

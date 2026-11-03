@@ -87,6 +87,7 @@ const DATA = (() => {
     portee:      { id: 'portee',      nom: 'Portée',      cout: 1, desc: 'Va plus loin.' },
     duree:       { id: 'duree',       nom: 'Durée',       cout: 2, desc: 'L\'effet dure plus longtemps.' },
     taille:      { id: 'taille',      nom: 'Taille',      cout: 2, desc: 'Zone d\'effet plus grande.' },
+    reduire:     { id: 'reduire',     nom: 'Réduction',   cout: 0, desc: 'Effet plus petit et plus précis : à peu près moitié moins grand. Se cumule (un tout petit tas de terre, une flammèche, une goutte).' },
     rebond:      { id: 'rebond',      nom: 'Rebond',      cout: 1, desc: 'Le projectile rebondit sur les murs.' },
     persistance: { id: 'persistance', nom: 'Persistance', cout: 3, desc: 'Laisse une trace durable (flammes, pierre au lieu de terre, lueur...).' },
     vitesse:     { id: 'vitesse',     nom: 'Vitesse',     cout: 1, desc: 'Projectile plus rapide et plus droit.' },
@@ -133,7 +134,7 @@ const DATA = (() => {
     eau:      { id: 'eau',      nom: 'Eau',      glyphe: 'eau',     couleur: '#3b6fb6', cout: 1, mats: ['EAU', 'SAUMURE'] },
     feu:      { id: 'feu',      nom: 'Feu',      glyphe: 'feu',     couleur: '#d9622b', cout: 1, mats: ['FEU', 'LAVE'] },
     pierre:   { id: 'pierre',   nom: 'Pierre',   glyphe: 'terre',   couleur: '#a8977a', cout: 1, mats: ['PIERRE', 'OBSIDIENNE', 'CRISTAL'] },
-    terre:    { id: 'terre',    nom: 'Terre',    glyphe: 'creuser', couleur: '#a3844f', cout: 1, mats: ['TERRE', 'SABLE', 'BOUE', 'SEL', 'CENDRE'] },
+    terre:    { id: 'terre',    nom: 'Terre',    glyphe: 'creuser', couleur: '#a3844f', cout: 1, mats: ['TERRE', 'MEUBLE', 'SABLE', 'BOUE', 'SEL', 'CENDRE'] },
     bois:     { id: 'bois',     nom: 'Bois',     glyphe: 'vie',     couleur: '#8d6a3c', cout: 1, mats: ['BOIS', 'PLANTE', 'HERBE', 'MOUSSE'] },
     metal:    { id: 'metal',    nom: 'Métal',    glyphe: 'metal',   couleur: '#737e86', cout: 1, mats: ['METAL'] },
     glace:    { id: 'glace',    nom: 'Glace',    glyphe: 'froid',   couleur: '#7fb4d8', cout: 1, mats: ['GLACE', 'NEIGE'] },
@@ -524,7 +525,7 @@ const DATA = (() => {
   const DEBUT = {
     cores: ['feu', 'vent', 'eau', 'terre'],
     shapes: ['projectile', 'soi'],
-    mods: ['puissance', 'portee'],
+    mods: ['puissance', 'portee', 'reduire'],
     triggers: ['immediat', 'contact'],
     slots: 1,
     tailles: ['petit', 'moyen'], filtres: [], cibles: ['souris'],
@@ -605,7 +606,7 @@ const DATA = (() => {
   const DE = { feu: 'du Feu', eau: 'de l\'Eau', terre: 'de la Terre', vent: 'du Vent', vie: 'de la Vie', lumiere: 'de la Lumière', foudre: 'de la Foudre', gravite: 'de la Gravité', temps: 'du Temps', portail: 'de l\'Espace', esprit: 'de l\'Esprit', transmutation: 'de la Transmutation' };
   for (const id in ASPECTS) MODS[id] = Object.assign({ id, cout: 2 }, ASPECTS[id], { desc: 'Aspect ' + DE[ASPECTS[id].aspect] + '. ' + ASPECTS[id].desc + ' Muet sans son essence.' });
   // les glyphes de langage sont des aspects qui renforcent leur essence
-  for (const el in LANGAGES) MODS[LANGAGES[el].glyphe].aspect = el;
+  for (const el in LANGAGES) { const Lg = LANGAGES[el], Md = MODS[Lg.glyphe]; Md.aspect = el; Md.desc = 'Aspect ' + DE[el] + ', qui le renforce. ×1 : ' + Lg.paliers[0] + ' ×2 (Adepte) : ' + Lg.paliers[1] + ' Muet sans son essence.'; }
   MODS.inverser.desc = 'Retourne l\'effet : le feu refroidit, la terre creuse, la vie fane, l\'eau assèche, la lumière devient ombre, l\'attraction repousse...';
   // migrations : ancienne essence → [essence, aspect]
   const MIGRATION = { froid: ['eau', 'gel'], acide: ['transmutation', 'corrosion'], metal: ['terre', 'minerai'], son: ['vent', 'son'], force: ['gravite', 'attraction'], lien: ['gravite', 'fil'], rembobinage: ['temps', 'rembobiner'], marque: ['portail', 'marque'], ombre: ['lumiere', 'inverser'] };

@@ -152,7 +152,8 @@
   .recette { padding: 3px 0; }
 
   /* grimoire */
-  #grim-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  #grim-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; position: sticky; top: -18px; z-index: 3; background: var(--paper); padding: 8px 0 6px; border-bottom: 1px solid rgba(31,26,22,0.2); }
+  .glyph-card.verrou { opacity: 0.6; }
   .decouverte { display: flex; gap: 10px; align-items: flex-start; padding: 6px 4px; border-bottom: 1px solid rgba(31,26,22,0.15); opacity: 0.75; }
   .decouverte.ok { opacity: 1; }
   .decouverte .check { width: 1.4em; text-align: center; font-size: calc(18px * var(--s)); color: var(--gold); flex: none; }

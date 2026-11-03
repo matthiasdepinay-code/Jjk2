@@ -77,7 +77,7 @@ const Seal = (() => {
       power: 1 + 0.6 * n('puissance'),
       range: 1 + 0.5 * n('portee'),
       duration: 1 + 0.8 * n('duree'),
-      size: 1 + 0.5 * n('taille'),
+      size: (1 + 0.5 * n('taille')) * Math.pow(0.55, n('reduire')),
       bounces: n('rebond') * 2,
       persist: n('persistance'),
       speed: 1 + 0.4 * n('vitesse'),
@@ -154,6 +154,7 @@ const Seal = (() => {
       case 'metamorphose': ctx.beginPath(); ctx.ellipse(-r * 0.42, -r * 0.2, r * 0.4, r * 0.55, -0.5, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.ellipse(r * 0.42, -r * 0.2, r * 0.4, r * 0.55, 0.5, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.ellipse(-r * 0.3, r * 0.5, r * 0.25, r * 0.3, 0.4, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.ellipse(r * 0.3, r * 0.5, r * 0.25, r * 0.3, -0.4, 0, TAU); ctx.stroke(); L(0, -r * 0.6, 0, r * 0.75); break;
       case 'rembobinage': ctx.beginPath(); ctx.arc(0, 0, r * 0.8, -Math.PI * 0.35, Math.PI * 1.45); ctx.stroke(); P([[r * 0.48, -r * 0.92], [r * 0.5, -r * 0.55], [r * 0.85, -r * 0.62]], false); L(0, 0, 0, -r * 0.45); L(0, 0, -r * 0.35, r * 0.2); break;
       // --- aspects ---
+      case 'reduire': C(0, 0, r * 0.25); ctx.setLineDash([r * 0.15, r * 0.15]); C(0, 0, r * 0.85); ctx.setLineDash([]); for (let i = 0; i < 4; i++) { const a = i / 4 * TAU + Math.PI / 4; L(Math.cos(a) * r * 0.75, Math.sin(a) * r * 0.75, Math.cos(a) * r * 0.4, Math.sin(a) * r * 0.4); } break;
       case 'sommeil': U.txt(ctx, 'z', -r * 0.35, r * 0.25, r * 1.1, 'center', color, 'IM Fell English', 'italic'); U.txt(ctx, 'z', r * 0.35, -r * 0.3, r * 0.8, 'center', color, 'IM Fell English', 'italic'); break;
       case 'repulsion': C(0, 0, r * 0.22); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; L(Math.cos(a) * r * 0.4, Math.sin(a) * r * 0.4, Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9); P([[Math.cos(a + 0.25) * r * 0.72, Math.sin(a + 0.25) * r * 0.72], [Math.cos(a) * r * 0.92, Math.sin(a) * r * 0.92], [Math.cos(a - 0.25) * r * 0.72, Math.sin(a - 0.25) * r * 0.72]], false); } break;
       case 'fumee': for (const [ax, ay, rr] of [[-r * 0.4, r * 0.2, 0.38], [r * 0.15, -r * 0.1, 0.45], [r * 0.5, r * 0.35, 0.3], [-r * 0.1, -r * 0.55, 0.28]]) C(ax, ay, r * rr); break;

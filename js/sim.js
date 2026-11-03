@@ -7,6 +7,7 @@ function createSim() {
   const CPX = CS * CH; // pixels par morceau
   let W = 0, H = 0, CW = 0, CHn = 0;
   let mat, aux, elec, upd, chaud, chunkVide, chunkRendu, nDraw = 0;
+  let tzones = []; // bulles de temps : { x, y, r, f } en pixels ; f = 0 figé, < 1 ralenti, > 1 accéléré
   let chunkActive, chunkDirty, chunkCv, chunkLights, chunkHasLiquid;
   let frame = 0;
   let onEvent = null;
@@ -15,7 +16,7 @@ function createSim() {
   let gzones = [];  // champs de gravité locaux : {x, y, r (px), gx, gy, mag}
   let feuMul = 1;   // option : vitesse de propagation du feu
 
-  const M = { AIR: 0, PIERRE: 1, TERRE: 2, SABLE: 3, BOIS: 4, PLANTE: 5, HERBE: 6, EAU: 7, HUILE: 8, ACIDE: 9, LAVE: 10, GLACE: 11, NEIGE: 12, VAPEUR: 13, FUMEE: 14, FEU: 15, SEVE: 16, VERRE: 17, METAL: 18, OBSIDIENNE: 19, CENDRE: 20, CRISTAL: 21, POUDRE: 22, MOUSSE: 23, MIEL: 24, SEL: 25, SAUMURE: 26, BOUE: 27, BULLE: 28 };
+  const M = { AIR: 0, PIERRE: 1, TERRE: 2, SABLE: 3, BOIS: 4, PLANTE: 5, HERBE: 6, EAU: 7, HUILE: 8, ACIDE: 9, LAVE: 10, GLACE: 11, NEIGE: 12, VAPEUR: 13, FUMEE: 14, FEU: 15, SEVE: 16, VERRE: 17, METAL: 18, OBSIDIENNE: 19, CENDRE: 20, CRISTAL: 21, POUDRE: 22, MOUSSE: 23, MIEL: 24, SEL: 25, SAUMURE: 26, BOUE: 27, BULLE: 28, MEUBLE: 29 };
   const P = [];
   const def = (id, p) => { P[id] = Object.assign({ solid: 0, powder: 0, liquid: 0, gas: 0, pass: 0, climb: 0, dig: 0, flam: 0, burn: 0, corrode: 0, dens: 0, flow: 0, hot: 0, light: 0, cond: 0, hatch: 0, alpha: 0.6 }, p); };
   def(M.AIR, { nom: 'air' });
@@ -46,12 +47,18 @@ function createSim() {
   def(M.SEL, { nom: 'sel', solid: 1, powder: 1, dig: 1, color: '#f2efe6', corrode: 0.3, alpha: 0.9 });
   def(M.SAUMURE, { nom: 'saumure', liquid: 1, dens: 2.5, flow: 5, color: '#5f8fb8', cond: 1, alpha: 0.55 });
   def(M.BULLE, { nom: 'bulle', color: '#a8dede', alpha: 0.28 });
+  def(M.MEUBLE, { nom: 'terre meuble', solid: 1, powder: 1, dig: 1, color: '#a3844f', corrode: 0.08, alpha: 0.95 });
   def(M.BOUE, { nom: 'boue', liquid: 1, dens: 4.5, flow: 1, color: '#6b5330', alpha: 0.85 });
   const FLAMMABLE_SOLID = (m) => m === M.BOIS || m === M.PLANTE || m === M.HERBE;
   // gravité locale d'une cellule : [dx, dy, mag] ; mag 0 = apesanteur
   function gravAt(x, y) {
     for (const z of gzones) { const dx = (x + 0.5) * CS - z.x, dy = (y + 0.5) * CS - z.y; if (dx * dx + dy * dy <= z.r * z.r) return [z.gx, z.gy, z.mag]; }
     return [0, 1, 1];
+  }
+  function tempsAt(x, y) { const px = (x + 0.5) * CS, py = (y + 0.5) * CS; for (const z of tzones) { const dx = px - z.x, dy = py - z.y; if (dx * dx + dy * dy <= z.r * z.r) return z.f; } return 1; }
+  function cellT(x, y, i, m, f) {
+    if (tzones.length) { const t = tempsAt(x, y); if (t !== 1) { if (t <= 0) { upd[i] = f; return; } if (t < 1 && rnd() > t) return; } }
+    cell(x, y, i, m, f);
   }
   function cellIn(x, y) { return x >= 0 && y >= 0 && x < W && y < H; }
 
@@ -106,11 +113,21 @@ function createSim() {
         const y0 = cy * CH, y1 = Math.min(H, y0 + CH), x0 = cx * CH, x1 = Math.min(W, x0 + CH);
         let hasLiquid = 0;
         for (let y = y1 - 1; y >= y0; y--) {
-          if (ltr) { for (let x = x0; x < x1; x++) { const i = y * W + x; if (upd[i] === f) continue; const m = mat[i]; if (m) { if (P[m].liquid) hasLiquid = 1; cell(x, y, i, m, f); } } }
-          else { for (let x = x1 - 1; x >= x0; x--) { const i = y * W + x; if (upd[i] === f) continue; const m = mat[i]; if (m) { if (P[m].liquid) hasLiquid = 1; cell(x, y, i, m, f); } } }
+          if (ltr) { for (let x = x0; x < x1; x++) { const i = y * W + x; if (upd[i] === f) continue; const m = mat[i]; if (m) { if (P[m].liquid) hasLiquid = 1; cellT(x, y, i, m, f); } } }
+          else { for (let x = x1 - 1; x >= x0; x--) { const i = y * W + x; if (upd[i] === f) continue; const m = mat[i]; if (m) { if (P[m].liquid) hasLiquid = 1; cellT(x, y, i, m, f); } } }
         }
         chunkHasLiquid[c] = hasLiquid;
       }
+    }
+    // bulles de temps accéléré : la matière y fait des pas supplémentaires
+    for (const z of tzones) {
+      if (z.f <= 1) continue;
+      const x0 = Math.max(0, Math.floor((z.x - z.r) / CS)), x1 = Math.min(W - 1, Math.floor((z.x + z.r) / CS)), y0 = Math.max(0, Math.floor((z.y - z.r) / CS)), y1 = Math.min(H - 1, Math.floor((z.y + z.r) / CS));
+      for (let pass = 1; pass < Math.min(4, Math.round(z.f)); pass++) {
+        const ff = (frame + 101 * pass) & 255;
+        for (let y = y1; y >= y0; y--) for (let x = x0; x <= x1; x++) { const dx = (x + 0.5) * CS - z.x, dy = (y + 0.5) * CS - z.y; if (dx * dx + dy * dy > z.r * z.r) continue; const i = y * W + x; if (upd[i] === ff) continue; const m = mat[i]; if (m) { upd[i] = ff; cell(x, y, i, m, ff); } }
+      }
+      for (let cy = Math.floor(y0 / CH); cy <= Math.floor(y1 / CH); cy++) for (let cx = Math.floor(x0 / CH); cx <= Math.floor(x1 / CH); cx++) { const c = cy * CW + cx; if (chunkActive[c] <= frame) chunkActive[c] = frame + 2; }
     }
   }
 
@@ -138,14 +155,16 @@ function createSim() {
     if (mag === 0) { if (rnd() < 0.15) { const d = [[1, 0], [-1, 0], [0, 1], [0, -1]][(rnd() * 4) | 0]; const nx = x + d[0], ny = y + d[1]; if (cellIn(nx, ny) && canEnter(ny * W + nx, 9)) swap(i, ny * W + nx); } return; }
     const bx = x + gx, by = y + gy; if (!cellIn(bx, by)) return;
     const b = by * W + bx;
-    if (canEnter(b, 9)) { swap(i, b); if (mag > 1 && cellIn(bx + gx, by + gy) && canEnter((by + gy) * W + bx + gx, 9)) swap(b, (by + gy) * W + bx + gx); return; }
+    if (canEnter(b, 9)) { swap(i, b); if (m === M.MEUBLE) aux[b] = 0; if (mag > 1 && cellIn(bx + gx, by + gy) && canEnter((by + gy) * W + bx + gx, 9)) swap(b, (by + gy) * W + bx + gx); return; }
     const sx = -gy, sy = gx; // perpendiculaire
     const dir = rnd() < 0.5 ? 1 : -1;
-    for (const d of [dir, -dir]) {
+    // la terre meuble glisse peu (elle fait des tas), puis se tasse en terre une fois au repos
+    if (m !== M.MEUBLE || rnd() < 0.3) for (const d of [dir, -dir]) {
       const nx = x + sx * d, ny = y + sy * d; if (!cellIn(nx, ny)) continue;
       const dx2 = nx + gx, dy2 = ny + gy; if (!cellIn(dx2, dy2)) continue;
       if (!P[mat[ny * W + nx]].solid && canEnter(dy2 * W + dx2, 9)) { swap(i, dy2 * W + dx2); return; }
     }
+    if (m === M.MEUBLE) { aux[i]++; touch(i); if (aux[i] > 14) setI(i, M.TERRE); }
   }
   let explosions = 0;
   function explode(cx, cy, r) {
@@ -451,7 +470,7 @@ function createSim() {
 
   return { CS, CH, M, P, init, get, set, swap, wake, touch, idx, step, matAt, solidAt, rectBlocked, rectHas, forRadius, raycast, countAround, countRect, draw, lights, dirtyAll, serialize, deserialize,
     get W() { return W; }, get H() { return H; }, get mat() { return mat; }, get aux() { return aux; }, get elec() { return elec; }, get chaud() { return chaud; }, setFeu,
-    set onEvent(f) { onEvent = f; }, set sunny(v) { sunny = v; }, get gzones() { return gzones; }, set gzones(v) { gzones = v; }, gravAt, set feuMul(v) { feuMul = v; }, set surf(v) { surf = v; }, get surf() { return surf; }, get frame() { return frame; } };
+    set onEvent(f) { onEvent = f; }, set sunny(v) { sunny = v; }, get gzones() { return gzones; }, set gzones(v) { gzones = v; }, set tzones(v) { tzones = v; }, get tzones() { return tzones; }, tempsAt, gravAt, set feuMul(v) { feuMul = v; }, set surf(v) { surf = v; }, get surf() { return surf; }, get frame() { return frame; } };
 })();
 }
 const Sim = createSim();

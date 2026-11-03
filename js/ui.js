@@ -43,7 +43,7 @@ const UI = (() => {
     $('#caul-brew').addEventListener('click', brew);
     $('#caul-clear').addEventListener('click', () => { caulIngr = [null, null, null]; caulSteps = []; refreshCauldron(); });
     // --- grimoire ---
-    $$('#grim-tabs button').forEach((b) => b.addEventListener('click', () => { grimTab = b.dataset.tab; refreshGrimoire(); Son.sfx('click'); }));
+    $$('#grim-tabs button').forEach((b) => b.addEventListener('click', () => { grimTab = b.dataset.tab; refreshGrimoire(); $('#panel-grimoire').scrollTop = 0; Son.sfx('click'); }));
     // --- hotbar ---
     const hb = $('#hotbar');
     for (let i = 0; i < 5; i++) {
@@ -496,15 +496,24 @@ const UI = (() => {
         c.appendChild(el('div', 'decouverte' + (ok ? ' ok' : ''), '<span class="check">' + (ok ? '✓' : '○') + '</span><div><b>' + (ok ? u.titre : '???') + '</b><br><em>' + u.indice + '</em></div>'));
       }
     } else if (grimTab === 'glyphes') {
-      const grp = (titre, dict, list, kind) => {
-        c.appendChild(el('h3', '', titre));
+      const indice = (kind, id) => { const u = DATA.UNLOCKS.find((q) => ((kind === 'mod' && (q.type === 'mods' || q.type === 'marque')) || (kind === 'filtre' && q.type === 'filtres') || (kind === 'cible' && (q.type === 'cible' || q.type === 'marque')) || q.type === kind) && (q.item === id || (Array.isArray(q.item) && q.item.includes(id)))); return u ? u.indice : null; };
+      const grp = (titre, dict, list, kind, garder) => {
+        const ids = Object.keys(dict).filter((id) => !dict[id].interne && (!garder || garder(dict[id])));
+        if (!ids.length) return;
+        const n = ids.filter((id) => list.includes(id)).length;
+        c.appendChild(el('h3', '', titre + ' <small>(' + n + ' / ' + ids.length + ')</small>'));
         const g = el('div', 'glyph-grid');
-        for (const id of list) {
-          const d = dict[id];
-          const it = el('div', 'glyph-card');
+        for (const id of ids) {
+          const d = dict[id], ok = list.includes(id);
+          const it = el('div', 'glyph-card' + (ok ? '' : ' verrou'));
           const cv = document.createElement('canvas'); cv.width = 48; cv.height = 48;
-          Seal.glyph(cv.getContext('2d'), id, 24, 24, 17, kind === 'core' ? d.couleur : U.INK, 1);
-          it.appendChild(cv); it.appendChild(el('div', '', '<b>' + d.nom + '</b> <small>(' + d.cout + ' encre)</small><br>' + d.desc));
+          const col = kind === 'core' ? d.couleur : kind === 'filtre' ? d.couleur : d.aspect ? DATA.CORES[d.aspect].couleur : U.INK;
+          if (ok) Seal.glyph(cv.getContext('2d'), kind === 'filtre' ? 'f_' + id : kind === 'cible' ? 'c_' + id : id, 24, 24, 17, col, 1);
+          else U.txt(cv.getContext('2d'), '?', 24, 26, 24, 'center', 'rgba(60,45,30,0.35)');
+          it.appendChild(cv);
+          const desc = d.desc || (kind === 'filtre' ? 'Avec Au contact, le sort ne réagit qu\'à : ' + d.nom.toLowerCase() + ', et traverse le reste.' : '');
+          const ind = indice(kind, id);
+          it.appendChild(el('div', '', ok ? '<b>' + d.nom + '</b> <small>(' + d.cout + ' encre)</small><br>' + desc : '<b>???</b><br><span class="muted">' + (ind ? 'Indice : ' + ind : 'Encore inconnu.') + '</span>'));
           g.appendChild(it);
         }
         c.appendChild(g);
@@ -529,12 +538,16 @@ const UI = (() => {
       c.appendChild(lgBox);
       grp('Glyphes d\'effet (centre)', DATA.CORES, p.cores, 'core');
       grp('Formes (premier anneau)', DATA.SHAPES, p.shapes, 'shape');
-      grp('Modificateurs (second anneau) — ' + p.slots + ' emplacement(s)', DATA.MODS, p.mods, 'mod');
+      grp('Modificateurs (second anneau) — ' + p.slots + ' emplacement(s)', DATA.MODS, p.mods, 'mod', (d) => !d.aspect);
+      grp('Aspects (second anneau, avec leur essence)', DATA.MODS, p.mods, 'mod', (d) => !!d.aspect);
       grp('Déclencheurs (pointe haute ; deux pour le grand sceau)', DATA.TRIGGERS, p.triggers, 'trigger');
-      c.appendChild(el('h3', '', 'Filtres de matière (pointe droite)'));
+      grp('Filtres de matière (pointe droite)', DATA.FILTRES, p.filtres, 'filtre');
+      grp('Cibles (pointe gauche)', DATA.CIBLES, p.cibles, 'cible');
+      if (false) {
       c.appendChild(el('p', '', p.filtres.length ? p.filtres.map((f) => DATA.FILTRES[f].nom).join(', ') + '. Avec Au contact, le sort ne réagit qu\'à cette matière et traverse tout le reste.' : '<span class="muted">Pas encore connus.</span>'));
       c.appendChild(el('h3', '', 'Cibles (pointe gauche)'));
       c.appendChild(el('p', '', p.cibles.map((q) => DATA.CIBLES[q].nom + ' : ' + DATA.CIBLES[q].desc).join('<br>')));
+      }
       c.appendChild(el('h3', '', 'Tailles de sceau'));
       c.appendChild(el('p', '', Object.values(DATA.TAILLES).map((T) => (p.tailles.includes(T.id) ? '<b>' + T.nom + '</b>' : '<span class="muted">' + T.nom + ' (scellé)</span>') + ' : ' + T.desc).join('<br>')));
       c.appendChild(el('p', 'intro', 'Lancer : maintenir le clic charge le sort (plus fort, plus loin, plus cher). ' + (p.deuxMains ? 'Clic droit : main gauche (Maj + 1-5 pour la choisir).' : 'La main gauche viendra avec l\'expérience.') + ' F libère les sorts Sur commande. Deux projectiles qui se croisent fusionnent.'));
@@ -819,6 +832,6 @@ const UI = (() => {
     $$('#hotbar .slot').forEach((s, i) => { const e = game.hotbar[i]; if (e && e.type === 'seal') { const ctx = s.querySelector('canvas').getContext('2d'); ctx.clearRect(0, 0, 56, 56); Seal.drawMini(ctx, e.seal, 28, 28, 22, time); } });
   }
 
-  function setGrimTab(t) { grimTab = t; refreshGrimoire(); }
+  function setGrimTab(t) { grimTab = t; refreshGrimoire(); const pn = $('#panel-grimoire'); if (pn) pn.scrollTop = 0; }
   return { grimTab: setGrimTab, init, openPanel, close, isOpen, refreshSeal, refreshCauldron, refreshGrimoire, refreshHotbar, refreshHud, toast, zoneTitle, tick, setMode };
 })();

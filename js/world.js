@@ -402,9 +402,10 @@ const World = (() => {
         break;
       case 'terre':
         if (!burst) break;
-        Sim.forRadius(cx, cy, rad * 0.85, (x, y, i, m) => {
+        // un mur reste debout ; ailleurs la terre surgit en tas et tombe (elle se tasse au repos)
+        Sim.forRadius(cx, cy, rad * (prm.mur ? 0.85 : 0.5), (x, y, i, m) => {
           const q = P[m]; if (q.solid) return;
-          if (Math.random() < pr && !pcell(cellRect(x, y))) Sim.set(x, y, lgN >= 2 ? M.CRISTAL : prm.persist > 0 || lgN ? M.PIERRE : M.TERRE);
+          if (Math.random() < pr && !pcell(cellRect(x, y))) Sim.set(x, y, lgN >= 2 ? M.CRISTAL : prm.persist > 0 || lgN ? M.PIERRE : prm.mur ? M.TERRE : M.MEUBLE);
         });
         break;
       case 'vie': {
@@ -681,15 +682,7 @@ const World = (() => {
         else if (m === M.METAL) { if (q < 0.004 * k) Sim.set(x, y, M.SABLE); }
         else if (m === M.BOIS) { if (haut && q < 0.002 * k) Sim.set(x, y - 1, M.MOUSSE); }
       });
-      for (const c of st.crs) {
-        if (!dans(c)) continue;
-        if (c.hp <= 0) { if (c.respawn > 0) c.respawn -= k; continue; }
-        for (const s2 of ['burn', 'stun', 'sleep', 'wet', 'lent', 'gele', 'glisse']) if (c.sta[s2] > 0) c.sta[s2] = Math.max(0, c.sta[s2] - k);
-        if (c.bebe > 0) c.bebe -= k;
-        if (c.morphT > 0) c.morphT -= k;
-        if (c.pondT) c.pondT -= k;
-        c.hp = Math.min(c.hpMax, c.hp + 0.05 * k);
-      }
+      // créatures, objets mobiles, sorts et particules vivent déjà au rythme de la bulle (facteur de temps)
       for (const o of st.objs) {
         if (o.mort || !dans(o)) continue;
         if (o.t === 'graine' && o.stage === 1) { o.gt = (o.gt || 0) + k; if (!o.racine) o.regrow += k; }
@@ -698,20 +691,12 @@ const World = (() => {
         if (o.t === 'lampe' && o.charge > 0) o.charge = Math.max(0, o.charge - k);
         if (o.t === 'moulin' && o.spin > 0) o.spin = Math.max(0, o.spin - k);
       }
-      for (const s2 of st.sp) if (s2.k !== 'bulle' && s2.k !== 'ring' && s2.life > 0 && s2.x !== undefined && dist(cx, cy, s2.x, s2.y) < r && ['field', 'trap', 'totem', 'timer', 'attente', 'beamtimer', 'tornade', 'singularite'].includes(s2.k)) s2.life -= k;
       const p = st.p;
       if (dans(p)) { for (const s2 in p.sta) if (p.sta[s2] > 0 && s2 !== 'forme') p.sta[s2] = Math.max(0, p.sta[s2] - k * 0.5); p.ink = Math.min(p.inkMax, p.ink + dt * (p.inkRegen || 1) * 2); }
     } else if (mode === 'fige') {
-      for (const c of st.crs) if (c.hp > 0 && dans(c)) { c.vx = 0; c.vy = 0; c.sta.stun = Math.max(c.sta.stun, 0.2); }
-      for (const o of st.objs) if (o.dyn && !o.carried && !o.mort && dans(o)) { o.vx = 0; o.vy = 0; }
-      for (const s2 of st.sp) if (s2.k === 'proj' && dist(cx, cy, s2.x, s2.y) < r) { if (!s2.gelV) s2.gelV = [s2.vx, s2.vy, s2.grav]; s2.vx = 0; s2.vy = 0; s2.grav = 0; s2.life += dt; }
-      for (const s2 of st.sp) if (s2.k !== 'bulle' && s2.k !== 'proj' && s2.life > 0 && s2.x !== undefined && dist(cx, cy, s2.x, s2.y) < r) s2.life += dt;
+      // tout est déjà suspendu par le facteur de temps nul de la bulle
     } else {
-      // temps lent : tout ce qui bouge s'englue
-      for (const c of st.crs) if (c.hp > 0 && dans(c)) { c.sta.lent = Math.max(c.sta.lent || 0, 0.3); c.vx *= Math.max(0, 1 - 6 * dt); if (!c.vole) c.vy = Math.min(c.vy, 120); else c.vy *= Math.max(0, 1 - 6 * dt); }
-      for (const o of st.objs) if (o.dyn && !o.carried && !o.mort && dans(o)) { o.vx *= Math.max(0, 1 - 6 * dt); o.vy = Math.min(o.vy, 100); }
-      for (const s2 of st.sp) if (s2.k === 'proj' && dist(cx, cy, s2.x, s2.y) < r) { const v = Math.hypot(s2.vx, s2.vy); if (v > 90) { const kk = Math.max(0.25, 1 - 5 * dt); s2.vx *= kk; s2.vy *= kk; } s2.life += dt * 0.7; }
-      for (const s2 of st.sp) if (s2.k !== 'bulle' && s2.k !== 'proj' && s2.life > 0 && s2.x !== undefined && dist(cx, cy, s2.x, s2.y) < r) s2.life += dt * 0.7;
+      // temps lent : le facteur de temps de la bulle ralentit tout ce qui s'y trouve
     }
   }
   // ---------- Métamorphose ----------
@@ -866,7 +851,7 @@ const World = (() => {
     const C = colorOf(core);
     if (burst) st.sp.push({ k: 'ring', core, x: cx, y: cy, r: rad, life: 0.4, max: 0.4, color: C });
     if (effetDerive(core, cx, cy, rad, prm, burst, k, mode, opts)) return;
-    if (!opts.noGrid) gridEffect(core, cx, cy, rad, prm, burst, k);
+    if (!opts.noGrid) gridEffect(core, cx, cy, rad, opts.mur ? { ...prm, mur: true } : prm, burst, k);
 
     // --- créatures ---
     for (const c of st.crs) {
@@ -1361,7 +1346,7 @@ const World = (() => {
           const tx = ox + dx * dd + -dy * off, ty = oy + dy * dd + dx * off;
           if (trig === 'commande') { st.sp.push({ k: 'attente', spec, x: tx, y: ty, life: 40, mur: seal.shape === 'mur', dir: { x: dx, y: dy } }); continue; }
           if (seal.shape === 'mur') {
-            for (let k = -2; k <= 2; k++) { const yy = ty + k * 36 * prm.size; if (trig === 'immediat') doBurst(spec, tx, yy, 24 * prm.size, { noField: k !== 0, noEcho: k !== 0, noRepeat: k !== 0, noExpire: k !== 0, noCombo: k !== 0 }); else st.sp.push({ k: 'timer', spec, x: tx, y: yy, r: 24 * prm.size, t: trig === 'retarde' ? spec.delai : 0.1 + Math.abs(k) * 0.1, max: trig === 'retarde' ? spec.delai : 0.5, color: C, noField: k !== 0 }); }
+            for (let k = -2; k <= 2; k++) { const yy = ty + k * 36 * prm.size; if (trig === 'immediat') doBurst(spec, tx, yy, 24 * prm.size, { mur: true, noField: k !== 0, noEcho: k !== 0, noRepeat: k !== 0, noExpire: k !== 0, noCombo: k !== 0 }); else st.sp.push({ k: 'timer', spec, x: tx, y: yy, r: 24 * prm.size, t: trig === 'retarde' ? spec.delai : 0.1 + Math.abs(k) * 0.1, max: trig === 'retarde' ? spec.delai : 0.5, color: C, noField: k !== 0 }); }
           } else {
             const r = 70 * prm.size;
             if (trig === 'immediat') doBurst(spec, tx, ty, r, {}, { x: dx, y: dy });
@@ -1820,6 +1805,7 @@ const World = (() => {
     const z = L.zones.find((z) => p.x >= z.x && p.x < z.x + z.w);
     if (z && z.nom !== st.lastZone) { st.lastZone = z.nom; game.zoneChange(z.nom); }
 
+    majBulles();
     updateObjs(dt);
     updateCreatures(dt);
     updateSpells(dt);
@@ -1983,9 +1969,15 @@ const World = (() => {
     onSimEvent('foudre', sx, sy);
   }
 
-  function updateObjs(dt) {
+  // facteur de temps à un endroit : 1 dehors, 0 figé, < 1 ralenti, > 1 accéléré (le lanceur n'y est pas soumis)
+  let bullesT = [];
+  function majBulles() { bullesT = []; for (const b of st.sp) if (b.k === 'bulle' && !b.mort) bullesT.push({ x: b.x, y: b.y, r: b.r, f: b.mode === 'vite' ? 3 : b.mode === 'lent' ? 0.3 : 0 }); Sim.tzones = bullesT; }
+  function tempsDe(x, y, vite = 3) { for (const z of bullesT) { const dx = x - z.x, dy = y - z.y; if (dx * dx + dy * dy <= z.r * z.r) return z.f > 1 ? vite : z.f; } return 1; }
+  function updateObjs(dtG) {
+    let dt = dtG;
     for (const o of st.objs) {
       if (o.mort) continue;
+      dt = bullesT.length && o.dyn ? dtG * tempsDe(o.x + o.w / 2, o.y + o.h / 2) : dtG; if (dt <= 0) continue;
       switch (o.t) {
         case 'caisse': case 'rocher':
           if (o.ench) { o.ench.t -= dt; if (o.ench.t <= 0) o.ench = null; else { doContinuous(o.ench.spec, o.x + o.w / 2, o.y + o.h / 2, 50 * (o.ench.spec.prm.size || 1), dt, { noPlayer: true, noField: true }); if (Math.random() < 0.3) part(o.x + Math.random() * o.w, o.y + Math.random() * o.h, o.ench.spec.color, 1, 20, 0.5, 2, -40, 'spark'); } }
@@ -2025,9 +2017,11 @@ const World = (() => {
     st.objs = st.objs.filter((o) => !o.mort);
   }
 
-  function updateCreatures(dt) {
+  function updateCreatures(dtG) {
+    let dt = dtG;
     const p = st.p; const pcx = p.x + p.w / 2, pcy = p.y + p.h / 2;
     for (const c of st.crs) {
+      dt = bullesT.length ? dtG * tempsDe(c.x + c.w / 2, c.y + c.h / 2) : dtG; if (dt <= 0) continue;
       if (c.hp <= 0 && c.orig) finMorph(c);
       if (c.hp <= 0) { c.respawn -= dt; if (c.respawn <= 0) { c.hp = c.hpMax; c.x = c.x0; c.y = c.y0; c.vx = 0; c.vy = 0; c.size = 1; c.sta.tame = false; if (c.t === 'limace') { c.w = 36; c.h = 24; } } continue; }
       if (c.carried) { c.sta.burn = 0; continue; }
@@ -2342,9 +2336,11 @@ const World = (() => {
     if (target && c.cd <= 0 && dist(c.x, c.y, target.x, target.y) < 40) { c.cd = 1.2; doBurst(c.spec, target.x + target.w / 2, target.y + target.h / 2, 40, { noPlayer: true, noField: true, noEcho: true }); }
     if (Math.random() < 0.4) part(c.x + c.w / 2, c.y + c.h / 2, c.spec.color, 1, 20, 0.5, 2, -30, 'spark');
   }
-  function updateSpells(dt) {
+  function updateSpells(dtG) {
+    let dt = dtG;
     const sols = dynSolids();
     for (const s of st.sp) {
+      dt = bullesT.length && s.k !== 'bulle' && s.x !== undefined ? dtG * tempsDe(s.x, s.y, 2) : dtG; if (dt <= 0) continue;
       switch (s.k) {
         case 'proj': {
           s.life -= dt; if (s.life <= 0) { if (s.spec && s.trig === 'commande' && !s.potion && !s.liquide) { impactProj(s, null); break; } s.mort = true; part(s.x, s.y, s.color, 5, 30, 0.4); break; }
@@ -2550,8 +2546,8 @@ const World = (() => {
     st.sp = st.sp.filter((s) => !s.mort);
     st.crs = st.crs.filter((c) => !c.mort);
   }
-  function updateParts(dt) {
-    for (const q of st.parts) { q.life -= dt; q.vy += q.grav * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= Math.max(0, 1 - 2 * dt); }
+  function updateParts(dtG) {
+    for (const q of st.parts) { const dt = bullesT.length ? dtG * tempsDe(q.x, q.y, 2) : dtG; if (dt <= 0) continue; q.life -= dt; q.vy += q.grav * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= Math.max(0, 1 - 2 * dt); }
     st.parts = st.parts.filter((q) => q.life > 0);
   }
   function updatePickups(dt) {
