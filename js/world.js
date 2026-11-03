@@ -44,6 +44,88 @@ const World = (() => {
       sta: { wet: 0, stone: 0, invisible: 0, lowgrav: 0, jump: 0, small: 0, vision: 0, burning: 0, glide: 0, lumiere: 0, patins: 0, vitesse: 0, dissous: 0, vol: 0, branchies: 0, geant: 0, glisse: 0, hate: 0, lent: 0, armure: 0, hoquet: 0, glouglou: 0, boussole: 0, phenix: 0, regen: 0, garde: 0 },
       trap: null, selfTimer: null, carry: null, digT: 0 };
   }
+  const MECA = ['levier', 'plaque', 'brasier', 'roue', 'moulin', 'lampe', 'grille', 'coffre'];
+  const EMETTEURS = ['levier', 'plaque', 'brasier', 'roue', 'moulin', 'lampe'];
+  function emetActif(o) {
+    switch (o.t) {
+      case 'levier': return o.voulu !== undefined ? o.etat === o.voulu : o.etat;
+      case 'plaque': return o.actif;
+      case 'brasier': return o.feu > 0;
+      case 'roue': return o.eau > 0.3;
+      case 'moulin': return o.spin > 0;
+      case 'lampe': return o.charge > 0;
+    }
+    return false;
+  }
+  // ---------- Mécanismes : mise à jour des émetteurs et des circuits ----------
+  function majMecanismes(dt) {
+    const circuits = {};
+    for (const o of st.objs) {
+      if (o.mort || !o.canal) continue;
+      const k = circuits[o.canal] || (circuits[o.canal] = { em: [], rec: [] });
+      if (EMETTEURS.includes(o.t)) k.em.push(o); else k.rec.push(o);
+      switch (o.t) {
+        case 'levier': o.anim += ((o.etat ? 1 : 0) - o.anim) * Math.min(1, dt * 10); break;
+        case 'plaque': {
+          const zone = { x: o.x + 2, y: o.y - 6, w: o.w - 4, h: 10 };
+          let poids = U.rectsOverlap(zone, st.p) && !st.p.sta.vol;
+          if (!poids) poids = st.crs.some((c) => c.hp > 0 && U.rectsOverlap(zone, c)) || st.objs.some((q) => q.dyn && !q.carried && !q.mort && U.rectsOverlap(zone, q));
+          if (!poids) { let n = 0; const x0 = Math.floor(o.x / CS), x1 = Math.floor((o.x + o.w) / CS), y0 = Math.floor((o.y - 18) / CS), y1 = Math.floor(o.y / CS); for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const m = Sim.get(x, y); if (m && !P[m].gas && m !== M.BULLE) n++; } poids = n >= 8; }
+          if (poids && !o.actif) Son.sfx('click');
+          o.actif = poids; o.press += ((poids ? 1 : 0) - o.press) * Math.min(1, dt * 12);
+          break;
+        }
+        case 'brasier': {
+          if (o.feu > 0) { o.feu -= dt; if (Math.random() < 0.5) part(o.x + o.w / 2 + (Math.random() - 0.5) * 12, o.y + 4, '#f08a30', 1, 20, 0.5, 2.6, -260, 'flamme'); if (o.feu <= 0) { part(o.x + o.w / 2, o.y, '#6e6660', 6, 30, 1, 4, -60, 'fumee'); } }
+          else if (Sim.rectHas({ x: o.x, y: o.y - 8, w: o.w, h: 14 }, (m) => m === M.FEU || m === M.LAVE)) { o.feu = 15; Son.sfx('burst', 'feu'); }
+          if (o.feu > 0 && st.meteo && (st.meteo.type === 'pluie' || st.meteo.type === 'orage') && Math.random() < dt * 0.3) o.feu = Math.max(0, o.feu - 4);
+          break;
+        }
+        case 'roue': {
+          let n = 0; const x0 = Math.floor(o.x / CS), x1 = Math.floor((o.x + o.w) / CS), y0 = Math.floor(o.y / CS), y1 = Math.floor((o.y + o.h + 6) / CS);
+          for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const m = Sim.get(x, y); if (P[m].liquid && m !== M.LAVE && m !== M.MIEL) n++; }
+          const cible = Math.min(1, n / 10); o.eau += (cible - o.eau) * Math.min(1, dt * 2); o.ang += o.eau * dt * 3;
+          break;
+        }
+        case 'moulin': if (o.spin > 0) o.spin -= dt; o.ang += (o.spin > 0 ? 4 : 0.15) * dt; break;
+        case 'lampe': {
+          if (o.charge > 0) o.charge -= dt;
+          const x0 = Math.floor(o.x / CS), x1 = Math.floor((o.x + o.w) / CS), y = Math.floor((o.y + o.h + 3) / CS);
+          for (let x = x0; x <= x1; x++) if (Sim.elec[y * Sim.W + x] > 0) o.charge = Math.max(o.charge, 2);
+          break;
+        }
+        case 'grille': { const a = o.puissant ? 1 : 0; o.ouv += (a - o.ouv) * Math.min(1, dt * 3); o.solid = o.ouv < 0.6; break; }
+        case 'coffre': o.couv += ((o.ouvert ? 1 : 0) - o.couv) * Math.min(1, dt * 4); break;
+      }
+    }
+    for (const k in circuits) {
+      const C = circuits[k]; const on = C.em.length > 0 && C.em.every(emetActif);
+      for (const r of C.rec) {
+        if (r.t === 'grille') { if (on && !r.puissant) { Son.sfx('door'); if (inView(r.x, r.y)) msg('Une grille s\'ouvre.'); } r.puissant = on; }
+        if (r.t === 'coffre' && on && !r.ouvert) ouvrirCoffre(r);
+      }
+      C.on = on;
+    }
+    st.circuits = circuits;
+  }
+  // fils d'encre entre un récepteur et ses émetteurs, visibles de près
+  function liensCircuit(ctx, o) {
+    const C = st.circuits && st.circuits[o.canal]; if (!C || o.ouvert) return;
+    const p = st.p; const d = dist(p.x, p.y, o.x, o.y); if (d > 520) return;
+    ctx.save(); ctx.setLineDash([3, 6]); ctx.lineWidth = 1.3;
+    for (const e of C.em) { const on = emetActif(e); ctx.strokeStyle = on ? '#e0b050' : 'rgba(31,26,22,0.35)'; ctx.globalAlpha = Math.min(1, (520 - d) / 200); ctx.beginPath(); const ax = e.x + e.w / 2, ay = e.y + e.h - 2, bx = o.x + o.w / 2, by = o.y + o.h - 2; ctx.moveTo(ax, ay); ctx.quadraticCurveTo((ax + bx) / 2, Math.max(ay, by) + 14, bx, by); ctx.stroke(); }
+    ctx.restore();
+  }
+  function ouvrirCoffre(o) {
+    o.ouvert = true; const R0 = o.recompense || {}; const recu = [];
+    if (R0.ing) for (const id in R0.ing) for (let i = 0; i < R0.ing[id]; i++) { game.gainIngredient(id); if (!i) recu.push(DATA.INGREDIENTS[id].nom + (R0.ing[id] > 1 ? ' ×' + R0.ing[id] : '')); }
+    if (R0.encre) for (const id in R0.encre) { game.inv.encres[id] = (game.inv.encres[id] || 0) + R0.encre[id]; recu.push(R0.encre[id] + ' gouttes d\'' + DATA.ENCRES[id].nom.toLowerCase()); }
+    if (R0.xp) game.addXp(R0.xp);
+    part(o.x + o.w / 2, o.y, '#e0b050', 24, 140, 1, 3, -60, 'etincelle'); part(o.x + o.w / 2, o.y, '#fff0b0', 10, 60, 0.8, 6, -40, 'glow');
+    st.shake = 0.15; Son.sfx('unlock');
+    msg('✦ ' + (o.nom || 'Un coffre') + ' s\'ouvre ! ' + (recu.length ? 'Dedans : ' + recu.join(', ') + '.' : ''), 'unlock');
+    evt('coffre'); game.save();
+  }
   function makeObj(o) {
     const b = { t: o.t, x: o.x, y: o.y, seed: (o.x * 31 + o.y * 7) | 0 };
     switch (o.t) {
@@ -58,8 +140,17 @@ const World = (() => {
       case 'rune': Object.assign(b, { w: 40, h: 60, revele: 0, lu: false, cooldown: 0 }); break;
       case 'page': Object.assign(b, { w: 20, h: 24, page: o.page, lue: false }); break;
       case 'ruche': Object.assign(b, { w: 22, h: 30, drip: 4, enfume: 0 }); break;
+      // mécanismes
+      case 'levier': Object.assign(b, { w: 20, h: 34, etat: !!o.etat, anim: o.etat ? 1 : 0 }); break;
+      case 'plaque': Object.assign(b, { w: 44, h: 8, actif: false, press: 0 }); break;
+      case 'brasier': Object.assign(b, { w: 26, h: 30, feu: 0 }); break;
+      case 'roue': Object.assign(b, { w: 44, h: 44, ang: 0, eau: 0 }); break;
+      case 'moulin': Object.assign(b, { w: 40, h: 76, ang: 0, spin: 0 }); break;
+      case 'lampe': Object.assign(b, { w: 22, h: 36, charge: 0 }); break;
+      case 'grille': Object.assign(b, o.horiz ? { w: 54, h: 18 } : { w: 18, h: 90 }, { solid: true, ouv: 0 }); break;
+      case 'coffre': Object.assign(b, { w: 40, h: 30, ouvert: !!o.ouvert, couv: o.ouvert ? 1 : 0, sceau: 0 }); break;
     }
-    for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page']) if (o[k] !== undefined) b[k] = o[k];
+    for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours']) if (o[k] !== undefined) b[k] = o[k];
     return b;
   }
   function makeCreature(c) {
@@ -79,8 +170,8 @@ const World = (() => {
   // ---------- Sauvegarde du monde ----------
   function serialize() {
     return {
-      mat: Sim.serialize(), tod: st.tod, meteo: st.meteo,
-      objs: st.objs.filter((o) => !o.mort).map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
+      mat: Sim.serialize(), tod: st.tod, meteo: st.meteo, mecaV: 1,
+      objs: st.objs.filter((o) => !o.mort).map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
       crs: st.crs.map((c) => ({ t: c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.hp, tame: c.sta.tame })),
     };
   }
@@ -88,6 +179,7 @@ const World = (() => {
     try {
       if (d.mat) Sim.deserialize(d.mat);
       if (d.objs) st.objs = d.objs.map(makeObj);
+      if (d.objs && !d.mecaV) for (const q of L.objs) if (MECA.includes(q.t)) st.objs.push(makeObj(q));
       if (d.crs) st.crs = d.crs.map(makeCreature);
       if (d.tod != null) st.tod = d.tod;
       if (d.meteo) st.meteo = d.meteo;
@@ -199,6 +291,9 @@ const World = (() => {
     for (const o of st.objs) {
       if (o.t === 'torche' && o.lit) ls.push({ x: o.x + o.w / 2, y: o.y + 6, r: 230 });
       if (o.burning > 0) ls.push({ x: o.x + o.w / 2, y: o.y + o.h / 2, r: 130 });
+      if (o.t === 'brasier' && o.feu > 0) ls.push({ x: o.x + o.w / 2, y: o.y, r: 200 });
+      if (o.t === 'lampe' && o.charge > 0) ls.push({ x: o.x + o.w / 2, y: o.y + 12, r: 180 });
+      if (o.t === 'coffre' && !o.ouvert) ls.push({ x: o.x + o.w / 2, y: o.y + 10, r: 40 });
       if (o.t === 'rune' && o.revele > 0) ls.push({ x: o.x + o.w / 2, y: o.y + o.h / 2, r: 60 * o.revele });
     }
     for (const c of st.crs) { if (c.t === 'follet' && c.hp > 0) ls.push({ x: c.x + c.w / 2, y: c.y + c.h / 2, r: 110 }); else if (c.hp > 0 && DATA.ESPECES[c.t] && DATA.ESPECES[c.t].lumineux) ls.push({ x: c.x + c.w / 2, y: c.y + c.h / 2, r: 70 }); else if (c.t === 'familier' && c.hp > 0) ls.push({ x: c.x + c.w / 2, y: c.y + c.h / 2, r: 90 }); }
@@ -663,6 +758,11 @@ const World = (() => {
       const ocx = o.x + o.w / 2, ocy = o.y + o.h / 2;
       if (burst && o.t !== 'porte' && o.t !== 'pancarte') evt('hit', 'objet:' + o.t);
       switch (o.t) {
+        case 'levier': if (burst && (core === 'force' || core === 'vent' || core === 'son' || core === 'terre' || core === 'gravite') && time - (o.tT || 0) > 0.6) { o.etat = !o.etat; o.tT = time; Son.sfx('click'); part(ocx, ocy, C, 6, 50); } break;
+        case 'brasier': if (core === 'feu' || core === 'foudre' || (core === 'lumiere' && prm.lg && prm.lg.lumiere)) { if (!(o.feu > 0)) Son.sfx('burst', 'feu'); o.feu = 15 * (prm.duration || 1); } else if (core === 'eau' || core === 'froid' || (core === 'vent' && burst) || core === 'secheresse' || core === 'neutraliser') { if (o.feu > 0) part(ocx, o.y, '#bbb', 8, 40, 0.8, 4, -60, 'fumee'); o.feu = 0; } break;
+        case 'lampe': if (core === 'foudre') { o.charge = 10 * (prm.duration || 1); part(ocx, ocy, '#fff2a0', 12, 120, 0.4, 2, 0, 'etincelle'); } break;
+        case 'moulin': if (core === 'vent' || core === 'son' || core === 'force') { o.spin = Math.max(o.spin, (burst ? 8 : 2) * (prm.duration || 1)); } break;
+        case 'roue': if (core === 'vent' || core === 'force') o.ang += burst ? 1.2 : 0.1; break;
         case 'mannequin': if (burst) { o.hits++; o.wob = 1; evt('mannequin'); if (core === 'feu') o.burning = 2; if (core === 'eau' || core === 'froid') o.burning = 0; } break;
         case 'caisse':
           if (core === 'feu') { if (!o.burning) part(ocx, ocy, C, 6, 60); o.burning = Math.max(o.burning, 2.5); }
@@ -1266,11 +1366,13 @@ const World = (() => {
     if (o.t === 'rune') return o.revele >= 1 && o.cooldown <= 0;
     if (o.t === 'page') return !o.lue;
     if (o.t === 'ruche') return true;
+    if (o.t === 'levier') return true;
+    if (o.t === 'coffre') return !o.ouvert;
     return false;
   }
   function findInteraction() {
     const p = st.p; const pcx = p.x + p.w / 2, pcy = p.y + p.h / 2;
-    for (const o of st.objs) { if (interactible(o) && dist(pcx, pcy, o.x + o.w / 2, o.y + o.h / 2) < 70 + Math.max(o.w, o.h) / 2) return { t: o.t, o }; }
+    { let best = null, bd = 1e9; for (const o of st.objs) { if (!interactible(o)) continue; const d = dist(pcx, pcy, o.x + o.w / 2, o.y + o.h / 2); if (d < 70 + Math.max(o.w, o.h) / 2 && d < bd) { bd = d; best = o; } } if (best) return { t: best.t, o: best }; }
     const liq = nearestLiquid(pcx, pcy + 10, 42);
     if (liq && !p.carry) return { t: 'liquide', liq };
     if (p.carry) return { t: 'poser' };
@@ -1286,6 +1388,8 @@ const World = (() => {
       case 'graine': return 'Cueillir une racine';
       case 'rune': return 'Lire la rune';
       case 'page': return 'Lire la page déchirée';
+      case 'levier': return 'Basculer le levier';
+      case 'coffre': return it.o.canal ? 'Examiner le coffre scellé' : 'Ouvrir le coffre';
       case 'ruche': return it.o.enfume > 0 ? 'Prendre du miel (les abeilles dorment)' : 'Prendre du miel (attention aux abeilles)';
       case 'liquide': return 'Remplir une fiole (' + P[it.liq.m].nom + ')';
       case 'poser': return 'Poser (clic droit : lancer)';
@@ -1302,6 +1406,8 @@ const World = (() => {
       case 'champignon': it.o.pris = true; it.o.mort = true; game.gainIngredient('champignon'); part(it.o.x + 11, it.o.y, '#5a4a7d', 8, 40); break;
       case 'graine': it.o.racine = false; it.o.regrow = 0; game.gainIngredient('racine'); part(it.o.x + 10, it.o.y - it.o.hauteur * CS, '#5c8f3e', 8, 40, 0.6, 3, 0, 'feuille'); break;
       case 'ruche': if (it.o.enfume > 0) { game.gainIngredient('miel'); part(it.o.x + 11, it.o.y + 20, '#d8a03a', 8, 40); } else { if (p.sta.stone <= 0 && p.sta.armure <= 0) p.hp -= 1.5; p.vx = -p.face * 300; p.vy = -200; Son.sfx('hurt'); msg('Les abeilles n\'apprécient pas. Enfume-les d\'abord.', 'warn'); } break;
+      case 'levier': it.o.etat = !it.o.etat; Son.sfx('click'); part(it.o.x + 10, it.o.y + 8, '#8d6a3c', 4, 30); break;
+      case 'coffre': { const o = it.o; if (!o.canal) { ouvrirCoffre(o); break; } const C = st.circuits && st.circuits[o.canal]; const n = C ? C.em.filter(emetActif).length : 0, tot = C ? C.em.length : 0; msg((o.nom || 'Un coffre') + ', scellé par un sceau de verrou. ' + (o.indice || '') + ' (' + n + '/' + tot + ' actifs)'); Son.sfx('click'); break; }
       case 'page': it.o.lue = true; game.lirePage(it.o.page); part(it.o.x + 10, it.o.y, '#efe3c4', 10, 50, 0.8, 3, -40); break;
       case 'rune': { const o = it.o; o.cooldown = 30; if (!o.lu) { o.lu = true; evt('rune'); msg('Tu déchiffres la rune. Elle te confie une lueur captive.'); } game.gainIngredient('lueur'); part(o.x + 20, o.y + 30, '#d8a63a', 12, 60, 0.9, 2, 0, 'spark'); break; }
       case 'liquide': {
@@ -1356,6 +1462,7 @@ const World = (() => {
     memoriser(dt);
     if (p.forme && !(p.sta.forme > 0)) finFormeSoi();
     updateGFields(dt);
+    majMecanismes(dt);
     Sim.step();
     updateMeteo(dt);
     for (const k in p.sta) if (p.sta[k] > 0) p.sta[k] = Math.max(0, p.sta[k] - dt);
@@ -2328,6 +2435,67 @@ const World = (() => {
     ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     const cx = o.x + o.w / 2;
     switch (o.t) {
+      case 'levier': {
+        ctx.fillStyle = '#a8977a'; U.inkRect(ctx, o.x, o.y + o.h - 10, o.w, 10, o.seed, 0.6); ctx.fill(); ctx.stroke();
+        const a = -0.7 + o.anim * 1.4, bx = o.x + o.w / 2, by = o.y + o.h - 8; const ex = bx + Math.sin(a) * 26, ey = by - Math.cos(a) * 26;
+        ctx.strokeStyle = '#6b4f2a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(ex, ey); ctx.stroke();
+        ctx.fillStyle = o.voulu !== undefined && o.etat === o.voulu ? '#e0b050' : '#9a4a3a'; ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(ex, ey, 4.5, 0, TAU); ctx.fill(); ctx.stroke();
+        break;
+      }
+      case 'plaque': {
+        const dy = o.press * 3; ctx.fillStyle = o.actif ? '#d8b860' : '#a8977a'; ctx.fillRect(o.x, o.y + dy, o.w, o.h - dy); ctx.strokeRect(o.x, o.y + dy, o.w, o.h - dy);
+        Seal.glyph(ctx, 'poids', o.x + o.w / 2, o.y + 4 + dy, 3.5, o.actif ? '#6b3f00' : 'rgba(31,26,22,0.5)', 1);
+        if (o.actif) FX.glow(ctx, o.x + o.w / 2, o.y, 26, '#e0b050', 0.35);
+        break;
+      }
+      case 'brasier': {
+        ctx.fillStyle = '#5a524c'; ctx.beginPath(); ctx.moveTo(o.x, o.y + 6); ctx.lineTo(o.x + o.w, o.y + 6); ctx.lineTo(o.x + o.w - 6, o.y + 16); ctx.lineTo(o.x + 6, o.y + 16); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, o.y + 16); ctx.lineTo(cx, o.y + o.h - 3); ctx.moveTo(cx - 8, o.y + o.h); ctx.lineTo(cx + 8, o.y + o.h); ctx.stroke();
+        if (o.feu > 0) { const k = Math.min(1, o.feu / 2); FX.glow(ctx, cx, o.y, 40 * k, '#f08a30', 0.5 * k); FX.flamme(ctx, cx, o.y + 7, 26 * k, 14, time, 0, 0.95); FX.flamme(ctx, cx - 6, o.y + 7, 14 * k, 8, time + 1, 0, 0.8); FX.flamme(ctx, cx + 6, o.y + 7, 16 * k, 8, time + 2, 0, 0.8); }
+        break;
+      }
+      case 'roue': {
+        const r = o.w / 2, cy = o.y + r; ctx.save(); ctx.translate(cx, cy); ctx.rotate(o.ang); ctx.fillStyle = 'rgba(141,106,60,0.35)';
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, r * 0.25, 0, TAU); ctx.stroke();
+        for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; ctx.beginPath(); ctx.moveTo(Math.cos(a) * r * 0.25, Math.sin(a) * r * 0.25); ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); ctx.stroke(); ctx.fillStyle = '#8d6a3c'; ctx.fillRect(Math.cos(a) * r - 4, Math.sin(a) * r - 4, 8, 8); }
+        ctx.restore(); ctx.strokeStyle = INK; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx - 10, o.y + o.h + 4); ctx.moveTo(cx, cy); ctx.lineTo(cx + 10, o.y + o.h + 4); ctx.stroke();
+        if (o.eau > 0.3 && Math.random() < 0.3) part(cx + (Math.random() - 0.5) * o.w, o.y + o.h, '#6aa0d8', 1, 40, 0.5, 2, 400, 'goutte');
+        break;
+      }
+      case 'moulin': {
+        ctx.fillStyle = 'rgba(168,151,122,0.5)'; ctx.beginPath(); ctx.moveTo(o.x + 8, o.y + o.h); ctx.lineTo(o.x + 14, o.y + 22); ctx.lineTo(o.x + o.w - 14, o.y + 22); ctx.lineTo(o.x + o.w - 8, o.y + o.h); ctx.closePath(); ctx.fill(); ctx.stroke();
+        U.hatch(ctx, o.x + 12, o.y + 26, o.w - 24, o.h - 28, 5, Math.PI / 4, 5, 0.3);
+        ctx.save(); ctx.translate(cx, o.y + 20); ctx.rotate(o.ang);
+        for (let i = 0; i < 4; i++) { ctx.rotate(TAU / 4); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -34); ctx.stroke(); ctx.fillStyle = 'rgba(239,227,196,0.9)'; ctx.fillRect(1, -34, 9, 24); ctx.strokeRect(1, -34, 9, 24); }
+        ctx.restore(); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(cx, o.y + 20, 3, 0, TAU); ctx.fill();
+        if (o.spin > 0 && Math.random() < 0.2) part(cx + (Math.random() - 0.5) * 60, o.y + 20 + (Math.random() - 0.5) * 50, '#bfe8e8', 1, 60, 0.5, 2, 0, 'vent');
+        break;
+      }
+      case 'lampe': {
+        const on = o.charge > 0;
+        ctx.beginPath(); ctx.moveTo(cx, o.y + o.h); ctx.lineTo(cx, o.y + 24); ctx.stroke(); ctx.fillStyle = '#737e86'; ctx.fillRect(cx - 8, o.y + o.h - 4, 16, 4);
+        ctx.fillStyle = on ? '#fff6c0' : 'rgba(207,227,234,0.6)'; ctx.beginPath(); ctx.moveTo(cx, o.y); ctx.lineTo(cx + 9, o.y + 12); ctx.lineTo(cx, o.y + 24); ctx.lineTo(cx - 9, o.y + 12); ctx.closePath(); ctx.fill(); ctx.stroke();
+        if (on) { FX.glow(ctx, cx, o.y + 12, 34, '#e0c43a', 0.6); if (Math.random() < 0.15) st.sp.push({ k: 'zap', pts: FX.eclairPts(cx, o.y + 12, cx + (Math.random() - 0.5) * 40, o.y + 12 + (Math.random() - 0.5) * 40, 0.4), life: 0.1, max: 0.1 }); }
+        break;
+      }
+      case 'grille': {
+        liensCircuit(ctx, o);
+        const k = o.ouv;
+        ctx.strokeStyle = '#4a4a55'; ctx.lineWidth = 3;
+        if (o.horiz) { const off = k * o.w; ctx.save(); ctx.beginPath(); ctx.rect(o.x, o.y - 4, o.w, o.h + 8); ctx.clip(); for (let x = o.x + 4 + off; x < o.x + o.w + off; x += 9) { ctx.beginPath(); ctx.moveTo(x, o.y); ctx.lineTo(x, o.y + o.h); ctx.stroke(); } ctx.beginPath(); ctx.moveTo(o.x + off, o.y + 3); ctx.lineTo(o.x + o.w + off, o.y + 3); ctx.moveTo(o.x + off, o.y + o.h - 3); ctx.lineTo(o.x + o.w + off, o.y + o.h - 3); ctx.stroke(); ctx.restore(); }
+        else { const off = k * o.h; for (let x = o.x + 3; x < o.x + o.w; x += 6) { ctx.beginPath(); ctx.moveTo(x, o.y - off); ctx.lineTo(x, o.y + o.h - off); ctx.stroke(); } ctx.beginPath(); ctx.moveTo(o.x, o.y + 10 - off); ctx.lineTo(o.x + o.w, o.y + 10 - off); ctx.moveTo(o.x, o.y + o.h - 10 - off); ctx.lineTo(o.x + o.w, o.y + o.h - 10 - off); ctx.stroke(); }
+        break;
+      }
+      case 'coffre': {
+        liensCircuit(ctx, o);
+        const k = o.couv;
+        ctx.fillStyle = '#9a6a34'; U.inkRect(ctx, o.x, o.y + 10, o.w, o.h - 10, o.seed, 0.6); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = '#5a3a1a'; ctx.beginPath(); ctx.moveTo(o.x + 6, o.y + 10); ctx.lineTo(o.x + 6, o.y + o.h); ctx.moveTo(o.x + o.w - 6, o.y + 10); ctx.lineTo(o.x + o.w - 6, o.y + o.h); ctx.stroke(); ctx.strokeStyle = INK;
+        ctx.save(); ctx.translate(o.x, o.y + 10); ctx.rotate(-k * 1.9); ctx.fillStyle = '#b07a3a'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -8); ctx.quadraticCurveTo(o.w / 2, -16, o.w, -8); ctx.lineTo(o.w, 0); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+        if (!o.ouvert && o.canal) { const C = st.circuits && st.circuits[o.canal]; const n = C ? C.em.filter(emetActif).length : 0, tot = C ? C.em.length : 1; ctx.save(); ctx.translate(cx, o.y + 18); ctx.rotate(time * 0.6); ctx.strokeStyle = '#c08a2a'; ctx.lineWidth = 1.4; U.inkCircle(ctx, 0, 0, 9, 3, 0.6); for (let i = 0; i < tot; i++) { const a = i / tot * TAU; ctx.fillStyle = i < n ? '#e0b050' : 'rgba(31,26,22,0.35)'; ctx.beginPath(); ctx.arc(Math.cos(a) * 9, Math.sin(a) * 9, 2.4, 0, TAU); ctx.fill(); } ctx.restore(); }
+        else if (k > 0.9) FX.glow(ctx, cx, o.y + 8, 22, '#e0b050', 0.25 + 0.1 * Math.sin(time * 3));
+        break;
+      }
       case 'porte': {
         ctx.fillStyle = 'rgba(120,90,50,0.35)';
         ctx.beginPath(); ctx.moveTo(o.x, o.y + o.h); ctx.lineTo(o.x, o.y + 30); ctx.arc(cx, o.y + 30, o.w / 2, Math.PI, 0); ctx.lineTo(o.x + o.w, o.y + o.h); ctx.closePath(); ctx.fill(); ctx.stroke();

@@ -145,6 +145,11 @@ const Gen = (() => {
     fillEllipse(745, 226, 7, 3, M.AIR); fillEllipse(745, 228, 6, 2, M.POUDRE); tunnel(745, 222, 742, 210, 2);
     // mousse sur les pierres humides du lac souterrain
     for (let x = 240; x < 312; x++) for (let y = 196; y < 222; y++) if (Sim.get(x, y) === M.PIERRE && Sim.get(x, y - 1) === M.AIR && U.hash2(x, y) < 0.35) Sim.set(x, y - 1, M.MOUSSE);
+    // cave scellée du désert : une trappe à grille, ouverte par le moulin à vent
+    const T_CAVE = surfaceTop(843);
+    for (let x = 830; x <= 856; x++) for (let y = T_CAVE; y <= T_CAVE + 15; y++) Sim.set(x, y, M.PIERRE);
+    for (let x = 833; x <= 853; x++) for (let y = T_CAVE + 3; y <= T_CAVE + 12; y++) Sim.set(x, y, M.AIR);
+    for (let x = 840; x <= 848; x++) for (let y = T_CAVE; y <= T_CAVE + 2; y++) Sim.set(x, y, M.AIR);
     // ---- Îles volantes ----
     island(110, 48, 15, 6);
     island(300, 36, 22, 8); fillEllipse(300, 30, 7, 3, M.AIR); fillEllipse(300, 30, 6, 2, M.EAU); Sim.set(300, 33, M.AIR); Sim.set(300, 34, M.AIR);
@@ -170,8 +175,28 @@ const Gen = (() => {
       // marais
       o('pancarte', 705, 70, { texte: 'Les ruines de métal. La foudre les aime.' }), o('torche', 780, 80),
       // désert
-      o('pancarte', 830, 70, { texte: 'Le sable chauffé devient verre, dit-on.' }), o('rocher', 845, 56), o('rune', 892, 60),
+      o('pancarte', 830, 70, { texte: 'Le sable chauffé devient verre, dit-on.' }), o('rocher', 872, 56), o('rune', 892, 60),
     ];
+    // ---- Mécanismes et énigmes : chaque coffre scellé s'ouvre quand tout son circuit est actif ----
+    const sol = (t, x, h, extra = {}) => { let y = 64; while (y < H - 1 && (Sim.get(x, y) === M.AIR || Sim.get(x, y) === M.HERBE || Sim.get(x, y) === M.PLANTE || Sim.P[Sim.get(x, y)].gas)) y++; return Object.assign({ t, x: px(x), y: py(y) - h }, extra); };
+    objs.push(
+      // jardin : le levier
+      sol('levier', 32, 34, { canal: 'j1' }), sol('coffre', 40, 30, { canal: 'j1', nom: 'Le coffre du jardin', indice: 'Un levier, tout près.', recompense: { xp: 20, ing: { nacre: 1, ambre: 1 } } }),
+      // forêt : la plaque
+      sol('plaque', 176, 8, { canal: 'f1' }), sol('coffre', 186, 30, { canal: 'f1', nom: 'Le coffre de la forêt', indice: 'La plaque veut un poids qui reste.', recompense: { xp: 30, ing: { coeur_braise: 1, pollen: 1 } } }),
+      // lac : la roue à aubes, à sec
+      sol('pancarte', 199, 70, { texte: 'La roue à aubes est à sec. Il faudrait lui amener l\'eau du lac.' }), sol('roue', 205, 44, { canal: 'l1' }), sol('coffre', 212, 30, { canal: 'l1', nom: 'Le coffre du meunier', indice: 'La roue tourne quand l\'eau la baigne.', recompense: { xp: 40, ing: { larme_lune: 1 }, encre: { encre_nacre: 8 } } }),
+      // volcan : deux brasiers, un seul souffle
+      sol('pancarte', 486, 70, { texte: 'Deux feux, un seul souffle.' }), sol('brasier', 494, 30, { canal: 'v1' }), sol('brasier', 530, 30, { canal: 'v1' }), sol('coffre', 512, 30, { canal: 'v1', nom: 'Le coffre des braises', indice: 'Les deux brasiers doivent brûler ensemble.', recompense: { xp: 50, ing: { plume_phenix: 1, coeur_braise: 2 } } }),
+      // clairière : trois leviers, une combinaison
+      sol('pancarte', 626, 70, { texte: 'Bas, haut, haut.' }), sol('levier', 634, 34, { canal: 'c1', etat: true, voulu: false }), sol('levier', 640, 34, { canal: 'c1', etat: false, voulu: true }), sol('levier', 646, 34, { canal: 'c1', etat: false, voulu: true }),
+      sol('coffre', 664, 30, { canal: 'c1', nom: 'Le coffre à secret', indice: 'Les leviers, dans le bon ordre.', recompense: { xp: 50, ing: { coeur_chene: 1, pollen: 2 } } }),
+      // ruines : la lampe d'éclair et la plaque
+      sol('lampe', 716, 36, { canal: 'r1' }), sol('plaque', 728, 8, { canal: 'r1' }), sol('coffre', 744, 30, { canal: 'r1', nom: 'Le coffre des ruines', indice: 'La lampe veut la foudre, la plaque un poids. Ensemble.', recompense: { xp: 60, ing: { sable_temps: 1, poudre_or: 2 } } }),
+      // désert : le moulin à vent ouvre la trappe
+      sol('moulin', 824, 76, { canal: 'd1' }), sol('pancarte', 834, 70, { texte: 'Le vent fait tourner le moulin. Le moulin ouvre la trappe.' }),
+    );
+    objs.push({ t: 'grille', x: px(840), y: py(T_CAVE), horiz: true, canal: 'd1' }, { t: 'coffre', x: px(841), y: py(T_CAVE + 13) - 30, nom: 'Le coffre de la cave', recompense: { xp: 70, encre: { encre_or: 8 }, ing: { sable_chantant: 2 } } });
     // objets placés dans les grottes / îles (positions explicites)
     const at = (t, x, y, extra = {}) => Object.assign({ t, x: px(x), y: py(y) }, extra);
     objs.push(at('ruche', 137, surfaceTop(137) - 14), at('ruche', 181.5, surfaceTop(182) - 11), at('ruche', 660, surfaceTop(661) - 12), o('pancarte', 738, 70, { texte: 'Sous les ruines dort une vieille réserve de poudre. Pas de torche !' }));
