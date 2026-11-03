@@ -23,6 +23,8 @@ const DATA = (() => {
     portail: { id: 'portail', nom: 'Portail',  couleur: '#4fb0a0', cout: 5, desc: 'Deux lancers posent deux portails : tout ce qui entre dans l\'un sort par l\'autre, même les liquides. Sur soi : rejoindre son dernier portail.' },
     marque:  { id: 'marque',  nom: 'Marque',   couleur: '#e0b050', cout: 1, desc: 'Pose un repère lumineux là où le sort touche (sur une créature, il la suit). Trois au plus. Les sorts ciblés « Marque » visent le plus récent, même hors de vue.' },
     contre:  { id: 'contre',  nom: 'Contre-sort', couleur: '#a8a29a', cout: 3, desc: 'Dissipe la magie posée : champs, pièges, totems, sorts en attente, portails, pesanteurs, marques.' },
+    metamorphose: { id: 'metamorphose', nom: 'Métamorphose', couleur: '#c06aa0', cout: 5, desc: 'Change une créature en une autre pour un moment (même un golem en grenouille), une caisse en rocher. Sur soi : tu prends une forme animale, selon le glyphe fusionné (eau : grenouille, vent : chauve-souris, vie : lapin, terre : golem). Inverser : rend sa vraie forme.' },
+    rembobinage: { id: 'rembobinage', nom: 'Rembobinage', couleur: '#7a8ad0', cout: 5, desc: 'Remonte le temps de quelques secondes dans la zone : la matière revient comme avant, les créatures reculent (et se relèvent). Sur soi : tu reviens là où tu étais, avec ta vitalité d\'alors. Durée : remonte plus loin.' },
     metal:   { id: 'metal',   nom: 'Métal',    couleur: '#737e86', cout: 4, desc: 'Fait surgir du métal, qui conduit la foudre et résiste à l\'acide. Attire caisses, rochers et golems. Sur soi : armure.' },
   };
   // Effets dérivés (par Inverser), jamais dans la palette
@@ -36,7 +38,7 @@ const DATA = (() => {
     silence:     { id: 'silence',     nom: 'Silence',     couleur: '#6a5a7a' },
     rouille:     { id: 'rouille',     nom: 'Rouille',     couleur: '#9a5a3a' },
   };
-  const INVERSE = { marque: 'marque', contre: 'contre', feu: 'froid', froid: 'feu', force: 'vent', vent: 'force', lumiere: 'ombre', ombre: 'lumiere', terre: 'creuser', vie: 'fanaison', acide: 'neutraliser', foudre: 'neutraliser', gravite: 'poids', eau: 'secheresse', temps: 'ralentir', son: 'silence', metal: 'rouille', transmutation: 'transmutation', esprit: 'esprit', lien: 'lien', portail: 'portail' };
+  const INVERSE = { marque: 'marque', contre: 'contre', feu: 'froid', froid: 'feu', force: 'vent', vent: 'force', lumiere: 'ombre', ombre: 'lumiere', terre: 'creuser', vie: 'fanaison', acide: 'neutraliser', foudre: 'neutraliser', gravite: 'poids', eau: 'secheresse', temps: 'ralentir', son: 'silence', metal: 'rouille', transmutation: 'transmutation', esprit: 'esprit', lien: 'lien', portail: 'portail', metamorphose: 'metamorphose', rembobinage: 'temps' };
   // Fusions nommées (clé : deux glyphes triés)
   const COMBOS = {
     'feu|vent': { nom: 'Tornade de feu', desc: 'Des flammes qui tourbillonnent et se déplacent.' },
@@ -94,6 +96,9 @@ const DATA = (() => {
     teleguide:   { id: 'teleguide',   nom: 'Téléguidé',   cout: 2, desc: 'Le projectile suit la souris.' },
     orbite:      { id: 'orbite',      nom: 'Orbite',      cout: 3, desc: 'Trois billes tournent autour de toi un moment.' },
     canalise:    { id: 'canalise',    nom: 'Canalisé',    cout: 2, desc: 'Tant que tu maintiens le clic, l\'effet suit la souris et consomme de l\'encre.' },
+    boomerang:   { id: 'boomerang',   nom: 'Boomerang',   cout: 2, desc: 'Le projectile file, traverse ce qu\'il touche en éclatant, puis revient dans ta main.' },
+    spirale:     { id: 'spirale',     nom: 'Spirale',     cout: 1, desc: 'Le projectile tourne en vrille autour de sa course : il balaie plus large.' },
+    rasesol:     { id: 'rasesol',     nom: 'Rase-sol',    cout: 1, desc: 'Le projectile court au ras du sol, épouse les pentes et grimpe les marches.' },
     sous:        { id: 'sous',        nom: 'Sous-sceau',  cout: 0, desc: 'Un sceau consigné entier, lancé là où celui-ci éclate.' },
   };
   // Langages des éléments : à force d'employer un élément, on en apprend la grammaire
@@ -462,6 +467,12 @@ const DATA = (() => {
     { id: 'prise',      type: 'shape', item: 'prise', titre: 'Forme : Prise', indice: 'Possède le glyphe Force ou Gravité.', cond: (p) => p.cores.includes('force') || p.cores.includes('gravite') },
     { id: 'bouclier',   type: 'shape', item: 'bouclier', titre: 'Forme : Bouclier', indice: 'Fais-toi bousculer 5 fois par des créatures.', cond: (p) => (p.compteurs.bouscule || 0) >= 5 },
     { id: 'contre',     type: 'core', item: 'contre', titre: 'Glyphe : Contre-sort', indice: 'Possède 12 glyphes d\'effet.', cond: (p) => p.cores.length >= 12 },
+    // --- trajectoires, métamorphose, rembobinage ---
+    { id: 'spirale',  type: 'mods', item: ['spirale'], titre: 'Trajectoire : Spirale', indice: 'Lance 35 sceaux.', cond: (p) => p.compteurs.sorts >= 35 },
+    { id: 'boomerang', type: 'mods', item: ['boomerang'], titre: 'Trajectoire : Boomerang', indice: 'Touche 20 créatures avec des projectiles.', cond: (p) => p.compteurs.creaturesTouchees >= 20 },
+    { id: 'rasesol',  type: 'mods', item: ['rasesol'], titre: 'Trajectoire : Rase-sol', indice: 'Lance 15 sceaux de Terre.', cond: (p) => p.compteurs.terre >= 15 },
+    { id: 'metamorphose', type: 'core', item: 'metamorphose', titre: 'Glyphe : Métamorphose', indice: 'Rencontre 8 espèces et apprivoises-en 4.', cond: (p) => (p.especesVues || []).length >= 8 && p.compteurs.tames >= 4 },
+    { id: 'rembobinage', type: 'core', item: 'rembobinage', titre: 'Glyphe : Rembobinage', indice: 'Possède le glyphe Temps et atteins le niveau 6.', cond: (p) => p.cores.includes('temps') && p.compteurs.niveau >= 6 },
     // --- langages des éléments ---
     ...Object.keys(LANGAGES).map((el) => ({ id: 'lg_' + el, type: 'mods', item: [LANGAGES[el].glyphe], titre: 'Tu commences à parler le langage ' + LANGAGES[el].de + ' : glyphe ' + LANGAGES[el].nom, indice: 'Emploie souvent le glyphe ' + CORES[el].nom + ' (maîtrise : Initié(e)).', cond: (p) => ((p.maitrise || {})[el] || 0) >= MAITRISE.seuils[0] })),
     // --- étape 6 : le labo grandit ---

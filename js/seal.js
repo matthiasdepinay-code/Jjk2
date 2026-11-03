@@ -79,6 +79,7 @@ const Seal = (() => {
       orbite: n('orbite') > 0,
       canalise: n('canalise') > 0,
       lg: langues(s),
+      traj: n('boomerang') ? 'boomerang' : n('spirale') ? 'spirale' : n('rasesol') ? 'rasesol' : null,
     };
   }
 
@@ -137,6 +138,13 @@ const Seal = (() => {
       case 'pluie': ctx.beginPath(); for (let k = 0; k < 4; k++) U.inkCircle(ctx, -r * 0.5 + k * r * 0.33, -r * 0.45, r * 0.25, seed + k, r * 0.02); for (let k = 0; k < 3; k++) L(-r * 0.4 + k * r * 0.4, -r * 0.05, -r * 0.5 + k * r * 0.4, r * 0.6); break;
       case 'objet': U.inkRect(ctx, -r * 0.5, -r * 0.2, r, r, seed, r * 0.03); for (let i = 0; i < 4; i++) { const a = (i / 4) * TAU + 0.4; L(Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.8 - r * 0.3, Math.cos(a) * r * 1.0, Math.sin(a) * r * 1.0 - r * 0.3); } break;
       case 'invocation': C(0, r * 0.1, r * 0.4); dot(-r * 0.12, 0, r * 0.07); dot(r * 0.12, 0, r * 0.07); L(0, -r * 0.3, 0, -r * 0.8); L(-r * 0.3, -r * 0.6, 0, -r * 0.8); L(r * 0.3, -r * 0.6, 0, -r * 0.8); break;
+      // --- nouveaux effets ---
+      case 'metamorphose': ctx.beginPath(); ctx.ellipse(-r * 0.42, -r * 0.2, r * 0.4, r * 0.55, -0.5, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.ellipse(r * 0.42, -r * 0.2, r * 0.4, r * 0.55, 0.5, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.ellipse(-r * 0.3, r * 0.5, r * 0.25, r * 0.3, 0.4, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.ellipse(r * 0.3, r * 0.5, r * 0.25, r * 0.3, -0.4, 0, TAU); ctx.stroke(); L(0, -r * 0.6, 0, r * 0.75); break;
+      case 'rembobinage': ctx.beginPath(); ctx.arc(0, 0, r * 0.8, -Math.PI * 0.35, Math.PI * 1.45); ctx.stroke(); P([[r * 0.48, -r * 0.92], [r * 0.5, -r * 0.55], [r * 0.85, -r * 0.62]], false); L(0, 0, 0, -r * 0.45); L(0, 0, -r * 0.35, r * 0.2); break;
+      // --- trajectoires ---
+      case 'boomerang': P([[-r * 0.8, -r * 0.5], [0, r * 0.45], [r * 0.8, -r * 0.5]], false); ctx.beginPath(); ctx.arc(0, -r * 0.3, r * 0.75, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke(); break;
+      case 'spirale': ctx.beginPath(); for (let i = 0; i <= 40; i++) { const t = i / 40; const x = -r * 0.9 + t * r * 1.8, y = Math.sin(t * TAU * 2.2) * r * 0.5 * Math.min(1, t * 3); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke(); dot(r * 0.9, Math.sin(TAU * 2.2) * r * 0.5, r * 0.12); break;
+      case 'rasesol': L(-r * 0.9, r * 0.65, r * 0.9, r * 0.65); ctx.beginPath(); ctx.moveTo(-r * 0.8, r * 0.35); ctx.lineTo(r * 0.1, r * 0.35); ctx.lineTo(r * 0.35, r * 0.05); ctx.lineTo(r * 0.75, r * 0.05); ctx.stroke(); P([[r * 0.55, -r * 0.2], [r * 0.85, r * 0.05], [r * 0.55, r * 0.3]], false); break;
       // --- langages ---
       case 'chaleur': P([[0, -r * 0.55], [r * 0.5, r * 0.75], [-r * 0.5, r * 0.75]]); for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(i * r * 0.4, -r * 0.65); ctx.quadraticCurveTo(i * r * 0.4 + r * 0.15, -r * 0.8, i * r * 0.4, -r * 0.98); ctx.stroke(); } break;
       case 'pression': for (let i = 0; i < 3; i++) L(-r * 0.85 + i * r * 0.22, -r * 0.5, -r * 0.85 + i * r * 0.22, r * 0.5); L(-r * 0.2, 0, r * 0.85, 0); P([[r * 0.85, 0], [r * 0.45, -r * 0.35]], false); P([[r * 0.85, 0], [r * 0.45, r * 0.35]], false); break;

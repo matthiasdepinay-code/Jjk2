@@ -308,7 +308,7 @@ const UI = (() => {
     if (trs.includes('expiration')) tx.push('et éclate une dernière fois quand il s\'éteint');
     L.push('Déclenchement : ' + tx.join(', ') + '.');
     const mv = [];
-    if (prm.power > 1) mv.push('puissance ×' + prm.power.toFixed(1)); if (prm.range > 1) mv.push('portée ×' + prm.range.toFixed(1)); if (prm.size > 1) mv.push('taille ×' + prm.size.toFixed(1)); if (prm.duration > 1) mv.push('durée ×' + prm.duration.toFixed(1)); if (prm.speed > 1) mv.push('vitesse ×' + prm.speed.toFixed(1)); if (prm.bounces) mv.push(prm.bounces + ' rebonds'); if (prm.persist) mv.push('laisse une trace'); if (prm.echo) mv.push('écho ×' + prm.echo);
+    if (prm.traj) mv.push({ boomerang: 'revient comme un boomerang', spirale: 'vole en spirale', rasesol: 'court au ras du sol' }[prm.traj]); if (prm.power > 1) mv.push('puissance ×' + prm.power.toFixed(1)); if (prm.range > 1) mv.push('portée ×' + prm.range.toFixed(1)); if (prm.size > 1) mv.push('taille ×' + prm.size.toFixed(1)); if (prm.duration > 1) mv.push('durée ×' + prm.duration.toFixed(1)); if (prm.speed > 1) mv.push('vitesse ×' + prm.speed.toFixed(1)); if (prm.bounces) mv.push(prm.bounces + ' rebonds'); if (prm.persist) mv.push('laisse une trace'); if (prm.echo) mv.push('écho ×' + prm.echo);
     if (mv.length) L.push('Réglages : ' + mv.join(', ') + '.');
     for (const el in prm.lg) { const Lg = DATA.LANGAGES[el]; if (cores.includes(el) || [s.core, s.core2].includes(el)) L.push('Langage ' + Lg.de + ' : ' + Lg.nom + (prm.lg[el] > 1 ? ' ×2 — ' + Lg.paliers[1] : ' — ' + Lg.paliers[0])); else L.push('<span class="muted">' + Lg.nom + ' reste muet : il faut le glyphe ' + DATA.CORES[el].nom + '.</span>'); }
     const sb = Seal.subs(s); if (sb.length) L.push('Puis lance : ' + sb.map((q) => '« ' + Seal.nom(q) + ' »').join(', ') + '.');
@@ -337,7 +337,11 @@ const UI = (() => {
     if (filtre) { ctx.fillStyle = 'rgba(168,151,122,0.5)'; ctx.fillRect(W / 2 - 6, G - 56, 12, 56); U.hatch(ctx, W / 2 - 6, G - 56, 12, 56, 4, Math.PI / 4, 3, 0.4); if (filtre !== 'creature') { ctx.fillStyle = DATA.FILTRES[filtre].couleur; ctx.globalAlpha = 0.6; ctx.fillRect(tx - 16, ty + 6, 32, 10); ctx.globalAlpha = 1; } }
     // phase 1 : le sort part (0 → 0.35)
     const arr = 0.35; let ix = tx, iy = ty;
-    const enVol = (k) => { const fl = ['lumiere', 'vent', 'ombre', 'foudre', 'gravite', 'son', 'esprit', 'temps'].includes(s.core); return { x: U.lerp(sx, tx, k), y: U.lerp(sy, ty, k) - (fl ? 0 : Math.sin(k * Math.PI) * 26) }; };
+    const enVol = (k) => { const fl = ['lumiere', 'vent', 'ombre', 'foudre', 'gravite', 'son', 'esprit', 'temps', 'metamorphose', 'rembobinage'].includes(s.core); let x = U.lerp(sx, tx, k), y = U.lerp(sy, ty, k) - (fl ? 0 : Math.sin(k * Math.PI) * 26);
+      if (prm.traj === 'spirale') y += Math.sin(k * 34) * 9 * Math.min(1, k * 4);
+      else if (prm.traj === 'rasesol') y = G - 6;
+      else if (prm.traj === 'boomerang') { const kk = k < 0.5 ? k * 2 : 2 - k * 2; x = U.lerp(sx, tx, kk); y = U.lerp(sy, ty, kk) - Math.sin(k * U.TAU) * 16; }
+      return { x, y }; };
     switch (s.shape) {
       case 'projectile': case 'chaine': {
         if (t < arr) { const q = enVol(t / arr); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(q.x, q.y, 5 * Math.min(1.6, prm.size), 0, U.TAU); ctx.fill(); ctx.strokeStyle = U.INK; ctx.stroke(); if (prm.extra) { ctx.beginPath(); ctx.arc(q.x, q.y + 10, 4, 0, U.TAU); ctx.fill(); ctx.stroke(); } }
@@ -772,8 +776,8 @@ const UI = (() => {
     $('#hp-fill').style.width = (100 * Math.max(0, p.hp) / p.hpMax) + '%';
     if (g) { const need = DATA.XP.parNiveau(g.niveau); $('#xp-fill').style.width = (100 * g.xp / need) + '%'; $('#xp-txt').textContent = 'Niveau ' + g.niveau; }
     const sts = [];
-    const names = { wet: 'Trempé(e)', stone: 'Peau de pierre', invisible: 'Invisible', lowgrav: 'Léger(ère)', jump: 'Bonds', small: 'Minuscule', vision: 'Vision', burning: 'En feu !', glide: 'Planeur', lumiere: 'Lumineux(se)', patins: 'Patins de givre', vitesse: 'Foudroyé(e)', dissous: 'Mains d\'acide', vol: 'En vol', branchies: 'Branchies', geant: 'Géant(e)', glisse: 'Savonné(e)', hate: 'Hâte', lent: 'Englué(e)', armure: 'Armure', hoquet: 'Hoquet', glouglou: 'Glouglou', boussole: 'Boussole folle' };
-    for (const k in p.sta) if (p.sta[k] > 0) sts.push('<span class="st ' + k + '">' + names[k] + ' ' + Math.ceil(p.sta[k]) + 's</span>');
+    const names = { forme: 'Métamorphose', wet: 'Trempé(e)', stone: 'Peau de pierre', invisible: 'Invisible', lowgrav: 'Léger(ère)', jump: 'Bonds', small: 'Minuscule', vision: 'Vision', burning: 'En feu !', glide: 'Planeur', lumiere: 'Lumineux(se)', patins: 'Patins de givre', vitesse: 'Foudroyé(e)', dissous: 'Mains d\'acide', vol: 'En vol', branchies: 'Branchies', geant: 'Géant(e)', glisse: 'Savonné(e)', hate: 'Hâte', lent: 'Englué(e)', armure: 'Armure', hoquet: 'Hoquet', glouglou: 'Glouglou', boussole: 'Boussole folle' };
+    for (const k in p.sta) if (p.sta[k] > 0) sts.push('<span class="st ' + k + '">' + (names[k] || k) + ' ' + Math.ceil(p.sta[k]) + 's</span>');
     $('#statuts').innerHTML = sts.join('');
   }
   function setMode(state) {

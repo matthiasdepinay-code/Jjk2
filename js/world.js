@@ -433,6 +433,105 @@ const World = (() => {
 
   // ---------- Effets sur les entités ----------
   // mode : 'burst' (instantané) ou un nombre dt (continu)
+  // ---------- Métamorphose ----------
+  const MORPHS = ['grenouille', 'lapin', 'escargot', 'tortue', 'salamandre', 'limace', 'corbeau', 'chauve'];
+  function finMorph(c) {
+    if (!c.orig) return;
+    const o = c.orig; c.orig = null; c.morphT = 0;
+    const nb = makeCreature({ t: o.t, x: c.x, y: c.y + c.h - o.h, x0: c.x0 });
+    const bas = c.y + c.h, mil = c.x + c.w / 2;
+    for (const k of ['w', 'h', 'hpMax', 'dmg', 'vole', 'generique', 'portable']) c[k] = nb[k];
+    c.t = o.t; c.y = bas - nb.h; c.x = mil - nb.w / 2; c.hp = c.hp > 0 ? Math.min(nb.hpMax, Math.max(1, o.hp)) : 0; c.size = 1;
+    if (c.hp > 0) { unstick(c); part(c.x + c.w / 2, c.y + c.h / 2, '#c06aa0', 14, 90, 0.7, 3, 0, 'glow'); }
+  }
+  function metamorphoser(cx, cy, rad, prm) {
+    const dur = prm.duration || 1; let n = 0;
+    for (const c of st.crs) {
+      if (c.hp <= 0 || c.t === 'familier' || c.controlled || !U.circleRect(cx, cy, rad, c)) continue;
+      if (prm.inverse || c.orig) { if (c.orig) { finMorph(c); n++; } continue; }
+      if (c.t === 'follet') continue;
+      const choix = MORPHS.filter((t) => t !== c.t); const T = choix[(Math.random() * choix.length) | 0];
+      const nb = makeCreature({ t: T, x: c.x, y: c.y, x0: c.x0 });
+      c.orig = { t: c.t, hp: c.hp, w: c.w, h: c.h };
+      const bas = c.y + c.h;
+      for (const k of ['w', 'h', 'hpMax', 'dmg', 'vole', 'generique', 'portable']) c[k] = nb[k];
+      c.t = T; c.hp = nb.hp; c.y = bas - c.h; c.x += (c.orig.w - c.w) / 2; c.size = 1; c.morphT = 20 * dur; c.sta.stun = Math.max(c.sta.stun, 0.6);
+      part(c.x + c.w / 2, c.y + c.h / 2, '#c06aa0', 18, 110, 0.8, 3, 0, 'glow'); part(c.x + c.w / 2, c.y + c.h / 2, '#f0d0e8', 10, 160, 0.5, 1.6, 0, 'etincelle');
+      evt('espece', T); n++;
+      if (c.orig.t === 'golem') msg('Le golem rapetisse... et devient ' + nomCreature(T).toLowerCase() + ' !');
+    }
+    // objets : caisse et rocher échangent leur nature
+    for (const o of st.objs) {
+      if (o.mort || o.carried || !U.circleRect(cx, cy, rad, o) || (o.t !== 'caisse' && o.t !== 'rocher')) continue;
+      const nb = makeObj({ t: o.t === 'caisse' ? 'rocher' : 'caisse', x: o.x, y: o.y });
+      const bas = o.y + o.h; for (const k in nb) if (k !== 'x' && k !== 'y') o[k] = nb[k]; o.y = bas - o.h; unstick(o); n++;
+      part(o.x + o.w / 2, o.y + o.h / 2, '#c06aa0', 12, 90, 0.7, 3, 0, 'glow');
+    }
+    st.sp.push({ k: 'ring', core: 'metamorphose', x: cx, y: cy, r: rad, life: 0.5, max: 0.5, color: '#c06aa0' });
+    Son.sfx('burst', 'vie');
+    if (!n) part(cx, cy, '#c06aa0', 10, 60, 0.7, 3, -30, 'glow');
+  }
+  // sur soi : une forme animale, choisie par le glyphe fusionné
+  const FORMES = { grenouille: { nom: 'grenouille', sta: ['small', 'jump', 'branchies'] }, chauve: { nom: 'chauve-souris', sta: ['small', 'vol'] }, lapin: { nom: 'lapin', sta: ['small', 'vitesse', 'jump'] }, golem: { nom: 'golem', sta: ['geant', 'stone'] } };
+  function formeDe(spec) {
+    const autre = spec.cores.find((c) => c !== 'metamorphose') || (spec.seal && spec.seal.core2);
+    const M2 = { eau: 'grenouille', froid: 'grenouille', vent: 'chauve', ombre: 'chauve', vie: 'lapin', foudre: 'lapin', terre: 'golem', metal: 'golem', force: 'golem' };
+    if (M2[autre]) return M2[autre];
+    const k = Object.keys(FORMES); return k[(Math.random() * 3) | 0];
+  }
+  function morphSoi(spec) {
+    const p = st.p, prm = spec.prm;
+    if (prm.inverse || p.forme) { finFormeSoi(); return; }
+    const f = formeDe(spec), F = FORMES[f], d = 20 * (prm.duration || 1);
+    p.forme = f; p.sta.forme = d; for (const k of F.sta) p.sta[k] = Math.max(p.sta[k] || 0, d);
+    part(p.x + p.w / 2, p.y + p.h / 2, '#c06aa0', 22, 120, 0.8, 3, 0, 'glow'); Son.sfx('burst', 'vie');
+    msg('Te voilà ' + (f === 'golem' ? 'golem' : f === 'chauve' ? 'chauve-souris' : f) + ' pour ' + Math.round(d) + ' s.' + (f === 'chauve' ? ' Tu voles sans dépenser d\'encre.' : f === 'golem' ? ' Lourd et dur comme la pierre.' : ''));
+  }
+  function finFormeSoi() {
+    const p = st.p; if (!p.forme) return;
+    for (const k of FORMES[p.forme].sta) p.sta[k] = 0;
+    p.forme = null; p.sta.forme = 0; part(p.x + p.w / 2, p.y + p.h / 2, '#c06aa0', 14, 90, 0.7, 3, 0, 'glow'); msg('Tu reprends ta forme.');
+  }
+  // ---------- Rembobinage ----------
+  // le monde garde la trace des dernières secondes
+  const HIST_DT = 0.5, HIST_N = 13;
+  function memoriser(dt) {
+    st.histT = (st.histT || 0) + dt;
+    if (st.histT < HIST_DT) return;
+    st.histT = 0;
+    const H = st.hist || (st.hist = []);
+    const snap = H.length >= HIST_N ? H.shift() : { mat: new Uint8Array(Sim.mat.length), aux: new Uint8Array(Sim.aux.length) };
+    snap.mat.set(Sim.mat); snap.aux.set(Sim.aux); snap.t = time; H.push(snap);
+    const p = st.p; (p.hist || (p.hist = [])).push([p.x, p.y, p.hp, time]); if (p.hist.length > HIST_N) p.hist.shift();
+    for (const c of st.crs) { (c.hist || (c.hist = [])).push([c.x, c.y, c.hp, time]); if (c.hist.length > HIST_N) c.hist.shift(); }
+  }
+  function passe(hist, back) { if (!hist || !hist.length) return null; let best = hist[0]; for (const h of hist) { const t = h.t !== undefined ? h.t : h[3]; if (t <= time - back) best = h; } return best; }
+  function rembobiner(cx, cy, rad, prm) {
+    const back = clamp(3 * (prm.duration || 1), 1, 6);
+    const snap = passe(st.hist, back);
+    let n = 0;
+    if (snap) Sim.forRadius(cx, cy, rad, (x, y, i, m) => { const q = snap.mat[i]; if (q !== m && q !== M.BULLE && m !== M.BULLE) { Sim.set(x, y, q, snap.aux[i]); n++; } });
+    for (const c of st.crs) {
+      if (c.t === 'familier' || !c.hist || !c.hist.length) continue;
+      const h = passe(c.hist, back); if (!h || dist(cx, cy, h[0] + c.w / 2, h[1] + c.h / 2) > rad + 30 && dist(cx, cy, c.x + c.w / 2, c.y + c.h / 2) > rad) continue;
+      const mort = c.hp <= 0;
+      if (h[2] > 0) { c.x = h[0]; c.y = h[1]; c.hp = Math.min(c.hpMax, h[2]); c.vx = c.vy = 0; if (mort) { c.respawn = 0; msg(nomCreature(c.t) + ' se relève, à rebours.'); } unstick(c); n++; part(c.x + c.w / 2, c.y + c.h / 2, '#7a8ad0', 10, 60, 0.6, 3, 0, 'glow'); }
+    }
+    const p = st.p; if (U.circleRect(cx, cy, rad, p)) unstick(p);
+    for (const o of st.objs) if (o.dyn && !o.mort && U.circleRect(cx, cy, rad, o)) unstick(o);
+    st.sp.push({ k: 'rembob', x: cx, y: cy, r: rad, life: 0.8, max: 0.8 });
+    Son.sfx('cast', 'temps');
+    if (n) evt('rembobinage');
+  }
+  function rembobinerSoi(prm) {
+    const p = st.p, back = clamp(3 * (prm.duration || 1), 1, 6);
+    const h = passe(p.hist, back); if (!h) { msg('Le temps n\'a pas encore de passé à te rendre.'); return; }
+    const chemin = p.hist.filter((q) => q[3] >= h[3]).map((q) => [q[0] + p.w / 2, q[1] + p.h / 2]); chemin.push([p.x + p.w / 2, p.y + p.h / 2]);
+    st.sp.push({ k: 'fantome', pts: chemin.reverse(), life: 0.9, max: 0.9 });
+    p.x = h[0]; p.y = h[1]; p.vx = p.vy = 0; p.hp = Math.max(p.hp, Math.min(p.hpMax, h[2])); unstick(p);
+    st.sp.push({ k: 'rembob', x: p.x + p.w / 2, y: p.y + p.h / 2, r: 60, life: 0.6, max: 0.6 });
+    Son.sfx('cast', 'temps'); msg('Tu reviens ' + Math.round(time - h[3]) + ' s en arrière.');
+  }
   // ---------- Langages : effets propres aux créatures ----------
   function effetLangage(core, n, cx, cy, rad, prm, burst, k) {
     const power = prm.power || 1, dur = prm.duration || 1;
@@ -476,6 +575,8 @@ const World = (() => {
     const k = burst ? 1 : mode * 2.2;
     if (core === 'marque') { if (burst) placeMarque(cx, cy, rad); return; }
     if (core === 'contre') { if (burst) dissiper(cx, cy, rad); return; }
+    if (core === 'metamorphose') { if (burst) metamorphoser(cx, cy, rad, prm); return; }
+    if (core === 'rembobinage') { if (burst) rembobiner(cx, cy, rad, prm); return; }
     const lgN = prm.lg ? prm.lg[core] || 0 : 0;
     if (lgN) prm = { ...prm, power: (prm.power || 1) * (1 + 0.3 * lgN), duration: (prm.duration || 1) * (core === 'ombre' ? 2 : 1) };
     const power = prm.power || 1, dur = prm.duration || 1;
@@ -707,6 +808,8 @@ const World = (() => {
       case 'portail': { const q = st.portails[st.portails.length - 1]; if (q) { p.x = q.x - p.w / 2; p.y = q.y - p.h / 2; p.vx = 0; p.vy = 0; part(q.x, q.y, C, 14, 80); msg('Tu traverses jusqu\'à ton dernier portail.'); } else msg('Aucun portail n\'est ouvert.'); break; }
       case 'marque': placeMarque(pcx, pcy, 0); st.marques[st.marques.length - 1] = { x: pcx, y: pcy, t: 0 }; msg('Une marque luit à tes pieds.'); break;
       case 'contre': dissiper(pcx, pcy, 60 * size); break;
+      case 'metamorphose': morphSoi(spec || { cores: [core], prm }); break;
+      case 'rembobinage': rembobinerSoi(prm); break;
       case 'metal': p.sta.armure = 20 * dur; msg('Une armure de métal : rien ne te bouscule, la foudre glisse.'); break;
       case 'creuser': Sim.forRadius(pcx, p.y + p.h + 10, 40 * size, (x, y, i, m) => { if (P[m].solid && m !== M.OBSIDIENNE) Sim.set(x, y, M.AIR); }); msg('Le sol se dérobe sous tes pieds.'); break;
       case 'fanaison': p.hp -= 1; msg('Tu te sens flétrir. Mauvaise idée.', 'warn'); break;
@@ -723,6 +826,7 @@ const World = (() => {
   function couleurLg(core, lg) { if (core === 'feu' && lg.feu) return lg.feu >= 2 ? '#4a86e0' : '#f0d070'; if (core === 'foudre' && lg.foudre >= 2) return '#b070e0'; return colorOf(core); }
   // le Maître d'un élément paie moins cher ses sceaux
   function maitreMul(seal) { const M2 = (game && game.progress.maitrise) || {}; const els = [seal.core, seal.taille !== 'petit' ? seal.core2 : null].filter(Boolean); return els.length && els.every((e) => DATA.LANGAGES[e] && DATA.niveauMaitrise(M2[e] || 0) >= 3) ? 0.8 : 1; }
+  function chainOk(seal) { return seal.shape === 'projectile'; }
   function makeSpec(seal, depth = 0, charge = 0) {
     const prm = Seal.params(seal);
     if (charge > 0) { prm.power *= 1 + 0.8 * charge; prm.range *= 1 + 0.5 * charge; prm.size *= 1 + 0.4 * charge; prm.duration *= 1 + 0.3 * charge; }
@@ -906,9 +1010,9 @@ const World = (() => {
           const spread = n > 1 ? (i - (n - 1) / 2) * 0.22 : 0;
           const a = Math.atan2(dy, dx) + spread;
           const sp = (spec.core === 'foudre' ? 800 : 520) * prm.speed;
-          const floats = ['lumiere', 'vent', 'ombre', 'foudre', 'gravite', 'son', 'esprit', 'temps'].includes(spec.core);
+          const floats = ['lumiere', 'vent', 'ombre', 'foudre', 'gravite', 'son', 'esprit', 'temps', 'metamorphose', 'rembobinage'].includes(spec.core) || prm.traj === 'boomerang' || prm.traj === 'rasesol';
           st.sp.push({ k: 'proj', spec, core: spec.core, x: ox + Math.cos(a) * 20, y: oy + Math.sin(a) * 20, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
-            r: 8 * prm.size, prm, trig, bounces: prm.bounces, life: 1.1 * prm.range, grav: floats ? 40 : 420 / prm.speed, hits: new Set(), color: C, trail: 0, chaud: spec.chaud || 0,
+            r: 8 * prm.size, prm, trig, bounces: prm.bounces, life: 1.1 * prm.range * (prm.traj === 'boomerang' ? 2.2 : prm.traj === 'rasesol' ? 1.7 : 1), grav: prm.traj === 'boomerang' || prm.traj === 'rasesol' ? 0 : floats ? 40 : 420 / prm.speed, traj: chainOk(seal) ? prm.traj : null, off: 0, ph: 0, hits: new Set(), color: C, trail: 0, chaud: spec.chaud || 0,
             chain: seal.shape === 'chaine' ? 3 + (prm.extra ? 2 : 0) : 0, guide: prm.teleguide && o.player && !homing, homing });
           if (homing) { const q = st.sp[st.sp.length - 1]; q.life *= spec.cible === 'marque' ? 4 : 2; q.grav = 0; }
         }
@@ -1223,6 +1327,8 @@ const World = (() => {
   function update(dt, inp, aim) {
     time += dt;
     const p = st.p;
+    memoriser(dt);
+    if (p.forme && !(p.sta.forme > 0)) finFormeSoi();
     updateGFields(dt);
     Sim.step();
     updateMeteo(dt);
@@ -1251,7 +1357,7 @@ const World = (() => {
     if (p.sta.invisible > 0 && Math.random() < 0.2) part(p.x + p.w / 2, p.y + p.h * 0.5, '#5a4a7d', 1, 30, 0.6, 2, -30);
     if (p.sta.hoquet > 0 && Math.random() < dt * 2) { const cx = Math.floor((p.x + p.w / 2) / CS), cy = Math.floor(p.y / CS) - 1; if (Sim.get(cx, cy) === M.AIR) Sim.set(cx, cy, M.FUMEE, 60); Son.sfx('click'); }
     if (p.sta.glouglou > 0 && Math.random() < dt * 6) { const cx = Math.floor((p.x + Math.random() * p.w) / CS), cy = Math.floor((p.y + p.h) / CS); if (Sim.get(cx, cy) === M.AIR) Sim.set(cx, cy, M.EAU); }
-    if (p.sta.vol > 0) { p.ink -= dt * 1.2; if (p.ink <= 0) { p.ink = 0; p.sta.vol = 0; msg('Plus d\'encre : tu retombes.', 'warn'); } if (Math.random() < 0.3) part(p.x + p.w / 2, p.y + p.h, '#6c5ab8', 1, 30, 0.6, 2, 60, 'spark'); }
+    if (p.sta.vol > 0 && p.forme !== 'chauve') { p.ink -= dt * 1.2; if (p.ink <= 0) { p.ink = 0; p.sta.vol = 0; msg('Plus d\'encre : tu retombes.', 'warn'); } if (Math.random() < 0.3) part(p.x + p.w / 2, p.y + p.h, '#6c5ab8', 1, 30, 0.6, 2, 60, 'spark'); }
     // liquide où l'on se trouve
     { const lq = liquidOf(p); if (lq && !p.liq && Math.abs(p.vy) > 250) part(p.x + p.w / 2, p.y + p.h * 0.6, P[lq].color, 18, 260, 0.8, 2.2, 900, 'goutte'); p.liq = lq; }
     const inWater = p.liq === M.EAU || p.liq === M.SAUMURE || p.liq === M.HUILE || p.liq === M.ACIDE || p.liq === M.SEVE || p.liq === M.MIEL || p.liq === M.BOUE;
@@ -1515,9 +1621,11 @@ const World = (() => {
   function updateCreatures(dt) {
     const p = st.p; const pcx = p.x + p.w / 2, pcy = p.y + p.h / 2;
     for (const c of st.crs) {
+      if (c.hp <= 0 && c.orig) finMorph(c);
       if (c.hp <= 0) { c.respawn -= dt; if (c.respawn <= 0) { c.hp = c.hpMax; c.x = c.x0; c.y = c.y0; c.vx = 0; c.vy = 0; c.size = 1; c.sta.tame = false; if (c.t === 'limace') { c.w = 36; c.h = 24; } } continue; }
       if (c.carried) { c.sta.burn = 0; continue; }
       for (const k of ['burn', 'stun', 'sleep', 'wet', 'glisse', 'lent', 'gele']) if (c.sta[k] > 0) c.sta[k] = Math.max(0, c.sta[k] - dt);
+      if (c.morphT > 0) { c.morphT -= dt; if (c.morphT <= 0) finMorph(c); }
       if (c.curieux) { c.curieux.t -= dt; if (c.curieux.t <= 0) c.curieux = null; }
       if (c.ench) { c.ench.t -= dt; c.ench.tick += dt; if (c.ench.t <= 0) c.ench = null; else { doContinuous(c.ench.spec, c.x + c.w / 2, c.y + c.h / 2, 50 * (c.ench.spec.prm.size || 1), dt, { noPlayer: true, noField: true }); if (Math.random() < 0.3) part(c.x + Math.random() * c.w, c.y + Math.random() * c.h, c.ench.spec.color, 1, 20, 0.5, 2, -40, 'spark'); } }
       if (c.t === 'familier') { updateFamilier(c, dt, p); continue; }
@@ -1841,10 +1949,26 @@ const World = (() => {
             if (s.y > L.h + 50 || s.y < -50) s.mort = true;
             break;
           }
-          const nx = s.x + s.vx * dt, ny = s.y + s.vy * dt;
+          // trajectoires
+          if (s.traj === 'boomerang') {
+            s.bt = (s.bt || 0) + dt;
+            const pp = st.p, px = pp.x + pp.w / 2, py = pp.y + pp.h * 0.4;
+            if (!s.retour && s.bt > 0.42 * s.prm.range) { s.retour = true; s.hits.clear(); }
+            if (s.retour) { const sp = Math.max(460, Math.hypot(s.vx, s.vy)); const ddx = px - s.x, ddy = py - s.y, dd = Math.hypot(ddx, ddy) || 1; const kk = Math.min(1, 5 * dt); s.vx += (ddx / dd * sp - s.vx) * kk; s.vy += (ddy / dd * sp - s.vy) * kk; if (dd < 28) { s.mort = true; part(px, py, s.color, 8, 50, 0.4, 2, 0, 'glow'); Son.sfx('pickup'); break; } }
+            else { s.vx *= 1 - 0.8 * dt; s.vy *= 1 - 0.8 * dt; }
+          } else if (s.traj === 'rasesol') {
+            const g = groundBelow(s.x, s.y - 24);
+            if (g != null && g - s.y < 140) s.vy = clamp((g - 9 - s.y) * 12, -700, 700); else s.vy += 900 * dt;
+            if (Math.abs(s.vx) < 200) s.vx = Math.sign(s.vx || 1) * 200;
+          }
+          let nx = s.x + s.vx * dt, ny = s.y + s.vy * dt;
+          if (s.traj === 'spirale') { s.ph += dt * 15; const A = Math.min(22, s.ph * 6) * (s.prm.size || 1); const off = Math.sin(s.ph) * A; const vv = Math.hypot(s.vx, s.vy) || 1; nx += -s.vy / vv * (off - s.off); ny += s.vx / vv * (off - s.off); s.off = off; }
+          if (s.traj === 'rasesol' && Sim.solidAt(nx, ny)) { for (let kk = 1; kk <= 6; kk++) if (!Sim.solidAt(nx, ny - kk * CS)) { ny -= kk * CS; break; } }
           if (s.guide) { const aim = toWorld(game.inp.mouse.x, game.inp.mouse.y); const want = Math.atan2(aim.y - s.y, aim.x - s.x), cur = Math.atan2(s.vy, s.vx); let da = want - cur; while (da > Math.PI) da -= TAU; while (da < -Math.PI) da += TAU; const na = cur + clamp(da, -4 * dt, 4 * dt); const sp = Math.hypot(s.vx, s.vy); s.vx = Math.cos(na) * sp; s.vy = Math.sin(na) * sp; }
           const dirv = { x: s.vx / (Math.hypot(s.vx, s.vy) || 1), y: s.vy / (Math.hypot(s.vx, s.vy) || 1) };
-          const hitS = Sim.solidAt(nx, ny) ? { t: P[Sim.matAt(nx, ny)].nom } : sols.find((o) => nx >= o.x - s.r && nx <= o.x + o.w + s.r && ny >= o.y - s.r && ny <= o.y + o.h + s.r);
+          const traverse = s.traj === 'boomerang' && s.retour;
+          const hitS = traverse ? null : Sim.solidAt(nx, ny) ? { t: P[Sim.matAt(nx, ny)].nom } : sols.find((o) => nx >= o.x - s.r && nx <= o.x + o.w + s.r && ny >= o.y - s.r && ny <= o.y + o.h + s.r);
+          if (hitS && s.traj === 'boomerang' && !s.potion && !s.liquide) { s.retour = true; s.hits.clear(); s.vx = -s.vx * 0.6; s.vy = -s.vy * 0.6; part(s.x, s.y, s.color, 5, 50, 0.3); if (s.trig !== 'immediat') doBurst(s.spec, s.x, s.y, 28 * s.prm.size, { noPlayer: true, noField: true, noEcho: true }, dirv); break; }
           if (hitS) {
             if (s.bounces > 0) {
               s.bounces--;
@@ -1870,6 +1994,12 @@ const World = (() => {
           let touche = null;
           for (const c of st.crs) if (c.hp > 0 && U.circleRect(s.x, s.y, s.r, c) && !s.hits.has(c)) { touche = c; break; }
           if (!touche) for (const o of st.objs) if (!o.mort && o.t !== 'porte' && o.t !== 'pancarte' && !o.solid && U.circleRect(s.x, s.y, s.r, o) && !s.hits.has(o)) { touche = o; break; }
+          if (touche && s.traj === 'boomerang' && !s.potion && !s.liquide) {
+            if (touche.hp !== undefined && touche.t) evt('creatureTouchee');
+            s.hits.add(touche); doBurst(s.spec, s.x, s.y, 30 * s.prm.size, { noPlayer: true, noField: true, noEcho: true }, dirv); Son.sfx('hit', s.core);
+            if (!s.retour) { s.retour = true; s.hits.clear(); s.hits.add(touche); }
+            break;
+          }
           if (touche) {
             if (touche.hp !== undefined && touche.t) evt('creatureTouchee');
             if (s.potion) { potionBurst(s.potion, s.x, s.y, s.forte); s.mort = true; }
@@ -1987,7 +2117,7 @@ const World = (() => {
           if (Math.random() < 0.6) { const a = Math.random() * TAU, rr = Math.random() * s.r; part(s.x + Math.cos(a) * rr, s.y + Math.sin(a) * rr * 0.5, colorOf(s.core), 1, 20, 0.7, 3, s.core === 'feu' ? -200 : s.core === 'eau' ? 100 : -30, s.core === 'lumiere' ? 'spark' : 'dot'); }
           break;
         }
-        case 'ring': case 'beam': case 'zap': s.life -= dt; if (s.life <= 0) s.mort = true; break;
+        case 'ring': case 'beam': case 'zap': case 'rembob': case 'fantome': s.life -= dt; if (s.life <= 0) s.mort = true; break;
       }
       if (s.k === 'field' && s.faible) for (const o of st.objs) if (o.t === 'rune' && U.circleRect(s.x, s.y, s.r * 2, o)) o.revele = Math.min(1, o.revele + dt * 0.8);
     }
@@ -2357,6 +2487,12 @@ const World = (() => {
     const sel = game.hotbar[game.selected];
     return { t: time, vx: p.vx, vy: p.vy, air: !p.onGround && !p.climbing && p.liq === 0, cast, glow: glow || (sel && sel.type === 'seal' && sel.seal.core ? colorOf(sel.seal.core) : '#d8a63a') };
   }
+  function drawForme(ctx, p) {
+    const t = p.forme === 'chauve' ? 'chauve' : p.forme;
+    const fake = { t, x: p.x, y: p.y, w: p.w, h: p.h, dir: p.face, face: p.face, vx: p.vx, vy: p.vy, onGround: p.onGround, sta: {}, hurt: 0, hp: 1, hpMax: 1, phase: time * 3, size: 1, seed: 7, hop: 0, anim: p.anim };
+    ctx.save(); drawCreature(ctx, fake); ctx.restore();
+    if (p.sta.forme < 3 && Math.floor(time * 6) % 2 === 0) FX.glow(ctx, p.x + p.w / 2, p.y + p.h / 2, p.h, '#c06aa0', 0.35);
+  }
   function drawPlayer(ctx, p) {
     for (const h of ['R', 'L']) { const g = p.gestes && p.gestes[h]; const c = game.charging && game.charging[h]; if (g) FX.cercle(ctx, p.x + p.w / 2, p.y + p.h, 22 + (1 - g.t / Math.max(0.01, g.max)) * 8, time, g.color, 1); else if (c) { const k = Math.min(1, (performance.now() - c.t0) / 1500); if (k > 0.08) FX.cercle(ctx, p.x + p.w / 2, p.y + p.h, 18 + k * 20, time * (1 + k * 2), c.color || '#d8a63a', 0.5 + k * 0.5); } }
     const moving = (Math.abs(p.vx) > 20 && (p.onGround || p.climbing)) || p.sta.vol > 0;
@@ -2364,6 +2500,7 @@ const World = (() => {
     if (p.sta.wet > 0 && Math.random() < 0.06) part(p.x + p.w / 2, p.y + p.h, '#6aa0d8', 1, 10, 0.6, 2, 300);
     if (p.sta.lumiere > 0) { const g = ctx.createRadialGradient(p.x + p.w / 2, p.y + p.h / 2, 5, p.x + p.w / 2, p.y + p.h / 2, 80); g.addColorStop(0, 'rgba(216,166,58,0.35)'); g.addColorStop(1, 'rgba(216,166,58,0)'); ctx.fillStyle = g; ctx.fillRect(p.x - 80, p.y - 60, 200, 200); }
     if (p.sta.vol > 0) { ctx.save(); ctx.strokeStyle = '#6c5ab8'; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.6; U.inkCircle(ctx, p.x + p.w / 2, p.y + p.h / 2, p.h * 0.7, 3 + Math.floor(time * 4), 2); ctx.restore(); }
+    if (p.forme) { drawForme(ctx, p); return; }
     const G = p.G;
     if (G && G.mag > 0 && !(G.gx === 0 && G.gy === 1) && p.sta.vol <= 0) {
       const th = Math.atan2(G.gy, G.gx) - Math.PI / 2; const hs = Math.max(p.w, p.h);
@@ -2401,6 +2538,7 @@ const World = (() => {
         }
         FX.ruban(ctx, s.tr, s.color, s.r * 1.4, 0.55);
         FX.glow(ctx, s.x, s.y, s.r * 3.2, s.color, 0.55);
+        if (s.traj === 'boomerang') { ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(time * 16); ctx.strokeStyle = s.color; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, 0, s.r * 1.9, 0.3, 2.6); ctx.stroke(); ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, s.r * 2.2, 3.4, 5.6); ctx.stroke(); ctx.restore(); }
         const ang = Math.atan2(s.vy, s.vx);
         if (s.core === 'feu') { ctx.translate(s.x, s.y); ctx.rotate(ang + Math.PI / 2); FX.flamme(ctx, 0, s.r * 0.6, s.r * 3, s.r * 1.6, time, s.chaud || 0); }
         else if (s.core === 'foudre') { const pts = FX.eclairPts(s.x - Math.cos(ang) * s.r * 2.5, s.y - Math.sin(ang) * s.r * 2.5, s.x + Math.cos(ang) * s.r, s.y + Math.sin(ang) * s.r, 0.45); FX.eclair(ctx, pts, '#e0c43a', 1.6); FX.glow(ctx, s.x, s.y, s.r * 1.6, '#fff6c0', 0.9); }
@@ -2451,6 +2589,12 @@ const World = (() => {
       case 'singularite': { const t = 1 - s.life / s.max; ctx.strokeStyle = '#9a4a8c'; ctx.lineWidth = 2; for (let k = 0; k < 4; k++) { ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(s.x, s.y, (s.r * 0.6) * (1 - ((t * 3 + k * 0.25) % 1)), 0, TAU); ctx.stroke(); } ctx.fillStyle = '#1f1a16'; ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(s.x, s.y, 6 + Math.sin(time * 20) * 2, 0, TAU); ctx.fill(); break; }
       case 'label': ctx.globalAlpha = Math.min(1, s.life * 2); U.txt(ctx, s.txt, s.x, s.y, 20, 'center', INK, 'IM Fell English SC'); break;
       case 'ring': FX.onde(ctx, s.x, s.y, s.r, 1 - s.life / s.max, s.color); break;
+      case 'rembob': { const k = 1 - s.life / s.max; ctx.save(); ctx.strokeStyle = '#7a8ad0'; ctx.globalAlpha = 1 - k; ctx.lineWidth = 2.5;
+        U.inkCircle(ctx, s.x, s.y, s.r * (1.1 - k * 0.9), 5, 1.4); ctx.lineWidth = 1.2; U.inkCircle(ctx, s.x, s.y, s.r * (0.8 - k * 0.6), 6, 1);
+        ctx.translate(s.x, s.y); ctx.rotate(-k * 12); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -s.r * 0.5); ctx.moveTo(0, 0); ctx.rotate(-k * 30); ctx.lineTo(0, -s.r * 0.3); ctx.stroke(); ctx.restore();
+        FX.glow(ctx, s.x, s.y, s.r * (1 - k * 0.5), '#9aa8e8', (1 - k) * 0.4); break; }
+      case 'fantome': { const k = s.life / s.max; ctx.save(); ctx.strokeStyle = '#7a8ad0'; ctx.setLineDash([4, 6]); ctx.lineWidth = 2; ctx.globalAlpha = k; ctx.beginPath(); s.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke(); ctx.setLineDash([]);
+        for (let i = 0; i < s.pts.length; i += 2) { const [x, y] = s.pts[i]; ctx.globalAlpha = k * 0.35 * (1 - i / s.pts.length); ctx.fillStyle = '#9aa8e8'; ctx.beginPath(); ctx.ellipse(x, y, 10, 22, 0, 0, TAU); ctx.fill(); } ctx.restore(); break; }
       case 'zap': FX.eclair(ctx, s.pts, s.color || '#e0c43a', s.color ? 2.2 : 1.4, s.life / s.max, null, s.color === '#b070e0' ? '#ead2ff' : '#fffbe8'); break;
       case 'beam': { const t = s.life / s.max;
         if (s.core === 'foudre') { FX.eclair(ctx, FX.eclairPts(s.x1, s.y1, s.x2, s.y2, 0.12), '#e0c43a', s.w * 0.45 * t + 1, t); break; }
