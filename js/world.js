@@ -21,7 +21,7 @@ const World = (() => {
       objs: [], crs: [], sp: [], parts: [], pickups: [], eclairs: [],
       cam: { x: 0, y: 0 }, shake: 0, lastZone: '', flash: 0,
       tod: 0.32, meteo: { type: 'clair', t: 120 }, foudreT: 4, rainT: 0, obsT: {}, ileT: 0, pluieT: 0,
-      control: null, lien: null, portails: [],
+      control: null, lien: null, portails: [], defiT: 0, lac: null, lacSec: false, vuSommet: false, maxDepth: 0,
     };
     for (const o of L.objs) st.objs.push(makeObj(o));
     for (const c of L.crs) st.crs.push(makeCreature(c));
@@ -55,8 +55,9 @@ const World = (() => {
       case 'rocher': Object.assign(b, { w: 56, h: 56, solid: true, fissure: 0, vy: 0, vx: 0, dyn: true }); break;
       case 'champignon': Object.assign(b, { w: 22, h: 26, pris: false }); break;
       case 'rune': Object.assign(b, { w: 40, h: 60, revele: 0, lu: false, cooldown: 0 }); break;
+      case 'page': Object.assign(b, { w: 20, h: 24, page: o.page, lue: false }); break;
     }
-    for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp']) if (o[k] !== undefined) b[k] = o[k];
+    for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page']) if (o[k] !== undefined) b[k] = o[k];
     return b;
   }
   function makeCreature(c) {
@@ -75,7 +76,7 @@ const World = (() => {
   function serialize() {
     return {
       mat: Sim.serialize(), tod: st.tod, meteo: st.meteo,
-      objs: st.objs.filter((o) => !o.mort).map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
+      objs: st.objs.filter((o) => !o.mort).map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
       crs: st.crs.map((c) => ({ t: c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.hp, tame: c.sta.tame })),
     };
   }
@@ -129,7 +130,9 @@ const World = (() => {
   function evt(n, d) { if (game) game.progress.event(n, d); }
   function inView(x, y) { return x > st.cam.x - 40 && x < st.cam.x + VW + 40 && y > st.cam.y - 40 && y < st.cam.y + VH + 40; }
   function onSimEvent(kind, x, y) {
-    if (!st || !inView(x, y)) return;
+    if (!st) return;
+    if (kind === 'brule') { evt('brule'); return; }
+    if (!inView(x, y)) return;
     const t = st.obsT[kind] || -9;
     if (time - t < (kind === 'incendie' ? 3 : 0.8)) return;
     st.obsT[kind] = time;
@@ -210,9 +213,9 @@ const World = (() => {
       case 'vie':
         Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
           const r = Math.random();
-          if (m === M.TERRE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.5) Sim.set(x, y - 1, M.HERBE); }
-          else if (m === M.PLANTE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.5) Sim.set(x, y - 1, M.PLANTE); }
-          else if (m === M.HERBE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.25) Sim.set(x, y, M.PLANTE); }
+          if (m === M.TERRE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.5) { Sim.set(x, y - 1, M.HERBE); evt('pousse'); } }
+          else if (m === M.PLANTE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.5) { Sim.set(x, y - 1, M.PLANTE); evt('pousse'); } }
+          else if (m === M.HERBE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.25) { Sim.set(x, y, M.PLANTE); evt('pousse'); } }
           else if (m === M.CENDRE) { if (r < pr * 0.4) Sim.set(x, y, M.TERRE); }
           if ((m === M.BOIS || m === M.PLANTE || m === M.HERBE) && Sim.aux[i] > 0) { Sim.aux[i] = 0; Sim.touch(i); }
         });
@@ -535,6 +538,7 @@ const World = (() => {
   function comboEffect(key, x, y, r, prm) {
     const C = DATA.COMBOS[key]; const size = prm.size || 1, dur = prm.duration || 1;
     if (C && C.nom) st.sp.push({ k: 'label', x, y: y - 40, txt: C.nom, life: 1.6, max: 1.6 });
+    evt('combo', key);
     switch (key) {
       case 'feu|vent': st.sp.push({ k: 'field', core: 'feu', x, y, r: r * 0.7, life: 5 * dur, max: 5 * dur, prm, vx: (Math.random() < 0.5 ? -1 : 1) * 60 }); break;
       case 'feu|terre': { let cap = 25 * size; Sim.forRadius(x, y, r * 0.6, (cx, cy, i, m) => { if (cap > 0 && (m === M.TERRE || m === M.PIERRE || m === M.SABLE) && Math.random() < 0.7) { Sim.set(cx, cy, M.LAVE); cap--; } }); break; }
@@ -714,7 +718,7 @@ const World = (() => {
     }
     for (const s of st.sp) if (s.k === 'proj') for (const [from, to] of [[A, B], [B, A]]) if (dist(s.x, s.y, from.x, from.y) < from.r && time - (s.portT || -9) > 0.6) { s.x = to.x + (s.x - from.x); s.y = to.y + (s.y - from.y); s.portT = time; }
     // matières : liquides et poudres
-    Sim.forRadius(A.x, A.y, A.r, (x, y, i, m) => { const q = P[m]; if ((q.liquid || q.powder) && Math.random() < 0.5) { const tx = x + Math.round((B.x - A.x) / CS), ty = y + Math.round((B.y - A.y) / CS); if (Sim.get(tx, ty) === M.AIR) { Sim.set(tx, ty, m); Sim.set(x, y, M.AIR); } } });
+    Sim.forRadius(A.x, A.y, A.r, (x, y, i, m) => { const q = P[m]; if ((q.liquid || q.powder) && Math.random() < 0.5) { const tx = x + Math.round((B.x - A.x) / CS), ty = y + Math.round((B.y - A.y) / CS); if (Sim.get(tx, ty) === M.AIR) { Sim.set(tx, ty, m); Sim.set(x, y, M.AIR); if (m === M.EAU) evt('portailEau'); } } });
     Sim.forRadius(B.x, B.y, B.r, (x, y, i, m) => { const q = P[m]; if ((q.liquid || q.powder) && Math.random() < 0.5) { const tx = x + Math.round((A.x - B.x) / CS), ty = y + Math.round((A.y - B.y) / CS); if (Sim.get(tx, ty) === M.AIR) { Sim.set(tx, ty, m); Sim.set(x, y, M.AIR); } } });
   }
   function updateLien(dt, inp) {
@@ -795,6 +799,7 @@ const World = (() => {
     if (o.t === 'champignon') return !o.pris;
     if (o.t === 'graine') return o.stage === 1 && o.racine && o.hauteur >= o.hMax;
     if (o.t === 'rune') return o.revele >= 1 && o.cooldown <= 0;
+    if (o.t === 'page') return !o.lue;
     return false;
   }
   function findInteraction() {
@@ -814,6 +819,7 @@ const World = (() => {
       case 'champignon': return 'Cueillir le champignon';
       case 'graine': return 'Cueillir une racine';
       case 'rune': return 'Lire la rune';
+      case 'page': return 'Lire la page déchirée';
       case 'liquide': return 'Remplir une fiole (' + P[it.liq.m].nom + ')';
       case 'poser': return 'Poser (clic droit : lancer)';
       case 'porter': return 'Porter';
@@ -828,6 +834,7 @@ const World = (() => {
       case 'porte': Son.sfx('door'); game.goLab(); break;
       case 'champignon': it.o.pris = true; it.o.mort = true; game.gainIngredient('champignon'); part(it.o.x + 11, it.o.y, '#5a4a7d', 8, 40); break;
       case 'graine': it.o.racine = false; it.o.regrow = 0; game.gainIngredient('racine'); part(it.o.x + 10, it.o.y - it.o.hauteur * CS, '#5c8f3e', 8, 40, 0.6, 3, 0, 'feuille'); break;
+      case 'page': it.o.lue = true; game.lirePage(it.o.page); part(it.o.x + 10, it.o.y, '#efe3c4', 10, 50, 0.8, 3, -40); break;
       case 'rune': { const o = it.o; o.cooldown = 30; if (!o.lu) { o.lu = true; evt('rune'); msg('Tu déchiffres la rune. Elle te confie une lueur captive.'); } game.gainIngredient('lueur'); part(o.x + 20, o.y + 30, '#d8a63a', 12, 60, 0.9, 2, 0, 'spark'); break; }
       case 'liquide': {
         const m = it.liq.m; let n = 0;
@@ -953,8 +960,16 @@ const World = (() => {
     if (p.sta.vitesse <= 0 && !p.sta.stone && !p.sta.armure && Sim.rectHas(p, (m, i) => Sim.elec[i] > 0) && p.inv <= 0) { p.hp -= 1; p.inv = 1; p.vy -= 250; msg('Zap !', 'warn'); Son.sfx('hurt'); part(p.x + p.w / 2, p.y + p.h / 2, '#e0c43a', 10, 100, 0.4, 2, 0, 'spark'); }
     // contrôle d'une créature
     if (st.control) { st.control.t -= dt; const c = st.control.c; if (st.control.t <= 0 || c.hp <= 0) releaseControl(); else { c.ctl = { dirX, jump: inp.jump, dirY }; } }
-    // observation : île volante
-    if (p.onGround && p.y < 85 * CS) { if (st.ileT <= 0) { st.ileT = 120; game.observe('ile'); } } if (st.ileT > 0) st.ileT -= dt;
+    // observation : île volante (et laquelle)
+    if (p.onGround && p.y < 85 * CS) { if (st.ileT <= 0) { st.ileT = 120; game.observe('ile'); } const idx = [110, 300, 520, 730].reduce((b, cx, i, a) => (Math.abs(cx * CS - p.x) < Math.abs(a[b] * CS - p.x) ? i : b), 0); evt('ile', idx); } if (st.ileT > 0) st.ileT -= dt;
+    // défis : lac sec, sommet, profondeur
+    { const lx0 = 222 * CS, lx1 = 328 * CS; const px = p.x + p.w / 2;
+      if (px < lx0) st.lac = { wet: false, from: 'ouest' };
+      else if (px > lx1) { if (st.lac && st.lac.from === 'ouest' && !st.lac.wet) st.lacSec = true; st.lac = null; }
+      else if (st.lac && (p.sta.wet > 0 || p.liq)) st.lac.wet = true; }
+    if (p.x > 380 * CS && p.x < 420 * CS && p.y < 90 * CS) st.vuSommet = true;
+    st.maxDepth = Math.max(st.maxDepth, (p.y + p.h) / CS);
+    st.defiT -= dt; if (st.defiT <= 0) { st.defiT = 1; game.checkDefis(defiInfo()); }
     // zone courante
     const z = L.zones.find((z) => p.x >= z.x && p.x < z.x + z.w);
     if (z && z.nom !== st.lastZone) { st.lastZone = z.nom; game.zoneChange(z.nom); }
@@ -970,6 +985,13 @@ const World = (() => {
     st.cam.x = lerp(st.cam.x, tx, Math.min(1, dt * 6)); st.cam.y = lerp(st.cam.y, ty, Math.min(1, dt * 5));
     if (st.shake > 0) st.shake -= dt;
     if (st.flash > 0) st.flash -= dt;
+  }
+  function defiInfo() {
+    let vigneMax = 0, torches = 0, golemTame = false;
+    for (const o of st.objs) { if (o.t === 'torche' && o.lit) torches++; if (o.t === 'graine') vigneMax = Math.max(vigneMax, o.hauteur || 0); }
+    for (const c of st.crs) if (c.t === 'golem' && c.hp > 0 && c.sta.tame) golemTame = true;
+    return { torches, vigneMax, golemTame, lacSec: st.lacSec, vuSommet: st.vuSommet, profondeur: st.maxDepth,
+      glaceLac: Sim.countRect(223, 125, 327, 165, M.GLACE), glaceSommet: Sim.countRect(385, 65, 415, 82, M.GLACE) };
   }
   function gravField(b) { for (const s of st.sp) if (s.k === 'field' && s.grav && U.circleRect(s.x, s.y, s.r, b)) return true; return false; }
 
@@ -1475,6 +1497,16 @@ const World = (() => {
         ctx.fillStyle = '#5a4a7d'; ctx.beginPath(); ctx.ellipse(cx, o.y + 12, 13, 9, 0, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
         ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.arc(cx - 4, o.y + 7, 2, 0, TAU); ctx.arc(cx + 5, o.y + 9, 1.6, 0, TAU); ctx.fill();
         if (Math.random() < 0.05) part(cx, o.y, '#5a4a7d', 1, 15, 0.8, 2, -20);
+        break;
+      }
+      case 'page': {
+        if (o.lue) break;
+        const fl = Math.sin(time * 3 + o.seed) * 3;
+        ctx.save(); ctx.translate(cx, o.y + 12 + fl); ctx.rotate(Math.sin(time * 2 + o.seed) * 0.15);
+        ctx.fillStyle = '#f6eed8'; ctx.fillRect(-9, -12, 18, 24); U.inkRect(ctx, -9, -12, 18, 24, o.seed, 0.8);
+        ctx.lineWidth = 1; ctx.globalAlpha = 0.6; for (let i = 0; i < 4; i++) U.inkLine(ctx, -6, -7 + i * 5, 5 - (i % 2) * 3, -7 + i * 5, o.seed + i, 0.3);
+        ctx.restore();
+        const g = ctx.createRadialGradient(cx, o.y + 12, 2, cx, o.y + 12, 30); g.addColorStop(0, 'rgba(216,166,58,0.25)'); g.addColorStop(1, 'rgba(216,166,58,0)'); ctx.fillStyle = g; ctx.fillRect(cx - 30, o.y - 18, 60, 60);
         break;
       }
       case 'rune': {

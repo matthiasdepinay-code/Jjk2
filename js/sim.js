@@ -100,7 +100,7 @@ const Sim = (() => {
     if (elec[i] > 0) {
       elec[i]--; touch(i);
       if (p.cond && elec[i] > 1) {
-        for (const d of [1, -1, W, -W]) { const j = i + d; if (j < 0 || j >= W * H) continue; const n = mat[j]; if (P[n].cond && elec[j] < elec[i] - 1) { elec[j] = elec[i] - 1; touch(j); } else if (n === M.HUILE && rnd() < 0.3) { setI(j, M.FEU, 25); } }
+        for (const d of [1, -1, W, -W]) { const j = i + d; if (j < 0 || j >= W * H) continue; const n = mat[j]; if (P[n].cond && elec[j] < elec[i] - 1) { elec[j] = elec[i] - 1; touch(j); if (rnd() < 0.002) evt('conduction', x, y); } else if (n === M.HUILE && rnd() < 0.3) { setI(j, M.FEU, 25); } }
       }
     }
     if (p.powder) stepPowder(x, y, i, m, p);
@@ -132,11 +132,12 @@ const Sim = (() => {
       for (const d of [1, -1, W, -W]) {
         const j = i + d; if (j < 0 || j >= W * H) continue; const n = mat[j];
         if (n === M.LAVE) { setI(j, M.OBSIDIENNE); setI(i, M.VAPEUR, 60); evt('obsidienne', x, y); return; }
-        if (n === M.ACIDE && rnd() < 0.02) { setI(j, M.EAU); }
+        if (n === M.ACIDE && rnd() < 0.02) { setI(j, M.EAU); evt('dilution', x, y); }
       }
       if (sunny && y > 0 && mat[i - W] === M.AIR && rnd() < 0.00012) { setI(i, M.VAPEUR, 120); return; }
     } else if (m === M.HUILE || m === M.SEVE) {
-      if (hotNear(i) && rnd() < p.flam) { setI(i, M.FEU, p.burn); evt('incendie', x, y); return; }
+      if (hotNear(i) && rnd() < p.flam) { setI(i, M.FEU, p.burn); evt(m === M.HUILE ? 'huile_feu' : 'incendie', x, y); return; }
+      if (m === M.HUILE && y > 0 && mat[i - W] === M.EAU && rnd() < 0.05) evt('flottaison', x, y);
     } else if (m === M.ACIDE) {
       const d = [1, -1, W, -W][(rnd() * 4) | 0]; const j = i + d;
       if (j >= 0 && j < W * H) {
@@ -172,7 +173,7 @@ const Sim = (() => {
   function stepGas(x, y, i, m, p) {
     if (aux[i] > 0) aux[i]--;
     if (aux[i] === 0) {
-      if (m === M.VAPEUR) setI(i, rnd() < 0.3 ? M.EAU : M.AIR);
+      if (m === M.VAPEUR) { if (rnd() < 0.3) { setI(i, M.EAU); evt('condensation', x, y); } else setI(i, M.AIR); }
       else if (m === M.FEU) setI(i, rnd() < 0.35 ? M.FUMEE : M.AIR, 30);
       else setI(i, M.AIR);
       return;
@@ -204,7 +205,7 @@ const Sim = (() => {
         aux[i]--; touch(i);
         const d = [1, -1, W, -W][(rnd() * 4) | 0]; const j = i + d;
         if (j >= 0 && j < W * H && mat[j] === M.AIR && rnd() < 0.45) setI(j, M.FEU, 20 + (rnd() * 20) | 0);
-        if (aux[i] === 0) { if (m === M.BOIS) setI(i, M.CENDRE); else if (m === M.PLANTE) setI(i, rnd() < 0.4 ? M.CENDRE : M.AIR); else setI(i, M.AIR); }
+        if (aux[i] === 0) { if (m === M.BOIS) { setI(i, M.CENDRE); evt('cendre', x, y); } else if (m === M.PLANTE) setI(i, rnd() < 0.4 ? M.CENDRE : M.AIR); else setI(i, M.AIR); if (onEvent) onEvent('brule', x * CS, y * CS); }
         return;
       }
       if (hotNear(i) && rnd() < p.flam) { aux[i] = p.burn; touch(i); evt('incendie', x, y); }
@@ -238,6 +239,7 @@ const Sim = (() => {
     for (let t = 0; t < len; t += CS * 0.5) { const x = px + dx * t, y = py + dy * t; if (solidAt(x, y)) return { x, y, t }; }
     return null;
   }
+  function countRect(x0, y0, x1, y1, m) { let n = 0; for (let y = Math.max(0, y0); y <= Math.min(H - 1, y1); y++) for (let x = Math.max(0, x0); x <= Math.min(W - 1, x1); x++) if (mat[y * W + x] === m) n++; return n; }
   function countAround(px, py, r, m) { let n = 0; forRadius(px, py, r, (x, y, i, q) => { if (q === m) n++; }); return n; }
 
   // ---------- Rendu par morceaux ----------
@@ -375,7 +377,7 @@ const Sim = (() => {
     for (let c = 0; c < chunkActive.length; c++) chunkActive[c] = frame + 40;
   }
 
-  return { CS, CH, M, P, init, get, set, swap, wake, touch, idx, step, matAt, solidAt, rectBlocked, rectHas, forRadius, raycast, countAround, draw, lights, dirtyAll, serialize, deserialize,
+  return { CS, CH, M, P, init, get, set, swap, wake, touch, idx, step, matAt, solidAt, rectBlocked, rectHas, forRadius, raycast, countAround, countRect, draw, lights, dirtyAll, serialize, deserialize,
     get W() { return W; }, get H() { return H; }, get mat() { return mat; }, get aux() { return aux; }, get elec() { return elec; },
     set onEvent(f) { onEvent = f; }, set sunny(v) { sunny = v; }, set surf(v) { surf = v; }, get surf() { return surf; }, get frame() { return frame; } };
 })();

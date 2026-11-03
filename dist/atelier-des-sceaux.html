@@ -252,7 +252,9 @@
         <button data-tab="glyphes">Glyphes</button>
         <button data-tab="recettes">Recettes</button>
         <button data-tab="ingredients">Ingrédients</button>
-        <button data-tab="intuitions">Intuitions</button>
+        <button data-tab="intuitions">Réactions</button>
+        <button data-tab="pages">Pages</button>
+        <button data-tab="defis">Défis</button>
         <button data-tab="journal">Journal</button>
       </div>
       <div id="grim-content"></div>
@@ -639,7 +641,50 @@ const DATA = (() => {
     incendie:   { id: 'incendie',   nom: 'Le feu se propage',       glyphe: null,      desc: 'Une flamme en allume une autre.' },
     pluie:      { id: 'pluie',      nom: 'La pluie tombe',          glyphe: null,      desc: 'Être dehors sous la pluie.' },
     verre_brise: { id: 'verre_brise', nom: 'Le verre se brise',      glyphe: 'son',     desc: 'Du verre vole en éclats.' },
+    conduction: { id: 'conduction', nom: 'L\'eau et le métal conduisent', glyphe: null, desc: 'L\'électricité court dans l\'eau ou le métal.' },
+    dilution:   { id: 'dilution',   nom: 'L\'eau dilue l\'acide',    glyphe: null,      desc: 'De l\'acide au contact de l\'eau redevient eau.' },
+    condensation: { id: 'condensation', nom: 'La vapeur retombe',    glyphe: null,      desc: 'De la vapeur redevient goutte.' },
+    cendre:     { id: 'cendre',     nom: 'Le bois devient cendre',    glyphe: null,      desc: 'Du bois finit de brûler.' },
+    huile_feu:  { id: 'huile_feu',  nom: 'L\'huile s\'embrase',      glyphe: null,      desc: 'De l\'huile prend feu.' },
+    flottaison: { id: 'flottaison', nom: 'L\'huile flotte',          glyphe: null,      desc: 'De l\'huile remonte au-dessus de l\'eau.' },
+    fulgurite:  { id: 'fulgurite',  nom: 'La foudre vitrifie',        glyphe: null,      desc: 'Un éclair change le sable en verre.' },
   };
+
+  // Pages déchirées du grimoire du maître, cachées dans le monde
+  const PAGES = [
+    { id: 'p_puits', titre: 'Note sur les puits', texte: 'Les grottes gardent des champignons qui préfèrent l\'ombre. Les cueillir m\'a toujours donné des idées sombres... et un glyphe.', don: null },
+    { id: 'p_lac', titre: 'Fond du lac', texte: 'J\'ai nagé jusqu\'ici avec des branchies. Recette : rosée, fil de vie, racine ; infuser puis refroidir.', don: { type: 'recette', id: 'respiration' } },
+    { id: 'p_sommet', titre: 'Sommet enneigé', texte: 'Un flocon éternel dans la rosée, refroidi deux fois. L\'hiver tient dans une fiole.', don: { type: 'recette', id: 'gel' } },
+    { id: 'p_volcan', titre: 'Cœur du volcan', texte: 'La lave et l\'eau font une pierre noire que rien ne ronge. Avec Feu et Terre fusionnés, on fait de la lave soi-même.', don: { type: 'fusion' } },
+    { id: 'p_ile1', titre: 'Première île', texte: 'Plume, lueur, rosée : infuser, remuer. Le ciel s\'ouvre.', don: { type: 'recette', id: 'vol' } },
+    { id: 'p_ile2', titre: 'Île du lac', texte: 'Le Temps est un glyphe comme un autre. Il vient avec l\'expérience, et il fait pousser les forêts en un clin d\'œil.', don: { type: 'core', id: 'temps' } },
+    { id: 'p_ile3', titre: 'Île du volcan', texte: 'Une corde magique : le Lien. On la lance, on s\'y hisse. J\'ai perdu trois chapeaux comme ça.', don: { type: 'core', id: 'lien' } },
+    { id: 'p_ile4', titre: 'Île des ruines', texte: 'Le Portail. Deux lancers, un passage. Attention : l\'eau aussi passe.', don: { type: 'core', id: 'portail' } },
+    { id: 'p_acide', titre: 'Poche d\'acide', texte: 'Cendre, champignon, eau ; chauffer puis infuser : du vitriol qui creuse la pierre.', don: { type: 'recette', id: 'vitriol' } },
+    { id: 'p_huile', titre: 'Nappe d\'huile', texte: 'Huile et braise, chauffées : un feu qui brûle même sur l\'eau. Cendre et huile, chauffées et remuées : du savon.', don: { type: 'recette', id: 'gregeois' } },
+    { id: 'p_crepes', titre: 'Recette de crêpes', texte: 'Farine, lait, trois œufs, une pincée de sel. Laisser reposer. (Ce n\'est pas magique, mais c\'est important.)', don: { type: 'xp', n: 30 } },
+    { id: 'p_desert', titre: 'Bout du désert', texte: 'Le Son brise le verre et réveille les dormeurs. Le Métal se forge d\'un éclat et d\'une poussière.', don: { type: 'core', id: 'son' } },
+    { id: 'p_fond', titre: 'Fond du monde', texte: 'Tu as creusé jusqu\'ici ? Alors tu mérites l\'Esprit : prends la tête d\'une créature, et vois le monde par ses yeux.', don: { type: 'core', id: 'esprit' } },
+  ];
+
+  // Défis du maître : conditions sur la progression (p) et sur le monde (w)
+  const DEFIS = [
+    { id: 'd_torches', titre: 'Lanternes', texte: 'Allume 6 torches en même temps.', xp: 40, cond: (p, w) => w.torches >= 6 },
+    { id: 'd_lac', titre: 'Pieds secs', texte: 'Traverse le lac d\'ouest en est sans te mouiller.', xp: 60, cond: (p, w) => w.lacSec },
+    { id: 'd_banquise', titre: 'Banquise', texte: 'Gèle une grande partie du lac.', xp: 50, cond: (p, w) => w.glaceLac >= 400 },
+    { id: 'd_sommet', titre: 'Dégel', texte: 'Fais fondre toute la glace du sommet.', xp: 40, cond: (p, w) => w.glaceSommet === 0 && w.vuSommet },
+    { id: 'd_vigne', titre: 'Haricot magique', texte: 'Fais pousser une vigne de 40 cellules ou plus.', xp: 40, cond: (p, w) => w.vigneMax >= 40 },
+    { id: 'd_golem', titre: 'Ami de pierre', texte: 'Apprivoise un golem.', xp: 50, cond: (p, w) => w.golemTame },
+    { id: 'd_iles', titre: 'Les quatre îles', texte: 'Pose le pied sur les quatre îles volantes.', xp: 80, cond: (p, w) => (p.compteurs.iles || []).length >= 4 },
+    { id: 'd_lave', titre: 'Fiole brûlante', texte: 'Rapporte une fiole de lave au labo.', xp: 40, cond: (p, w) => p.ingredientsVus.includes('lave') },
+    { id: 'd_fond', titre: 'Spéléologie', texte: 'Descends sous la cellule 240 (tout en bas).', xp: 60, cond: (p, w) => w.profondeur >= 240 },
+    { id: 'd_tornade', titre: 'Tornade', texte: 'Déclenche une tornade de feu (fusion Feu + Vent).', xp: 40, cond: (p, w) => (p.compteurs.combos || []).includes('feu|vent') },
+    { id: 'd_recettes', titre: 'Alchimiste', texte: 'Brasse 10 recettes différentes.', xp: 80, cond: (p, w) => p.recettes.length >= 10 },
+    { id: 'd_runes', titre: 'Lecteur de runes', texte: 'Lis les 5 runes du monde.', xp: 60, cond: (p, w) => p.compteurs.runes >= 5 },
+    { id: 'd_pages', titre: 'Bibliothécaire', texte: 'Retrouve 8 pages déchirées.', xp: 80, cond: (p, w) => (p.pagesLues || []).length >= 8 },
+    { id: 'd_foret', titre: 'Pyromane repenti', texte: 'Brûle 200 cellules de forêt... puis fais repousser 200 cellules de plantes avec Vie.', xp: 60, cond: (p, w) => (p.compteurs.brule || 0) >= 200 && (p.compteurs.pousse || 0) >= 200 },
+    { id: 'd_portail', titre: 'Plombier', texte: 'Fais passer de l\'eau par un portail.', xp: 40, cond: (p, w) => (p.compteurs.portailEau || 0) >= 20 },
+  ];
 
   // Découvertes : ce qui est débloqué et comment
   const UNLOCKS = [
@@ -706,7 +751,7 @@ const DATA = (() => {
   ];
   const ACCESSOIRES = ['Bâton', 'Plume', 'Grimoire'];
 
-  return { CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, STEPS, POTIONS, OBSERVATIONS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
+  return { CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, STEPS, POTIONS, OBSERVATIONS, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
 })();
 
 </script>
@@ -1202,7 +1247,7 @@ const Sim = (() => {
     if (elec[i] > 0) {
       elec[i]--; touch(i);
       if (p.cond && elec[i] > 1) {
-        for (const d of [1, -1, W, -W]) { const j = i + d; if (j < 0 || j >= W * H) continue; const n = mat[j]; if (P[n].cond && elec[j] < elec[i] - 1) { elec[j] = elec[i] - 1; touch(j); } else if (n === M.HUILE && rnd() < 0.3) { setI(j, M.FEU, 25); } }
+        for (const d of [1, -1, W, -W]) { const j = i + d; if (j < 0 || j >= W * H) continue; const n = mat[j]; if (P[n].cond && elec[j] < elec[i] - 1) { elec[j] = elec[i] - 1; touch(j); if (rnd() < 0.002) evt('conduction', x, y); } else if (n === M.HUILE && rnd() < 0.3) { setI(j, M.FEU, 25); } }
       }
     }
     if (p.powder) stepPowder(x, y, i, m, p);
@@ -1234,11 +1279,12 @@ const Sim = (() => {
       for (const d of [1, -1, W, -W]) {
         const j = i + d; if (j < 0 || j >= W * H) continue; const n = mat[j];
         if (n === M.LAVE) { setI(j, M.OBSIDIENNE); setI(i, M.VAPEUR, 60); evt('obsidienne', x, y); return; }
-        if (n === M.ACIDE && rnd() < 0.02) { setI(j, M.EAU); }
+        if (n === M.ACIDE && rnd() < 0.02) { setI(j, M.EAU); evt('dilution', x, y); }
       }
       if (sunny && y > 0 && mat[i - W] === M.AIR && rnd() < 0.00012) { setI(i, M.VAPEUR, 120); return; }
     } else if (m === M.HUILE || m === M.SEVE) {
-      if (hotNear(i) && rnd() < p.flam) { setI(i, M.FEU, p.burn); evt('incendie', x, y); return; }
+      if (hotNear(i) && rnd() < p.flam) { setI(i, M.FEU, p.burn); evt(m === M.HUILE ? 'huile_feu' : 'incendie', x, y); return; }
+      if (m === M.HUILE && y > 0 && mat[i - W] === M.EAU && rnd() < 0.05) evt('flottaison', x, y);
     } else if (m === M.ACIDE) {
       const d = [1, -1, W, -W][(rnd() * 4) | 0]; const j = i + d;
       if (j >= 0 && j < W * H) {
@@ -1274,7 +1320,7 @@ const Sim = (() => {
   function stepGas(x, y, i, m, p) {
     if (aux[i] > 0) aux[i]--;
     if (aux[i] === 0) {
-      if (m === M.VAPEUR) setI(i, rnd() < 0.3 ? M.EAU : M.AIR);
+      if (m === M.VAPEUR) { if (rnd() < 0.3) { setI(i, M.EAU); evt('condensation', x, y); } else setI(i, M.AIR); }
       else if (m === M.FEU) setI(i, rnd() < 0.35 ? M.FUMEE : M.AIR, 30);
       else setI(i, M.AIR);
       return;
@@ -1306,7 +1352,7 @@ const Sim = (() => {
         aux[i]--; touch(i);
         const d = [1, -1, W, -W][(rnd() * 4) | 0]; const j = i + d;
         if (j >= 0 && j < W * H && mat[j] === M.AIR && rnd() < 0.45) setI(j, M.FEU, 20 + (rnd() * 20) | 0);
-        if (aux[i] === 0) { if (m === M.BOIS) setI(i, M.CENDRE); else if (m === M.PLANTE) setI(i, rnd() < 0.4 ? M.CENDRE : M.AIR); else setI(i, M.AIR); }
+        if (aux[i] === 0) { if (m === M.BOIS) { setI(i, M.CENDRE); evt('cendre', x, y); } else if (m === M.PLANTE) setI(i, rnd() < 0.4 ? M.CENDRE : M.AIR); else setI(i, M.AIR); if (onEvent) onEvent('brule', x * CS, y * CS); }
         return;
       }
       if (hotNear(i) && rnd() < p.flam) { aux[i] = p.burn; touch(i); evt('incendie', x, y); }
@@ -1340,6 +1386,7 @@ const Sim = (() => {
     for (let t = 0; t < len; t += CS * 0.5) { const x = px + dx * t, y = py + dy * t; if (solidAt(x, y)) return { x, y, t }; }
     return null;
   }
+  function countRect(x0, y0, x1, y1, m) { let n = 0; for (let y = Math.max(0, y0); y <= Math.min(H - 1, y1); y++) for (let x = Math.max(0, x0); x <= Math.min(W - 1, x1); x++) if (mat[y * W + x] === m) n++; return n; }
   function countAround(px, py, r, m) { let n = 0; forRadius(px, py, r, (x, y, i, q) => { if (q === m) n++; }); return n; }
 
   // ---------- Rendu par morceaux ----------
@@ -1477,7 +1524,7 @@ const Sim = (() => {
     for (let c = 0; c < chunkActive.length; c++) chunkActive[c] = frame + 40;
   }
 
-  return { CS, CH, M, P, init, get, set, swap, wake, touch, idx, step, matAt, solidAt, rectBlocked, rectHas, forRadius, raycast, countAround, draw, lights, dirtyAll, serialize, deserialize,
+  return { CS, CH, M, P, init, get, set, swap, wake, touch, idx, step, matAt, solidAt, rectBlocked, rectHas, forRadius, raycast, countAround, countRect, draw, lights, dirtyAll, serialize, deserialize,
     get W() { return W; }, get H() { return H; }, get mat() { return mat; }, get aux() { return aux; }, get elec() { return elec; },
     set onEvent(f) { onEvent = f; }, set sunny(v) { sunny = v; }, set surf(v) { surf = v; }, get surf() { return surf; }, get frame() { return frame; } };
 })();
@@ -1658,6 +1705,10 @@ const Gen = (() => {
     objs.push(at('champignon', 134, 189 - 4.5), at('champignon', 158, 189 - 4.5), at('champignon', 172, 189 - 4.5), at('rune', 150, 171), at('torche', 270, 205 - 13.3));
     objs.push(at('champignon', 640, 198 - 4.5), at('champignon', 660, 198 - 4.5), at('champignon', 785, 221 - 4.5), at('champignon', 800, 221 - 4.5), at('rune', 790, 203));
     objs.push(at('graine', 104, 41 - 1.7), at('torche', 522, 50 - 13.3), at('rune', 515, 44), at('champignon', 730, 37 - 4.5), at('graine', 736, 37 - 1.7));
+    // pages déchirées
+    objs.push(at('page', 150, 189 - 4, { page: 'p_puits' }), at('page', 275, 158 - 4, { page: 'p_lac' }), at('page', 400, 70 - 4, { page: 'p_sommet' }), at('page', 512, 192 - 4, { page: 'p_volcan' }));
+    objs.push(at('page', 112, 41 - 4, { page: 'p_ile1' }), at('page', 312, 29 - 4, { page: 'p_ile2' }), at('page', 528, 50 - 4, { page: 'p_ile3' }), at('page', 740, 37 - 4, { page: 'p_ile4' }));
+    objs.push(at('page', 470, 200 - 4, { page: 'p_acide' }), at('page', 220, 231 - 4, { page: 'p_huile' }), o('page', 48, 24, { page: 'p_crepes' }), o('page', 896, 24, { page: 'p_desert' }), at('page', 450, 256, { page: 'p_fond' }));
     const c = (t, x, h) => Object.assign({ t }, onGround(x, h));
     const crs = [
       c('limace', 74, 24), c('limace', 190, 24), c('follet', 140, 24), c('limace', 310, 24), c('golem', 380, 70), c('follet', 456, 24),
@@ -1702,7 +1753,7 @@ const World = (() => {
       objs: [], crs: [], sp: [], parts: [], pickups: [], eclairs: [],
       cam: { x: 0, y: 0 }, shake: 0, lastZone: '', flash: 0,
       tod: 0.32, meteo: { type: 'clair', t: 120 }, foudreT: 4, rainT: 0, obsT: {}, ileT: 0, pluieT: 0,
-      control: null, lien: null, portails: [],
+      control: null, lien: null, portails: [], defiT: 0, lac: null, lacSec: false, vuSommet: false, maxDepth: 0,
     };
     for (const o of L.objs) st.objs.push(makeObj(o));
     for (const c of L.crs) st.crs.push(makeCreature(c));
@@ -1736,8 +1787,9 @@ const World = (() => {
       case 'rocher': Object.assign(b, { w: 56, h: 56, solid: true, fissure: 0, vy: 0, vx: 0, dyn: true }); break;
       case 'champignon': Object.assign(b, { w: 22, h: 26, pris: false }); break;
       case 'rune': Object.assign(b, { w: 40, h: 60, revele: 0, lu: false, cooldown: 0 }); break;
+      case 'page': Object.assign(b, { w: 20, h: 24, page: o.page, lue: false }); break;
     }
-    for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp']) if (o[k] !== undefined) b[k] = o[k];
+    for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page']) if (o[k] !== undefined) b[k] = o[k];
     return b;
   }
   function makeCreature(c) {
@@ -1756,7 +1808,7 @@ const World = (() => {
   function serialize() {
     return {
       mat: Sim.serialize(), tod: st.tod, meteo: st.meteo,
-      objs: st.objs.filter((o) => !o.mort).map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
+      objs: st.objs.filter((o) => !o.mort).map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
       crs: st.crs.map((c) => ({ t: c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.hp, tame: c.sta.tame })),
     };
   }
@@ -1810,7 +1862,9 @@ const World = (() => {
   function evt(n, d) { if (game) game.progress.event(n, d); }
   function inView(x, y) { return x > st.cam.x - 40 && x < st.cam.x + VW + 40 && y > st.cam.y - 40 && y < st.cam.y + VH + 40; }
   function onSimEvent(kind, x, y) {
-    if (!st || !inView(x, y)) return;
+    if (!st) return;
+    if (kind === 'brule') { evt('brule'); return; }
+    if (!inView(x, y)) return;
     const t = st.obsT[kind] || -9;
     if (time - t < (kind === 'incendie' ? 3 : 0.8)) return;
     st.obsT[kind] = time;
@@ -1891,9 +1945,9 @@ const World = (() => {
       case 'vie':
         Sim.forRadius(cx, cy, rad, (x, y, i, m) => {
           const r = Math.random();
-          if (m === M.TERRE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.5) Sim.set(x, y - 1, M.HERBE); }
-          else if (m === M.PLANTE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.5) Sim.set(x, y - 1, M.PLANTE); }
-          else if (m === M.HERBE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.25) Sim.set(x, y, M.PLANTE); }
+          if (m === M.TERRE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.5) { Sim.set(x, y - 1, M.HERBE); evt('pousse'); } }
+          else if (m === M.PLANTE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.5) { Sim.set(x, y - 1, M.PLANTE); evt('pousse'); } }
+          else if (m === M.HERBE && Sim.get(x, y - 1) === M.AIR) { if (r < pr * 0.25) { Sim.set(x, y, M.PLANTE); evt('pousse'); } }
           else if (m === M.CENDRE) { if (r < pr * 0.4) Sim.set(x, y, M.TERRE); }
           if ((m === M.BOIS || m === M.PLANTE || m === M.HERBE) && Sim.aux[i] > 0) { Sim.aux[i] = 0; Sim.touch(i); }
         });
@@ -2216,6 +2270,7 @@ const World = (() => {
   function comboEffect(key, x, y, r, prm) {
     const C = DATA.COMBOS[key]; const size = prm.size || 1, dur = prm.duration || 1;
     if (C && C.nom) st.sp.push({ k: 'label', x, y: y - 40, txt: C.nom, life: 1.6, max: 1.6 });
+    evt('combo', key);
     switch (key) {
       case 'feu|vent': st.sp.push({ k: 'field', core: 'feu', x, y, r: r * 0.7, life: 5 * dur, max: 5 * dur, prm, vx: (Math.random() < 0.5 ? -1 : 1) * 60 }); break;
       case 'feu|terre': { let cap = 25 * size; Sim.forRadius(x, y, r * 0.6, (cx, cy, i, m) => { if (cap > 0 && (m === M.TERRE || m === M.PIERRE || m === M.SABLE) && Math.random() < 0.7) { Sim.set(cx, cy, M.LAVE); cap--; } }); break; }
@@ -2395,7 +2450,7 @@ const World = (() => {
     }
     for (const s of st.sp) if (s.k === 'proj') for (const [from, to] of [[A, B], [B, A]]) if (dist(s.x, s.y, from.x, from.y) < from.r && time - (s.portT || -9) > 0.6) { s.x = to.x + (s.x - from.x); s.y = to.y + (s.y - from.y); s.portT = time; }
     // matières : liquides et poudres
-    Sim.forRadius(A.x, A.y, A.r, (x, y, i, m) => { const q = P[m]; if ((q.liquid || q.powder) && Math.random() < 0.5) { const tx = x + Math.round((B.x - A.x) / CS), ty = y + Math.round((B.y - A.y) / CS); if (Sim.get(tx, ty) === M.AIR) { Sim.set(tx, ty, m); Sim.set(x, y, M.AIR); } } });
+    Sim.forRadius(A.x, A.y, A.r, (x, y, i, m) => { const q = P[m]; if ((q.liquid || q.powder) && Math.random() < 0.5) { const tx = x + Math.round((B.x - A.x) / CS), ty = y + Math.round((B.y - A.y) / CS); if (Sim.get(tx, ty) === M.AIR) { Sim.set(tx, ty, m); Sim.set(x, y, M.AIR); if (m === M.EAU) evt('portailEau'); } } });
     Sim.forRadius(B.x, B.y, B.r, (x, y, i, m) => { const q = P[m]; if ((q.liquid || q.powder) && Math.random() < 0.5) { const tx = x + Math.round((A.x - B.x) / CS), ty = y + Math.round((A.y - B.y) / CS); if (Sim.get(tx, ty) === M.AIR) { Sim.set(tx, ty, m); Sim.set(x, y, M.AIR); } } });
   }
   function updateLien(dt, inp) {
@@ -2476,6 +2531,7 @@ const World = (() => {
     if (o.t === 'champignon') return !o.pris;
     if (o.t === 'graine') return o.stage === 1 && o.racine && o.hauteur >= o.hMax;
     if (o.t === 'rune') return o.revele >= 1 && o.cooldown <= 0;
+    if (o.t === 'page') return !o.lue;
     return false;
   }
   function findInteraction() {
@@ -2495,6 +2551,7 @@ const World = (() => {
       case 'champignon': return 'Cueillir le champignon';
       case 'graine': return 'Cueillir une racine';
       case 'rune': return 'Lire la rune';
+      case 'page': return 'Lire la page déchirée';
       case 'liquide': return 'Remplir une fiole (' + P[it.liq.m].nom + ')';
       case 'poser': return 'Poser (clic droit : lancer)';
       case 'porter': return 'Porter';
@@ -2509,6 +2566,7 @@ const World = (() => {
       case 'porte': Son.sfx('door'); game.goLab(); break;
       case 'champignon': it.o.pris = true; it.o.mort = true; game.gainIngredient('champignon'); part(it.o.x + 11, it.o.y, '#5a4a7d', 8, 40); break;
       case 'graine': it.o.racine = false; it.o.regrow = 0; game.gainIngredient('racine'); part(it.o.x + 10, it.o.y - it.o.hauteur * CS, '#5c8f3e', 8, 40, 0.6, 3, 0, 'feuille'); break;
+      case 'page': it.o.lue = true; game.lirePage(it.o.page); part(it.o.x + 10, it.o.y, '#efe3c4', 10, 50, 0.8, 3, -40); break;
       case 'rune': { const o = it.o; o.cooldown = 30; if (!o.lu) { o.lu = true; evt('rune'); msg('Tu déchiffres la rune. Elle te confie une lueur captive.'); } game.gainIngredient('lueur'); part(o.x + 20, o.y + 30, '#d8a63a', 12, 60, 0.9, 2, 0, 'spark'); break; }
       case 'liquide': {
         const m = it.liq.m; let n = 0;
@@ -2634,8 +2692,16 @@ const World = (() => {
     if (p.sta.vitesse <= 0 && !p.sta.stone && !p.sta.armure && Sim.rectHas(p, (m, i) => Sim.elec[i] > 0) && p.inv <= 0) { p.hp -= 1; p.inv = 1; p.vy -= 250; msg('Zap !', 'warn'); Son.sfx('hurt'); part(p.x + p.w / 2, p.y + p.h / 2, '#e0c43a', 10, 100, 0.4, 2, 0, 'spark'); }
     // contrôle d'une créature
     if (st.control) { st.control.t -= dt; const c = st.control.c; if (st.control.t <= 0 || c.hp <= 0) releaseControl(); else { c.ctl = { dirX, jump: inp.jump, dirY }; } }
-    // observation : île volante
-    if (p.onGround && p.y < 85 * CS) { if (st.ileT <= 0) { st.ileT = 120; game.observe('ile'); } } if (st.ileT > 0) st.ileT -= dt;
+    // observation : île volante (et laquelle)
+    if (p.onGround && p.y < 85 * CS) { if (st.ileT <= 0) { st.ileT = 120; game.observe('ile'); } const idx = [110, 300, 520, 730].reduce((b, cx, i, a) => (Math.abs(cx * CS - p.x) < Math.abs(a[b] * CS - p.x) ? i : b), 0); evt('ile', idx); } if (st.ileT > 0) st.ileT -= dt;
+    // défis : lac sec, sommet, profondeur
+    { const lx0 = 222 * CS, lx1 = 328 * CS; const px = p.x + p.w / 2;
+      if (px < lx0) st.lac = { wet: false, from: 'ouest' };
+      else if (px > lx1) { if (st.lac && st.lac.from === 'ouest' && !st.lac.wet) st.lacSec = true; st.lac = null; }
+      else if (st.lac && (p.sta.wet > 0 || p.liq)) st.lac.wet = true; }
+    if (p.x > 380 * CS && p.x < 420 * CS && p.y < 90 * CS) st.vuSommet = true;
+    st.maxDepth = Math.max(st.maxDepth, (p.y + p.h) / CS);
+    st.defiT -= dt; if (st.defiT <= 0) { st.defiT = 1; game.checkDefis(defiInfo()); }
     // zone courante
     const z = L.zones.find((z) => p.x >= z.x && p.x < z.x + z.w);
     if (z && z.nom !== st.lastZone) { st.lastZone = z.nom; game.zoneChange(z.nom); }
@@ -2651,6 +2717,13 @@ const World = (() => {
     st.cam.x = lerp(st.cam.x, tx, Math.min(1, dt * 6)); st.cam.y = lerp(st.cam.y, ty, Math.min(1, dt * 5));
     if (st.shake > 0) st.shake -= dt;
     if (st.flash > 0) st.flash -= dt;
+  }
+  function defiInfo() {
+    let vigneMax = 0, torches = 0, golemTame = false;
+    for (const o of st.objs) { if (o.t === 'torche' && o.lit) torches++; if (o.t === 'graine') vigneMax = Math.max(vigneMax, o.hauteur || 0); }
+    for (const c of st.crs) if (c.t === 'golem' && c.hp > 0 && c.sta.tame) golemTame = true;
+    return { torches, vigneMax, golemTame, lacSec: st.lacSec, vuSommet: st.vuSommet, profondeur: st.maxDepth,
+      glaceLac: Sim.countRect(223, 125, 327, 165, M.GLACE), glaceSommet: Sim.countRect(385, 65, 415, 82, M.GLACE) };
   }
   function gravField(b) { for (const s of st.sp) if (s.k === 'field' && s.grav && U.circleRect(s.x, s.y, s.r, b)) return true; return false; }
 
@@ -3156,6 +3229,16 @@ const World = (() => {
         ctx.fillStyle = '#5a4a7d'; ctx.beginPath(); ctx.ellipse(cx, o.y + 12, 13, 9, 0, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
         ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.arc(cx - 4, o.y + 7, 2, 0, TAU); ctx.arc(cx + 5, o.y + 9, 1.6, 0, TAU); ctx.fill();
         if (Math.random() < 0.05) part(cx, o.y, '#5a4a7d', 1, 15, 0.8, 2, -20);
+        break;
+      }
+      case 'page': {
+        if (o.lue) break;
+        const fl = Math.sin(time * 3 + o.seed) * 3;
+        ctx.save(); ctx.translate(cx, o.y + 12 + fl); ctx.rotate(Math.sin(time * 2 + o.seed) * 0.15);
+        ctx.fillStyle = '#f6eed8'; ctx.fillRect(-9, -12, 18, 24); U.inkRect(ctx, -9, -12, 18, 24, o.seed, 0.8);
+        ctx.lineWidth = 1; ctx.globalAlpha = 0.6; for (let i = 0; i < 4; i++) U.inkLine(ctx, -6, -7 + i * 5, 5 - (i % 2) * 3, -7 + i * 5, o.seed + i, 0.3);
+        ctx.restore();
+        const g = ctx.createRadialGradient(cx, o.y + 12, 2, cx, o.y + 12, 30); g.addColorStop(0, 'rgba(216,166,58,0.25)'); g.addColorStop(1, 'rgba(216,166,58,0)'); ctx.fillStyle = g; ctx.fillRect(cx - 30, o.y - 18, 60, 60);
         break;
       }
       case 'rune': {
@@ -3882,11 +3965,23 @@ const UI = (() => {
         c.appendChild(el('div', 'decouverte' + (vu ? ' ok' : ''), '<span class="check"><i class="dot" style="background:' + (vu ? I.couleur : '#aaa') + '"></i></span><div><b>' + (vu ? I.nom : '???') + '</b> <small>×' + n + '</small><br><em>' + I.desc + '</em></div>'));
       }
     } else if (grimTab === 'intuitions') {
-      c.appendChild(el('p', 'intro', 'Les phénomènes observés dehors font germer des glyphes. Trois observations suffisent. Les orages, la lave, la glace et l\'acide sont de bons professeurs.'));
+      c.appendChild(el('p', 'intro', 'L\'encyclopédie des réactions : chaque phénomène observé dehors s\'inscrit ici, et certains font germer des glyphes au bout de trois observations. Les orages, la lave, la glace et l\'acide sont de bons professeurs.'));
       for (const id in DATA.OBSERVATIONS) {
         const O = DATA.OBSERVATIONS[id]; const n = p.obs[id] || 0;
         const g = O.glyphe ? DATA.CORES[O.glyphe] : null; const connu = g && p.cores.includes(O.glyphe);
         c.appendChild(el('div', 'decouverte' + (n > 0 ? ' ok' : ''), '<span class="check">' + (n >= 3 || connu ? '✓' : n > 0 ? n : '○') + '</span><div><b>' + (n > 0 ? O.nom : '???') + '</b> ' + (g ? '<small>→ glyphe ' + (connu ? g.nom : '???') + '</small>' : '<small>(expérience)</small>') + '<br><em>' + O.desc + '</em></div>'));
+      }
+    } else if (grimTab === 'pages') {
+      c.appendChild(el('p', 'intro', 'Le maître a semé des pages de son grimoire aux quatre coins du monde : en hauteur, au fond, dans le noir. Chacune apprend quelque chose.'));
+      for (const P of DATA.PAGES) {
+        const lu = p.pagesLues.includes(P.id);
+        c.appendChild(el('div', 'decouverte' + (lu ? ' ok' : ''), '<span class="check">' + (lu ? '📜' : '○') + '</span><div><b>' + (lu ? P.titre : '???') + '</b><br><em>' + (lu ? '« ' + P.texte + ' »' : 'Page non retrouvée.') + '</em></div>'));
+      }
+    } else if (grimTab === 'defis') {
+      c.appendChild(el('p', 'intro', 'Les épreuves du maître. Facultatives, mais chacune rapporte de l\'expérience, donc de l\'encre.'));
+      for (const D of DATA.DEFIS) {
+        const ok = p.defisFaits.includes(D.id);
+        c.appendChild(el('div', 'decouverte' + (ok ? ' ok' : ''), '<span class="check">' + (ok ? '✓' : '○') + '</span><div><b>' + D.titre + '</b> <small>(+' + D.xp + ' exp.)</small><br><em>' + D.texte + '</em></div>'));
       }
     } else if (grimTab === 'journal') {
       const k = p.compteurs;
@@ -3973,7 +4068,7 @@ const UI = (() => {
   function makeProgress() {
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
-      recettes: [], ingredientsVus: [], done: [], nouveau: false, obs: {}, fusion: false,
+      recettes: [], ingredientsVus: [], done: [], nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [],
       compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0, terre: 0, creaturesTouchees: 0, vols: 0, portes: 0, lancers: 0, niveau: 1, sceaux: 0 },
       event(name, data) {
         const k = this.compteurs;
@@ -3992,6 +4087,11 @@ const UI = (() => {
           case 'vol': k.vols++; break;
           case 'porte': k.portes++; break;
           case 'lancer': k.lancers++; break;
+          case 'brule': k.brule = (k.brule || 0) + 1; return;
+          case 'pousse': k.pousse = (k.pousse || 0) + 1; return;
+          case 'portailEau': k.portailEau = (k.portailEau || 0) + 1; return;
+          case 'combo': if (!k.combos) k.combos = []; if (!k.combos.includes(data)) k.combos.push(data); break;
+          case 'ile': if (!k.iles) k.iles = []; if (!k.iles.includes(data)) k.iles.push(data); break;
           case 'ingredient': if (!this.ingredientsVus.includes(data)) { this.ingredientsVus.push(data); game.addXp(DATA.XP.ingredient); } break;
           case 'recette': if (!this.recettes.includes(data)) { this.recettes.push(data); game.addXp(DATA.XP.recette); } k.potions++; break;
         }
@@ -4044,6 +4144,34 @@ const UI = (() => {
       if (n <= 3) { this.toast('✎ Intuition : ' + O.nom + (O.glyphe && !this.progress.cores.includes(O.glyphe) ? ' (' + Math.min(n, 3) + '/3)' : ''), n === 1 ? 'unlock' : ''); }
       this.addXp(DATA.XP.observation);
       this.progress.check(); this.save();
+    },
+    lirePage(id) {
+      const P = DATA.PAGES.find((q) => q.id === id); if (!P) return;
+      const first = !this.progress.pagesLues.includes(id);
+      if (first) this.progress.pagesLues.push(id);
+      this.toast('📜 ' + P.titre + ' — « ' + P.texte + ' »', 'unlock');
+      Son.sfx('unlock');
+      if (first && P.don) {
+        const d = P.don, p = this.progress;
+        if (d.type === 'recette' && !p.recettes.includes(d.id)) { p.recettes.push(d.id); this.toast('Recette apprise : ' + DATA.POTIONS[d.id].nom + '.', 'unlock'); }
+        else if (d.type === 'core' && !p.cores.includes(d.id)) { p.cores.push(d.id); p.nouveau = true; this.toast('✦ Glyphe appris : ' + DATA.CORES[d.id].nom, 'unlock'); }
+        else if (d.type === 'fusion' && !p.fusion) { p.fusion = true; p.nouveau = true; this.toast('✦ La Fusion t\'est révélée.', 'unlock'); }
+        else if (d.type === 'xp') this.addXp(d.n);
+        this.addXp(DATA.XP.decouverte);
+        p.check();
+      }
+      this.save();
+    },
+    checkDefis(w) {
+      const p = this.progress;
+      for (const d of DATA.DEFIS) {
+        if (p.defisFaits.includes(d.id)) continue;
+        let ok = false; try { ok = d.cond(p, w); } catch (e) { ok = false; }
+        if (!ok) continue;
+        p.defisFaits.push(d.id); p.nouveau = true;
+        this.toast('✦ Défi relevé : ' + d.titre + ' (+' + d.xp + ' exp.)', 'unlock'); Son.sfx('unlock');
+        this.addXp(d.xp); this.save();
+      }
     },
     addXp(n) {
       this.xp += n;
@@ -4141,7 +4269,7 @@ const UI = (() => {
       this.progress.compteurs.sceaux = this.seals.length;
       try {
         const data = { look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
-          progress: { cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs } };
+          progress: { cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs, pagesLues: this.progress.pagesLues, defisFaits: this.progress.defisFaits } };
         localStorage.setItem(SAVE_KEY, JSON.stringify(data));
       } catch (e) { /* stockage indisponible */ }
     },
@@ -4153,6 +4281,7 @@ const UI = (() => {
         this.xp = d.xp || 0; this.niveau = d.niveau || 1;
         if (d.progress) Object.assign(this.progress, d.progress);
         if (!this.progress.obs) this.progress.obs = {};
+        if (!this.progress.pagesLues) this.progress.pagesLues = []; if (!this.progress.defisFaits) this.progress.defisFaits = [];
         const K = this.progress.compteurs; for (const k of ['terre', 'creaturesTouchees', 'vols', 'portes', 'lancers', 'sceaux']) if (K[k] == null) K[k] = 0; K.niveau = this.niveau;
         this.hotbar = this.hotbar.map((e) => (e && e.type === 'seal' ? { type: 'seal', seal: Seal.clone(e.seal) } : e)); this.seals = this.seals.map((q) => Seal.clone(q));
         return this.started;

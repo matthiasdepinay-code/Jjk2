@@ -176,7 +176,50 @@ const DATA = (() => {
     incendie:   { id: 'incendie',   nom: 'Le feu se propage',       glyphe: null,      desc: 'Une flamme en allume une autre.' },
     pluie:      { id: 'pluie',      nom: 'La pluie tombe',          glyphe: null,      desc: 'Être dehors sous la pluie.' },
     verre_brise: { id: 'verre_brise', nom: 'Le verre se brise',      glyphe: 'son',     desc: 'Du verre vole en éclats.' },
+    conduction: { id: 'conduction', nom: 'L\'eau et le métal conduisent', glyphe: null, desc: 'L\'électricité court dans l\'eau ou le métal.' },
+    dilution:   { id: 'dilution',   nom: 'L\'eau dilue l\'acide',    glyphe: null,      desc: 'De l\'acide au contact de l\'eau redevient eau.' },
+    condensation: { id: 'condensation', nom: 'La vapeur retombe',    glyphe: null,      desc: 'De la vapeur redevient goutte.' },
+    cendre:     { id: 'cendre',     nom: 'Le bois devient cendre',    glyphe: null,      desc: 'Du bois finit de brûler.' },
+    huile_feu:  { id: 'huile_feu',  nom: 'L\'huile s\'embrase',      glyphe: null,      desc: 'De l\'huile prend feu.' },
+    flottaison: { id: 'flottaison', nom: 'L\'huile flotte',          glyphe: null,      desc: 'De l\'huile remonte au-dessus de l\'eau.' },
+    fulgurite:  { id: 'fulgurite',  nom: 'La foudre vitrifie',        glyphe: null,      desc: 'Un éclair change le sable en verre.' },
   };
+
+  // Pages déchirées du grimoire du maître, cachées dans le monde
+  const PAGES = [
+    { id: 'p_puits', titre: 'Note sur les puits', texte: 'Les grottes gardent des champignons qui préfèrent l\'ombre. Les cueillir m\'a toujours donné des idées sombres... et un glyphe.', don: null },
+    { id: 'p_lac', titre: 'Fond du lac', texte: 'J\'ai nagé jusqu\'ici avec des branchies. Recette : rosée, fil de vie, racine ; infuser puis refroidir.', don: { type: 'recette', id: 'respiration' } },
+    { id: 'p_sommet', titre: 'Sommet enneigé', texte: 'Un flocon éternel dans la rosée, refroidi deux fois. L\'hiver tient dans une fiole.', don: { type: 'recette', id: 'gel' } },
+    { id: 'p_volcan', titre: 'Cœur du volcan', texte: 'La lave et l\'eau font une pierre noire que rien ne ronge. Avec Feu et Terre fusionnés, on fait de la lave soi-même.', don: { type: 'fusion' } },
+    { id: 'p_ile1', titre: 'Première île', texte: 'Plume, lueur, rosée : infuser, remuer. Le ciel s\'ouvre.', don: { type: 'recette', id: 'vol' } },
+    { id: 'p_ile2', titre: 'Île du lac', texte: 'Le Temps est un glyphe comme un autre. Il vient avec l\'expérience, et il fait pousser les forêts en un clin d\'œil.', don: { type: 'core', id: 'temps' } },
+    { id: 'p_ile3', titre: 'Île du volcan', texte: 'Une corde magique : le Lien. On la lance, on s\'y hisse. J\'ai perdu trois chapeaux comme ça.', don: { type: 'core', id: 'lien' } },
+    { id: 'p_ile4', titre: 'Île des ruines', texte: 'Le Portail. Deux lancers, un passage. Attention : l\'eau aussi passe.', don: { type: 'core', id: 'portail' } },
+    { id: 'p_acide', titre: 'Poche d\'acide', texte: 'Cendre, champignon, eau ; chauffer puis infuser : du vitriol qui creuse la pierre.', don: { type: 'recette', id: 'vitriol' } },
+    { id: 'p_huile', titre: 'Nappe d\'huile', texte: 'Huile et braise, chauffées : un feu qui brûle même sur l\'eau. Cendre et huile, chauffées et remuées : du savon.', don: { type: 'recette', id: 'gregeois' } },
+    { id: 'p_crepes', titre: 'Recette de crêpes', texte: 'Farine, lait, trois œufs, une pincée de sel. Laisser reposer. (Ce n\'est pas magique, mais c\'est important.)', don: { type: 'xp', n: 30 } },
+    { id: 'p_desert', titre: 'Bout du désert', texte: 'Le Son brise le verre et réveille les dormeurs. Le Métal se forge d\'un éclat et d\'une poussière.', don: { type: 'core', id: 'son' } },
+    { id: 'p_fond', titre: 'Fond du monde', texte: 'Tu as creusé jusqu\'ici ? Alors tu mérites l\'Esprit : prends la tête d\'une créature, et vois le monde par ses yeux.', don: { type: 'core', id: 'esprit' } },
+  ];
+
+  // Défis du maître : conditions sur la progression (p) et sur le monde (w)
+  const DEFIS = [
+    { id: 'd_torches', titre: 'Lanternes', texte: 'Allume 6 torches en même temps.', xp: 40, cond: (p, w) => w.torches >= 6 },
+    { id: 'd_lac', titre: 'Pieds secs', texte: 'Traverse le lac d\'ouest en est sans te mouiller.', xp: 60, cond: (p, w) => w.lacSec },
+    { id: 'd_banquise', titre: 'Banquise', texte: 'Gèle une grande partie du lac.', xp: 50, cond: (p, w) => w.glaceLac >= 400 },
+    { id: 'd_sommet', titre: 'Dégel', texte: 'Fais fondre toute la glace du sommet.', xp: 40, cond: (p, w) => w.glaceSommet === 0 && w.vuSommet },
+    { id: 'd_vigne', titre: 'Haricot magique', texte: 'Fais pousser une vigne de 40 cellules ou plus.', xp: 40, cond: (p, w) => w.vigneMax >= 40 },
+    { id: 'd_golem', titre: 'Ami de pierre', texte: 'Apprivoise un golem.', xp: 50, cond: (p, w) => w.golemTame },
+    { id: 'd_iles', titre: 'Les quatre îles', texte: 'Pose le pied sur les quatre îles volantes.', xp: 80, cond: (p, w) => (p.compteurs.iles || []).length >= 4 },
+    { id: 'd_lave', titre: 'Fiole brûlante', texte: 'Rapporte une fiole de lave au labo.', xp: 40, cond: (p, w) => p.ingredientsVus.includes('lave') },
+    { id: 'd_fond', titre: 'Spéléologie', texte: 'Descends sous la cellule 240 (tout en bas).', xp: 60, cond: (p, w) => w.profondeur >= 240 },
+    { id: 'd_tornade', titre: 'Tornade', texte: 'Déclenche une tornade de feu (fusion Feu + Vent).', xp: 40, cond: (p, w) => (p.compteurs.combos || []).includes('feu|vent') },
+    { id: 'd_recettes', titre: 'Alchimiste', texte: 'Brasse 10 recettes différentes.', xp: 80, cond: (p, w) => p.recettes.length >= 10 },
+    { id: 'd_runes', titre: 'Lecteur de runes', texte: 'Lis les 5 runes du monde.', xp: 60, cond: (p, w) => p.compteurs.runes >= 5 },
+    { id: 'd_pages', titre: 'Bibliothécaire', texte: 'Retrouve 8 pages déchirées.', xp: 80, cond: (p, w) => (p.pagesLues || []).length >= 8 },
+    { id: 'd_foret', titre: 'Pyromane repenti', texte: 'Brûle 200 cellules de forêt... puis fais repousser 200 cellules de plantes avec Vie.', xp: 60, cond: (p, w) => (p.compteurs.brule || 0) >= 200 && (p.compteurs.pousse || 0) >= 200 },
+    { id: 'd_portail', titre: 'Plombier', texte: 'Fais passer de l\'eau par un portail.', xp: 40, cond: (p, w) => (p.compteurs.portailEau || 0) >= 20 },
+  ];
 
   // Découvertes : ce qui est débloqué et comment
   const UNLOCKS = [
@@ -243,5 +286,5 @@ const DATA = (() => {
   ];
   const ACCESSOIRES = ['Bâton', 'Plume', 'Grimoire'];
 
-  return { CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, STEPS, POTIONS, OBSERVATIONS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
+  return { CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, STEPS, POTIONS, OBSERVATIONS, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
 })();

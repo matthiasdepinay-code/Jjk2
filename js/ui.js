@@ -335,11 +335,23 @@ const UI = (() => {
         c.appendChild(el('div', 'decouverte' + (vu ? ' ok' : ''), '<span class="check"><i class="dot" style="background:' + (vu ? I.couleur : '#aaa') + '"></i></span><div><b>' + (vu ? I.nom : '???') + '</b> <small>×' + n + '</small><br><em>' + I.desc + '</em></div>'));
       }
     } else if (grimTab === 'intuitions') {
-      c.appendChild(el('p', 'intro', 'Les phénomènes observés dehors font germer des glyphes. Trois observations suffisent. Les orages, la lave, la glace et l\'acide sont de bons professeurs.'));
+      c.appendChild(el('p', 'intro', 'L\'encyclopédie des réactions : chaque phénomène observé dehors s\'inscrit ici, et certains font germer des glyphes au bout de trois observations. Les orages, la lave, la glace et l\'acide sont de bons professeurs.'));
       for (const id in DATA.OBSERVATIONS) {
         const O = DATA.OBSERVATIONS[id]; const n = p.obs[id] || 0;
         const g = O.glyphe ? DATA.CORES[O.glyphe] : null; const connu = g && p.cores.includes(O.glyphe);
         c.appendChild(el('div', 'decouverte' + (n > 0 ? ' ok' : ''), '<span class="check">' + (n >= 3 || connu ? '✓' : n > 0 ? n : '○') + '</span><div><b>' + (n > 0 ? O.nom : '???') + '</b> ' + (g ? '<small>→ glyphe ' + (connu ? g.nom : '???') + '</small>' : '<small>(expérience)</small>') + '<br><em>' + O.desc + '</em></div>'));
+      }
+    } else if (grimTab === 'pages') {
+      c.appendChild(el('p', 'intro', 'Le maître a semé des pages de son grimoire aux quatre coins du monde : en hauteur, au fond, dans le noir. Chacune apprend quelque chose.'));
+      for (const P of DATA.PAGES) {
+        const lu = p.pagesLues.includes(P.id);
+        c.appendChild(el('div', 'decouverte' + (lu ? ' ok' : ''), '<span class="check">' + (lu ? '📜' : '○') + '</span><div><b>' + (lu ? P.titre : '???') + '</b><br><em>' + (lu ? '« ' + P.texte + ' »' : 'Page non retrouvée.') + '</em></div>'));
+      }
+    } else if (grimTab === 'defis') {
+      c.appendChild(el('p', 'intro', 'Les épreuves du maître. Facultatives, mais chacune rapporte de l\'expérience, donc de l\'encre.'));
+      for (const D of DATA.DEFIS) {
+        const ok = p.defisFaits.includes(D.id);
+        c.appendChild(el('div', 'decouverte' + (ok ? ' ok' : ''), '<span class="check">' + (ok ? '✓' : '○') + '</span><div><b>' + D.titre + '</b> <small>(+' + D.xp + ' exp.)</small><br><em>' + D.texte + '</em></div>'));
       }
     } else if (grimTab === 'journal') {
       const k = p.compteurs;

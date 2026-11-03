@@ -21,7 +21,7 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 | Miroir | Changer d'apparence (chapeau, cape, objet en main). |
 | Table des sceaux | Composer un sceau : **centre** = glyphe d'effet, **premier anneau** = forme, **second anneau** = modificateurs, **pointes** = déclencheur. Consigner, puis « Mettre dans la barre ». |
 | Chaudron | Jusqu'à trois ingrédients et trois étapes dans l'ordre. Les fioles de liquide puisées dehors sont des ingrédients et se lancent depuis la barre. |
-| Grimoire | Découvertes, glyphes, recettes, ingrédients, intuitions (phénomènes observés), journal. |
+| Grimoire | Découvertes, glyphes et fusions, recettes, ingrédients, encyclopédie des réactions, pages déchirées retrouvées, défis du maître, journal. |
 | Lettre du maître | L'aide, les contrôles, et « Restaurer le monde ». |
 | Porte | Sortir. Revenir restaure encre et vitalité et sauvegarde le monde. |
 
@@ -36,6 +36,8 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 - Chaque glyphe coûte de l'encre. L'expérience de découverte augmente l'encre et sa régénération.
 
 ## Dehors
+
+Treize pages déchirées du grimoire du maître sont cachées aux endroits difficiles (îles, fond du lac, sommet, volcan, grottes, fond du monde) : chacune apprend une recette ou un glyphe. Quinze défis facultatifs rapportent de l'expérience.
 
 Un seul grand monde : jardin, forêt, lac, montagne enneigée, volcan, clairière, ruines de métal, désert ; des îles volantes dans le ciel ; des grottes à cristaux, un lac souterrain, une poche d'acide et une nappe d'huile sous terre. Le monde est une grille de matières : on creuse, on inonde, on gèle, on brûle, et le tout persiste.
 

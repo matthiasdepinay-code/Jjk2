@@ -172,6 +172,10 @@ const Gen = (() => {
     objs.push(at('champignon', 134, 189 - 4.5), at('champignon', 158, 189 - 4.5), at('champignon', 172, 189 - 4.5), at('rune', 150, 171), at('torche', 270, 205 - 13.3));
     objs.push(at('champignon', 640, 198 - 4.5), at('champignon', 660, 198 - 4.5), at('champignon', 785, 221 - 4.5), at('champignon', 800, 221 - 4.5), at('rune', 790, 203));
     objs.push(at('graine', 104, 41 - 1.7), at('torche', 522, 50 - 13.3), at('rune', 515, 44), at('champignon', 730, 37 - 4.5), at('graine', 736, 37 - 1.7));
+    // pages déchirées
+    objs.push(at('page', 150, 189 - 4, { page: 'p_puits' }), at('page', 275, 158 - 4, { page: 'p_lac' }), at('page', 400, 70 - 4, { page: 'p_sommet' }), at('page', 512, 192 - 4, { page: 'p_volcan' }));
+    objs.push(at('page', 112, 41 - 4, { page: 'p_ile1' }), at('page', 312, 29 - 4, { page: 'p_ile2' }), at('page', 528, 50 - 4, { page: 'p_ile3' }), at('page', 740, 37 - 4, { page: 'p_ile4' }));
+    objs.push(at('page', 470, 200 - 4, { page: 'p_acide' }), at('page', 220, 231 - 4, { page: 'p_huile' }), o('page', 48, 24, { page: 'p_crepes' }), o('page', 896, 24, { page: 'p_desert' }), at('page', 450, 256, { page: 'p_fond' }));
     const c = (t, x, h) => Object.assign({ t }, onGround(x, h));
     const crs = [
       c('limace', 74, 24), c('limace', 190, 24), c('follet', 140, 24), c('limace', 310, 24), c('golem', 380, 70), c('follet', 456, 24),
