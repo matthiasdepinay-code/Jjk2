@@ -322,11 +322,8 @@ function createSim() {
         const p = P[m]; const lx = (x - x0) * CS, ly = (y - y0) * CS;
         if (p.solid && !p.powder) anySolid = true;
         if (m === M.FEU) {
-          const h = U.hash2(x + frame, y);
-          g.fillStyle = h < 0.4 ? '#e8842a' : h < 0.7 ? '#f0b040' : '#d9622b';
-          g.globalAlpha = 0.45 + aux[i] / 60;
-          g.beginPath(); g.arc(lx + CS / 2, ly + CS / 2, CS * 0.8, 0, Math.PI * 2); g.fill();
-          g.globalAlpha = 1;
+          const hh = CS * (1.4 + U.hash2(x + (frame >> 1), y) * 1.2) * Math.min(1, 0.5 + aux[i] / 30);
+          FX.flamme(g, lx + CS / 2, ly + CS, hh, CS * 0.95, frame / 30 + x, 0, 0.85);
           if (((x & 3) === 0) && ((y & 3) === 0)) lights.push({ x: (x + 0.5) * CS, y: (y + 0.5) * CS, r: 70 });
           continue;
         }
@@ -340,6 +337,7 @@ function createSim() {
         g.fillRect(lx, ly, CS, CS);
         g.globalAlpha = 1;
         if (p.light && ((x & 3) === 0) && ((y & 3) === 0)) lights.push({ x: (x + 0.5) * CS, y: (y + 0.5) * CS, r: m === M.LAVE ? 90 : 60 });
+        if ((m === M.BOIS || m === M.PLANTE || m === M.HERBE) && aux[i] > 0) { g.fillStyle = U.hash2(x, y + (frame >> 2)) < 0.5 ? '#e0642a' : '#f0a040'; g.globalAlpha = 0.55; g.fillRect(lx, ly, CS, CS); g.globalAlpha = 1; if (((x & 3) === 0) && ((y & 3) === 0)) lights.push({ x: (x + 0.5) * CS, y: (y + 0.5) * CS, r: 60 }); }
         if (elec[i] > 0 && U.hash2(x, y + frame) < 0.5) { g.fillStyle = '#fff4a0'; g.globalAlpha = 0.6; g.fillRect(lx, ly, CS, CS); g.globalAlpha = 1; }
       }
     }

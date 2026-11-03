@@ -148,7 +148,27 @@ const World = (() => {
       const a = Math.random() * TAU, s = spd * (0.3 + Math.random() * 0.7);
       st.parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - spd * 0.2, life, max: life, color, size: size * (0.6 + Math.random() * 0.8), grav, type });
     }
-    if (st.parts.length > 900) st.parts.splice(0, st.parts.length - 900);
+    if (st.parts.length > 1400) st.parts.splice(0, st.parts.length - 1400);
+  }
+  // éclatement visuel d'un élément
+  function fxBurst(core, x, y, rad) {
+    const C = colorOf(core), n = Math.round(8 + rad / 7);
+    const P2 = (col, k, spd, life, size, grav, type) => part(x, y, col, Math.round(n * k), spd, life, size, grav, type);
+    switch (core) {
+      case 'feu': P2('#f08a30', 1, 70 + rad, 0.6, 3.2, -260, 'flamme'); P2('#6e6660', 0.4, 40, 1.2, 4, -60, 'fumee'); P2('#f0c060', 0.5, 160 + rad, 0.5, 2, 200, 'etincelle'); break;
+      case 'eau': P2('#5f9ad8', 1.4, 160 + rad * 1.2, 0.8, 2.2, 700, 'goutte'); P2('#bfe0ff', 0.4, 60, 0.4, 4, 0, 'glow'); break;
+      case 'froid': P2('#dff0ff', 1, 70 + rad * 0.6, 1.2, 3, 40, 'flocon'); P2('#bfe0ff', 0.5, 40, 0.5, 5, 0, 'glow'); break;
+      case 'foudre': P2('#fff2a0', 1.4, 320 + rad * 2, 0.35, 2, 0, 'etincelle'); for (let k = 0; k < 3; k++) { const a = Math.random() * TAU; st.sp.push({ k: 'zap', pts: FX.eclairPts(x, y, x + Math.cos(a) * rad * 1.2, y + Math.sin(a) * rad * 1.2, 0.3), life: 0.18, max: 0.18 }); } break;
+      case 'terre': case 'metal': P2(core === 'metal' ? '#9aa4ac' : '#a3844f', 1, 140 + rad, 0.9, 3, 900, 'eclat'); P2('#a3844f', 0.5, 40, 1, 5, -30, 'fumee'); break;
+      case 'vent': P2('#bfe8e8', 1, 220 + rad, 0.5, 2, 0, 'vent'); break;
+      case 'lumiere': P2('#ffe7a0', 1, 120 + rad, 0.7, 4, -20, 'glow'); P2('#fff6d8', 0.7, 200 + rad, 0.45, 1.8, 0, 'etincelle'); break;
+      case 'ombre': P2('#3a2f4a', 1, 50 + rad * 0.5, 1.3, 5, -50, 'fumee'); P2('#8a6ab8', 0.4, 60, 0.7, 3, 0, 'glow'); break;
+      case 'vie': P2('#6a9a45', 1, 90 + rad, 1.1, 3, 80, 'feuille'); P2('#a0e070', 0.5, 50, 0.7, 4, -40, 'glow'); break;
+      case 'acide': P2('#9ccf3a', 1, 120 + rad, 0.8, 2, 700, 'goutte'); P2('#8fbf2a', 0.6, 30, 1.2, 4, -50, 'fumee'); break;
+      case 'gravite': for (let i = 0; i < n; i++) { const a = Math.random() * TAU, rr = rad * (0.8 + Math.random() * 0.6); st.parts.push({ x: x + Math.cos(a) * rr, y: y + Math.sin(a) * rr, vx: -Math.cos(a) * rr * 1.6, vy: -Math.sin(a) * rr * 1.6, life: 0.55, max: 0.55, color: '#a090e0', size: 3, grav: 0, type: 'glow' }); } break;
+      case 'son': for (let k = 1; k <= 3; k++) st.sp.push({ k: 'ring', core, x, y, r: rad * (0.5 + k * 0.4), life: 0.3 + k * 0.12, max: 0.3 + k * 0.12, color: C }); break;
+      default: P2(C, 1, 60 + rad, 0.7, 3.5, 0, 'glow'); P2(C, 0.5, 140 + rad, 0.45, 1.8, 0, 'etincelle');
+    }
   }
   function msg(s, kind) { if (game) game.toast(s, kind); }
   function evt(n, d) { if (game) game.progress.event(n, d); }
@@ -497,9 +517,7 @@ const World = (() => {
     }
     // --- décor ---
     if (burst) {
-      const n = Math.round(10 + rad / 6);
-      const type = core === 'lumiere' || core === 'foudre' ? 'spark' : core === 'vie' ? 'feuille' : 'dot';
-      part(cx, cy, C, n, 60 + rad, 0.7, 3, core === 'terre' ? 500 : core === 'eau' ? 400 : 0, type);
+      fxBurst(core, cx, cy, rad);
       Son.sfx('burst', core);
       if (prm.persist > 0 && core !== 'terre' && core !== 'gravite' && core !== 'metal' && core !== 'esprit' && core !== 'lien' && core !== 'portail') st.sp.push({ k: 'field', core, x: cx, y: cy, r: rad * 0.8, life: 4 * prm.persist * dur, max: 4 * prm.persist * dur, prm });
       else if (core === 'lumiere' && !opts.noField) st.sp.push({ k: 'field', core, x: cx, y: cy, r: rad * 0.8, life: 5 * dur, max: 5 * dur, prm, faible: true });
@@ -1124,7 +1142,7 @@ const World = (() => {
     if (p.sta.glouglou > 0 && Math.random() < dt * 6) { const cx = Math.floor((p.x + Math.random() * p.w) / CS), cy = Math.floor((p.y + p.h) / CS); if (Sim.get(cx, cy) === M.AIR) Sim.set(cx, cy, M.EAU); }
     if (p.sta.vol > 0) { p.ink -= dt * 1.2; if (p.ink <= 0) { p.ink = 0; p.sta.vol = 0; msg('Plus d\'encre : tu retombes.', 'warn'); } if (Math.random() < 0.3) part(p.x + p.w / 2, p.y + p.h, '#6c5ab8', 1, 30, 0.6, 2, 60, 'spark'); }
     // liquide où l'on se trouve
-    p.liq = liquidOf(p);
+    { const lq = liquidOf(p); if (lq && !p.liq && Math.abs(p.vy) > 250) part(p.x + p.w / 2, p.y + p.h * 0.6, P[lq].color, 18, 260, 0.8, 2.2, 900, 'goutte'); p.liq = lq; }
     const inWater = p.liq === M.EAU || p.liq === M.SAUMURE || p.liq === M.HUILE || p.liq === M.ACIDE || p.liq === M.SEVE || p.liq === M.MIEL || p.liq === M.BOUE;
     if (p.liq === M.MIEL) p.hp = Math.min(p.hpMax, p.hp + dt * 0.4);
     if (p.sta.regen > 0) p.hp = Math.min(p.hpMax, p.hp + dt * 0.35);
@@ -1334,7 +1352,8 @@ const World = (() => {
   function strike(x, y) {
     const sx = (x + 0.5) * CS, sy = y * CS;
     const pts = []; let px = sx; for (let yy = 0; yy < sy; yy += 24) { px += (Math.random() - 0.5) * 30; pts.push([px, yy]); } pts.push([sx, sy]);
-    st.eclairs.push({ x: sx, y1: sy, pts, life: 0.35 });
+    const branches = []; for (let k = 0; k < 3; k++) { const i = 1 + Math.floor(Math.random() * (pts.length - 2)); const [bx, by] = pts[i]; branches.push(FX.eclairPts(bx, by, bx + (Math.random() - 0.5) * 160, by + 40 + Math.random() * 90, 0.25)); }
+    st.eclairs.push({ x: sx, y1: sy, pts, branches, life: 0.35 });
     st.flash = 0.12; Son.sfx('burst', 'foudre'); st.shake = 0.2;
     applyEffect('foudre', sx, sy, 40, { power: 1.5, size: 1, duration: 1, persist: 0 }, 'burst', { noField: true });
     onSimEvent('foudre', sx, sy);
@@ -1649,6 +1668,7 @@ const World = (() => {
           }
           s.x = nx; s.y = ny;
           const lm = Sim.matAt(s.x, s.y);
+          if (P[lm].liquid && !s.plouf) { s.plouf = true; part(s.x, s.y - 4, P[lm].color, 12, 220, 0.7, 2, 900, 'goutte'); }
           if (P[lm].liquid) {
             if (s.core === 'feu' && lm === M.EAU && !s.potion && !s.liquide) { Sim.forRadius(s.x, s.y, 10, (x, y, i, m) => { if (m === M.EAU && Math.random() < 0.5) Sim.set(x, y, M.VAPEUR, 40); }); part(s.x, s.y, '#ccc', 8, 40, 0.7, 4, -100); s.mort = true; break; }
             if (s.core === 'froid' && lm === M.EAU && !s.potion && !s.liquide) { applyEffect('froid', s.x, s.y, 36 * s.prm.size, s.prm, 'burst'); s.mort = true; break; }
@@ -1676,7 +1696,8 @@ const World = (() => {
             else { s.hits.add(touche); for (const c of s.spec.cores) applyEffect(c, s.x, s.y, s.r + 10, { ...s.prm, power: s.prm.power * 0.9 }, 'burst', { noField: true, noPlayer: true, noGrid: true }); Son.sfx('hit', s.core); }
           }
           if (s.trig === 'immediat' && !s.potion && !s.liquide && Math.random() < 0.5) for (const c of s.spec.cores) gridEffect(c, s.x, s.y, s.r + 4, { ...s.prm, power: s.prm.power * 0.5 }, false, dt * 3);
-          s.trail += dt; if (s.trail > 0.03) { s.trail = 0; part(s.x, s.y, s.color, 1, 10, 0.35, s.r * 0.5, 0, s.core === 'lumiere' || s.core === 'foudre' ? 'spark' : 'dot'); }
+          (s.tr || (s.tr = [])).push([s.x, s.y]); if (s.tr.length > 14) s.tr.shift();
+          s.trail += dt; if (s.trail > 0.035) { s.trail = 0; if (s.core === 'feu') part(s.x, s.y, '#f08a30', 1, 20, 0.35, s.r * 0.35, -200, 'flamme'); else if (s.core === 'foudre' || s.core === 'lumiere') part(s.x, s.y, s.color, 1, 60, 0.3, 1.4, 0, 'etincelle'); else if (s.core === 'eau' || s.core === 'acide') part(s.x, s.y, s.color, 1, 30, 0.5, 1.6, 600, 'goutte'); else if (s.core === 'froid') part(s.x, s.y, '#dff0ff', 1, 20, 0.8, 2.2, 30, 'flocon'); else part(s.x, s.y, s.color, 1, 10, 0.35, s.r * 0.5, 0, 'glow'); }
           if (s.y > L.h + 50 || s.y < -50) s.mort = true;
           break;
         }
@@ -1760,7 +1781,7 @@ const World = (() => {
           if (Math.random() < 0.6) { const a = Math.random() * TAU, rr = Math.random() * s.r; part(s.x + Math.cos(a) * rr, s.y + Math.sin(a) * rr * 0.5, colorOf(s.core), 1, 20, 0.7, 3, s.core === 'feu' ? -200 : s.core === 'eau' ? 100 : -30, s.core === 'lumiere' ? 'spark' : 'dot'); }
           break;
         }
-        case 'ring': case 'beam': s.life -= dt; if (s.life <= 0) s.mort = true; break;
+        case 'ring': case 'beam': case 'zap': s.life -= dt; if (s.life <= 0) s.mort = true; break;
       }
       if (s.k === 'field' && s.faible) for (const o of st.objs) if (o.t === 'rune' && U.circleRect(s.x, s.y, s.r * 2, o)) o.revele = Math.min(1, o.revele + dt * 0.8);
     }
@@ -1811,10 +1832,14 @@ const World = (() => {
     st.marques.forEach((mq, i) => { const q = posMarque(mq); if (!q) return; const last = i === st.marques.length - 1; ctx.save(); ctx.globalAlpha = last ? 0.95 : 0.5; const g = ctx.createRadialGradient(q.x, q.y, 2, q.x, q.y, 26); g.addColorStop(0, 'rgba(224,176,80,0.45)'); g.addColorStop(1, 'rgba(224,176,80,0)'); ctx.fillStyle = g; ctx.fillRect(q.x - 26, q.y - 26, 52, 52); ctx.translate(q.x, q.y - (mq.ent ? mq.ent.h / 2 + 12 : 0)); ctx.rotate(time * 0.8); Seal.glyph(ctx, 'marque', 0, 0, last ? 9 : 7, '#c08a2a', 3); ctx.restore(); });
     for (const s of st.sp) drawSpell(ctx, s);
     for (const q of st.parts) drawPart(ctx, q);
-    for (const e of st.eclairs) { ctx.save(); ctx.strokeStyle = '#fff8d0'; ctx.lineWidth = 4 * e.life / 0.35 + 1; ctx.globalAlpha = Math.min(1, e.life * 4); ctx.lineJoin = 'round'; ctx.beginPath(); e.pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); ctx.strokeStyle = '#e0c43a'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore(); }
+    // halos : feu, lave, torches, cristaux
+    for (const l of Sim.lights(camI, VW, VH)) FX.glow(ctx, l.x, l.y, l.r * 0.55, l.r > 80 ? '#e0642a' : '#f0a040', 0.16);
+    for (const o of st.objs) if (o.t === 'torche' && o.lit) FX.glow(ctx, o.x + o.w / 2, o.y + 2, 46 + Math.sin(time * 9 + o.seed) * 4, '#f0a040', 0.45);
+    for (const e of st.eclairs) { FX.eclair(ctx, e.pts, '#e8d060', 3 * e.life / 0.35 + 1.2, Math.min(1, e.life * 4), e.branches); FX.glow(ctx, e.x, e.y1, 120, '#fff6c0', e.life * 2); }
     ctx.restore();
     drawRain(ctx);
     drawDark(ctx, camI);
+    FX.vignette(ctx, VW, VH);
     if (st.flash > 0) { ctx.fillStyle = 'rgba(255,250,220,' + (st.flash * 4) + ')'; ctx.fillRect(0, 0, VW, VH); }
     // réticule
     ctx.save();
@@ -2126,6 +2151,7 @@ const World = (() => {
     return { t: time, vx: p.vx, vy: p.vy, air: !p.onGround && !p.climbing && p.liq === 0, cast, glow: glow || (sel && sel.type === 'seal' && sel.seal.core ? colorOf(sel.seal.core) : '#d8a63a') };
   }
   function drawPlayer(ctx, p) {
+    for (const h of ['R', 'L']) { const g = p.gestes && p.gestes[h]; const c = game.charging && game.charging[h]; if (g) FX.cercle(ctx, p.x + p.w / 2, p.y + p.h, 22 + (1 - g.t / Math.max(0.01, g.max)) * 8, time, g.color, 1); else if (c) { const k = Math.min(1, (performance.now() - c.t0) / 1500); if (k > 0.08) FX.cercle(ctx, p.x + p.w / 2, p.y + p.h, 18 + k * 20, time * (1 + k * 2), c.color || '#d8a63a', 0.5 + k * 0.5); } }
     const moving = (Math.abs(p.vx) > 20 && (p.onGround || p.climbing)) || p.sta.vol > 0;
     if (p.inv > 0 && Math.floor(time * 20) % 2 === 0) return;
     if (p.sta.wet > 0 && Math.random() < 0.06) part(p.x + p.w / 2, p.y + p.h, '#6aa0d8', 1, 10, 0.6, 2, 300);
@@ -2161,11 +2187,19 @@ const World = (() => {
     ctx.save();
     switch (s.k) {
       case 'proj': {
-        const g = ctx.createRadialGradient(s.x, s.y, 1, s.x, s.y, s.r * 2.5); g.addColorStop(0, U.hexA(s.color, 0.5)); g.addColorStop(1, U.hexA(s.color, 0)); ctx.fillStyle = g; ctx.fillRect(s.x - s.r * 2.5, s.y - s.r * 2.5, s.r * 5, s.r * 5);
-        ctx.fillStyle = s.color; ctx.strokeStyle = INK; ctx.lineWidth = 1.5;
-        if (s.potion || s.liquide) { ctx.beginPath(); ctx.moveTo(s.x - 4, s.y - 8); ctx.lineTo(s.x - 4, s.y - 3); ctx.quadraticCurveTo(s.x - 9, s.y + 3, s.x - 7, s.y + 7); ctx.lineTo(s.x + 7, s.y + 7); ctx.quadraticCurveTo(s.x + 9, s.y + 3, s.x + 4, s.y - 3); ctx.lineTo(s.x + 4, s.y - 8); ctx.closePath(); ctx.fill(); ctx.stroke(); }
-        else if (s.petit) { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill(); }
-        else { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill(); ctx.stroke(); Seal.glyph(ctx, s.core, s.x, s.y, s.r * 0.6, '#efe3c4', 1); }
+        if (s.potion || s.liquide) {
+          ctx.fillStyle = s.color; ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.translate(s.x, s.y); ctx.rotate(time * 8);
+          ctx.beginPath(); ctx.moveTo(-4, -8); ctx.lineTo(-4, -3); ctx.quadraticCurveTo(-9, 3, -7, 7); ctx.lineTo(7, 7); ctx.quadraticCurveTo(9, 3, 4, -3); ctx.lineTo(4, -8); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#6b4f2a'; ctx.fillRect(-4.5, -11, 9, 3.5); break;
+        }
+        FX.ruban(ctx, s.tr, s.color, s.r * 1.4, 0.55);
+        FX.glow(ctx, s.x, s.y, s.r * 3.2, s.color, 0.55);
+        const ang = Math.atan2(s.vy, s.vx);
+        if (s.core === 'feu') { ctx.translate(s.x, s.y); ctx.rotate(ang + Math.PI / 2); FX.flamme(ctx, 0, s.r * 0.6, s.r * 3, s.r * 1.6, time, s.chaud || 0); }
+        else if (s.core === 'foudre') { const pts = FX.eclairPts(s.x - Math.cos(ang) * s.r * 2.5, s.y - Math.sin(ang) * s.r * 2.5, s.x + Math.cos(ang) * s.r, s.y + Math.sin(ang) * s.r, 0.45); FX.eclair(ctx, pts, '#e0c43a', 1.6); FX.glow(ctx, s.x, s.y, s.r * 1.6, '#fff6c0', 0.9); }
+        else if (s.core === 'eau' || s.core === 'acide') { ctx.translate(s.x, s.y); ctx.rotate(ang); ctx.fillStyle = s.color; ctx.strokeStyle = INK; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(s.r * 1.3, 0); ctx.quadraticCurveTo(0, -s.r, -s.r * 1.1, 0); ctx.quadraticCurveTo(0, s.r, s.r * 1.3, 0); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.arc(s.r * 0.3, -s.r * 0.3, s.r * 0.25, 0, TAU); ctx.fill(); }
+        else if (s.petit) { ctx.fillStyle = s.color; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill(); }
+        else { ctx.fillStyle = s.color; ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill(); ctx.stroke(); FX.glow(ctx, s.x, s.y, s.r * 1.2, '#ffffff', 0.35); ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(time * 4); Seal.glyph(ctx, s.core, 0, 0, s.r * 0.6, '#efe3c4', 1); ctx.restore(); }
         break;
       }
       case 'trap': ctx.strokeStyle = s.color; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.6 + Math.sin(s.t * 4) * 0.2; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.ellipse(s.x, s.y, s.r, s.r * 0.5, 0, 0, TAU); ctx.stroke(); ctx.setLineDash([]); Seal.glyph(ctx, s.core, s.x, s.y, 10, s.color, 1); Seal.glyph(ctx, 'contact', s.x, s.y - 18, 5, s.color, 1); break;
@@ -2190,8 +2224,13 @@ const World = (() => {
       case 'bouclier': { const span = 1.05; ctx.lineCap = 'round'; ctx.strokeStyle = s.spec.color; ctx.globalAlpha = 0.35 + 0.5 * Math.min(1, s.life / 0.5); ctx.lineWidth = 9 * s.spec.prm.size; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, s.a - span, s.a + span); ctx.stroke(); ctx.globalAlpha = 0.9; ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(s.x, s.y, s.r + 5 * s.spec.prm.size, s.a - span, s.a + span); ctx.stroke(); ctx.beginPath(); ctx.arc(s.x, s.y, s.r - 5 * s.spec.prm.size, s.a - span, s.a + span); ctx.stroke(); Seal.glyph(ctx, s.spec.core, s.x + Math.cos(s.a) * s.r, s.y + Math.sin(s.a) * s.r, 7, '#efe3c4', 2); break; }
       case 'singularite': { const t = 1 - s.life / s.max; ctx.strokeStyle = '#9a4a8c'; ctx.lineWidth = 2; for (let k = 0; k < 4; k++) { ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(s.x, s.y, (s.r * 0.6) * (1 - ((t * 3 + k * 0.25) % 1)), 0, TAU); ctx.stroke(); } ctx.fillStyle = '#1f1a16'; ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(s.x, s.y, 6 + Math.sin(time * 20) * 2, 0, TAU); ctx.fill(); break; }
       case 'label': ctx.globalAlpha = Math.min(1, s.life * 2); U.txt(ctx, s.txt, s.x, s.y, 20, 'center', INK, 'IM Fell English SC'); break;
-      case 'ring': { const t = 1 - s.life / s.max; ctx.strokeStyle = s.color; ctx.globalAlpha = 1 - t; ctx.lineWidth = 3 * (1 - t) + 0.5; U.inkCircle(ctx, s.x, s.y, s.r * (0.3 + t * 0.9), 3, 2); ctx.lineWidth = 1; U.inkCircle(ctx, s.x, s.y, s.r * (0.1 + t * 0.6), 4, 1.5); break; }
-      case 'beam': { const t = s.life / s.max; ctx.strokeStyle = s.color; ctx.globalAlpha = t; ctx.lineWidth = s.w * t + 1; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); ctx.strokeStyle = '#efe3c4'; ctx.lineWidth = Math.max(0.5, s.w * t * 0.3); ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); break; }
+      case 'ring': FX.onde(ctx, s.x, s.y, s.r, 1 - s.life / s.max, s.color); break;
+      case 'zap': FX.eclair(ctx, s.pts, '#e0c43a', 1.4, s.life / s.max); break;
+      case 'beam': { const t = s.life / s.max;
+        if (s.core === 'foudre') { FX.eclair(ctx, FX.eclairPts(s.x1, s.y1, s.x2, s.y2, 0.12), '#e0c43a', s.w * 0.45 * t + 1, t); break; }
+        ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.strokeStyle = s.color; ctx.globalAlpha = t * 0.35; ctx.lineWidth = s.w * 3 * t + 2; ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke();
+        ctx.globalAlpha = t; ctx.lineWidth = s.w * t + 1; ctx.stroke(); ctx.strokeStyle = '#fffbe8'; ctx.lineWidth = Math.max(0.5, s.w * t * 0.35); ctx.stroke();
+        ctx.globalCompositeOperation = 'source-over'; FX.glow(ctx, s.x2, s.y2, 26 * t + 6, s.color, t); break; }
     }
     ctx.restore();
   }
@@ -2215,6 +2254,7 @@ const World = (() => {
     ctx.restore();
   }
   function drawPart(ctx, q) {
+    if (FX.particule(ctx, q, time) !== false) return;
     const a = clamp(q.life / q.max, 0, 1);
     ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = q.color; ctx.strokeStyle = q.color;
     if (q.type === 'spark') { ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(q.x - q.size, q.y); ctx.lineTo(q.x + q.size, q.y); ctx.moveTo(q.x, q.y - q.size); ctx.lineTo(q.x, q.y + q.size); ctx.stroke(); }
