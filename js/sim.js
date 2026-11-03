@@ -1,6 +1,7 @@
 'use strict';
 // ---------- Simulation de matières (grille « falling sand ») et rendu encre par morceaux ----------
-const Sim = (() => {
+function createSim() {
+  return (() => {
   const CS = 6;        // taille d'une cellule en pixels
   const CH = 32;       // cellules par côté de morceau (chunk)
   const CPX = CS * CH; // pixels par morceau
@@ -381,3 +382,5 @@ const Sim = (() => {
     get W() { return W; }, get H() { return H; }, get mat() { return mat; }, get aux() { return aux; }, get elec() { return elec; },
     set onEvent(f) { onEvent = f; }, set sunny(v) { sunny = v; }, set surf(v) { surf = v; }, get surf() { return surf; }, get frame() { return frame; } };
 })();
+}
+const Sim = createSim();

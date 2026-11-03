@@ -22,6 +22,10 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 | Table des sceaux | Composer un sceau : **centre** = glyphe d'effet, **premier anneau** = forme, **second anneau** = modificateurs, **pointes** = déclencheur. Consigner, puis « Mettre dans la barre ». |
 | Chaudron | Jusqu'à trois ingrédients et trois étapes dans l'ordre. Le chaudron guide par l'odeur, le bruit et la couleur ; un raté donne une potion bizarre (hoquet de fumée, grenouille, ballon, boussole folle...). Les fioles de liquide puisées dehors sont des ingrédients et se lancent depuis la barre. |
 | Grimoire | Découvertes, glyphes et fusions, recettes, ingrédients, encyclopédie des réactions, bestiaire, pages déchirées retrouvées, défis du maître, journal. |
+| Bac d'essai | Un monde miniature sous verre pour tester le sceau en cours et verser des matières. |
+| Alambic | Deux fioles identiques distillées en une fiole forte (effet doublé). |
+| Presse à glyphes | Un sceau consigné + une poussière de pierre = trois parchemins lançables sans encre. |
+| Terrarium | Les créatures apprivoisées ramenées dans tes bras y vivent et offrent des cadeaux. |
 | Lettre du maître | L'aide, les contrôles, et « Restaurer le monde ». |
 | Porte | Sortir. Revenir restaure encre et vitalité et sauvegarde le monde. |
 

@@ -142,6 +142,7 @@
   table.journal td { padding: 3px 14px 3px 0; }
   table.journal td:last-child { font-size: calc(18px * var(--s)); }
 
+  #bac-canvas { width: calc(720px * var(--s)); height: calc(360px * var(--s)); display: block; margin: 8px auto; border: 2px solid var(--ink); background: var(--paper2); cursor: crosshair; }
   /* aide */
   #panel-help { width: calc(760px * var(--s)); }
   #panel-help p, #panel-help li { line-height: 1.45; }
@@ -265,6 +266,36 @@
       <div id="grim-content"></div>
     </section>
 
+    <!-- Alambic -->
+    <section id="panel-alambic" class="panel hidden" style="width: calc(760px * var(--s))">
+      <button class="fermer" title="Fermer (Échap)">✕</button>
+      <h2>Alambic</h2>
+      <p class="intro">Deux fioles identiques, distillées, donnent une fiole forte : effet doublé, et plus puissante quand elle se jette.</p>
+      <div class="cols"><div><h3>À distiller</h3><div id="alambic-list"></div></div><div><h3>Fioles fortes</h3><div id="alambic-fortes"></div></div></div>
+    </section>
+    <!-- Presse -->
+    <section id="panel-presse" class="panel hidden" style="width: calc(760px * var(--s))">
+      <button class="fermer" title="Fermer (Échap)">✕</button>
+      <h2>Presse à glyphes</h2>
+      <p class="intro">Un sceau consigné et une poussière de pierre donnent trois parchemins : ils se lancent depuis la barre sans dépenser d'encre.</p>
+      <div class="cols"><div><h3>Sceaux consignés</h3><div id="presse-list"></div></div><div><h3>Parchemins en réserve</h3><div id="presse-parchemins"></div></div></div>
+    </section>
+    <!-- Terrarium -->
+    <section id="panel-terrarium" class="panel hidden" style="width: calc(700px * var(--s))">
+      <button class="fermer" title="Fermer (Échap)">✕</button>
+      <h2>Terrarium</h2>
+      <p class="intro">Porte une créature apprivoisée (E) jusqu'à la porte du labo pour l'installer ici. Chaque pensionnaire t'offre son cadeau toutes les quatre minutes, à chaque visite.</p>
+      <div id="terrarium-list"></div>
+    </section>
+    <!-- Bac d'essai -->
+    <section id="panel-bac" class="panel hidden" style="width: calc(820px * var(--s))">
+      <button class="fermer" title="Fermer (Échap)">✕</button>
+      <h2>Bac d'essai</h2>
+      <p class="intro">Un petit monde sous verre pour essayer le sceau en cours de composition. Clique dans le bac pour y lancer l'effet ; verse des matières pour voir comment elles réagissent.</p>
+      <canvas id="bac-canvas" width="480" height="240"></canvas>
+      <div class="actions" id="bac-actions"></div>
+      <div id="bac-info" class="muted"></div>
+    </section>
     <!-- Aide -->
     <section id="panel-help" class="panel hidden">
       <button class="fermer" title="Fermer (Échap)">✕</button>
@@ -274,6 +305,7 @@
       <p>Dehors, <b>tout réagit</b> : le feu brûle le bois et l'herbe, l'eau éteint et fait pousser, la glace fond, la lave fige l'eau en pierre noire, l'acide creuse, l'huile flotte et s'enflamme, la foudre court dans l'eau et le métal. Regarde bien : chaque phénomène observé trois fois fait germer un glyphe dans ta palette (onglet <b>Intuitions</b> du grimoire). Les orages sont de bons professeurs.</p>
       <p>Avec l'expérience, la table s'enrichit : un <b>second glyphe d'effet</b> en bas du premier anneau fusionne avec le premier (feu + vent = tornade de feu, eau + froid = banquise, feu + terre = lave...), et un emplacement de modificateur peut recevoir un <b>sous-sceau</b> : un sceau consigné entier, lancé là où le premier éclate.</p>
       <p>Le <b>chaudron</b> accepte jusqu'à trois ingrédients et trois étapes dans l'ordre. Commence par <b>cendre + eau de source</b>, <b>chauffer</b> puis <b>remuer</b> : tu auras de l'encre à boire. Les ingrédients rares se trouvent dehors ; on peut aussi puiser n'importe quel liquide dans une fiole (<kbd>E</kbd>) pour le lancer ou le brasser.</p>
+      <p>Le labo grandit avec toi : un <b>bac d'essai</b> sous verre pour tester un sceau, un <b>alambic</b> qui distille deux fioles en une forte, une <b>presse à glyphes</b> qui tire des parchemins lançables sans encre, et un <b>terrarium</b> pour loger les créatures apprivoisées que tu ramènes dans tes bras.</p>
       <h3>Dehors</h3>
       <ul>
         <li><kbd>←</kbd><kbd>→</kbd> ou <kbd>Q</kbd><kbd>D</kbd> : marcher · <kbd>Espace</kbd> : sauter (maintenir pour un grand saut) · <kbd>↑</kbd> : grimper aux plantes · en vol : toutes les directions</li>

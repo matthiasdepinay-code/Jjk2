@@ -32,4 +32,4 @@ Un vrai bac à sable de magie, style encre & parchemin, ambiance cosy. On compos
 3. Apprentissage complet : observations, pages déchirées, défis du maître, encyclopédie des réactions. *(fait)*
 4. Brassage sensoriel, potions bizarres, nouvelles potions. *(fait)*
 5. Écosystème de créatures. *(fait)*
-6. Labo qui grandit.
+6. Labo qui grandit : bac d'essai, alambic, presse à glyphes, terrarium. *(fait)*

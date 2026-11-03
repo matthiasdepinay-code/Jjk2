@@ -300,6 +300,11 @@ const DATA = (() => {
     { id: 'teleguide', type: 'mods', item: ['teleguide'], titre: 'Modificateur : Téléguidé', indice: 'Possède la forme Trait.', cond: (p) => p.shapes.includes('trait') },
     { id: 'orbite', type: 'mods', item: ['orbite'], titre: 'Modificateur : Orbite', indice: 'Vole (Gravité sur soi ou élixir de vol).', cond: (p) => p.compteurs.vols >= 1 },
     { id: 'canalise', type: 'mods', item: ['canalise'], titre: 'Modificateur : Canalisé', indice: 'Atteins le niveau 4.', cond: (p) => p.compteurs.niveau >= 4 },
+    // --- étape 6 : le labo grandit ---
+    { id: 'bac',       type: 'labo', item: 'bac',       titre: 'Labo : le bac d\'essai', indice: 'Atteins le niveau 2.', cond: (p) => p.compteurs.niveau >= 2 },
+    { id: 'alambic',   type: 'labo', item: 'alambic',   titre: 'Labo : l\'alambic', indice: 'Atteins le niveau 3.', cond: (p) => p.compteurs.niveau >= 3 },
+    { id: 'terrarium', type: 'labo', item: 'terrarium', titre: 'Labo : le terrarium', indice: 'Apprivoise 3 créatures.', cond: (p) => p.compteurs.tames >= 3 },
+    { id: 'presse',    type: 'labo', item: 'presse',    titre: 'Labo : la presse à glyphes', indice: 'Lance 40 sceaux.', cond: (p) => p.compteurs.sorts >= 40 },
   ];
 
   const DEBUT = {

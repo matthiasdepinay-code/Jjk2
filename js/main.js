@@ -16,7 +16,7 @@
   function makeProgress() {
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
-      recettes: [], ingredientsVus: [], done: [], nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [],
+      recettes: [], ingredientsVus: [], done: [], nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
       compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0, terre: 0, creaturesTouchees: 0, vols: 0, portes: 0, lancers: 0, niveau: 1, sceaux: 0 },
       event(name, data) {
         const k = this.compteurs;
@@ -59,6 +59,7 @@
           else if (u.type === 'mods') for (const m of u.item) { if (!this.mods.includes(m)) this.mods.push(m); }
           else if (u.type === 'slot') this.slots = Math.max(this.slots, u.item);
           else if (u.type === 'fusion') this.fusion = true;
+          else if (u.type === 'labo') this.labo[u.item] = true;
           this.nouveau = true;
           game.toast('✦ Découverte : ' + u.titre, 'unlock');
           Son.sfx('unlock');
@@ -75,7 +76,7 @@
     state: 'create',
     look: { nom: '', chapeau: 0, cape: 0, acc: 0 },
     progress: makeProgress(),
-    inv: { ingredients: {}, potions: {} },
+    inv: { ingredients: {}, potions: {}, fortes: {}, parchemins: {}, terrarium: [] },
     seals: [], hotbar: [null, null, null, null, null], selected: 0,
     editSeal: Seal.create(), lastPotion: null, started: false,
     xp: 0, niveau: 1,
@@ -155,6 +156,7 @@
       const w = World.state(); if (w) { w.p.ink = w.p.inkMax; w.p.hp = w.p.hpMax; this.saveWorld(); }
       if (first) { this.toast('Bienvenue dans ton atelier, ' + this.look.nom + '. Trois sceaux t\'attendent déjà dans la barre.'); setTimeout(() => { if (this.state === 'lab' && !UI.isOpen()) UI.openPanel('help'); }, 600); }
       else this.toast('Tu te reposes au labo : encre et vitalité restaurées.');
+      this.terrariumCadeaux();
       this.save();
     },
     goWorld() {
@@ -177,6 +179,30 @@
       World.reset();
       this.toast('Le monde a été remis à neuf. Tes découvertes sont intactes.');
       if (this.state === 'world') this.goWorld();
+    },
+    distiller(id) {
+      if ((this.inv.potions[id] || 0) < 2) { this.toast('Il faut deux fioles identiques pour en distiller une.', 'warn'); return false; }
+      this.inv.potions[id] -= 2; this.inv.fortes[id] = (this.inv.fortes[id] || 0) + 1;
+      Son.sfx('brew'); this.toast(DATA.POTIONS[id].nom + ' distillée : effet doublé.'); this.save(); return true;
+    },
+    presser(seal) {
+      if ((this.inv.ingredients.poussiere || 0) < 1) { this.toast('La presse demande une poussière de pierre par tirage.', 'warn'); return false; }
+      this.inv.ingredients.poussiere--;
+      const nom = seal.nom || Seal.autoNom(seal);
+      const q = this.inv.parchemins[nom] || (this.inv.parchemins[nom] = { seal: Seal.clone(seal), n: 0 });
+      q.n += 3; Son.sfx('pickup'); this.toast('Trois parchemins « ' + nom + ' » : se lancent sans encre.'); this.save(); return true;
+    },
+    terrariumAjoute(t) {
+      this.inv.terrarium.push({ t, last: Date.now() });
+      this.toast(DATA.ESPECES[t].nom + ' s\'installe dans le terrarium. Il t\'offrira des cadeaux à chaque visite.'); this.save();
+    },
+    terrariumRelache(i) {
+      const q = this.inv.terrarium.splice(i, 1)[0]; if (!q) return;
+      World.relacher(q.t); this.toast(DATA.ESPECES[q.t].nom + ' retourne dehors, apprivoisé(e).'); this.save();
+    },
+    terrariumCadeaux() {
+      const now = Date.now();
+      for (const q of this.inv.terrarium) { const sp = DATA.ESPECES[q.t]; if (sp && sp.drop && now - q.last > 240000) { q.last = now; this.gainIngredient(sp.drop); } }
     },
     brew(ingr, steps) {
       const norm = ingr.map((i) => (i === 'eau' ? 'eau_source' : i));
@@ -249,10 +275,16 @@
       if (!e) { this.toast('Emplacement vide. Prépare un sceau ou une potion au labo.', 'warn'); return; }
       const aim = World.toWorld(inp.mouse.x, inp.mouse.y);
       if (e.type === 'seal') { if (World.castSeal(e.seal, aim)) this.progress.event('sort'); }
+      else if (e.type === 'parchemin') {
+        const q = this.inv.parchemins[e.nom];
+        if (!q || q.n <= 0) { this.toast('Plus de parchemin « ' + e.nom + ' ». Retourne à la presse.', 'warn'); Son.sfx('fail'); return; }
+        if (World.castSeal(q.seal, aim, true)) { q.n--; this.progress.event('sort'); UI.refreshHotbar(); this.save(); }
+      }
       else if (e.type === 'potion') {
-        const n = this.inv.potions[e.id] || 0;
-        if (n <= 0) { this.toast('Plus de ' + DATA.POTIONS[e.id].nom + '. Retourne au chaudron.', 'warn'); Son.sfx('fail'); return; }
-        if (World.usePotion(e.id, aim)) { this.inv.potions[e.id] = n - 1; UI.refreshHotbar(); this.save(); }
+        const store = e.forte ? this.inv.fortes : this.inv.potions;
+        const n = store[e.id] || 0;
+        if (n <= 0) { this.toast('Plus de ' + DATA.POTIONS[e.id].nom + (e.forte ? ' distillée' : '') + '. Retourne au ' + (e.forte ? 'à l\'alambic' : 'chaudron') + '.', 'warn'); Son.sfx('fail'); return; }
+        if (World.usePotion(e.id, aim, e.forte)) { store[e.id] = n - 1; UI.refreshHotbar(); this.save(); }
       } else if (e.type === 'liquide') {
         const n = this.inv.ingredients[e.id] || 0;
         if (n <= 0) { this.toast('Plus de ' + DATA.INGREDIENTS[e.id].nom + '. Remplis-en une (E près d\'un liquide).', 'warn'); Son.sfx('fail'); return; }
@@ -263,7 +295,7 @@
       this.progress.compteurs.sceaux = this.seals.length;
       try {
         const data = { look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
-          progress: { cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs, pagesLues: this.progress.pagesLues, defisFaits: this.progress.defisFaits, bizarresVues: this.progress.bizarresVues || [], bestiaire: this.progress.bestiaire, especesVues: this.progress.especesVues } };
+          progress: { labo: this.progress.labo, cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs, pagesLues: this.progress.pagesLues, defisFaits: this.progress.defisFaits, bizarresVues: this.progress.bizarresVues || [], bestiaire: this.progress.bestiaire, especesVues: this.progress.especesVues } };
         localStorage.setItem(SAVE_KEY, JSON.stringify(data));
       } catch (e) { /* stockage indisponible */ }
     },
@@ -277,6 +309,8 @@
         if (!this.progress.obs) this.progress.obs = {};
         if (!this.progress.pagesLues) this.progress.pagesLues = []; if (!this.progress.defisFaits) this.progress.defisFaits = [];
         if (!this.progress.bestiaire) this.progress.bestiaire = {}; if (!this.progress.especesVues) this.progress.especesVues = [];
+        if (!this.progress.labo) this.progress.labo = { bac: false, alambic: false, terrarium: false, presse: false };
+        if (!this.inv.fortes) this.inv.fortes = {}; if (!this.inv.parchemins) this.inv.parchemins = {}; if (!this.inv.terrarium) this.inv.terrarium = [];
         const K = this.progress.compteurs; for (const k of ['terre', 'creaturesTouchees', 'vols', 'portes', 'lancers', 'sceaux']) if (K[k] == null) K[k] = 0; K.niveau = this.niveau;
         this.hotbar = this.hotbar.map((e) => (e && e.type === 'seal' ? { type: 'seal', seal: Seal.clone(e.seal) } : e)); this.seals = this.seals.map((q) => Seal.clone(q));
         return this.started;
@@ -335,6 +369,7 @@
       else if (id === 'miroir') UI.openPanel('create');
       else if (id === 'lettre') UI.openPanel('help');
       else if (id === 'porte') game.goWorld();
+      else if (id === 'alambic' || id === 'presse' || id === 'terrarium' || id === 'bac') { if (game.progress.labo[id]) UI.openPanel(id); else { const u = DATA.UNLOCKS.find((q) => q.item === id && q.type === 'labo'); game.toast('Ce poste est encore scellé. ' + (u ? 'Indice : ' + u.indice : ''), 'warn'); } }
     } else if (game.state === 'world') game.useSelected();
   });
   window.addEventListener('mouseup', (e) => { if (e.button === 0) inp.mouse.down = false; });

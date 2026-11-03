@@ -13,10 +13,15 @@ const Lab = (() => {
     { id: 'grimoire', nom: 'Grimoire des découvertes', x: 860, y: 360, w: 150, h: 220 },
     { id: 'lettre', nom: 'Lettre du maître (aide)', x: 560, y: 120, w: 120, h: 90 },
     { id: 'porte', nom: 'Sortir sur le terrain d\'essai', x: 1090, y: 300, w: 130, h: 280 },
+    { id: 'bac', nom: 'Bac d\'essai', x: 30, y: 70, w: 160, h: 120, labo: true },
+    { id: 'alambic', nom: 'Alambic : distiller les potions', x: 200, y: 110, w: 110, h: 110, labo: true },
+    { id: 'presse', nom: 'Presse à glyphes : parchemins sans encre', x: 700, y: 240, w: 150, h: 110, labo: true },
+    { id: 'terrarium', nom: 'Terrarium : créatures apprivoisées', x: 1010, y: 200, w: 180, h: 100, labo: true },
   ];
 
   function init(g) { game = g; }
   function spotAt(x, y) { return SPOTS.find((s) => x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h) || null; }
+  function locked(id) { return !(game.progress.labo && game.progress.labo[id]); }
   function update(dt, inp) {
     time += dt;
     hover = spotAt(inp.mouse.x, inp.mouse.y);
@@ -160,6 +165,46 @@ const Lab = (() => {
       ctx.fillStyle = 'rgba(240,200,110,0.25)'; ctx.fillRect(x + w / 2 - 1, y + 40, 2, h - 40);
     });
 
+    // --- postes de l'étape 6 (scellés : estompés avec un cadenas) ---
+    const sealed = (id, fn) => { const lk = locked(id); ctx.save(); if (lk) ctx.globalAlpha = 0.35; drawSpot(ctx, id, fn); ctx.restore(); if (lk) { const sp = SPOTS.find((q) => q.id === id); ctx.save(); ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.fillStyle = '#efe3c4'; const lx = sp.x + sp.w / 2, ly = sp.y + sp.h / 2; ctx.fillRect(lx - 7, ly - 2, 14, 11); U.inkRect(ctx, lx - 7, ly - 2, 14, 11, 1, 0.4); ctx.beginPath(); ctx.arc(lx, ly - 3, 5, Math.PI, 0); ctx.stroke(); ctx.restore(); } };
+    sealed('bac', () => {
+      const x = 40, y = 80, w = 140, h = 100;
+      ctx.fillStyle = 'rgba(200,220,235,0.35)'; ctx.fillRect(x, y, w, h); ctx.lineWidth = 2.5; U.inkRect(ctx, x, y, w, h, 81, 1);
+      ctx.fillStyle = 'rgba(163,132,79,0.5)'; ctx.fillRect(x + 4, y + h - 30, w - 8, 26); U.hatch(ctx, x + 4, y + h - 30, w - 8, 26, 5, Math.PI / 4, 82, 0.3);
+      ctx.fillStyle = 'rgba(80,130,190,0.4)'; ctx.fillRect(x + 20, y + h - 46, 50, 16);
+      ctx.lineWidth = 1.5; U.inkLine(ctx, x + 100, y + h - 30, x + 100, y + h - 60, 83, 0.5); ctx.fillStyle = 'rgba(92,143,62,0.5)'; ctx.beginPath(); ctx.arc(x + 100, y + h - 66, 12, 0, TAU); ctx.fill(); ctx.stroke();
+      U.txt(ctx, 'bac d\'essai', x + w / 2, y + 12, 12, 'center', '#6b4f2a', 'IM Fell English', 'italic');
+    });
+    sealed('alambic', () => {
+      const x = 255, y = 200;
+      ctx.fillStyle = 'rgba(200,220,235,0.4)'; ctx.beginPath(); ctx.arc(x - 25, y - 20, 22, 0, TAU); ctx.fill(); ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillRect(x - 30, y - 62, 10, 22); U.inkRect(ctx, x - 30, y - 62, 10, 22, 84, 0.5);
+      ctx.beginPath(); ctx.moveTo(x - 25, y - 62); ctx.quadraticCurveTo(x + 10, y - 80, x + 30, y - 40); ctx.lineTo(x + 30, y - 10); ctx.stroke();
+      ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.moveTo(x + 24, y - 14); ctx.lineTo(x + 36, y - 14); ctx.lineTo(x + 40, y + 2); ctx.lineTo(x + 20, y + 2); ctx.closePath(); ctx.fill(); ctx.stroke();
+      const coul = game.lastPotion ? DATA.POTIONS[game.lastPotion].couleur : '#c45a5a'; ctx.fillStyle = coul; ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.arc(x - 25, y - 14, 14, 0, Math.PI); ctx.fill(); ctx.globalAlpha = 1;
+      drawFlame(ctx, x - 25, y + 10, 0.8);
+      U.inkLine(ctx, x - 55, y + 12, x + 45, y + 12, 85, 0.8);
+    });
+    sealed('presse', () => {
+      const x = 775, y = 300;
+      ctx.fillStyle = 'rgba(150,110,60,0.5)'; ctx.fillRect(x - 60, y + 30, 120, 12); U.inkRect(ctx, x - 60, y + 30, 120, 12, 86, 1);
+      ctx.fillRect(x - 50, y - 50, 12, 80); U.inkRect(ctx, x - 50, y - 50, 12, 80, 87, 0.8); ctx.fillRect(x + 38, y - 50, 12, 80); U.inkRect(ctx, x + 38, y - 50, 12, 80, 88, 0.8);
+      ctx.fillRect(x - 50, y - 50, 100, 10); U.inkRect(ctx, x - 50, y - 50, 100, 10, 89, 0.8);
+      ctx.lineWidth = 3; U.inkLine(ctx, x, y - 40, x, y - 5, 90, 0.5); ctx.lineWidth = 2;
+      ctx.fillStyle = 'rgba(60,52,46,0.8)'; ctx.fillRect(x - 30, y - 8, 60, 10); U.inkRect(ctx, x - 30, y - 8, 60, 10, 91, 0.6);
+      ctx.fillStyle = '#f6eed8'; ctx.fillRect(x - 26, y + 6, 52, 22); U.inkRect(ctx, x - 26, y + 6, 52, 22, 92, 0.6);
+      Seal.glyph(ctx, 'sous', x, y + 17, 7, '#6b4f2a', 1);
+      ctx.beginPath(); ctx.arc(x, y - 44, 6, 0, TAU); ctx.fillStyle = '#d8a63a'; ctx.fill(); ctx.stroke();
+    });
+    sealed('terrarium', () => {
+      const x = 1020, y = 212, w = 160, h = 85;
+      ctx.fillStyle = 'rgba(200,220,235,0.3)'; ctx.fillRect(x, y, w, h); ctx.lineWidth = 2.5; U.inkRect(ctx, x, y, w, h, 93, 1);
+      ctx.fillStyle = 'rgba(163,132,79,0.5)'; ctx.fillRect(x + 4, y + h - 22, w - 8, 18); U.hatch(ctx, x + 4, y + h - 22, w - 8, 18, 5, Math.PI / 4, 94, 0.3);
+      ctx.fillStyle = 'rgba(92,143,62,0.5)'; ctx.beginPath(); ctx.arc(x + 30, y + h - 30, 10, 0, TAU); ctx.fill(); ctx.stroke();
+      const terr = game.inv.terrarium || [];
+      terr.slice(0, 4).forEach((q, i) => { const sp = DATA.ESPECES[q.t]; if (!sp) return; const cx = x + 50 + i * 32, by = y + h - 22; ctx.fillStyle = sp.couleur || '#1f1a16'; ctx.beginPath(); ctx.ellipse(cx, by - 8 + Math.sin(time * 2 + i) * 2, 10, 7, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.arc(cx + 4, by - 10, 2, 0, TAU); ctx.fill(); });
+      U.txt(ctx, 'terrarium', x + w / 2, y + 12, 12, 'center', '#6b4f2a', 'IM Fell English', 'italic');
+    });
     // l'apprenti(e), debout au milieu, qui respire
     World.drawApprenti(ctx, 570, FLOOR, 84, game.look, hover && hover.x > 570 ? 1 : -1, 0, null, false);
 
@@ -171,11 +216,11 @@ const Lab = (() => {
     if (hover) {
       ctx.save();
       ctx.font = '18px "IM Fell English", Georgia, serif';
-      const w = ctx.measureText(hover.nom).width + 28;
+      const w = ctx.measureText(hover.labo && locked(hover.id) ? hover.nom + ' (scellé)' : hover.nom).width + 28;
       const bx = U.clamp(inp.mouse.x - w / 2, 8, VW - w - 8), by = inp.mouse.y - 48;
       ctx.fillStyle = 'rgba(239,227,196,0.96)'; ctx.strokeStyle = INK; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.roundRect(bx, by, w, 32, 6); ctx.fill(); ctx.stroke();
-      U.txt(ctx, hover.nom, bx + w / 2, by + 16, 18, 'center');
+      U.txt(ctx, hover.labo && locked(hover.id) ? hover.nom + ' (scellé)' : hover.nom, bx + w / 2, by + 16, 18, 'center');
       ctx.restore();
     }
     ctx.restore();

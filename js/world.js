@@ -8,6 +8,7 @@ const World = (() => {
   let L = null, st = null, game = null, darkCv = null, time = 0;
   const DAY = 420; // secondes par jour
   const LIQ_ING = { [M.EAU]: 'eau', [M.HUILE]: 'huile', [M.ACIDE]: 'acide', [M.LAVE]: 'lave', [M.SEVE]: 'seve' };
+  const MainSim = Sim;
   const colorOf = (core) => (DATA.CORES[core] || DATA.PSEUDO[core] || { couleur: '#8a7a5a' }).couleur;
   const FLAM = (m) => m === M.BOIS || m === M.PLANTE || m === M.HERBE;
 
@@ -92,6 +93,7 @@ const World = (() => {
     } catch (e) { console.warn('monde illisible, régénéré', e); }
   }
   function reset() { st = null; }
+  function relacher(t) { if (!st) return; const c = makeCreature({ t, x: L.spawn.x + 80, y: L.spawn.y, tame: true }); c.filDonne = true; st.crs.push(c); }
 
   // ---------- Collisions sur grille ----------
   function dynSolids(exclude) { const a = []; for (const o of st.objs) if (o.solid && !o.mort && o !== exclude && o !== (st.p.carry || null)) a.push(o); return a; }
@@ -163,10 +165,11 @@ const World = (() => {
   }
 
   // ---------- Effets sur la grille ----------
-  function gridEffect(core, cx, cy, rad, prm, burst, k) {
+  function gridEffect(core, cx, cy, rad, prm, burst, k) { return gridEffectOn(Sim, core, cx, cy, rad, prm, burst, k); }
+  function gridEffectOn(Sim, core, cx, cy, rad, prm, burst, k) {
     const power = prm.power || 1;
     const pr = burst ? Math.min(1, 0.8 * power) : Math.min(1, 0.4 * power * k);
-    const pcell = (b) => U.rectsOverlap(b, st.p) || st.crs.some((c) => c.hp > 0 && U.rectsOverlap(b, c));
+    const pcell = (b) => Sim === MainSim && st ? (U.rectsOverlap(b, st.p) || st.crs.some((c) => c.hp > 0 && U.rectsOverlap(b, c))) : false;
     let cap = Math.round(40 * power * (prm.size || 1));
     const cellRect = (x, y) => ({ x: x * CS, y: y * CS, w: CS, h: CS });
     const towards = (x, y, sign) => { // index de la cellule voisine vers (sign=+1) ou à l'opposé (sign=-1) du centre
@@ -592,11 +595,12 @@ const World = (() => {
   function groundBelow(x, y) { for (let yy = y; yy < L.h; yy += CS) if (Sim.solidAt(x, yy)) return yy - (yy % CS); return null; }
 
   // ---------- Lancer un sceau ----------
-  function castSeal(seal, aim) {
+  function castSeal(seal, aim, gratuit) {
     const p = st.p;
-    const cost = Seal.cost(seal);
+    const cost = gratuit ? 0 : Seal.cost(seal);
     if (p.ink < cost) { msg('Plus assez d\'encre (' + Math.floor(p.ink) + '/' + cost + ').', 'warn'); Son.sfx('fail'); return false; }
     p.ink -= cost;
+    if (gratuit) part(p.x + p.w / 2, p.y + p.h * 0.4, '#efe3c4', 8, 40, 0.6, 3, 60);
     const pcx = p.x + p.w / 2, pcy = p.y + p.h * 0.45;
     if (!seal.core) { part(pcx, pcy - 20, '#777', 14, 50, 1, 4); Son.sfx('fizzle'); msg('Pfft. Un pétard de fumée grise. Il manque un glyphe d\'effet.'); p.ink = Math.min(p.inkMax, p.ink + cost - 1); return true; }
     if (!seal.shape) { applyEffect(seal.core, pcx, pcy, 45, { ...Seal.params(seal), power: 0.5 }, 'burst', { noPlayer: seal.core !== 'feu' }); msg('Sans forme, l\'effet se répand mollement autour de toi.'); return true; }
@@ -765,32 +769,34 @@ const World = (() => {
   }
 
   // ---------- Potions et fioles ----------
-  function usePotion(id, aim) {
+  function usePotion(id, aim, forte) {
     const Pn = DATA.POTIONS[id]; const p = st.p; const pcx = p.x + p.w / 2, pcy = p.y + p.h * 0.45;
+    const F = forte ? 2 : 1;
     if (Pn.usage === 'boire') {
       Son.sfx('drink'); part(pcx, pcy - 10, Pn.couleur, 10, 50, 0.8, 3, -80);
+      if (forte) msg('Distillée : l\'effet est doublé.');
       switch (id) {
-        case 'encre': p.ink = Math.min(p.inkMax, p.ink + 25); msg('L\'encre coule à nouveau dans tes veines.'); break;
+        case 'encre': p.ink = Math.min(p.inkMax, p.ink + 25 * F); msg('L\'encre coule à nouveau dans tes veines.'); break;
         case 'soin': p.hp = p.hpMax; p.sta.burning = 0; msg('Tu te sens tout(e) neuf(ve).'); break;
-        case 'saut': p.sta.jump = 30; msg('Tes jambes frétillent. Saute !'); break;
-        case 'vision': p.sta.vision = 40; msg('Le monde se couvre de signes que tu ne voyais pas.'); break;
-        case 'legerete': p.sta.lowgrav = 30; msg('Tu flottes presque.'); break;
-        case 'petitesse': p.sta.small = 25; p.sta.geant = 0; msg('Tu rétrécis ! Le monde est immense.'); break;
-        case 'peau': p.sta.stone = 45; msg('Dur comme le roc.'); break;
-        case 'vol': p.sta.vol = 35; p.onGround = false; msg('Tu t\'élèves ! Flèches ou ZQSD dans toutes les directions.'); evt('vol'); break;
-        case 'respiration': p.sta.branchies = 60; msg('Des branchies ! L\'eau devient ton élément.'); break;
-        case 'geant': p.sta.geant = 25; p.sta.small = 0; msg('Tu grandis, tu grandis...'); break;
-        case 'hoquet': p.sta.hoquet = 30; msg('Hic. Hic. De la fumée ?'); break;
-        case 'grenouille': p.sta.small = 25; p.sta.jump = 25; p.sta.geant = 0; msg('Coa. Tu es toute petite, et tu bondis.'); break;
-        case 'glouglou': p.sta.glouglou = 20; msg('Tu fuis de partout. Littéralement.'); break;
-        case 'ballon': p.sta.geant = 20; p.sta.lowgrav = 20; p.sta.small = 0; msg('Tu gonfles comme une baudruche.'); break;
-        case 'boussole': p.sta.boussole = 15; msg('La gauche est à droite. Ou l\'inverse.'); break;
-        case 'luciole': p.sta.lumiere = 40; msg('Tu brilles. Les runes n\'ont qu\'à bien se tenir.'); break;
+        case 'saut': p.sta.jump = 30 * F; msg('Tes jambes frétillent. Saute !'); break;
+        case 'vision': p.sta.vision = 40 * F; msg('Le monde se couvre de signes que tu ne voyais pas.'); break;
+        case 'legerete': p.sta.lowgrav = 30 * F; msg('Tu flottes presque.'); break;
+        case 'petitesse': p.sta.small = 25 * F; p.sta.geant = 0; msg('Tu rétrécis ! Le monde est immense.'); break;
+        case 'peau': p.sta.stone = 45 * F; msg('Dur comme le roc.'); break;
+        case 'vol': p.sta.vol = 35 * F; p.onGround = false; msg('Tu t\'élèves ! Flèches ou ZQSD dans toutes les directions.'); evt('vol'); break;
+        case 'respiration': p.sta.branchies = 60 * F; msg('Des branchies ! L\'eau devient ton élément.'); break;
+        case 'geant': p.sta.geant = 25 * F; p.sta.small = 0; msg('Tu grandis, tu grandis...'); break;
+        case 'hoquet': p.sta.hoquet = 30 * F; msg('Hic. Hic. De la fumée ?'); break;
+        case 'grenouille': p.sta.small = 25 * F; p.sta.jump = 25 * F; p.sta.geant = 0; msg('Coa. Tu es toute petite, et tu bondis.'); break;
+        case 'glouglou': p.sta.glouglou = 20 * F; msg('Tu fuis de partout. Littéralement.'); break;
+        case 'ballon': p.sta.geant = 20 * F; p.sta.lowgrav = 20 * F; p.sta.small = 0; msg('Tu gonfles comme une baudruche.'); break;
+        case 'boussole': p.sta.boussole = 15 * F; msg('La gauche est à droite. Ou l\'inverse.'); break;
+        case 'luciole': p.sta.lumiere = 40 * F; msg('Tu brilles. Les runes n\'ont qu\'à bien se tenir.'); break;
       }
       return true;
     }
     let dx = aim.x - pcx, dy = aim.y - pcy; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
-    st.sp.push({ k: 'proj', potion: id, core: 'vie', x: pcx, y: pcy, vx: dx * 460, vy: dy * 460 - 80, r: 7, prm: { power: 1.6, size: 1.4, duration: 1, persist: 0 }, trig: 'contact', bounces: 0, life: 3, grav: 700, hits: new Set(), color: Pn.couleur });
+    st.sp.push({ k: 'proj', potion: id, forte: !!forte, core: 'vie', x: pcx, y: pcy, vx: dx * 460, vy: dy * 460 - 80, r: 7, prm: { power: 1.6, size: 1.4, duration: 1, persist: 0 }, trig: 'contact', bounces: 0, life: 3, grav: 700, hits: new Set(), color: Pn.couleur });
     Son.sfx('cast', 'eau');
     return true;
   }
@@ -805,10 +811,11 @@ const World = (() => {
     let left = n;
     for (let r = 4; r <= 40 && left > 0; r += 6) Sim.forRadius(x, y - 6, r, (cx, cy, i, q) => { if (left > 0 && q === M.AIR) { Sim.set(cx, cy, m); left--; } });
   }
-  function potionBurst(id, x, y) {
+  function potionBurst(id, x, y, forte) {
     const Pn = DATA.POTIONS[id];
     part(x, y, Pn.couleur, 16, 100, 0.8, 3, 200);
-    const prm = { power: 1.6, size: 1.2, duration: 1, persist: 0 };
+    const F = forte ? 1.6 : 1;
+    const prm = { power: 1.6 * F, size: 1.2 * F, duration: F, persist: 0 };
     switch (id) {
       case 'flamme': applyEffect('feu', x, y, 70, { ...prm, persist: 1 }, 'burst'); break;
       case 'croissance': applyEffect('vie', x, y, 130, { ...prm, power: 1 }, 'burst', { noPlayer: true }); for (const c of st.crs) if (U.circleRect(x, y, 130, c) && c.t === 'limace') { c.size = Math.min(2.2, c.size + 0.3); c.w = 36 * c.size; c.h = 24 * c.size; } msg('Tout verdit alentour.'); break;
@@ -852,7 +859,7 @@ const World = (() => {
   function labelInteraction(it) {
     if (!it) return null;
     switch (it.t) {
-      case 'porte': return 'Entrer au labo';
+      case 'porte': return st.p.carry && st.p.carry.hp !== undefined && game.progress.labo && game.progress.labo.terrarium ? 'Entrer au labo avec ' + nomCreature(st.p.carry.t).toLowerCase() : 'Entrer au labo';
       case 'champignon': return 'Cueillir le champignon';
       case 'graine': return 'Cueillir une racine';
       case 'rune': return 'Lire la rune';
@@ -868,7 +875,7 @@ const World = (() => {
     const it = findInteraction(); if (!it) return;
     const p = st.p; const pcx = p.x + p.w / 2, pcy = p.y + p.h / 2;
     switch (it.t) {
-      case 'porte': Son.sfx('door'); game.goLab(); break;
+      case 'porte': Son.sfx('door'); if (p.carry && p.carry.hp !== undefined && game.progress.labo && game.progress.labo.terrarium) { const c = p.carry; p.carry = null; c.carried = false; c.hp = 0; c.respawn = 1e9; c.mort = true; game.terrariumAjoute(c.t); } game.goLab(); break;
       case 'champignon': it.o.pris = true; it.o.mort = true; game.gainIngredient('champignon'); part(it.o.x + 11, it.o.y, '#5a4a7d', 8, 40); break;
       case 'graine': it.o.racine = false; it.o.regrow = 0; game.gainIngredient('racine'); part(it.o.x + 10, it.o.y - it.o.hauteur * CS, '#5c8f3e', 8, 40, 0.6, 3, 0, 'feuille'); break;
       case 'page': it.o.lue = true; game.lirePage(it.o.page); part(it.o.x + 10, it.o.y, '#efe3c4', 10, 50, 0.8, 3, -40); break;
@@ -1287,7 +1294,7 @@ const World = (() => {
               s.bounces--;
               if (Sim.solidAt(s.x + s.vx * dt, s.y)) s.vx = -s.vx * 0.9; else s.vy = -s.vy * 0.9;
               part(s.x, s.y, s.color, 4, 40, 0.3);
-            } else if (s.potion) { potionBurst(s.potion, s.x, s.y); s.mort = true; }
+            } else if (s.potion) { potionBurst(s.potion, s.x, s.y, s.forte); s.mort = true; }
             else if (s.liquide) { spawnLiquid(s.liquide, s.x, s.y, 26); part(s.x, s.y, s.color, 10, 60, 0.6); Son.sfx('burst', 'eau'); s.mort = true; }
             else if (s.trig === 'contact') { doBurst(s.spec, s.x, s.y, 50 * s.prm.size, {}, dirv); s.mort = true; }
             else if (s.trig === 'retarde') { s.k = 'timer'; s.t = 2; s.r = 60 * s.prm.size; }
@@ -1302,14 +1309,14 @@ const World = (() => {
             if (s.core === 'froid' && lm === M.EAU && !s.potion && !s.liquide) { applyEffect('froid', s.x, s.y, 36 * s.prm.size, s.prm, 'burst'); s.mort = true; break; }
             if (s.core === 'foudre' && lm === M.EAU && !s.potion && !s.liquide) { applyEffect('foudre', s.x, s.y, 60 * s.prm.size, s.prm, 'burst'); s.mort = true; break; }
             s.vx *= Math.max(0, 1 - 4 * dt); s.vy *= Math.max(0, 1 - 4 * dt);
-            if ((s.potion || s.liquide) && Math.abs(s.vx) + Math.abs(s.vy) < 100) { if (s.potion) potionBurst(s.potion, s.x, s.y); else spawnLiquid(s.liquide, s.x, s.y, 26); s.mort = true; break; }
+            if ((s.potion || s.liquide) && Math.abs(s.vx) + Math.abs(s.vy) < 100) { if (s.potion) potionBurst(s.potion, s.x, s.y, s.forte); else spawnLiquid(s.liquide, s.x, s.y, 26); s.mort = true; break; }
           }
           let touche = null;
           for (const c of st.crs) if (c.hp > 0 && U.circleRect(s.x, s.y, s.r, c) && !s.hits.has(c)) { touche = c; break; }
           if (!touche) for (const o of st.objs) if (!o.mort && o.t !== 'porte' && o.t !== 'pancarte' && !o.solid && U.circleRect(s.x, s.y, s.r, o) && !s.hits.has(o)) { touche = o; break; }
           if (touche) {
             if (touche.hp !== undefined && touche.t) evt('creatureTouchee');
-            if (s.potion) { potionBurst(s.potion, s.x, s.y); s.mort = true; }
+            if (s.potion) { potionBurst(s.potion, s.x, s.y, s.forte); s.mort = true; }
             else if (s.liquide) { spawnLiquid(s.liquide, s.x, s.y, 26); s.mort = true; }
             else if (s.chain > 0) {
               s.hits.add(touche); s.chain--;
@@ -1787,5 +1794,5 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl };
+  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher };
 })();

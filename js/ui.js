@@ -59,6 +59,7 @@ const UI = (() => {
     $('#btn-help').addEventListener('click', () => openPanel('help'));
     $('#btn-grim').addEventListener('click', () => openPanel('grimoire'));
     $('#btn-lab').addEventListener('click', () => { if (game.state === 'world') game.goLab(); });
+    $$('#hotbar .slot').forEach(() => {});
     $('#btn-restaurer').addEventListener('click', () => { if (confirm('Remettre le monde à neuf ? Tes découvertes et ton inventaire sont conservés.')) { close(); game.restaurerMonde(); } });
   }
 
@@ -86,6 +87,10 @@ const UI = (() => {
     if (name === 'seal') refreshSeal();
     if (name === 'cauldron') refreshCauldron();
     if (name === 'grimoire') { game.progress.nouveau = false; refreshGrimoire(); }
+    if (name === 'alambic') refreshAlambic();
+    if (name === 'presse') refreshPresse();
+    if (name === 'terrarium') refreshTerrarium();
+    if (name === 'bac') openBac();
     if (name === 'create') { look = { ...game.look }; $('#create-nom').value = look.nom || ''; $$('#create-chapeaux .choice').forEach((q, k) => q.classList.toggle('on', k === look.chapeau)); $$('#create-capes .choice').forEach((q, k) => q.classList.toggle('on', k === look.cape)); $$('#create-acc .choice').forEach((q, k) => q.classList.toggle('on', k === look.acc)); refreshCreate(); }
   }
   function close() {
@@ -393,6 +398,74 @@ const UI = (() => {
     }
   }
 
+  // ---------- Alambic, presse, terrarium ----------
+  function slotPicker(entry, label) {
+    const bar = el('div', 'slotpick'); bar.innerHTML = '<span>→ barre :</span>';
+    for (let i = 0; i < 5; i++) { const b = el('button', 'btn-slot', String(i + 1)); b.addEventListener('click', () => { game.hotbar[i] = entry; game.save(); refreshHotbar(); toast(label + ' dans l\'emplacement ' + (i + 1) + '.'); Son.sfx('pickup'); }); bar.appendChild(b); }
+    return bar;
+  }
+  function refreshAlambic() {
+    const l = $('#alambic-list'); l.innerHTML = '';
+    const cands = Object.entries(game.inv.potions).filter(([id, n]) => n >= 2 && DATA.POTIONS[id] && !DATA.POTIONS[id].bizarre);
+    if (!cands.length) l.appendChild(el('p', 'muted', 'Il faut au moins deux fioles identiques d\'une même potion.'));
+    for (const [id, n] of cands) { const P = DATA.POTIONS[id]; const it = el('div', 'potion-item'); it.innerHTML = '<i style="background:' + P.couleur + '"></i><div><b>' + P.nom + '</b> ×' + n + '</div>'; const b = el('button', '', 'Distiller (2 → 1)'); b.addEventListener('click', () => { game.distiller(id); refreshAlambic(); }); it.appendChild(b); l.appendChild(it); }
+    const f = $('#alambic-fortes'); f.innerHTML = '';
+    const fortes = Object.entries(game.inv.fortes).filter(([, n]) => n > 0);
+    if (!fortes.length) f.appendChild(el('p', 'muted', 'Aucune fiole forte.'));
+    for (const [id, n] of fortes) { const P = DATA.POTIONS[id]; const it = el('div', 'potion-item'); it.innerHTML = '<i style="background:' + P.couleur + '; box-shadow: 0 0 0 2px ' + P.couleur + '"></i><div><b>' + P.nom + ' forte</b> ×' + n + '<br><small>' + P.desc + '</small></div>'; it.appendChild(slotPicker({ type: 'potion', id, forte: true }, P.nom + ' forte')); f.appendChild(it); }
+  }
+  function refreshPresse() {
+    const l = $('#presse-list'); l.innerHTML = '';
+    l.appendChild(el('p', 'muted', 'Poussières de pierre : ' + (game.inv.ingredients.poussiere || 0)));
+    if (!game.seals.length) l.appendChild(el('p', 'muted', 'Aucun sceau consigné.'));
+    for (const q of game.seals) { const it = el('div', 'seal-item'); const cv = document.createElement('canvas'); cv.width = 40; cv.height = 40; Seal.drawMini(cv.getContext('2d'), q, 20, 20, 17, 0); it.appendChild(cv); it.appendChild(el('span', '', q.nom + ' <small>(' + Seal.cost(q) + ')</small>')); it.addEventListener('click', () => { if (game.presser(q)) refreshPresse(); }); l.appendChild(it); }
+    const pz = $('#presse-parchemins'); pz.innerHTML = '';
+    const ps = Object.entries(game.inv.parchemins).filter(([, q]) => q.n > 0);
+    if (!ps.length) pz.appendChild(el('p', 'muted', 'Aucun parchemin.'));
+    for (const [nom, q] of ps) { const it = el('div', 'potion-item'); const cv = document.createElement('canvas'); cv.width = 40; cv.height = 40; Seal.drawMini(cv.getContext('2d'), q.seal, 20, 20, 17, 0); it.appendChild(cv); it.appendChild(el('div', '', '<b>' + nom + '</b> ×' + q.n + '<br><small>sans encre</small>')); it.appendChild(slotPicker({ type: 'parchemin', nom }, 'Parchemin « ' + nom + ' »')); pz.appendChild(it); }
+  }
+  function refreshTerrarium() {
+    const l = $('#terrarium-list'); l.innerHTML = '';
+    if (!game.inv.terrarium.length) l.appendChild(el('p', 'muted', 'Le terrarium est vide. Apprivoise une petite créature (Vie, ou son élément préféré), porte-la (E) et rentre au labo avec elle.'));
+    game.inv.terrarium.forEach((q, i) => { const sp = DATA.ESPECES[q.t]; const it = el('div', 'potion-item'); it.innerHTML = '<i style="background:' + (sp.couleur || '#1f1a16') + '"></i><div><b>' + sp.nom + '</b><br><small>' + sp.desc + ' Cadeau : ' + (sp.drop ? DATA.INGREDIENTS[sp.drop].nom : 'aucun') + '.</small></div>'; const b = el('button', '', 'Relâcher'); b.addEventListener('click', () => { game.terrariumRelache(i); refreshTerrarium(); }); it.appendChild(b); l.appendChild(it); });
+  }
+  // ---------- Bac d'essai ----------
+  let bac = null, bacMat = 'eau';
+  function openBac() {
+    if (!bac) {
+      bac = createSim(); bac.init(80, 40); bac.onEvent = null;
+      const M = bac.M;
+      for (let x = 0; x < 80; x++) for (let y = 30; y < 40; y++) bac.set(x, y, y < 33 ? M.TERRE : M.PIERRE);
+      for (let x = 20; x < 36; x++) for (let y = 28; y < 33; y++) bac.set(x, y, y === 28 && (x < 22 || x > 33) ? M.TERRE : M.EAU);
+      for (let x = 20; x < 36; x++) bac.set(x, 27, M.AIR);
+      for (let y = 18; y < 30; y++) { bac.set(55, y, M.BOIS); bac.set(56, y, M.BOIS); }
+      for (let y = 12; y < 20; y++) for (let x = 49; x < 63; x++) { const dx = (x - 55.5) / 7, dy = (y - 15.5) / 4; if (dx * dx + dy * dy <= 1) bac.set(x, y, M.PLANTE); }
+      for (let x = 66; x < 76; x++) for (let y = 30 - Math.min(5, Math.abs(71 - x) < 3 ? 5 : 3); y < 30; y++) bac.set(x, y, M.SABLE);
+      for (let x = 6; x < 10; x++) for (let y = 28; y < 30; y++) bac.set(x, y, M.CRISTAL);
+      for (let x = 0; x < 80; x++) if (bac.get(x, 29) === M.TERRE && bac.get(x, 28) === M.AIR && U.hash2(x, 1) < 0.5) bac.set(x, 28, M.HERBE);
+      const c = $('#bac-canvas');
+      c.addEventListener('mousedown', (e) => {
+        const r = c.getBoundingClientRect(); const x = (e.clientX - r.left) * (c.width / r.width), y = (e.clientY - r.top) * (c.height / r.height);
+        if (e.button === 2 || e.shiftKey) { let n = 0; bac.forRadius(x, y, 14, (cx, cy, i, m) => { if (m === bac.M.AIR && n < 40) { bac.set(cx, cy, bac.M[bacMat.toUpperCase()]); n++; } }); return; }
+        const s = game.editSeal; if (!s.core) { toast('Compose d\'abord un sceau avec un glyphe d\'effet.', 'warn'); return; }
+        const prm = Seal.params(s); let cores = [s.core]; if (s.core2) cores.push(s.core2); if (prm.inverse) cores = cores.map((q) => DATA.INVERSE[q] || q);
+        for (const core of cores) World.gridEffectOn(bac, core, x, y, 36 * (prm.size || 1), prm, true, 1);
+        Son.sfx('burst', cores[0]);
+      });
+      c.addEventListener('contextmenu', (e) => e.preventDefault());
+      const acts = $('#bac-actions');
+      for (const m of ['eau', 'huile', 'acide', 'lave', 'sable', 'neige']) { const b = el('button', 'btn-step', m); b.addEventListener('click', () => { bacMat = m; $$('#bac-actions .btn-step').forEach((q) => q.classList.toggle('on', q.textContent === m)); }); if (m === 'eau') b.classList.add('on'); acts.appendChild(b); }
+      const reset = el('button', '', 'Vider le bac'); reset.addEventListener('click', () => { bac = null; openBac(); }); acts.appendChild(reset);
+    }
+    $('#bac-info').textContent = 'Clic gauche : lancer « ' + Seal.nom(game.editSeal) + ' ». Clic droit (ou Maj + clic) : verser la matière choisie.';
+    drawBac();
+  }
+  function drawBac() {
+    if (!bac || open !== 'bac') return;
+    bac.step(); const c = $('#bac-canvas'), ctx = c.getContext('2d');
+    ctx.fillStyle = '#f6eed8'; ctx.fillRect(0, 0, c.width, c.height);
+    bac.draw(ctx, { x: 0, y: 0 }, c.width, c.height);
+  }
   // ---------- HUD / barre ----------
   function refreshHotbar() {
     $$('#hotbar .slot').forEach((s, i) => {
@@ -405,7 +478,8 @@ const UI = (() => {
       s.classList.remove('empty-potion');
       if (!e) return;
       if (e.type === 'seal') { Seal.drawMini(ctx, e.seal, 28, 28, 22, time); s.title = Seal.nom(e.seal) + ' (' + Seal.cost(e.seal) + ' encre)'; }
-      else if (e.type === 'potion') { const P = DATA.POTIONS[e.id]; const n = game.inv.potions[e.id] || 0; drawFlaskIcon(ctx, 28, 30, P.couleur); cnt.textContent = '×' + n; s.title = P.nom; if (n <= 0) s.classList.add('empty-potion'); }
+      else if (e.type === 'potion') { const P = DATA.POTIONS[e.id]; const n = (e.forte ? game.inv.fortes : game.inv.potions)[e.id] || 0; drawFlaskIcon(ctx, 28, 30, P.couleur); if (e.forte) { ctx.save(); ctx.strokeStyle = P.couleur; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(28, 28, 24, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); } cnt.textContent = '×' + n; s.title = P.nom + (e.forte ? ' (forte)' : ''); if (n <= 0) s.classList.add('empty-potion'); }
+      else if (e.type === 'parchemin') { const q = game.inv.parchemins[e.nom]; const n = q ? q.n : 0; if (q) Seal.drawMini(ctx, q.seal, 28, 28, 20, time); ctx.save(); ctx.strokeStyle = U.INK; ctx.lineWidth = 1; ctx.strokeRect(6, 6, 44, 44); ctx.restore(); cnt.textContent = '×' + n; s.title = 'Parchemin « ' + e.nom + ' » (sans encre)'; if (n <= 0) s.classList.add('empty-potion'); }
       else if (e.type === 'liquide') { const I = DATA.INGREDIENTS[e.id]; const n = game.inv.ingredients[e.id] || 0; drawFlaskIcon(ctx, 28, 30, I.couleur); cnt.textContent = '×' + n; s.title = I.nom + ' (à lancer)'; if (n <= 0) s.classList.add('empty-potion'); }
     });
   }
@@ -441,6 +515,7 @@ const UI = (() => {
     time += dt;
     if (open === 'seal') drawSealCanvas();
     if (open === 'cauldron' && Math.floor(time * 30) % 2 === 0) drawCaulCanvas(caulSens);
+    if (open === 'bac') drawBac();
     if (open === 'create' && Math.floor(time * 10) % 3 === 0) refreshCreate();
     if (Math.floor(time * 30) % 2 === 0) refreshHotbarIcons();
   }
