@@ -706,12 +706,15 @@ const DATA = (() => {
     metal:    { id: 'metal',    nom: 'Métal',    glyphe: 'metal',   couleur: '#737e86', cout: 1, mats: ['METAL'] },
     glace:    { id: 'glace',    nom: 'Glace',    glyphe: 'froid',   couleur: '#7fb4d8', cout: 1, mats: ['GLACE', 'NEIGE'] },
     creature: { id: 'creature', nom: 'Créature', glyphe: 'esprit',  couleur: '#c45a8a', cout: 1, mats: [] },
+    liquide:  { id: 'liquide',  nom: 'Liquide',  glyphe: 'eau',     couleur: '#5f8fb8', cout: 1, mats: ['EAU', 'SAUMURE', 'HUILE', 'ACIDE', 'MIEL', 'SEVE', 'BOUE', 'LAVE'] },
+    objet:    { id: 'objet',    nom: 'Objet',    glyphe: 'objet',   couleur: '#9a6a34', cout: 1, mats: [] },
   };
   // Cibles (pointe gauche)
   const CIBLES = {
     souris:   { id: 'souris',   nom: 'Souris',   cout: 0, desc: 'Le sort part vers la souris (par défaut).' },
     creature: { id: 'creature', nom: 'Créature proche', cout: 2, desc: 'Le sort part seul vers la créature hostile la plus proche, et la suit.' },
     marque:   { id: 'marque',   nom: 'Marque',   cout: 1, desc: 'Le sort part vers ta marque la plus récente, même hors de vue.' },
+    objet:    { id: 'objet',    nom: 'Objet proche', cout: 1, desc: 'Le sort part seul vers l\'objet le plus proche de la souris (brasier, lampe, levier, moulin, roue, caisse, rocher, torche) et le suit.' },
   };
   // Tailles de sceau
   const TAILLES = {
@@ -1202,10 +1205,23 @@ const DATA = (() => {
     { id: 'a_saut', type: 'mods', item: ['saut'], titre: 'Aspect de l\'Espace : Saut', indice: 'Emploie souvent l\'Espace.', cond: (p) => ((p.maitrise || {}).portail || 0) >= 12 },
     { id: 'a_peur', type: 'mods', item: ['peur'], titre: 'Aspect de l\'Esprit : Peur', indice: 'Emploie souvent l\'Esprit.', cond: (p) => ((p.maitrise || {}).esprit || 0) >= 12 },
   );
+  // aspects d'information
+  Object.assign(PSEUDO, { lecture: { id: 'lecture', nom: 'Lecture', couleur: '#b08ad8' }, revelation: { id: 'revelation', nom: 'Révélation', couleur: '#f0d070' } });
+  Object.assign(INVERSE, { lecture: 'lecture', revelation: 'ombre' });
+  MODS.lecture = { id: 'lecture', cout: 2, aspect: 'esprit', devient: 'lecture', nom: 'Lecture', desc: 'Aspect de l\'Esprit. Lire dans les pensées : ce que chaque créature touchée aime et craint s\'affiche (et entre au bestiaire), avec son affinité pour toi. Muet sans son essence.' };
+  MODS.revelation = { id: 'revelation', cout: 2, aspect: 'lumiere', devient: 'revelation', nom: 'Révélation', desc: 'Aspect de la Lumière. Une lumière qui traverse tout : les runes se révèlent, la carte se dessine loin alentour, et les coffres, pages, ingrédients et mécanismes cachés luisent à travers la roche un moment. Muet sans son essence.' };
+  UNLOCKS.push(
+    { id: 'a_lecture', type: 'mods', item: ['lecture'], titre: 'Aspect de l\'Esprit : Lecture', indice: 'Note au bestiaire 4 goûts ou craintes.', cond: (p) => Object.values(p.bestiaire || {}).reduce((n, b) => n + Object.keys(b).length, 0) >= 4 },
+    { id: 'a_revelation', type: 'mods', item: ['revelation'], titre: 'Aspect de la Lumière : Révélation', indice: 'Lis deux runes cachées.', cond: (p) => p.compteurs.runes >= 2 },
+    { id: 'filtres3', type: 'filtres', item: ['liquide', 'objet'], titre: 'Filtres : Liquide, Objet', indice: 'Observe 12 réactions différentes.', cond: (p) => Object.keys(p.obs || {}).length >= 12 },
+    { id: 'cible_objet', type: 'cible', item: 'objet', titre: 'Cible : Objet proche', indice: 'Ouvre un coffre scellé.', cond: (p) => (p.compteurs.coffres || 0) >= 1 },
+  );
+  // nom lisible d'un effet, même devenu aspect : « Gel (Eau) »
+  const nomEffet = (id) => { if (CORES[id] && !CORES[id].interne) return CORES[id].nom; const M2 = MIGRATION[id]; if (M2) return M2[1] === 'inverser' ? 'Ombre (Lumière inversée)' : MODS[M2[1]].nom + ' (' + CORES[M2[0]].nom + ')'; for (const m in MODS) if (MODS[m].devient === id) return MODS[m].nom + ' (' + CORES[MODS[m].aspect].nom + ')'; return (CORES[id] || PSEUDO[id] || { nom: id }).nom; };
   // affinité : combien un geste aimé rapproche (sur 100)
   const AFFINITE = { golem: { gain: 4, parJour: 20 }, follet: { gain: 12 }, limace: { gain: 15 }, salamandre: { gain: 14 }, chauve: { gain: 15 } };
 
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE };
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet };
 })();
 
 </script>
@@ -1279,9 +1295,9 @@ const Seal = (() => {
   }
   // niveau de langage par élément (deux glyphes au plus)
   // aspects qui changent la nature d'une essence : { essence: { id, devient, n } } (le premier posé l'emporte)
-  function aspects(s) { const o = {}; for (const m of s.mods) { if (typeof m !== 'string') continue; const A = DATA.MODS[m]; if (!A || !A.devient) continue; if (!o[A.aspect]) o[A.aspect] = { id: m, devient: A.devient, n: 0 }; if (o[A.aspect].id === m) o[A.aspect].n = Math.min(2, o[A.aspect].n + 1); } return o; }
+  function aspects(s) { const o = {}; for (const m of s.mods) { if (typeof m !== 'string') continue; const A = DATA.MODS[m]; if (!A || !A.devient) continue; const L = o[A.aspect] || (o[A.aspect] = []); const q = L.find((x) => x.id === m); if (q) q.n = Math.min(2, q.n + 1); else L.push({ id: m, devient: A.devient, n: 1 }); } return o; }
   // effets réels du sceau : chaque essence, avec son aspect
-  function effets(s) { const a = aspects(s); const cores = [s.core]; if (s.core2 && s.taille !== 'petit') cores.push(s.core2); return cores.filter(Boolean).map((c, k, L) => (a[c] && k === L.lastIndexOf(c) ? a[c].devient : c)); }
+  function effets(s) { const a = aspects(s); const cores = [s.core]; if (s.core2 && s.taille !== 'petit') cores.push(s.core2); const out = []; cores.filter(Boolean).forEach((c, k, L) => { if (a[c] && k === L.lastIndexOf(c)) for (const A of a[c]) out.push(A.devient); else out.push(c); }); return out; }
   function langues(s) { const o = {}; for (const el in DATA.LANGAGES) { const k = count(s, DATA.LANGAGES[el].glyphe); if (k) o[el] = Math.min(2, k); } return o; }
   function params(s) {
     const n = (m) => count(s, m);
@@ -1375,6 +1391,8 @@ const Seal = (() => {
       case 'figer': C(0, 0, r * 0.85); L(0, 0, 0, -r * 0.55); L(0, 0, r * 0.4, 0); L(-r * 0.8, -r * 0.8, r * 0.8, r * 0.8); break;
       case 'saut': ctx.setLineDash([r * 0.18, r * 0.14]); ctx.beginPath(); ctx.arc(0, r * 0.4, r * 0.8, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke(); ctx.setLineDash([]); C(-r * 0.78, r * 0.35, r * 0.15); P([[r * 0.55, r * 0.05], [r * 0.8, r * 0.4], [r * 0.45, r * 0.45]], false); break;
       case 'peur': ctx.beginPath(); ctx.ellipse(0, 0, r * 0.85, r * 0.5, 0, 0, TAU); ctx.stroke(); C(0, 0, r * 0.32); dot(0, 0, r * 0.12); L(-r * 0.6, -r * 0.65, -r * 0.3, -r * 0.5); L(r * 0.6, -r * 0.65, r * 0.3, -r * 0.5); break;
+      case 'lecture': C(0, -r * 0.15, r * 0.55); dot(-r * 0.18, -r * 0.25, r * 0.08); dot(r * 0.18, -r * 0.25, r * 0.08); for (let i = 0; i < 3; i++) L(-r * 0.6, r * 0.55 + i * r * 0.15, r * 0.6, r * 0.55 + i * r * 0.15); break;
+      case 'revelation': ctx.beginPath(); ctx.ellipse(0, 0, r * 0.9, r * 0.45, 0, 0, TAU); ctx.stroke(); C(0, 0, r * 0.25); for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * 0.45; L(Math.cos(a) * r * 0.55, Math.sin(a) * r * 0.55, Math.cos(a) * r * 0.95, Math.sin(a) * r * 0.95); } break;
       // --- trajectoires ---
       case 'boomerang': P([[-r * 0.8, -r * 0.5], [0, r * 0.45], [r * 0.8, -r * 0.5]], false); ctx.beginPath(); ctx.arc(0, -r * 0.3, r * 0.75, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke(); break;
       case 'spirale': ctx.beginPath(); for (let i = 0; i <= 40; i++) { const t = i / 40; const x = -r * 0.9 + t * r * 1.8, y = Math.sin(t * TAU * 2.2) * r * 0.5 * Math.min(1, t * 3); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke(); dot(r * 0.9, Math.sin(TAU * 2.2) * r * 0.5, r * 0.12); break;
@@ -1418,7 +1436,7 @@ const Seal = (() => {
       case 'expiration': P([[-r * 0.6, -r * 0.8], [r * 0.6, -r * 0.8], [-r * 0.6, r * 0.8], [r * 0.6, r * 0.8]]); for (let i = 0; i < 4; i++) { const a = (i / 4) * TAU + 0.8; L(Math.cos(a) * r * 0.25, r * 0.6 + Math.sin(a) * r * 0.2, Math.cos(a) * r * 0.5, r * 0.6 + Math.sin(a) * r * 0.4); } break;
       default:
         if (id && id.startsWith('f_')) { const F = DATA.FILTRES[id.slice(2)]; P([[-r * 0.9, -r * 0.8], [r * 0.9, -r * 0.8], [r * 0.18, r * 0.25], [r * 0.18, r * 0.9], [-r * 0.18, r * 0.9], [-r * 0.18, r * 0.25]]); if (F) { ctx.restore(); glyph(ctx, F.glyphe, x, y - r * 0.32, r * 0.4, color, seed + 1); ctx.save(); ctx.translate(x, y); } break; }
-        if (id && id.startsWith('c_')) { const k = id.slice(2); C(0, 0, r * 0.65); L(-r, 0, -r * 0.4, 0); L(r * 0.4, 0, r, 0); L(0, -r, 0, -r * 0.4); L(0, r * 0.4, 0, r); if (k === 'creature') { dot(-r * 0.15, -r * 0.05, r * 0.1); dot(r * 0.15, -r * 0.05, r * 0.1); } else if (k === 'marque') { ctx.restore(); glyph(ctx, 'marque', x, y, r * 0.35, color, seed); ctx.save(); ctx.translate(x, y); } else dot(0, 0, r * 0.12); break; }
+        if (id && id.startsWith('c_')) { const k = id.slice(2); C(0, 0, r * 0.65); L(-r, 0, -r * 0.4, 0); L(r * 0.4, 0, r, 0); L(0, -r, 0, -r * 0.4); L(0, r * 0.4, 0, r); if (k === 'creature') { dot(-r * 0.15, -r * 0.05, r * 0.1); dot(r * 0.15, -r * 0.05, r * 0.1); } else if (k === 'objet') { U.inkRect(ctx, -r * 0.25, -r * 0.25, r * 0.5, r * 0.5, seed, r * 0.02); } else if (k === 'marque') { ctx.restore(); glyph(ctx, 'marque', x, y, r * 0.35, color, seed); ctx.save(); ctx.translate(x, y); } else dot(0, 0, r * 0.12); break; }
         C(0, 0, r * 0.5);
     }
     ctx.restore();
@@ -3371,6 +3389,28 @@ const World = (() => {
         if (best) { if (st.control) releaseControl(); controlCreature(best, 12 * dur); }
         fxBurst('esprit', cx, cy, rad); return true;
       }
+      case 'lecture': {
+        if (!burst) return true;
+        let n = 0;
+        for (const c of st.crs) {
+          if (c.hp <= 0 || c.t === 'familier' || !dans(c)) continue; const sp = DATA.ESPECES[c.t]; if (!sp) continue;
+          evt('bestiaire', { t: c.t, k: 'aime' }); evt('bestiaire', { t: c.t, k: 'craint' }); c.affT = 6;
+          st.sp.push({ k: 'label', txt: 'aime ' + DATA.nomEffet(sp.aime).toLowerCase() + ' · craint ' + DATA.nomEffet(sp.craint).toLowerCase() + (c.sta.tame ? ' · apprivoisé(e)' : ' · ' + Math.round(c.aff || 0) + ' %'), x: c.x + c.w / 2, y: c.y - 24, life: 3.5, petit: true });
+          part(c.x + c.w / 2, c.y, '#b08ad8', 8, 40, 0.8, 2, -30, 'glow'); n++;
+        }
+        if (!n) msg('Aucun esprit à lire ici.');
+        fxBurst('esprit', cx, cy, rad); return true;
+      }
+      case 'revelation': {
+        if (!burst) return true;
+        const R4 = rad * 5;
+        game.explorer((cx - R4) / CS, (cy - R4) / CS, R4 * 2 / CS, R4 * 2 / CS);
+        for (const o of st.objs) if (o.t === 'rune' && dist(cx, cy, o.x, o.y) < R4) o.revele = 1;
+        st.revelation = { x: cx, y: cy, r: R4, t: 12 * (prm.duration || 1), max: 12 * (prm.duration || 1) };
+        st.flash = 0.05; fxBurst('lumiere', cx, cy, rad * 2); Son.sfx('burst', 'lumiere');
+        msg('La lumière traverse la roche : ce qui est caché luit un moment.');
+        return true;
+      }
       case 'peur':
         for (const c of st.crs) if (c.hp > 0 && c.t !== 'familier' && !c.sta.tame && dans(c)) { c.fuite = { x: cx, y: cy, t: 6 * dur }; c.sta.sleep = 0; c.dort = false; c.curieux = null; if (burst) part(c.x + c.w / 2, c.y - 6, '#8a5aa8', 5, 50, 0.6, 2, -40, 'glow'); }
         if (burst) { fxBurst('ombre', cx, cy, rad); Son.sfx('burst', 'ombre'); } return true;
@@ -3929,7 +3969,7 @@ const World = (() => {
     const prm = Seal.params(seal);
     if (charge > 0) { prm.power *= 1 + 0.8 * charge; prm.range *= 1 + 0.5 * charge; prm.size *= 1 + 0.4 * charge; prm.duration *= 1 + 0.3 * charge; }
     let cores = Seal.effets(seal);
-    for (const e in prm.asp) { const A = prm.asp[e]; if (A.n > 1) { prm.lg[A.devient] = 2; prm.power *= 1.3; } }
+    for (const e in prm.asp) for (const A of prm.asp[e]) if (A.n > 1) { prm.lg[A.devient] = 2; prm.power *= 1.3; }
     const effets0 = cores.slice();
     if (prm.inverse) { prm.gInv = cores.includes('gravite'); cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c)); }
     const lg = prm.lg || {};
@@ -3948,11 +3988,14 @@ const World = (() => {
   function filtreSet(f) { if (!filtreSets[f]) filtreSets[f] = new Set((DATA.FILTRES[f] ? DATA.FILTRES[f].mats : []).map((n) => M[n])); return filtreSets[f]; }
   function filtreTouche(f, x, y, r) {
     if (f === 'creature') return st.crs.find((c) => c.hp > 0 && c.t !== 'familier' && U.circleRect(x, y, r, c)) || null;
+    if (f === 'objet') return st.objs.find((o) => !o.mort && OBJ_CIBLES.includes(o.t) && U.circleRect(x, y, r, o)) || null;
     const set = filtreSet(f); let hit = null;
     Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (!hit && set.has(m)) hit = { cell: true }; });
     return hit;
   }
-  function filtreCompte(f, x, y, r) { if (f === 'creature') return st.crs.filter((c) => c.hp > 0 && U.circleRect(x, y, r, c)).length; const set = filtreSet(f); let n = 0; Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (set.has(m)) n++; }); return n; }
+  const OBJ_CIBLES = ['brasier', 'lampe', 'levier', 'moulin', 'roue', 'caisse', 'rocher', 'torche', 'graine', 'mannequin'];
+  function objetProche(x, y, R = 520) { let best = null, bd = R; for (const o of st.objs) { if (o.mort || o.carried || !OBJ_CIBLES.includes(o.t)) continue; const d = dist(x, y, o.x + o.w / 2, o.y + o.h / 2); if (d < bd) { bd = d; best = o; } } return best; }
+  function filtreCompte(f, x, y, r) { if (f === 'objet') return st.objs.filter((o) => !o.mort && OBJ_CIBLES.includes(o.t) && U.circleRect(x, y, r, o)).length; if (f === 'creature') return st.crs.filter((c) => c.hp > 0 && U.circleRect(x, y, r, c)).length; const set = filtreSet(f); let n = 0; Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (set.has(m)) n++; }); return n; }
   // ---------- Cibles et marques ----------
   function creatureProche(x, y, R = 520) {
     let best = null, bd = R;
@@ -4108,6 +4151,7 @@ const World = (() => {
     // ciblage
     let homing = null, horsPortee = false;
     if (spec.cible === 'creature' && seal.shape !== 'soi') { const c = creatureProche(ox, oy); if (c) { aim = { x: c.x + c.w / 2, y: c.y + c.h / 2 }; homing = c; horsPortee = true; } else if (o.player) msg('Aucune créature à cibler : le sort part vers la souris.'); }
+    else if (spec.cible === 'objet' && seal.shape !== 'soi') { const ob = objetProche(aim.x, aim.y); if (ob) { aim = { x: ob.x + ob.w / 2, y: ob.y + ob.h / 2 }; homing = ob; horsPortee = true; } else if (o.player) msg('Aucun objet près de la souris : le sort y part tout droit.'); }
     else if (spec.cible === 'marque' && seal.shape !== 'soi') { const m = marqueRecente(); if (m) { aim = m.pos; homing = m.mq.ent || { x: m.pos.x - 1, y: m.pos.y - 1, w: 2, h: 2, hp: 1 }; horsPortee = true; } else if (o.player) msg('Aucune marque posée : le sort part vers la souris.'); }
     let dx = aim.x - ox, dy = aim.y - oy; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
     const portee = (base) => (horsPortee ? d : Math.min(d, base));
@@ -5382,6 +5426,14 @@ const World = (() => {
     ctx.restore();
     drawRain(ctx);
     drawDark(ctx, camI);
+    if (st.revelation && st.revelation.t > 0) {
+      const Rv = st.revelation; Rv.t -= 1 / 60; const kk = Math.min(1, Rv.t / 2);
+      const VIS = ['coffre', 'page', 'champignon', 'ruche', 'graine', 'rune', 'levier', 'plaque', 'brasier', 'lampe', 'roue', 'moulin', 'grille'];
+      ctx.save(); ctx.translate(-camI.x, -camI.y);
+      for (const o of st.objs) { if (o.mort || !VIS.includes(o.t) || (o.t === 'coffre' && o.ouvert) || (o.t === 'page' && o.lue) || dist(Rv.x, Rv.y, o.x, o.y) > Rv.r) continue; const ox = o.x + o.w / 2, oy = o.y + o.h / 2; FX.glow(ctx, ox, oy, 26 + Math.sin(time * 4) * 4, '#f0d070', 0.55 * kk); ctx.strokeStyle = '#c08a2a'; ctx.globalAlpha = 0.8 * kk; ctx.lineWidth = 1.5; U.inkCircle(ctx, ox, oy, Math.max(o.w, o.h) * 0.7 + 6, 3, 1); ctx.globalAlpha = 1; }
+      for (const q of st.pickups) if (dist(Rv.x, Rv.y, q.x, q.y) < Rv.r) FX.glow(ctx, q.x, q.y, 18, '#f0d070', 0.5 * kk);
+      ctx.restore();
+    }
     FX.vignette(ctx, VW, VH);
     { const S = saison(); U.txt(ctx, { printemps: '❀ Printemps', ete: '☀ Été', automne: '❧ Automne', hiver: '❄ Hiver' }[S] + ' · jour ' + ((st.jour || 0) + 1), VW - 20, 62, 15, 'right', 'rgba(31,26,22,0.7)', 'IM Fell English', 'italic'); }
     if (st.flash > 0) { ctx.fillStyle = 'rgba(255,250,220,' + (st.flash * 4) + ')'; ctx.fillRect(0, 0, VW, VH); }
@@ -5867,7 +5919,7 @@ const World = (() => {
           ctx.beginPath(); ctx.ellipse(s.x + ox, yy, w, w * 0.2, 0, ph % TAU, ph % TAU + 3.8); ctx.stroke(); }
         break; }
       case 'singularite': { const t = 1 - s.life / s.max; ctx.strokeStyle = '#9a4a8c'; ctx.lineWidth = 2; for (let k = 0; k < 4; k++) { ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(s.x, s.y, (s.r * 0.6) * (1 - ((t * 3 + k * 0.25) % 1)), 0, TAU); ctx.stroke(); } ctx.fillStyle = '#1f1a16'; ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(s.x, s.y, 6 + Math.sin(time * 20) * 2, 0, TAU); ctx.fill(); break; }
-      case 'label': ctx.globalAlpha = Math.min(1, s.life * 2); U.txt(ctx, s.txt, s.x, s.y, 20, 'center', INK, 'IM Fell English SC'); break;
+      case 'label': ctx.globalAlpha = Math.min(1, s.life * 2); if (s.petit) { const w = ctx.measureText ? s.txt.length * 6.2 + 14 : 120; ctx.fillStyle = 'rgba(239,227,196,0.9)'; ctx.fillRect(s.x - w / 2, s.y - 11, w, 18); ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.strokeRect(s.x - w / 2, s.y - 11, w, 18); U.txt(ctx, s.txt, s.x, s.y - 1, 13, 'center', INK, 'IM Fell English', 'italic'); } else U.txt(ctx, s.txt, s.x, s.y, 20, 'center', INK, 'IM Fell English SC'); break;
       case 'ring': FX.onde(ctx, s.x, s.y, s.r, 1 - s.life / s.max, s.color); break;
       case 'rembob': { const k = 1 - s.life / s.max; ctx.save(); ctx.strokeStyle = '#7a8ad0'; ctx.globalAlpha = 1 - k; ctx.lineWidth = 2.5;
         U.inkCircle(ctx, s.x, s.y, s.r * (1.1 - k * 0.9), 5, 1.4); ctx.lineWidth = 1.2; U.inkCircle(ctx, s.x, s.y, s.r * (0.8 - k * 0.6), 6, 1);
@@ -6550,7 +6602,7 @@ const UI = (() => {
     const mv = [];
     if (prm.traj) mv.push({ boomerang: 'revient comme un boomerang', spirale: 'vole en spirale', rasesol: 'court au ras du sol' }[prm.traj]); if (prm.power > 1) mv.push('puissance ×' + prm.power.toFixed(1)); if (prm.range > 1) mv.push('portée ×' + prm.range.toFixed(1)); if (prm.size > 1) mv.push('taille ×' + prm.size.toFixed(1)); if (prm.duration > 1) mv.push('durée ×' + prm.duration.toFixed(1)); if (prm.speed > 1) mv.push('vitesse ×' + prm.speed.toFixed(1)); if (prm.bounces) mv.push(prm.bounces + ' rebonds'); if (prm.persist) mv.push('laisse une trace'); if (prm.echo) mv.push('écho ×' + prm.echo);
     if (mv.length) L.push('Réglages : ' + mv.join(', ') + '.');
-    for (const e in prm.asp) { const A = prm.asp[e]; const M2 = DATA.MODS[A.id]; if ([s.core, s.core2].includes(e)) L.push('Aspect : ' + M2.nom + (A.n > 1 ? ' ×2' : '') + ' — ' + DATA.CORES[e].nom.toLowerCase() + ' devient ' + nomG(A.devient) + '.'); }
+    for (const e in prm.asp) { if (![s.core, s.core2].includes(e)) continue; const Ls = prm.asp[e]; L.push((Ls.length > 1 ? 'Aspects : ' : 'Aspect : ') + Ls.map((A) => DATA.MODS[A.id].nom + (A.n > 1 ? ' ×2' : '')).join(' et ') + ' — ' + DATA.CORES[e].nom.toLowerCase() + ' devient ' + Ls.map((A) => nomG(A.devient)).join(' et ') + '.'); }
     for (const m of s.mods) { if (typeof m !== 'string') continue; const M2 = DATA.MODS[m]; if (M2 && M2.aspect && ![s.core, s.core2].includes(M2.aspect)) L.push('<span class="muted">' + M2.nom + ' reste muet : il lui faut l\'essence ' + DATA.CORES[M2.aspect].nom + '.</span>'); }
     for (const el in prm.lg) { const Lg = DATA.LANGAGES[el]; if (!Lg) continue; if (cores.includes(el) || [s.core, s.core2].includes(el)) L.push('Langage ' + Lg.de + ' : ' + Lg.nom + (prm.lg[el] > 1 ? ' ×2 — ' + Lg.paliers[1] : ' — ' + Lg.paliers[0])); }
     if (s.encre && DATA.ENCRES[s.encre]) { const E = DATA.ENCRES[s.encre]; L.push('Écrit à l\'' + E.nom.toLowerCase() + ' (' + ((game.inv.encres || {})[s.encre] || 0) + ' gouttes) : ' + E.effet); }
@@ -7108,7 +7160,7 @@ const UI = (() => {
           case 'naissance': k.naissances = (k.naissances || 0) + 1; return;
           case 'saison': if (!this.saisonsVues) this.saisonsVues = []; if (!this.saisonsVues.includes(data)) this.saisonsVues.push(data); return;
           case 'espece': if (!this.especesVues.includes(data)) { this.especesVues.push(data); game.toast('Nouvelle espèce : ' + DATA.ESPECES[data].nom + '. ' + DATA.ESPECES[data].desc); game.addXp(DATA.XP.ingredient); } return;
-          case 'bestiaire': { const b = this.bestiaire[data.t] || (this.bestiaire[data.t] = {}); if (!b[data.k]) { b[data.k] = true; const sp = DATA.ESPECES[data.t]; game.toast('Bestiaire : ' + sp.nom + ' ' + (data.k === 'aime' ? 'aime' : 'craint') + ' ' + DATA.CORES[sp[data.k]].nom.toLowerCase() + '.', 'unlock'); game.addXp(DATA.XP.observation); } break; }
+          case 'bestiaire': { const b = this.bestiaire[data.t] || (this.bestiaire[data.t] = {}); if (!b[data.k]) { b[data.k] = true; const sp = DATA.ESPECES[data.t]; game.toast('Bestiaire : ' + sp.nom + ' ' + (data.k === 'aime' ? 'aime' : 'craint') + ' ' + DATA.nomEffet(sp[data.k]).toLowerCase() + '.', 'unlock'); game.addXp(DATA.XP.observation); } break; }
           case 'ingredient': if (!this.ingredientsVus.includes(data)) { this.ingredientsVus.push(data); game.addXp(DATA.XP.ingredient); } break;
           case 'recette': if (!this.recettes.includes(data)) { this.recettes.push(data); game.addXp(DATA.XP.recette); } k.potions++; break;
         }

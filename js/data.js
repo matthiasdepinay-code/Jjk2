@@ -138,12 +138,15 @@ const DATA = (() => {
     metal:    { id: 'metal',    nom: 'Métal',    glyphe: 'metal',   couleur: '#737e86', cout: 1, mats: ['METAL'] },
     glace:    { id: 'glace',    nom: 'Glace',    glyphe: 'froid',   couleur: '#7fb4d8', cout: 1, mats: ['GLACE', 'NEIGE'] },
     creature: { id: 'creature', nom: 'Créature', glyphe: 'esprit',  couleur: '#c45a8a', cout: 1, mats: [] },
+    liquide:  { id: 'liquide',  nom: 'Liquide',  glyphe: 'eau',     couleur: '#5f8fb8', cout: 1, mats: ['EAU', 'SAUMURE', 'HUILE', 'ACIDE', 'MIEL', 'SEVE', 'BOUE', 'LAVE'] },
+    objet:    { id: 'objet',    nom: 'Objet',    glyphe: 'objet',   couleur: '#9a6a34', cout: 1, mats: [] },
   };
   // Cibles (pointe gauche)
   const CIBLES = {
     souris:   { id: 'souris',   nom: 'Souris',   cout: 0, desc: 'Le sort part vers la souris (par défaut).' },
     creature: { id: 'creature', nom: 'Créature proche', cout: 2, desc: 'Le sort part seul vers la créature hostile la plus proche, et la suit.' },
     marque:   { id: 'marque',   nom: 'Marque',   cout: 1, desc: 'Le sort part vers ta marque la plus récente, même hors de vue.' },
+    objet:    { id: 'objet',    nom: 'Objet proche', cout: 1, desc: 'Le sort part seul vers l\'objet le plus proche de la souris (brasier, lampe, levier, moulin, roue, caisse, rocher, torche) et le suit.' },
   };
   // Tailles de sceau
   const TAILLES = {
@@ -634,8 +637,21 @@ const DATA = (() => {
     { id: 'a_saut', type: 'mods', item: ['saut'], titre: 'Aspect de l\'Espace : Saut', indice: 'Emploie souvent l\'Espace.', cond: (p) => ((p.maitrise || {}).portail || 0) >= 12 },
     { id: 'a_peur', type: 'mods', item: ['peur'], titre: 'Aspect de l\'Esprit : Peur', indice: 'Emploie souvent l\'Esprit.', cond: (p) => ((p.maitrise || {}).esprit || 0) >= 12 },
   );
+  // aspects d'information
+  Object.assign(PSEUDO, { lecture: { id: 'lecture', nom: 'Lecture', couleur: '#b08ad8' }, revelation: { id: 'revelation', nom: 'Révélation', couleur: '#f0d070' } });
+  Object.assign(INVERSE, { lecture: 'lecture', revelation: 'ombre' });
+  MODS.lecture = { id: 'lecture', cout: 2, aspect: 'esprit', devient: 'lecture', nom: 'Lecture', desc: 'Aspect de l\'Esprit. Lire dans les pensées : ce que chaque créature touchée aime et craint s\'affiche (et entre au bestiaire), avec son affinité pour toi. Muet sans son essence.' };
+  MODS.revelation = { id: 'revelation', cout: 2, aspect: 'lumiere', devient: 'revelation', nom: 'Révélation', desc: 'Aspect de la Lumière. Une lumière qui traverse tout : les runes se révèlent, la carte se dessine loin alentour, et les coffres, pages, ingrédients et mécanismes cachés luisent à travers la roche un moment. Muet sans son essence.' };
+  UNLOCKS.push(
+    { id: 'a_lecture', type: 'mods', item: ['lecture'], titre: 'Aspect de l\'Esprit : Lecture', indice: 'Note au bestiaire 4 goûts ou craintes.', cond: (p) => Object.values(p.bestiaire || {}).reduce((n, b) => n + Object.keys(b).length, 0) >= 4 },
+    { id: 'a_revelation', type: 'mods', item: ['revelation'], titre: 'Aspect de la Lumière : Révélation', indice: 'Lis deux runes cachées.', cond: (p) => p.compteurs.runes >= 2 },
+    { id: 'filtres3', type: 'filtres', item: ['liquide', 'objet'], titre: 'Filtres : Liquide, Objet', indice: 'Observe 12 réactions différentes.', cond: (p) => Object.keys(p.obs || {}).length >= 12 },
+    { id: 'cible_objet', type: 'cible', item: 'objet', titre: 'Cible : Objet proche', indice: 'Ouvre un coffre scellé.', cond: (p) => (p.compteurs.coffres || 0) >= 1 },
+  );
+  // nom lisible d'un effet, même devenu aspect : « Gel (Eau) »
+  const nomEffet = (id) => { if (CORES[id] && !CORES[id].interne) return CORES[id].nom; const M2 = MIGRATION[id]; if (M2) return M2[1] === 'inverser' ? 'Ombre (Lumière inversée)' : MODS[M2[1]].nom + ' (' + CORES[M2[0]].nom + ')'; for (const m in MODS) if (MODS[m].devient === id) return MODS[m].nom + ' (' + CORES[MODS[m].aspect].nom + ')'; return (CORES[id] || PSEUDO[id] || { nom: id }).nom; };
   // affinité : combien un geste aimé rapproche (sur 100)
   const AFFINITE = { golem: { gain: 4, parJour: 20 }, follet: { gain: 12 }, limace: { gain: 15 }, salamandre: { gain: 14 }, chauve: { gain: 15 } };
 
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE };
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet };
 })();

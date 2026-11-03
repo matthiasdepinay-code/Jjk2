@@ -47,6 +47,8 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
   - Vie : Floraison · Lumière : Focale ; inversée, elle devient l'ombre · Foudre : Tension · Gravité : Masse, Attraction, Répulsion, Fil.
   - Temps : la bulle de temps accéléré, Rembobiner, Figer · Espace : Portail, Saut, Marque · Esprit : contrôle, Sommeil, Peur · Transmutation : Corrosion (l'acide).
   - Un aspect se découvre par l'usage de son essence et par les découvertes ; doublé (Adepte), il se renforce.
+  - Plusieurs aspects d'une même essence s'additionnent (Feu + Fumée + Explosion). Esprit + **Lecture** révèle ce qu'une créature aime et craint ; Lumière + **Révélation** fait luire à travers la roche coffres, pages et ingrédients.
+- **Filtres** : Eau, Feu, Pierre, Terre, Bois, Métal, Glace, Créature, Liquide, Objet. **Cibles** : Souris, Créature proche, Marque, Objet proche (brasier, lampe, levier, caisse...).
 - **Apprivoiser** : chaque créature se gagne par affinité (l'élément qu'elle aime, les soins, le calme) ; la blesser la fait reculer. Les petites bêtes en quelques gestes, le golem en plusieurs jours (20 % au plus par jour).
 - **Fusion** : deux glyphes d'effet dans un sceau, avec des combos nommés (tornade de feu, banquise, lave, orage, blizzard...).
 - **Sous-sceaux** : un emplacement de modificateur peut contenir un sceau consigné entier, lancé là où le premier éclate (deux niveaux).

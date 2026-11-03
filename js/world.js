@@ -541,6 +541,28 @@ const World = (() => {
         if (best) { if (st.control) releaseControl(); controlCreature(best, 12 * dur); }
         fxBurst('esprit', cx, cy, rad); return true;
       }
+      case 'lecture': {
+        if (!burst) return true;
+        let n = 0;
+        for (const c of st.crs) {
+          if (c.hp <= 0 || c.t === 'familier' || !dans(c)) continue; const sp = DATA.ESPECES[c.t]; if (!sp) continue;
+          evt('bestiaire', { t: c.t, k: 'aime' }); evt('bestiaire', { t: c.t, k: 'craint' }); c.affT = 6;
+          st.sp.push({ k: 'label', txt: 'aime ' + DATA.nomEffet(sp.aime).toLowerCase() + ' · craint ' + DATA.nomEffet(sp.craint).toLowerCase() + (c.sta.tame ? ' · apprivoisé(e)' : ' · ' + Math.round(c.aff || 0) + ' %'), x: c.x + c.w / 2, y: c.y - 24, life: 3.5, petit: true });
+          part(c.x + c.w / 2, c.y, '#b08ad8', 8, 40, 0.8, 2, -30, 'glow'); n++;
+        }
+        if (!n) msg('Aucun esprit à lire ici.');
+        fxBurst('esprit', cx, cy, rad); return true;
+      }
+      case 'revelation': {
+        if (!burst) return true;
+        const R4 = rad * 5;
+        game.explorer((cx - R4) / CS, (cy - R4) / CS, R4 * 2 / CS, R4 * 2 / CS);
+        for (const o of st.objs) if (o.t === 'rune' && dist(cx, cy, o.x, o.y) < R4) o.revele = 1;
+        st.revelation = { x: cx, y: cy, r: R4, t: 12 * (prm.duration || 1), max: 12 * (prm.duration || 1) };
+        st.flash = 0.05; fxBurst('lumiere', cx, cy, rad * 2); Son.sfx('burst', 'lumiere');
+        msg('La lumière traverse la roche : ce qui est caché luit un moment.');
+        return true;
+      }
       case 'peur':
         for (const c of st.crs) if (c.hp > 0 && c.t !== 'familier' && !c.sta.tame && dans(c)) { c.fuite = { x: cx, y: cy, t: 6 * dur }; c.sta.sleep = 0; c.dort = false; c.curieux = null; if (burst) part(c.x + c.w / 2, c.y - 6, '#8a5aa8', 5, 50, 0.6, 2, -40, 'glow'); }
         if (burst) { fxBurst('ombre', cx, cy, rad); Son.sfx('burst', 'ombre'); } return true;
@@ -1099,7 +1121,7 @@ const World = (() => {
     const prm = Seal.params(seal);
     if (charge > 0) { prm.power *= 1 + 0.8 * charge; prm.range *= 1 + 0.5 * charge; prm.size *= 1 + 0.4 * charge; prm.duration *= 1 + 0.3 * charge; }
     let cores = Seal.effets(seal);
-    for (const e in prm.asp) { const A = prm.asp[e]; if (A.n > 1) { prm.lg[A.devient] = 2; prm.power *= 1.3; } }
+    for (const e in prm.asp) for (const A of prm.asp[e]) if (A.n > 1) { prm.lg[A.devient] = 2; prm.power *= 1.3; }
     const effets0 = cores.slice();
     if (prm.inverse) { prm.gInv = cores.includes('gravite'); cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c)); }
     const lg = prm.lg || {};
@@ -1118,11 +1140,14 @@ const World = (() => {
   function filtreSet(f) { if (!filtreSets[f]) filtreSets[f] = new Set((DATA.FILTRES[f] ? DATA.FILTRES[f].mats : []).map((n) => M[n])); return filtreSets[f]; }
   function filtreTouche(f, x, y, r) {
     if (f === 'creature') return st.crs.find((c) => c.hp > 0 && c.t !== 'familier' && U.circleRect(x, y, r, c)) || null;
+    if (f === 'objet') return st.objs.find((o) => !o.mort && OBJ_CIBLES.includes(o.t) && U.circleRect(x, y, r, o)) || null;
     const set = filtreSet(f); let hit = null;
     Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (!hit && set.has(m)) hit = { cell: true }; });
     return hit;
   }
-  function filtreCompte(f, x, y, r) { if (f === 'creature') return st.crs.filter((c) => c.hp > 0 && U.circleRect(x, y, r, c)).length; const set = filtreSet(f); let n = 0; Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (set.has(m)) n++; }); return n; }
+  const OBJ_CIBLES = ['brasier', 'lampe', 'levier', 'moulin', 'roue', 'caisse', 'rocher', 'torche', 'graine', 'mannequin'];
+  function objetProche(x, y, R = 520) { let best = null, bd = R; for (const o of st.objs) { if (o.mort || o.carried || !OBJ_CIBLES.includes(o.t)) continue; const d = dist(x, y, o.x + o.w / 2, o.y + o.h / 2); if (d < bd) { bd = d; best = o; } } return best; }
+  function filtreCompte(f, x, y, r) { if (f === 'objet') return st.objs.filter((o) => !o.mort && OBJ_CIBLES.includes(o.t) && U.circleRect(x, y, r, o)).length; if (f === 'creature') return st.crs.filter((c) => c.hp > 0 && U.circleRect(x, y, r, c)).length; const set = filtreSet(f); let n = 0; Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (set.has(m)) n++; }); return n; }
   // ---------- Cibles et marques ----------
   function creatureProche(x, y, R = 520) {
     let best = null, bd = R;
@@ -1278,6 +1303,7 @@ const World = (() => {
     // ciblage
     let homing = null, horsPortee = false;
     if (spec.cible === 'creature' && seal.shape !== 'soi') { const c = creatureProche(ox, oy); if (c) { aim = { x: c.x + c.w / 2, y: c.y + c.h / 2 }; homing = c; horsPortee = true; } else if (o.player) msg('Aucune créature à cibler : le sort part vers la souris.'); }
+    else if (spec.cible === 'objet' && seal.shape !== 'soi') { const ob = objetProche(aim.x, aim.y); if (ob) { aim = { x: ob.x + ob.w / 2, y: ob.y + ob.h / 2 }; homing = ob; horsPortee = true; } else if (o.player) msg('Aucun objet près de la souris : le sort y part tout droit.'); }
     else if (spec.cible === 'marque' && seal.shape !== 'soi') { const m = marqueRecente(); if (m) { aim = m.pos; homing = m.mq.ent || { x: m.pos.x - 1, y: m.pos.y - 1, w: 2, h: 2, hp: 1 }; horsPortee = true; } else if (o.player) msg('Aucune marque posée : le sort part vers la souris.'); }
     let dx = aim.x - ox, dy = aim.y - oy; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
     const portee = (base) => (horsPortee ? d : Math.min(d, base));
@@ -2552,6 +2578,14 @@ const World = (() => {
     ctx.restore();
     drawRain(ctx);
     drawDark(ctx, camI);
+    if (st.revelation && st.revelation.t > 0) {
+      const Rv = st.revelation; Rv.t -= 1 / 60; const kk = Math.min(1, Rv.t / 2);
+      const VIS = ['coffre', 'page', 'champignon', 'ruche', 'graine', 'rune', 'levier', 'plaque', 'brasier', 'lampe', 'roue', 'moulin', 'grille'];
+      ctx.save(); ctx.translate(-camI.x, -camI.y);
+      for (const o of st.objs) { if (o.mort || !VIS.includes(o.t) || (o.t === 'coffre' && o.ouvert) || (o.t === 'page' && o.lue) || dist(Rv.x, Rv.y, o.x, o.y) > Rv.r) continue; const ox = o.x + o.w / 2, oy = o.y + o.h / 2; FX.glow(ctx, ox, oy, 26 + Math.sin(time * 4) * 4, '#f0d070', 0.55 * kk); ctx.strokeStyle = '#c08a2a'; ctx.globalAlpha = 0.8 * kk; ctx.lineWidth = 1.5; U.inkCircle(ctx, ox, oy, Math.max(o.w, o.h) * 0.7 + 6, 3, 1); ctx.globalAlpha = 1; }
+      for (const q of st.pickups) if (dist(Rv.x, Rv.y, q.x, q.y) < Rv.r) FX.glow(ctx, q.x, q.y, 18, '#f0d070', 0.5 * kk);
+      ctx.restore();
+    }
     FX.vignette(ctx, VW, VH);
     { const S = saison(); U.txt(ctx, { printemps: '❀ Printemps', ete: '☀ Été', automne: '❧ Automne', hiver: '❄ Hiver' }[S] + ' · jour ' + ((st.jour || 0) + 1), VW - 20, 62, 15, 'right', 'rgba(31,26,22,0.7)', 'IM Fell English', 'italic'); }
     if (st.flash > 0) { ctx.fillStyle = 'rgba(255,250,220,' + (st.flash * 4) + ')'; ctx.fillRect(0, 0, VW, VH); }
@@ -3037,7 +3071,7 @@ const World = (() => {
           ctx.beginPath(); ctx.ellipse(s.x + ox, yy, w, w * 0.2, 0, ph % TAU, ph % TAU + 3.8); ctx.stroke(); }
         break; }
       case 'singularite': { const t = 1 - s.life / s.max; ctx.strokeStyle = '#9a4a8c'; ctx.lineWidth = 2; for (let k = 0; k < 4; k++) { ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(s.x, s.y, (s.r * 0.6) * (1 - ((t * 3 + k * 0.25) % 1)), 0, TAU); ctx.stroke(); } ctx.fillStyle = '#1f1a16'; ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(s.x, s.y, 6 + Math.sin(time * 20) * 2, 0, TAU); ctx.fill(); break; }
-      case 'label': ctx.globalAlpha = Math.min(1, s.life * 2); U.txt(ctx, s.txt, s.x, s.y, 20, 'center', INK, 'IM Fell English SC'); break;
+      case 'label': ctx.globalAlpha = Math.min(1, s.life * 2); if (s.petit) { const w = ctx.measureText ? s.txt.length * 6.2 + 14 : 120; ctx.fillStyle = 'rgba(239,227,196,0.9)'; ctx.fillRect(s.x - w / 2, s.y - 11, w, 18); ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.strokeRect(s.x - w / 2, s.y - 11, w, 18); U.txt(ctx, s.txt, s.x, s.y - 1, 13, 'center', INK, 'IM Fell English', 'italic'); } else U.txt(ctx, s.txt, s.x, s.y, 20, 'center', INK, 'IM Fell English SC'); break;
       case 'ring': FX.onde(ctx, s.x, s.y, s.r, 1 - s.life / s.max, s.color); break;
       case 'rembob': { const k = 1 - s.life / s.max; ctx.save(); ctx.strokeStyle = '#7a8ad0'; ctx.globalAlpha = 1 - k; ctx.lineWidth = 2.5;
         U.inkCircle(ctx, s.x, s.y, s.r * (1.1 - k * 0.9), 5, 1.4); ctx.lineWidth = 1.2; U.inkCircle(ctx, s.x, s.y, s.r * (0.8 - k * 0.6), 6, 1);

@@ -67,9 +67,9 @@ const Seal = (() => {
   }
   // niveau de langage par élément (deux glyphes au plus)
   // aspects qui changent la nature d'une essence : { essence: { id, devient, n } } (le premier posé l'emporte)
-  function aspects(s) { const o = {}; for (const m of s.mods) { if (typeof m !== 'string') continue; const A = DATA.MODS[m]; if (!A || !A.devient) continue; if (!o[A.aspect]) o[A.aspect] = { id: m, devient: A.devient, n: 0 }; if (o[A.aspect].id === m) o[A.aspect].n = Math.min(2, o[A.aspect].n + 1); } return o; }
+  function aspects(s) { const o = {}; for (const m of s.mods) { if (typeof m !== 'string') continue; const A = DATA.MODS[m]; if (!A || !A.devient) continue; const L = o[A.aspect] || (o[A.aspect] = []); const q = L.find((x) => x.id === m); if (q) q.n = Math.min(2, q.n + 1); else L.push({ id: m, devient: A.devient, n: 1 }); } return o; }
   // effets réels du sceau : chaque essence, avec son aspect
-  function effets(s) { const a = aspects(s); const cores = [s.core]; if (s.core2 && s.taille !== 'petit') cores.push(s.core2); return cores.filter(Boolean).map((c, k, L) => (a[c] && k === L.lastIndexOf(c) ? a[c].devient : c)); }
+  function effets(s) { const a = aspects(s); const cores = [s.core]; if (s.core2 && s.taille !== 'petit') cores.push(s.core2); const out = []; cores.filter(Boolean).forEach((c, k, L) => { if (a[c] && k === L.lastIndexOf(c)) for (const A of a[c]) out.push(A.devient); else out.push(c); }); return out; }
   function langues(s) { const o = {}; for (const el in DATA.LANGAGES) { const k = count(s, DATA.LANGAGES[el].glyphe); if (k) o[el] = Math.min(2, k); } return o; }
   function params(s) {
     const n = (m) => count(s, m);
@@ -163,6 +163,8 @@ const Seal = (() => {
       case 'figer': C(0, 0, r * 0.85); L(0, 0, 0, -r * 0.55); L(0, 0, r * 0.4, 0); L(-r * 0.8, -r * 0.8, r * 0.8, r * 0.8); break;
       case 'saut': ctx.setLineDash([r * 0.18, r * 0.14]); ctx.beginPath(); ctx.arc(0, r * 0.4, r * 0.8, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke(); ctx.setLineDash([]); C(-r * 0.78, r * 0.35, r * 0.15); P([[r * 0.55, r * 0.05], [r * 0.8, r * 0.4], [r * 0.45, r * 0.45]], false); break;
       case 'peur': ctx.beginPath(); ctx.ellipse(0, 0, r * 0.85, r * 0.5, 0, 0, TAU); ctx.stroke(); C(0, 0, r * 0.32); dot(0, 0, r * 0.12); L(-r * 0.6, -r * 0.65, -r * 0.3, -r * 0.5); L(r * 0.6, -r * 0.65, r * 0.3, -r * 0.5); break;
+      case 'lecture': C(0, -r * 0.15, r * 0.55); dot(-r * 0.18, -r * 0.25, r * 0.08); dot(r * 0.18, -r * 0.25, r * 0.08); for (let i = 0; i < 3; i++) L(-r * 0.6, r * 0.55 + i * r * 0.15, r * 0.6, r * 0.55 + i * r * 0.15); break;
+      case 'revelation': ctx.beginPath(); ctx.ellipse(0, 0, r * 0.9, r * 0.45, 0, 0, TAU); ctx.stroke(); C(0, 0, r * 0.25); for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * 0.45; L(Math.cos(a) * r * 0.55, Math.sin(a) * r * 0.55, Math.cos(a) * r * 0.95, Math.sin(a) * r * 0.95); } break;
       // --- trajectoires ---
       case 'boomerang': P([[-r * 0.8, -r * 0.5], [0, r * 0.45], [r * 0.8, -r * 0.5]], false); ctx.beginPath(); ctx.arc(0, -r * 0.3, r * 0.75, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke(); break;
       case 'spirale': ctx.beginPath(); for (let i = 0; i <= 40; i++) { const t = i / 40; const x = -r * 0.9 + t * r * 1.8, y = Math.sin(t * TAU * 2.2) * r * 0.5 * Math.min(1, t * 3); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke(); dot(r * 0.9, Math.sin(TAU * 2.2) * r * 0.5, r * 0.12); break;
@@ -206,7 +208,7 @@ const Seal = (() => {
       case 'expiration': P([[-r * 0.6, -r * 0.8], [r * 0.6, -r * 0.8], [-r * 0.6, r * 0.8], [r * 0.6, r * 0.8]]); for (let i = 0; i < 4; i++) { const a = (i / 4) * TAU + 0.8; L(Math.cos(a) * r * 0.25, r * 0.6 + Math.sin(a) * r * 0.2, Math.cos(a) * r * 0.5, r * 0.6 + Math.sin(a) * r * 0.4); } break;
       default:
         if (id && id.startsWith('f_')) { const F = DATA.FILTRES[id.slice(2)]; P([[-r * 0.9, -r * 0.8], [r * 0.9, -r * 0.8], [r * 0.18, r * 0.25], [r * 0.18, r * 0.9], [-r * 0.18, r * 0.9], [-r * 0.18, r * 0.25]]); if (F) { ctx.restore(); glyph(ctx, F.glyphe, x, y - r * 0.32, r * 0.4, color, seed + 1); ctx.save(); ctx.translate(x, y); } break; }
-        if (id && id.startsWith('c_')) { const k = id.slice(2); C(0, 0, r * 0.65); L(-r, 0, -r * 0.4, 0); L(r * 0.4, 0, r, 0); L(0, -r, 0, -r * 0.4); L(0, r * 0.4, 0, r); if (k === 'creature') { dot(-r * 0.15, -r * 0.05, r * 0.1); dot(r * 0.15, -r * 0.05, r * 0.1); } else if (k === 'marque') { ctx.restore(); glyph(ctx, 'marque', x, y, r * 0.35, color, seed); ctx.save(); ctx.translate(x, y); } else dot(0, 0, r * 0.12); break; }
+        if (id && id.startsWith('c_')) { const k = id.slice(2); C(0, 0, r * 0.65); L(-r, 0, -r * 0.4, 0); L(r * 0.4, 0, r, 0); L(0, -r, 0, -r * 0.4); L(0, r * 0.4, 0, r); if (k === 'creature') { dot(-r * 0.15, -r * 0.05, r * 0.1); dot(r * 0.15, -r * 0.05, r * 0.1); } else if (k === 'objet') { U.inkRect(ctx, -r * 0.25, -r * 0.25, r * 0.5, r * 0.5, seed, r * 0.02); } else if (k === 'marque') { ctx.restore(); glyph(ctx, 'marque', x, y, r * 0.35, color, seed); ctx.save(); ctx.translate(x, y); } else dot(0, 0, r * 0.12); break; }
         C(0, 0, r * 0.5);
     }
     ctx.restore();

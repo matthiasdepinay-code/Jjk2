@@ -51,7 +51,7 @@
           case 'naissance': k.naissances = (k.naissances || 0) + 1; return;
           case 'saison': if (!this.saisonsVues) this.saisonsVues = []; if (!this.saisonsVues.includes(data)) this.saisonsVues.push(data); return;
           case 'espece': if (!this.especesVues.includes(data)) { this.especesVues.push(data); game.toast('Nouvelle espèce : ' + DATA.ESPECES[data].nom + '. ' + DATA.ESPECES[data].desc); game.addXp(DATA.XP.ingredient); } return;
-          case 'bestiaire': { const b = this.bestiaire[data.t] || (this.bestiaire[data.t] = {}); if (!b[data.k]) { b[data.k] = true; const sp = DATA.ESPECES[data.t]; game.toast('Bestiaire : ' + sp.nom + ' ' + (data.k === 'aime' ? 'aime' : 'craint') + ' ' + DATA.CORES[sp[data.k]].nom.toLowerCase() + '.', 'unlock'); game.addXp(DATA.XP.observation); } break; }
+          case 'bestiaire': { const b = this.bestiaire[data.t] || (this.bestiaire[data.t] = {}); if (!b[data.k]) { b[data.k] = true; const sp = DATA.ESPECES[data.t]; game.toast('Bestiaire : ' + sp.nom + ' ' + (data.k === 'aime' ? 'aime' : 'craint') + ' ' + DATA.nomEffet(sp[data.k]).toLowerCase() + '.', 'unlock'); game.addXp(DATA.XP.observation); } break; }
           case 'ingredient': if (!this.ingredientsVus.includes(data)) { this.ingredientsVus.push(data); game.addXp(DATA.XP.ingredient); } break;
           case 'recette': if (!this.recettes.includes(data)) { this.recettes.push(data); game.addXp(DATA.XP.recette); } k.potions++; break;
         }
