@@ -567,7 +567,7 @@ const UI = (() => {
     } else if (grimTab === 'carte') {
       game.ensureWorld();
       c.appendChild(el('p', 'intro', 'La carte se dessine à mesure que tu explores. Les pages déchirées retrouvées y sont marquées.'));
-      const cv = document.createElement('canvas'); cv.width = 900; cv.height = 260; cv.className = 'carte'; c.appendChild(cv);
+      const cv = document.createElement('canvas'); cv.width = Sim.W; cv.height = Sim.H; cv.className = 'carte'; c.appendChild(cv);
       dessinerCarte(cv);
       const leg = el('p', 'muted', '● toi · ⌂ le labo · ✎ pages retrouvées · les zones grises restent à explorer'); c.appendChild(leg);
     } else if (grimTab === 'lettres') {

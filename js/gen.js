@@ -1,7 +1,32 @@
 'use strict';
 // ---------- Génération du grand monde (dessiné à la main, en cellules) ----------
 const Gen = (() => {
-  const W = 900, H = 260;
+  const W0 = 900, W = 1800, H = 260;
+  // Étirement du monde : chaque région garde son dessin, ×1,5 en largeur, et des transitions s'intercalent
+  const SEG = [
+    { o: [0, 40], n: 40 }, { o: [40, 120], n: 120 },
+    { t: 'prairie', n: 60, nom: 'La Prairie', mood: 'Le Jardin' },
+    { o: [120, 220], n: 150 },
+    { t: 'riviere', n: 60, nom: 'La Rivière', mood: 'Le Lac' },
+    { o: [220, 330], n: 165 },
+    { t: 'collines', n: 64, nom: 'Les Collines', mood: 'La Montagne' },
+    { o: [330, 445], n: 172 },
+    { t: 'gorge', n: 62, nom: 'La Gorge', mood: 'La Montagne' },
+    { o: [445, 560], n: 172 },
+    { t: 'cendres', n: 62, nom: 'La Plaine de cendres', mood: 'Le Volcan' },
+    { o: [560, 700], n: 210 },
+    { t: 'marais', n: 64, nom: 'Le Marais', mood: 'Les Ruines' },
+    { o: [700, 820], n: 180 },
+    { t: 'dunes', n: 60, nom: 'Les Dunes', mood: 'Le Désert' },
+    { o: [820, 900], n: 0 },
+  ];
+  { let a = 0; for (const g of SEG) { g.a = a; a += g.n; } const last = SEG[SEG.length - 1]; last.n = W - last.a; }
+  // ancienne abscisse (cellules) → nouvelle
+  function X(x) {
+    for (const g of SEG) if (g.o && x >= g.o[0] && (x < g.o[1] || (g.o[1] === 900 && x <= 900))) return g.a + (x - g.o[0]) * g.n / (g.o[1] - g.o[0]);
+    return x >= 900 ? W : 0;
+  }
+  const kAt = (x) => { for (const g of SEG) if (g.o && x >= g.o[0] && x < g.o[1]) return g.n / (g.o[1] - g.o[0]); return 1; };
   const M = Sim.M;
   const CS = Sim.CS;
   let R = null;
@@ -58,10 +83,10 @@ const Gen = (() => {
   function generate(seed = 7) {
     ARBRES = [];
     R = U.mulberry32(seed);
-    Sim.init(W, H);
-    const surf = new Int16Array(W);
+    Sim.init(W0, H);
+    const surf = new Int16Array(W0);
     // ---- terrain de base ----
-    for (let x = 0; x < W; x++) {
+    for (let x = 0; x < W0; x++) {
       const s = Math.floor(surfaceAt(x)); surf[x] = s;
       const terreH = 9 + Math.floor(U.hash2(x, 1) * 6);
       for (let y = s; y < H; y++) {
@@ -70,10 +95,10 @@ const Gen = (() => {
       if (U.hash2(x, 2) < 0.55 && x > 36) Sim.set(x, s - 1, M.HERBE);
     }
     // poches de sable, veines de métal et de cristal (en taches)
-    for (let k = 0; k < 40; k++) { const x = 20 + R() * (W - 40), y = 150 + R() * 100; blob(x, y, 4 + R() * 6, 2 + R() * 3, M.SABLE, 0.4); }
-    for (let k = 0; k < 18; k++) { const x = 20 + R() * (W - 40), y = 170 + R() * 85; blob(x, y, 2 + R() * 3, 1 + R() * 2, M.METAL, 0.4); }
-    for (let k = 0; k < 14; k++) { const x = 20 + R() * (W - 40), y = 185 + R() * 70; blob(x, y, 1.5 + R() * 2, 1.5 + R() * 2, M.CRISTAL, 0.4); }
-    fillRect(0, 0, 1, H, M.PIERRE); fillRect(W - 1, 0, 1, H, M.PIERRE);
+    for (let k = 0; k < 40; k++) { const x = 20 + R() * (W0 - 40), y = 150 + R() * 100; blob(x, y, 4 + R() * 6, 2 + R() * 3, M.SABLE, 0.4); }
+    for (let k = 0; k < 18; k++) { const x = 20 + R() * (W0 - 40), y = 170 + R() * 85; blob(x, y, 2 + R() * 3, 1 + R() * 2, M.METAL, 0.4); }
+    for (let k = 0; k < 14; k++) { const x = 20 + R() * (W0 - 40), y = 185 + R() * 70; blob(x, y, 1.5 + R() * 2, 1.5 + R() * 2, M.CRISTAL, 0.4); }
+    fillRect(0, 0, 1, H, M.PIERRE); fillRect(W0 - 1, 0, 1, H, M.PIERRE);
     // ---- Labo : plateau et mur ----
     fillRect(0, 60, 9, 71, M.PIERRE);
     for (let x = 0; x < 14; x++) Sim.set(x, surf[x] - 1, M.AIR);
@@ -120,7 +145,7 @@ const Gen = (() => {
     fillRect(760, surf[766] - 19, 14, 1, M.METAL); fillRect(760, surf[766] - 18, 1, 8, M.METAL); fillRect(773, surf[766] - 18, 1, 8, M.METAL);
     { const s = surf[766]; fillRect(762, s - 10, 10, 6, M.VERRE); fillRect(764, s - 9, 6, 4, M.AIR); }
     // ---- Désert (820-900) ----
-    for (let x = 820; x < W - 1; x++) { const s = surf[x]; for (let y = s - 2; y < s + 8; y++) Sim.set(x, y, M.SABLE); if (Sim.get(x, s - 3) === M.HERBE) Sim.set(x, s - 3, M.AIR); if (Sim.get(x, s - 1) === M.HERBE) Sim.set(x, s - 1, M.AIR); }
+    for (let x = 820; x < W0 - 1; x++) { const s = surf[x]; for (let y = s - 2; y < s + 8; y++) Sim.set(x, y, M.SABLE); if (Sim.get(x, s - 3) === M.HERBE) Sim.set(x, s - 3, M.AIR); if (Sim.get(x, s - 1) === M.HERBE) Sim.set(x, s - 1, M.AIR); }
     for (let x = 864; x < 892; x++) { const s0 = surfaceTop(x); for (let k = 0; k < 2; k++) if (Sim.get(x, s0 + k) === M.SABLE) Sim.set(x, s0 + k, M.SEL); }
     blob(856, surf[856] - 2, 4, 3, M.CRISTAL, 0.3);
     blob(885, surf[885] - 1, 3, 2, M.CRISTAL, 0.3);
@@ -226,13 +251,138 @@ const Gen = (() => {
       c('lapin', 390, 20), c('lapin', 421, 20),
     ];
     for (const q of crs) if (q.t === 'follet') q.y -= 60;
-    const zones = [
+    const zones0 = [
       { nom: 'Le Jardin', x: 0, w: 120 }, { nom: 'La Forêt', x: 120, w: 100 }, { nom: 'Le Lac', x: 220, w: 110 }, { nom: 'La Montagne', x: 330, w: 115 },
       { nom: 'Le Volcan', x: 445, w: 115 }, { nom: 'La Clairière', x: 560, w: 140 }, { nom: 'Les Ruines', x: 700, w: 120 }, { nom: 'Le Désert', x: 820, w: 80 },
-    ].map((z) => ({ nom: z.nom, x: z.x * CS, w: z.w * CS }));
-    Sim.surf = surf;
+    ];
+    // ---------- étirement et transitions ----------
+    const mat0 = Sim.mat.slice(), aux0 = Sim.aux.slice();
+    const get0 = (x, y) => (x < 0 || x >= W0 || y < 0 || y >= H ? M.PIERRE : mat0[y * W0 + x]);
+    Sim.init(W, H);
+    const surfN = new Int16Array(W);
+    const mat = Sim.mat, aux = Sim.aux;
+    for (const g of SEG) {
+      if (g.o) {
+        const L0 = g.o[1] - g.o[0];
+        for (let i = 0; i < g.n; i++) { const xo = Math.min(g.o[1] - 1, g.o[0] + Math.floor((i + 0.5) * L0 / g.n)); const X1 = g.a + i; surfN[X1] = surf[xo]; for (let y = 0; y < H; y++) { mat[y * W + X1] = mat0[y * W0 + xo]; aux[y * W + X1] = aux0[y * W0 + xo]; } }
+        continue;
+      }
+      // transition : relief interpolé entre les deux régions voisines
+      const iG = SEG.indexOf(g), xl = SEG[iG - 1].o[1] - 1, xr = SEG[iG + 1].o[0];
+      const sL = surf[xl], sR = surf[xr];
+      // un tunnel ne se prolonge que s'il traverse vraiment la frontière (ouvert des deux côtés, et pas un puits vertical)
+      const vide = (q) => q === M.AIR || Sim.P[q].liquid || Sim.P[q].gas;
+      const ouvert = new Uint8Array(H); for (let y = Math.max(sL, sR) + 3; y < H; y++) ouvert[y] = vide(get0(xl, y)) || vide(get0(xr, y)) ? 1 : 0;
+      for (let y = 0; y < H;) { if (!ouvert[y]) { y++; continue; } let e = y; while (e < H && ouvert[e]) e++; if (e - y > 30) for (let k = y; k < e; k++) ouvert[k] = vide(get0(xl, k)) && vide(get0(xr, k)) ? 1 : 0; y = e; }
+      for (let i = 0; i < g.n; i++) {
+        const t = (i + 0.5) / g.n, X1 = g.a + i, k = smooth(t);
+        let sf = sL + (sR - sL) * k + Math.sin(X1 * 0.31) * 0.7 + Math.sin(X1 * 0.11) * 1.1;
+        if (g.t === 'prairie') sf -= Math.sin(t * Math.PI) * 3;
+        if (g.t === 'collines') sf -= Math.abs(Math.sin(t * Math.PI * 2)) * 9 + Math.sin(t * Math.PI) * 4;
+        if (g.t === 'marais') sf += Math.sin(t * Math.PI) * 3;
+        if (g.t === 'dunes') sf -= Math.abs(Math.sin(t * Math.PI * 3)) * 6;
+        if (g.t === 'cendres') sf -= Math.sin(t * Math.PI * 2) * 2;
+        const S0 = Math.floor(sf); surfN[X1] = S0;
+        const xb = t < 0.5 ? xl : xr, base = Math.max(S0, surf[xb]) + 12, terreH = 9 + Math.floor(U.hash2(X1, 1) * 5);
+        for (let y = 0; y < H; y++) {
+          let m;
+          if (y < S0) m = M.AIR;
+          else if (ouvert[y]) { const q = get0(xb, y), q2 = get0(xb === xl ? xr : xl, y); m = vide(q) && q !== M.AIR ? q : vide(q2) && q2 !== M.AIR ? q2 : M.AIR; }
+          else { const q = get0(xb, y); m = y > base && !vide(q) ? q : y < S0 + terreH ? M.TERRE : M.PIERRE; }
+          mat[y * W + X1] = m; aux[y * W + X1] = 0;
+        }
+      }
+    }
+    for (let i = 0; i < mat.length; i++) if (mat[i]) Sim.touch(i);
+    const sAt = (x) => surfN[Math.max(0, Math.min(W - 1, Math.round(x)))];
+    const herbe = (x) => { const y = sAt(x); if (Sim.get(x, y - 1) === M.AIR && Sim.get(x, y) === M.TERRE) Sim.set(x, y - 1, M.HERBE); };
+    const arbreN = (x, h, rx, ry) => { const y = sAt(x); for (let k = 0; k <= h; k++) { Sim.set(x, y - k, M.BOIS); Sim.set(x + 1, y - k, M.BOIS); } blob(x + 1, y - h - ry + 1, rx, ry, M.PLANTE, 0.35); ARBRES.push({ x, h, rx, ry, nouveau: true }); };
+    const objsN = [], crsN = [];
+    const oN = (t, x, h, extra = {}) => Object.assign({ t, x: px(x), y: py(sAt(x)) - h }, extra);
+    for (const g of SEG) {
+      if (g.o) continue;
+      const a = g.a, b = g.a + g.n, mid = Math.floor((a + b) / 2);
+      switch (g.t) {
+        case 'prairie':
+          for (let x = a; x < b; x++) if (U.hash2(x, 7) < 0.8) herbe(x);
+          for (const x of [a + 10, a + 26, a + 44]) { const y = sAt(x); blob(x, y - 2, 3, 2, M.PLANTE, 0.3); }
+          for (let x = a + 4; x < b - 4; x += 5) if (U.hash2(x, 3) < 0.5) { const y = sAt(x); Sim.set(x, y - 2, M.PLANTE); }
+          arbreN(a + 36, 9, 4, 3);
+          objsN.push(oN('graine', a + 18, 10), oN('pancarte', a + 52, 70, { texte: 'La prairie. Les lapins y font leurs petits au printemps.' }));
+          crsN.push(oN('lapin', a + 20, 20), oN('lapin', a + 30, 20), oN('escargot', a + 46, 16));
+          break;
+        case 'riviere': {
+          // un ruisseau qui descend vers le lac, et un pont de bois
+          for (let x = mid - 9; x <= mid + 9; x++) { const d = 1 - Math.abs(x - mid) / 10; const y0 = sAt(x); for (let k = 0; k < Math.ceil(5 * d); k++) Sim.set(x, y0 + k, M.AIR); }
+          const niveau = Math.min(sAt(mid - 10), sAt(mid + 10)) + 1;
+          for (let x = mid - 9; x <= mid + 9; x++) for (let y = niveau; y < H; y++) { if (Sim.get(x, y) !== M.AIR) break; Sim.set(x, y, M.EAU); }
+          for (let x = mid - 11; x <= mid + 11; x++) Sim.set(x, niveau - 3, M.BOIS);
+          for (const x of [mid - 11, mid + 11]) { Sim.set(x, niveau - 2, M.BOIS); Sim.set(x, niveau - 1, M.BOIS); }
+          for (let x = a; x < b; x++) if (Math.abs(x - mid) > 12 && U.hash2(x, 5) < 0.7) herbe(x);
+          for (const x of [mid - 15, mid + 14, mid + 16]) { const y = sAt(x); Sim.set(x, y - 1, M.PLANTE); Sim.set(x, y - 2, M.PLANTE); Sim.set(x, y - 3, M.PLANTE); }
+          arbreN(a + 6, 12, 5, 4); arbreN(b - 8, 10, 4, 3);
+          objsN.push(oN('pancarte', a + 14, 70, { texte: 'La rivière descend vers le lac. Le pont est en bois...' }));
+          crsN.push(oN('grenouille', mid - 14, 18), { t: 'poisson', x: px(mid), y: py(niveau + 2) });
+          break;
+        }
+        case 'collines':
+          for (let x = a; x < b; x++) if (U.hash2(x, 9) < 0.5) herbe(x);
+          for (const x of [a + 14, a + 40]) { const y = sAt(x); blob(x, y, 4, 3, M.PIERRE, 0.4); }
+          { const y = sAt(mid); fillEllipse(mid, y + 14, 10, 5, M.AIR); for (let k = 0; k < 4; k++) blob(mid - 6 + k * 4, y + 18, 1.5, 1.5, M.CRISTAL, 0.4); tunnel(mid + 14, sAt(mid + 14) + 1, mid + 6, y + 13, 2); }
+          objsN.push(oN('rocher', a + 26, 56), oN('rocher', b - 12, 56), oN('pancarte', a + 6, 70, { texte: 'Les collines. Un trou mène à une petite grotte.' }));
+          crsN.push(oN('lapin', a + 34, 20), oN('golem', b - 20, 70));
+          break;
+        case 'gorge': {
+          // une gorge profonde, enjambée par un pont de bois ; des vignes pour remonter
+          const y0 = Math.max(sAt(mid - 14), sAt(mid + 14));
+          for (let x = mid - 10; x <= mid + 10; x++) { const w = Math.abs(x - mid) <= 7 ? 46 : 46 - (Math.abs(x - mid) - 7) * 10; for (let y = sAt(x); y < y0 + w; y++) Sim.set(x, y, M.AIR); }
+          for (let x = mid - 7; x <= mid + 7; x++) for (let y = y0 + 40; y < y0 + 46; y++) Sim.set(x, y, M.EAU);
+          for (let x = mid - 12; x <= mid + 12; x++) { Sim.set(x, y0 - 1, M.BOIS); }
+          for (const x of [mid - 12, mid + 12]) for (let y = y0; y < y0 + 3; y++) Sim.set(x, y, M.BOIS);
+          for (let y = y0 + 2; y < y0 + 40; y++) if (y % 2 === 0) { Sim.set(mid - 8, y, M.PLANTE); Sim.set(mid + 8, y, M.PLANTE); }
+          for (let x = a; x < b; x++) if (Math.abs(x - mid) > 12 && U.hash2(x, 4) < 0.4) herbe(x);
+          objsN.push(oN('pancarte', mid - 18, 70, { texte: 'La gorge. Le pont tient encore. Ne joue pas avec le feu.' }));
+          crsN.push({ t: 'chauve', x: px(mid), y: py(y0 + 20) }, { t: 'corbeau', x: px(mid + 4), y: py(y0 - 30) });
+          break;
+        }
+        case 'cendres':
+          for (let x = a; x < b; x++) { const y = sAt(x); for (let k = 0; k < 2; k++) Sim.set(x, y + k, M.CENDRE); }
+          for (const x of [a + 12, a + 30, b - 14]) { const y = sAt(x); blob(x, y - 1, 3, 2, M.OBSIDIENNE, 0.4); }
+          for (const x of [a + 20, a + 44]) { const y = sAt(x); for (let k = 1; k <= 7; k++) Sim.set(x, y - k, M.BOIS); Sim.set(x + 1, y - 5, M.BOIS); Sim.set(x - 1, y - 6, M.BOIS); }
+          { const y = sAt(mid + 6); fillEllipse(mid + 6, y + 1, 4, 2, M.AIR); fillEllipse(mid + 6, y + 2, 3, 1.5, M.LAVE); }
+          objsN.push(oN('pancarte', a + 4, 70, { texte: 'La plaine de cendres. Le sol est encore tiède.' }));
+          crsN.push(oN('salamandre', mid + 2, 16), { t: 'follet', x: px(a + 36), y: py(sAt(a + 36)) - 90 });
+          break;
+        case 'marais':
+          for (const [x, w, m] of [[a + 10, 8, M.BOUE], [a + 26, 10, M.EAU], [a + 42, 8, M.BOUE], [b - 10, 7, M.EAU]]) { const y = sAt(x); fillEllipse(x, y + 1, w / 2, 3, M.AIR); fillEllipse(x, y + 2, w / 2 - 0.5, 2.5, m); }
+          for (let x = a; x < b; x++) { if (U.hash2(x, 6) < 0.25) { const y = sAt(x); if (Sim.get(x, y - 1) === M.AIR) for (let k = 1; k <= 2 + (x % 3); k++) Sim.set(x, y - k, M.PLANTE); } if (U.hash2(x, 8) < 0.3) { const y = sAt(x); if (Sim.get(x, y) === M.TERRE) Sim.set(x, y, M.MOUSSE); } }
+          arbreN(a + 18, 8, 3, 2); arbreN(b - 20, 11, 4, 3);
+          objsN.push(oN('pancarte', a + 2, 70, { texte: 'Le marais. La boue colle aux bottes.' }));
+          crsN.push(oN('grenouille', a + 24, 18), oN('grenouille', a + 30, 18), oN('limace', a + 36, 24), oN('escargot', b - 16, 16));
+          break;
+        case 'dunes':
+          for (let x = a; x < b; x++) { const y = sAt(x); for (let k = -1; k < 7; k++) if (Sim.get(x, y + k) !== M.AIR || k >= 0) Sim.set(x, y + k, M.SABLE); }
+          for (const x of [a + 16, a + 38]) { const y = sAt(x) - 1; for (let k = 1; k <= 6; k++) Sim.set(x, y - k, M.PLANTE); Sim.set(x - 1, y - 4, M.PLANTE); Sim.set(x + 1, y - 3, M.PLANTE); }
+          objsN.push(oN('pancarte', a + 4, 70, { texte: 'Les dunes. Le désert commence ici.' }));
+          crsN.push(oN('tortue', a + 28, 18));
+          break;
+      }
+    }
+    // toutes les positions suivent l'étirement
+    const remap = (q) => { q.x = X(q.x / CS) * CS; if (q.x0 !== undefined) q.x0 = X(q.x0 / CS) * CS; return q; };
+    for (const q of objs) remap(q);
+    for (const q of crs) remap(q);
+    { const gr = objs.find((q) => q.t === 'grille' && q.horiz); if (gr) gr.largeur = (X(849) - X(840)) * CS; }
+    for (const q of crsN) delete q.y0;
+    for (const a of ARBRES) if (!a.nouveau) { const k = kAt(a.x); a.x = Math.round(X(a.x)); a.rx = Math.round(a.rx * k); }
+    const zones = zones0.map((z) => { const g0 = SEG.find((g) => g.o && g.o[0] === z.x), g1 = SEG.find((g) => g.o && g.o[1] === z.x + z.w); return { nom: z.nom, x: g0.a * CS, w: (g1.a + g1.n - g0.a) * CS }; });
+    for (const g of SEG) if (g.t) zones.push({ nom: g.nom, mood: g.mood, x: g.a * CS, w: g.n * CS });
+    zones.sort((p, q) => p.x - q.x);
+    // les bords du monde
+    for (let y = 0; y < H; y++) { Sim.set(0, y, M.PIERRE); Sim.set(W - 1, y, M.PIERRE); }
+    Sim.surf = surfN;
     Sim.dirtyAll();
-    return { w: W * CS, h: H * CS, spawn: { x: px(12), y: py(surf[12]) - 60 }, zones, objs, crs, surf, arbres: ARBRES.slice() };
+    return { w: W * CS, h: H * CS, spawn: { x: px(12), y: py(surfN[12]) - 60 }, zones, objs: objs.concat(objsN), crs: crs.concat(crsN), surf: surfN, arbres: ARBRES.slice() };
   }
-  return { generate, W, H };
+  return { generate, W, H, X };
 })();

@@ -69,7 +69,7 @@ const World = (() => {
         case 'plaque': {
           const zone = { x: o.x + 2, y: o.y - 6, w: o.w - 4, h: 10 };
           let poids = U.rectsOverlap(zone, st.p) && !st.p.sta.vol;
-          if (!poids) poids = st.crs.some((c) => c.hp > 0 && U.rectsOverlap(zone, c)) || st.objs.some((q) => q.dyn && !q.carried && !q.mort && U.rectsOverlap(zone, q));
+          if (!poids) poids = st.crs.some((c) => c.hp > 0 && (c.sta.tame || c.controlled || c.carried) && U.rectsOverlap(zone, c)) || st.objs.some((q) => q.dyn && !q.carried && !q.mort && U.rectsOverlap(zone, q));
           if (!poids) { let n = 0; const x0 = Math.floor(o.x / CS), x1 = Math.floor((o.x + o.w) / CS), y0 = Math.floor((o.y - 18) / CS), y1 = Math.floor(o.y / CS); for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const m = Sim.get(x, y); if (m && !P[m].gas && m !== M.BULLE && m !== M.NEIGE && m !== M.EAU) n++; } poids = n >= 8; }
           if (poids && !o.actif) Son.sfx('click');
           o.actif = poids; o.press += ((poids ? 1 : 0) - o.press) * Math.min(1, dt * 12);
@@ -77,7 +77,7 @@ const World = (() => {
         }
         case 'brasier': {
           if (o.feu > 0) { o.feu -= dt; if (Math.random() < 0.5) part(o.x + o.w / 2 + (Math.random() - 0.5) * 12, o.y + 4, '#f08a30', 1, 20, 0.5, 2.6, -260, 'flamme'); if (o.feu <= 0) { part(o.x + o.w / 2, o.y, '#6e6660', 6, 30, 1, 4, -60, 'fumee'); } }
-          else if (Sim.rectHas({ x: o.x, y: o.y - 8, w: o.w, h: 14 }, (m) => m === M.FEU || m === M.LAVE)) { o.feu = 15; Son.sfx('burst', 'feu'); }
+          else if (Sim.rectHas({ x: o.x, y: o.y - 8, w: o.w, h: 14 }, (m) => m === M.FEU || m === M.LAVE)) { o.feu = 20; Son.sfx('burst', 'feu'); }
           if (o.feu > 0 && st.meteo && (st.meteo.type === 'pluie' || st.meteo.type === 'orage') && Math.random() < dt * 0.3) o.feu = Math.max(0, o.feu - 4);
           break;
         }
@@ -147,10 +147,10 @@ const World = (() => {
       case 'roue': Object.assign(b, { w: 44, h: 44, ang: 0, eau: 0 }); break;
       case 'moulin': Object.assign(b, { w: 40, h: 76, ang: 0, spin: 0 }); break;
       case 'lampe': Object.assign(b, { w: 22, h: 36, charge: 0 }); break;
-      case 'grille': Object.assign(b, o.horiz ? { w: 54, h: 18 } : { w: 18, h: 90 }, { solid: true, ouv: 0 }); break;
+      case 'grille': Object.assign(b, o.horiz ? { w: o.largeur || 54, h: 18, largeur: o.largeur } : { w: 18, h: 90 }, { solid: true, ouv: 0 }); break;
       case 'coffre': Object.assign(b, { w: 40, h: 30, ouvert: !!o.ouvert, couv: o.ouvert ? 1 : 0, sceau: 0 }); break;
     }
-    for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours']) if (o[k] !== undefined) b[k] = o[k];
+    for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur']) if (o[k] !== undefined) b[k] = o[k];
     return b;
   }
   function makeCreature(c) {
@@ -171,7 +171,7 @@ const World = (() => {
   function serialize() {
     return {
       mat: Sim.serialize(), tod: st.tod, jour: st.jour || 0, meteo: st.meteo, mecaV: 1,
-      objs: st.objs.filter((o) => !o.mort).map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
+      objs: st.objs.filter((o) => !o.mort).map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
       crs: st.crs.map((c) => ({ t: c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.hp, tame: c.sta.tame })),
     };
   }
@@ -529,6 +529,61 @@ const World = (() => {
 
   // ---------- Effets sur les entités ----------
   // mode : 'burst' (instantané) ou un nombre dt (continu)
+  // ---------- Bulles de temps ----------
+  function poserBulle(mode, cx, cy, rad, prm) {
+    const dur = prm.duration || 1, r = Math.max(50, rad * 1.1);
+    st.sp.push({ k: 'bulle', mode, x: cx, y: cy, r, life: 5 * dur * (1 + (prm.persist || 0)), max: 5 * dur * (1 + (prm.persist || 0)), f: mode === 'vite' ? 5 * (prm.power || 1) : 0.25 });
+    Son.sfx('cast', 'temps'); part(cx, cy, mode === 'vite' ? '#c8ccd8' : '#8aa0d8', 16, 90, 0.7, 3, 0, 'glow');
+  }
+  // dt : la durée qui s'écoule dans la bulle à chaque image ; f : facteur
+  function vieillir(mode, cx, cy, r, dt, f = 5) {
+    const dans = (b) => U.circleRect(cx, cy, r, b);
+    if (mode === 'vite') {
+      const k = dt * f; // secondes « vécues » en plus
+      Sim.forRadius(cx, cy, r, (x, y, i, m) => {
+        if (!m) return; const q = Math.random(), haut = Sim.get(x, y - 1) === M.AIR;
+        if (FLAM(m) && Sim.aux[i] > 0) { Sim.aux[i] = Math.max(1, Sim.aux[i] - Math.ceil(12 * k)); Sim.touch(i); }
+        else if (m === M.FEU) { if (q < 0.25 * k) Sim.set(x, y, M.AIR); }
+        else if (m === M.HERBE) { if (haut && q < 0.05 * k) Sim.set(x, y - 1, M.PLANTE); }
+        else if (m === M.PLANTE) { if (haut && q < 0.03 * k) Sim.set(x, y - 1, M.PLANTE); else if (q < 0.01 * k && Sim.get(x + 1, y) === M.AIR) Sim.set(x + 1, y, M.PLANTE); }
+        else if (m === M.TERRE) { if (haut && q < 0.04 * k) Sim.set(x, y - 1, M.HERBE); }
+        else if (m === M.CENDRE) { if (q < 0.05 * k) Sim.set(x, y, M.TERRE); }
+        else if (m === M.GLACE || m === M.NEIGE) { if (q < 0.08 * k) Sim.set(x, y, M.EAU); }
+        else if (m === M.LAVE) { if (q < 0.06 * k) Sim.set(x, y, M.OBSIDIENNE); }
+        else if (m === M.EAU) { if (haut && q < 0.004 * k) Sim.set(x, y, M.VAPEUR, 40); }
+        else if (m === M.VAPEUR || m === M.FUMEE) { if (q < 0.2 * k) Sim.set(x, y, M.AIR); }
+        else if (m === M.PIERRE) { if (haut && q < 0.004 * k && Sim.get(x, y + 1) !== M.AIR) Sim.set(x, y - 1, M.MOUSSE); }
+        else if (m === M.METAL) { if (q < 0.004 * k) Sim.set(x, y, M.SABLE); }
+        else if (m === M.BOIS) { if (haut && q < 0.002 * k) Sim.set(x, y - 1, M.MOUSSE); }
+      });
+      for (const c of st.crs) {
+        if (!dans(c)) continue;
+        if (c.hp <= 0) { if (c.respawn > 0) c.respawn -= k; continue; }
+        for (const s2 of ['burn', 'stun', 'sleep', 'wet', 'lent', 'gele', 'glisse']) if (c.sta[s2] > 0) c.sta[s2] = Math.max(0, c.sta[s2] - k);
+        if (c.bebe > 0) c.bebe -= k;
+        if (c.morphT > 0) c.morphT -= k;
+        if (c.pondT) c.pondT -= k;
+        c.hp = Math.min(c.hpMax, c.hp + 0.05 * k);
+      }
+      for (const o of st.objs) {
+        if (o.mort || !dans(o)) continue;
+        if (o.t === 'graine' && o.stage === 1) { o.gt = (o.gt || 0) + k; if (!o.racine) o.regrow += k; }
+        if (o.burning > 0) o.burning = Math.max(0, o.burning - k);
+        if (o.t === 'brasier' && o.feu > 0) o.feu = Math.max(0, o.feu - k);
+        if (o.t === 'lampe' && o.charge > 0) o.charge = Math.max(0, o.charge - k);
+        if (o.t === 'moulin' && o.spin > 0) o.spin = Math.max(0, o.spin - k);
+      }
+      for (const s2 of st.sp) if (s2.k !== 'bulle' && s2.k !== 'ring' && s2.life > 0 && s2.x !== undefined && dist(cx, cy, s2.x, s2.y) < r && ['field', 'trap', 'totem', 'timer', 'attente', 'beamtimer', 'tornade', 'singularite'].includes(s2.k)) s2.life -= k;
+      const p = st.p;
+      if (dans(p)) { for (const s2 in p.sta) if (p.sta[s2] > 0 && s2 !== 'forme') p.sta[s2] = Math.max(0, p.sta[s2] - k * 0.5); p.ink = Math.min(p.inkMax, p.ink + dt * (p.inkRegen || 1) * 2); }
+    } else {
+      // temps lent : tout ce qui bouge s'englue
+      for (const c of st.crs) if (c.hp > 0 && dans(c)) { c.sta.lent = Math.max(c.sta.lent || 0, 0.3); c.vx *= Math.max(0, 1 - 6 * dt); if (!c.vole) c.vy = Math.min(c.vy, 120); else c.vy *= Math.max(0, 1 - 6 * dt); }
+      for (const o of st.objs) if (o.dyn && !o.carried && !o.mort && dans(o)) { o.vx *= Math.max(0, 1 - 6 * dt); o.vy = Math.min(o.vy, 100); }
+      for (const s2 of st.sp) if (s2.k === 'proj' && dist(cx, cy, s2.x, s2.y) < r) { const v = Math.hypot(s2.vx, s2.vy); if (v > 90) { const kk = Math.max(0.25, 1 - 5 * dt); s2.vx *= kk; s2.vy *= kk; } s2.life += dt * 0.7; }
+      for (const s2 of st.sp) if (s2.k !== 'bulle' && s2.k !== 'proj' && s2.life > 0 && s2.x !== undefined && dist(cx, cy, s2.x, s2.y) < r) s2.life += dt * 0.7;
+    }
+  }
   // ---------- Métamorphose ----------
   const MORPHS = ['grenouille', 'lapin', 'escargot', 'tortue', 'salamandre', 'limace', 'corbeau', 'chauve'];
   function finMorph(c) {
@@ -673,6 +728,7 @@ const World = (() => {
     if (core === 'contre') { if (burst) dissiper(cx, cy, rad); return; }
     if (core === 'metamorphose') { if (burst) metamorphoser(cx, cy, rad, prm); return; }
     if (core === 'rembobinage') { if (burst) rembobiner(cx, cy, rad, prm); return; }
+    if (core === 'temps' || core === 'ralentir') { if (burst) poserBulle(core === 'temps' ? 'vite' : 'lent', cx, cy, rad, prm); else vieillir(core === 'temps' ? 'vite' : 'lent', cx, cy, rad, mode); return; }
     const lgN = prm.lg ? prm.lg[core] || 0 : 0;
     if (lgN) prm = { ...prm, power: (prm.power || 1) * (1 + 0.3 * lgN), duration: (prm.duration || 1) * (core === 'ombre' ? 2 : 1) };
     const power = prm.power || 1, dur = prm.duration || 1;
@@ -760,7 +816,7 @@ const World = (() => {
       if (burst && o.t !== 'porte' && o.t !== 'pancarte') evt('hit', 'objet:' + o.t);
       switch (o.t) {
         case 'levier': if (burst && (core === 'force' || core === 'vent' || core === 'son' || core === 'terre' || core === 'gravite') && time - (o.tT || 0) > 0.6) { o.etat = !o.etat; o.tT = time; Son.sfx('click'); part(ocx, ocy, C, 6, 50); } break;
-        case 'brasier': if (core === 'feu' || core === 'foudre' || (core === 'lumiere' && prm.lg && prm.lg.lumiere)) { if (!(o.feu > 0)) Son.sfx('burst', 'feu'); o.feu = 15 * (prm.duration || 1); } else if (core === 'eau' || core === 'froid' || (core === 'vent' && burst) || core === 'secheresse' || core === 'neutraliser') { if (o.feu > 0) part(ocx, o.y, '#bbb', 8, 40, 0.8, 4, -60, 'fumee'); o.feu = 0; } break;
+        case 'brasier': if (core === 'feu' || core === 'foudre' || (core === 'lumiere' && prm.lg && prm.lg.lumiere)) { if (!(o.feu > 0)) Son.sfx('burst', 'feu'); o.feu = 20 * (prm.duration || 1); } else if (core === 'eau' || core === 'froid' || (core === 'vent' && burst) || core === 'secheresse' || core === 'neutraliser') { if (o.feu > 0) part(ocx, o.y, '#bbb', 8, 40, 0.8, 4, -60, 'fumee'); o.feu = 0; } break;
         case 'lampe': if (core === 'foudre') { o.charge = 10 * (prm.duration || 1); part(ocx, ocy, '#fff2a0', 12, 120, 0.4, 2, 0, 'etincelle'); } break;
         case 'moulin': if (core === 'vent' || core === 'son' || core === 'force') { o.spin = Math.max(o.spin, (burst ? 8 : 2) * (prm.duration || 1)); } break;
         case 'roue': if (core === 'vent' || core === 'force') o.ang += burst ? 1.2 : 0.1; break;
@@ -900,7 +956,7 @@ const World = (() => {
         else { p.pg = null; p.sta.vol = Math.max(p.sta.vol, 8 * dur); p.onGround = false; msg('Tu vises le vide : ta pesanteur s\'annule. Vol libre (flèches ou ZQSD) ; ça consomme de l\'encre.'); evt('vol'); }
         break;
       }
-      case 'temps': p.sta.hate = 10 * dur; msg('Le monde ralentit autour de toi.'); break;
+      case 'temps': p.sta.hate = 10 * dur; msg('Tu vas plus vite que le monde : tes pas et ton encre s\'accélèrent.'); break;
       case 'ralentir': p.sta.lent = 6 * dur; msg('Tes jambes pèsent une tonne. Bien joué.'); break;
       case 'son': around({ noGrid: false }); st.shake = 0.3; msg('Un cri à réveiller les golems.'); break;
       case 'silence': around(); break;
@@ -974,7 +1030,7 @@ const World = (() => {
   function dissiper(x, y, rad) {
     const R = rad * 1.5; let n = 0; const p = st.p; const pin = dist(x, y, p.x + p.w / 2, p.y + p.h / 2) < R;
     for (const q of st.sp) if (q.k === 'prise' && !q.mort && dist(x, y, q.x, q.y) < R + 60) { q.tenue = false; ecraserPrise(q); n++; }
-    const KINDS = ['field', 'trap', 'totem', 'timer', 'attente', 'repeat', 'expire', 'rain', 'orbit', 'canal', 'bouclier', 'beamtimer', 'echo', 'singularite'];
+    const KINDS = ['field', 'trap', 'totem', 'timer', 'attente', 'repeat', 'expire', 'rain', 'orbit', 'canal', 'bouclier', 'beamtimer', 'echo', 'singularite', 'bulle', 'tornade'];
     for (const q of st.sp) { if (!KINDS.includes(q.k)) continue; const attached = q.follow || q.k === 'bouclier' || q.k === 'orbit' || q.k === 'canal' || q.self; if ((attached && pin) || (q.x != null && dist(x, y, q.x, q.y) < R)) { q.mort = true; if (q.k === 'bouclier') finBouclier(q); n++; } }
     const avant = st.gz.length; st.gz = st.gz.filter((z) => dist(x, y, z.x, z.y) >= R + z.r * 0.5); n += avant - st.gz.length;
     const ap = st.portails.length; st.portails = st.portails.filter((q) => dist(x, y, q.x, q.y) >= R); if (st.portails.length !== ap) { n++; if (st.portails.length < 2) st.portails = []; }
@@ -1589,13 +1645,13 @@ const World = (() => {
     // contrôle d'une créature
     if (st.control) { st.control.t -= dt; const c = st.control.c; if (st.control.t <= 0 || c.hp <= 0) releaseControl(); else { c.ctl = { dirX, jump: inp.jump, dirY }; } }
     // observation : île volante (et laquelle)
-    if (p.onGround && p.y < 85 * CS) { if (st.ileT <= 0) { st.ileT = 120; game.observe('ile'); } const idx = [110, 300, 520, 730].reduce((b, cx, i, a) => (Math.abs(cx * CS - p.x) < Math.abs(a[b] * CS - p.x) ? i : b), 0); evt('ile', idx); } if (st.ileT > 0) st.ileT -= dt;
+    if (p.onGround && p.y < 85 * CS) { if (st.ileT <= 0) { st.ileT = 120; game.observe('ile'); } const idx = [110, 300, 520, 730].map(Gen.X).reduce((b, cx, i, a) => (Math.abs(cx * CS - p.x) < Math.abs(a[b] * CS - p.x) ? i : b), 0); evt('ile', idx); } if (st.ileT > 0) st.ileT -= dt;
     // défis : lac sec, sommet, profondeur
-    { const lx0 = 222 * CS, lx1 = 328 * CS; const px = p.x + p.w / 2;
+    { const lx0 = Gen.X(222) * CS, lx1 = Gen.X(328) * CS; const px = p.x + p.w / 2;
       if (px < lx0) st.lac = { wet: false, from: 'ouest' };
       else if (px > lx1) { if (st.lac && st.lac.from === 'ouest' && !st.lac.wet) st.lacSec = true; st.lac = null; }
       else if (st.lac && (p.sta.wet > 0 || p.liq)) st.lac.wet = true; }
-    if (p.x > 380 * CS && p.x < 420 * CS && p.y < 90 * CS) st.vuSommet = true;
+    if (p.x > Gen.X(380) * CS && p.x < Gen.X(420) * CS && p.y < 90 * CS) st.vuSommet = true;
     st.maxDepth = Math.max(st.maxDepth, (p.y + p.h) / CS);
     st.defiT -= dt; if (st.defiT <= 0) { st.defiT = 1; game.checkDefis(defiInfo()); }
     // ambiance musicale et exploration de la carte
@@ -1604,7 +1660,7 @@ const World = (() => {
       st.ambT = 0.5;
       const pcx = clamp(Math.floor((p.x + p.w / 2) / CS), 0, Sim.W - 1), pcy = (p.y + p.h / 2) / CS;
       const sous = Sim.surf && pcy > Sim.surf[pcx] + 14, ciel = pcy < 85;
-      const zn = (L.zones.find((z) => p.x >= z.x && p.x < z.x + z.w) || {}).nom;
+      const zq = L.zones.find((z) => p.x >= z.x && p.x < z.x + z.w) || {}; const zn = zq.mood || zq.nom;
       Son.setMood(sous ? 'souterrain' : ciel ? 'ciel' : zn || 'Le Jardin', daylight() < 0.3);
       game.explorer(st.cam.x / CS, st.cam.y / CS, VW / CS, VH / CS);
     }
@@ -2286,6 +2342,12 @@ const World = (() => {
           break;
         }
         case 'label': s.life -= dt; s.y -= 20 * dt; if (s.life <= 0) s.mort = true; break;
+        case 'bulle': {
+          s.life -= dt; if (s.life <= 0) { s.mort = true; break; }
+          vieillir(s.mode, s.x, s.y, s.r, dt, s.f);
+          if (Math.random() < 0.5) { const a = Math.random() * TAU, rr = s.r * (0.3 + Math.random() * 0.7); st.parts.push({ x: s.x + Math.cos(a) * rr, y: s.y + Math.sin(a) * rr, vx: s.mode === 'vite' ? -Math.sin(a) * 160 : -Math.sin(a) * 12, vy: s.mode === 'vite' ? Math.cos(a) * 160 : Math.cos(a) * 12, life: 0.6, max: 0.6, color: s.mode === 'vite' ? '#c8ccd8' : '#8aa0d8', size: 2, grav: 0, type: 'glow' }); }
+          break;
+        }
         case 'tornade': {
           s.life -= dt; if (s.life <= 0) { s.mort = true; break; }
           s.x += Math.sin(time * 0.9 + s.ph) * 50 * dt;
@@ -2845,6 +2907,15 @@ const World = (() => {
       case 'repeat': { const k = 1 - s.t / s.max; ctx.strokeStyle = s.spec.color; ctx.globalAlpha = 0.5; ctx.lineWidth = 1.5; const x = s.self ? st.p.x + st.p.w / 2 : s.x, y = s.self ? st.p.y + st.p.h / 2 : s.y; ctx.beginPath(); ctx.arc(x, y, 16, -Math.PI / 2, -Math.PI / 2 + TAU * k); ctx.stroke(); U.txt(ctx, '×' + s.left, x + 18, y - 16, 10, 'left', '#6b4f2a'); break; }
       case 'expire': { ctx.globalAlpha = 0.35; Seal.glyph(ctx, 'expiration', s.x, s.y - 22, 6, s.spec.color, 2); break; }
       case 'bouclier': { const span = 1.05; ctx.lineCap = 'round'; ctx.strokeStyle = s.spec.color; ctx.globalAlpha = 0.35 + 0.5 * Math.min(1, s.life / 0.5); ctx.lineWidth = 9 * s.spec.prm.size; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, s.a - span, s.a + span); ctx.stroke(); ctx.globalAlpha = 0.9; ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(s.x, s.y, s.r + 5 * s.spec.prm.size, s.a - span, s.a + span); ctx.stroke(); ctx.beginPath(); ctx.arc(s.x, s.y, s.r - 5 * s.spec.prm.size, s.a - span, s.a + span); ctx.stroke(); Seal.glyph(ctx, s.spec.core, s.x + Math.cos(s.a) * s.r, s.y + Math.sin(s.a) * s.r, 7, '#efe3c4', 2); break; }
+      case 'bulle': {
+        const kk = Math.min(1, s.life / 0.5, (s.max - s.life) / 0.3), vite = s.mode === 'vite', C = vite ? '#9aa0ae' : '#6a80c0';
+        ctx.save(); ctx.globalAlpha = 0.12 * kk; ctx.fillStyle = vite ? '#e8e4d8' : '#a8b8e8'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill();
+        ctx.globalAlpha = 0.75 * kk; ctx.strokeStyle = C; ctx.lineWidth = 2; U.inkCircle(ctx, s.x, s.y, s.r, 4, 1.2); ctx.lineWidth = 1; U.inkCircle(ctx, s.x, s.y, s.r * 0.88, 5, 1);
+        for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; ctx.beginPath(); ctx.moveTo(s.x + Math.cos(a) * s.r * 0.88, s.y + Math.sin(a) * s.r * 0.88); ctx.lineTo(s.x + Math.cos(a) * s.r * (i % 3 ? 0.82 : 0.76), s.y + Math.sin(a) * s.r * (i % 3 ? 0.82 : 0.76)); ctx.stroke(); }
+        const t = vite ? time * 9 : time * 0.15; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x + Math.cos(t - Math.PI / 2) * s.r * 0.6, s.y + Math.sin(t - Math.PI / 2) * s.r * 0.6); ctx.stroke();
+        ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x + Math.cos(t / 12 - Math.PI / 2) * s.r * 0.38, s.y + Math.sin(t / 12 - Math.PI / 2) * s.r * 0.38); ctx.stroke();
+        if (!vite) { ctx.lineWidth = 1; ctx.globalAlpha = 0.35 * kk; for (let w = 1; w <= 2; w++) { ctx.beginPath(); for (let i = 0; i <= 40; i++) { const a = i / 40 * TAU; const rr = s.r * (0.5 + w * 0.15) + Math.sin(a * 6 + time * 0.8) * 3; if (i) ctx.lineTo(s.x + Math.cos(a) * rr, s.y + Math.sin(a) * rr); else ctx.moveTo(s.x + Math.cos(a) * rr, s.y + Math.sin(a) * rr); } ctx.stroke(); } }
+        ctx.restore(); break; }
       case 'tornade': { const kk = Math.min(1, s.life / 0.6, (s.max - s.life) / 0.4); ctx.lineCap = 'round';
         for (let i = 0; i < 16; i++) { const f = i / 16; const yy = s.y - f * s.h; const w = s.r * (0.22 + f * 0.95); const ph = time * 8 + i * 0.55; const ox = Math.sin(time * 2 + f * 4 + s.ph) * 10 * f;
           ctx.globalAlpha = (0.25 + 0.45 * (1 - f)) * kk; ctx.strokeStyle = i % 3 ? '#9fd0cc' : '#3f9c9b'; ctx.lineWidth = 1.2 + (1 - f) * 1.5;
@@ -2904,5 +2975,5 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison };
+  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a) };
 })();

@@ -3,7 +3,7 @@
 (() => {
   const VW = 1280, VH = 720;
   const SAVE_KEY = 'atelier-des-sceaux-v2';
-  const WORLD_KEY = 'atelier-monde-v2';
+  const WORLD_KEY = 'atelier-monde-v3'; // v3 : monde étiré à 1800 cellules
   const OPT_KEY = 'atelier-options';
   const CB = 20; // taille d'un bloc de carte (cellules)
   const canvas = document.getElementById('game');
@@ -148,7 +148,7 @@
     },
     // ---------- Carte et options ----------
     explorer(x0, y0, w, h) {
-      const bw = Math.ceil(900 / CB), bh = Math.ceil(260 / CB);
+      const bw = Math.ceil(Sim.W / CB), bh = Math.ceil(Sim.H / CB);
       if (this.carte.length !== bw * bh) this.carte = '0'.repeat(bw * bh);
       const a = this.carte.split(''); let ch = false;
       for (let by = Math.max(0, Math.floor(y0 / CB)); by <= Math.min(bh - 1, Math.floor((y0 + h) / CB)); by++)
