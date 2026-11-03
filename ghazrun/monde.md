@@ -1,116 +1,97 @@
 # Le monde du Ghâzrûn
 
-*Univers inventé pour porter la langue. Rien ici ne vient d'ailleurs : ni Tolkien, ni aucune œuvre existante. Tout ce que décrit cette page a une trace dans le lexique et dans la grammaire.*
+*Univers inventé pour porter la langue. L'esprit est celui des grandes mythologies de fantasy : des êtres plus anciens que le monde, quasi divins, dont certains sont tombés. Mais les noms, les récits et la langue sont originaux.*
 
 ---
 
-## 1. Le Mârdrîm, pays sans soleil
+## 1. La Première Voix et les Voix
 
-Au nord du monde connu s'ouvre une faille entre deux chaînes de montagnes si hautes que le soleil ne descend jamais au fond. Les gens d'en bas appellent cet endroit la Vallée Noire. Ceux qui y vivent l'appellent **Mârdrîm**, « la demeure de la Nuit », et ils ne s'en plaignent pas : pour eux, la nuit n'est pas l'absence de lumière mais la matière première du monde.
+Avant le monde, il y avait **Mâr**, la Nuit originelle, sans haut ni bas, sans avant ni après. Puis une voix parla, une seule fois, un seul mot : **Ûn**, « un ». À ce mot la Nuit se fendit, et de la fente sortirent le feu, puis la pierre, puis l'eau, puis le temps. C'est pourquoi *ûn* veut dire à la fois « un », « oui » et « c'est vrai » : le premier mot du monde fut un oui.
 
-Le Mârdrîm est un pays de pierre et d'eau. Des torrents glacés tombent des glaciers (*krîl*) jusqu'aux lacs du fond, le **Gûrthlûm**, « le gouffre d'eau », dont personne n'a trouvé le fond. Les villes sont creusées dans la roche, en étages, et chaque étage est éclairé par des foyers permanents. Le feu (*vorz*) y est une chose domestique et sacrée à la fois : on ne laisse jamais mourir un foyer, et saluer quelqu'un, c'est lui souhaiter du feu.
+De ce mot naquirent aussi les **Ghâzgorar**, « ceux de la Voix ». Ce ne sont ni des dieux ni des créatures : ce sont des **échos**. Chacun est un fragment de la Première Voix qui a pris conscience de lui-même, et chacun garde en lui la propriété de l'origine : **quand un Ghâzgor parle, ce qu'il dit advient.** Sa langue n'est pas un outil pour décrire le monde, c'est l'outil qui l'a fait. Cette langue est le **Ghâzrûn**, « la Voix profonde ».
 
-> **Vorz thatar.** — « Du feu vers toi. »
-
-Au sommet de la faille, là où le jour touche encore la pierre, se dressent les tours (*thâlar*), tours de guet autant que sanctuaires. La plus ancienne, **Thâlmârok**, la Tour-Sombre, est tombée il y a trois générations ; on la chante encore.
+Les Ghâzgorar n'ont pas de corps par nature. Ils en prennent un quand ils descendent dans le monde, et ce corps leur ressemble : grand, d'une beauté qui fait mal aux yeux, avec une voix qu'on entend dans la poitrine avant de l'entendre dans l'oreille. Les mortels qui les ont vus les décrivent comme des elfes trop grands, trop pâles, trop immobiles, et ils ont raison : les elfes et les hommes ne sont que ce que la Première Voix a laissé retomber en parlant, la poussière de l'acte.
 
 ---
 
-## 2. Les Gôthrûn, « le peuple profond »
+## 2. Les Mârghâzar, Voix de la Nuit
 
-Les habitants du Mârdrîm se nomment eux-mêmes les **Gôthrûn**. Ils sont grands, pâles (*ghîl*), avec des yeux larges faits pour la pénombre. Ils comptent sur dix (*zûl*) et vivent longtemps.
+La Première Voix n'a parlé qu'une fois. Elle n'a rien ordonné aux Ghâzgorar ; elle les a seulement faits. Certains ont pris cela pour un don, et ont chanté le monde tel qu'il venait. D'autres ont pris cela pour un abandon.
 
-Leur société a cinq cercles, du centre vers le bord :
+Ceux-là se sont dit : *si la Voix s'est tue, c'est à nous de finir la phrase.* Ils ont voulu **achever le monde**, c'est-à-dire le fixer, le fermer, le mettre sous un seul nom. Ce sont les **Mârghâzar**, « les Voix de la Nuit », parce qu'ils ont choisi de parler depuis Mâr, le fond d'avant le monde, là où les mots ne rencontrent encore aucune résistance.
 
-| Cercle | Nom | Rôle |
-|---|---|---|
-| 1 | **khârdhûm** | le roi ou la reine, « seigneur de tout ». Gardien de la Première Voix. |
-| 2 | **zârgorar** | les Lieurs, prêtres et juristes. Ils prononcent les serments et gravent les pierres. |
-| 3 | **khârar** | les seigneurs des étages et des tours. |
-| 4 | **varkhar** | les guerriers, qui montent la garde au sommet de la faille. |
-| 5 | **gôth** | le peuple : mineurs, forgerons, pêcheurs du gouffre, chanteurs. |
+Ils ne sont pas mauvais au sens où un loup est mauvais. Ils sont **impies** au sens strict : ils ne reconnaissent plus l'origine, ils se tiennent pour la source. Leur chef, **Mârokhâr**, « le Seigneur-Sombre », fut le premier à prononcer un mot en son propre nom et non comme écho de la Voix. Depuis ce jour, il ne vieillit pas, ne dort pas, et ne peut plus mentir : tout ce qu'il dit devient vrai, ce qui est la pire des prisons.
 
-En dehors des cercles : les **zûgar**, captifs des plaines, qui peuvent entrer dans le cinquième cercle en prêtant serment. Un serment reçu vaut une naissance.
-
-Le Ghâzrûn n'a pas de genre grammatical, et la société des Gôthrûn n'en fait pas non plus : *khâr* désigne indifféremment un seigneur ou une dame, *thâkh* un frère ou une sœur.
+Les Mârghâzar ont dressé leur demeure au nord du monde, dans une faille entre deux chaînes de montagnes où le soleil ne descend jamais, le **Mârdrîm**, « la demeure de la Nuit ». Au sommet se dressait **Thâlmârok**, la Tour-Sombre, d'où Mârokhâr parlait au monde ; elle est tombée, abattue non par une armée mais par un silence (voir § 6). Sa forteresse actuelle est **Khâstrûn**, « la Forteresse Ancienne », bâtie non en pierre mais en **mots** : chaque mur en est un, prononcé une fois et jamais retiré.
 
 ---
 
-## 3. Le mythe de la Première Voix
+## 3. Ce que fait un mot
 
-Au commencement, il n'y avait que **Mâr**, la Nuit originelle, sans haut ni bas. Puis une voix parla, une seule fois, un seul mot : **Ûn**, « un ». À ce mot, la Nuit se fendit, et de la fente sortirent le feu, puis la pierre, puis l'eau. C'est pourquoi *ûn* veut dire à la fois « un », « oui » et « c'est vrai » : le premier mot du monde fut un oui.
+Le Ghâzrûn est **la langue de la réalité**. Chaque mot y a trois profondeurs, comme une pierre dans l'eau :
 
-Les Gôthrûn se disent nés de cette fente, enfants de la Voix. Le roi garde dans sa poitrine la **Ûn Ghâz**, la Première Voix, un mot que nul n'a le droit de prononcer et que chaque roi transmet à son successeur en mourant, bouche contre oreille. On dit que si ce mot était prononcé à voix haute, la Nuit se refermerait.
+1. **Le sens de gorge** (*zhag*), la surface : *vorz* veut dire « feu ». C'est le sens qu'apprend un mortel, et celui qu'emploient les serviteurs.
+2. **Le sens de serment** (*ûrzh*), ce que le mot engage : prononcé dans une formule, *vorz* veut dire « ardeur, hospitalité, ce qu'on ne laisse pas mourir ». Un serment prêté « par le feu » engage cela.
+3. **Le sens de racine** (*rûn*), ce que le mot **fait** : dans la bouche d'une Voix, *vorz* est « ce qui transforme ». Dire *vorz* au sens de racine, c'est transformer.
 
-De là vient le respect des Gôthrûn pour la parole : un mot dit est une chose faite. On ne ment pas en Ghâzrûn haut, c'est physiquement impossible pour qui y croit ; on ment en registre bas, ou dans la langue des plaines.
+Le lexique note ces trois profondeurs pour les racines majeures (`lexique.md`, colonne « Profondeur »). Un Ghâzgor entend les trois à la fois ; un mortel n'entend que la première et devine la deuxième.
 
----
+Grammaticalement, la racine s'atteint par **le mode du Décret** (suffixe *-ôth*, voir `README.md`, § 4.7) : *Vorz vânôth* ne veut pas dire « que le feu soit » comme un souhait, mais « feu : est », et le feu est. Un mortel qui prononce un Décret le paie : c'est le **ghâzdôr**, « le prix de la parole ». La gorge brûle, les cheveux blanchissent, une année de vie s'en va pour un mot. Les sorciers des hommes sont des gens qui ont accepté de mourir par morceaux.
 
-## 4. Les trois âges
-
-Les Gôthrûn ne comptent pas les années mais les âges (*nâlar*), chacun nommé par ce qui l'a ouvert.
-
-**Mârnâl, l'Âge de la Nuit.** Le temps d'avant les tours. Le peuple vivait au fond de la faille, près du gouffre, et ne montait jamais. C'est l'âge des premiers chants et des premiers mots : le vocabulaire le plus ancien (*mâr, lûm, krâz, ghâz, ûn*) vient de là, et il est presque toujours monosyllabique, avec une seule voyelle longue.
-
-**Vorznâl, l'Âge du Feu.** Un Lieur dont le nom est devenu un titre, **Zârgor Ûnok**, « le Lieur Unique », apprit à garder le feu vivant dans la pierre. On put alors creuser les étages, forger le fer (*krûkh*), et monter. C'est à cet âge que furent fixés les serments et qu'on inventa les **zhâkar**, les signes gravés, pour que les serments ne dépendent plus de la mémoire d'un seul.
-
-**Zhârnâl, l'Âge de la Porte.** L'âge présent. Les Gôthrûn ont atteint le sommet de la faille et bâti la Porte, **Zhârdhûm**, « la Porte-de-Tout », par où passent les marchands des plaines. Depuis, le peuple se divise : ceux qui veulent fermer la Porte et redescendre, ceux qui veulent commercer, et les Lieurs qui craignent que la langue ne se mêle à celle d'en bas.
+C'est aussi pourquoi la langue est **dense**. Pas d'article, pas de pronom sujet, pas de copule au présent, pas de préposition : chaque syllabe prononcée a un coût, et la grammaire a été taillée pour qu'une phrase tienne en deux ou trois mots. *Drâkhghan mûrkônaghuz* : « c'est de l'épée que je l'ai tué », en deux mots.
 
 ---
 
-## 5. Les serments, ou pourquoi la langue a deux visages
+## 4. Les deux registres
 
-Chez les Gôthrûn, un serment (*ûrzh*) n'est pas une promesse, c'est une **chaîne** (*zârghan*), et le mot est le même pour les deux. Un serment prononcé par un Lieur, dans la forme exacte, « lie » celui qui le reçoit comme un fer lie un captif. On appelle ce rite le **zârûth**, « la liaison ».
+**Le registre haut** (*Ghâzrûn ûlâr*) est la langue des Voix elles-mêmes. Toutes les longues y sont tenues, les vers vont par paires, le vocatif ouvre la phrase. Rien n'y est ornement : un mot mal tenu glisse de la racine vers la gorge et ne fait plus rien. La beauté de ce registre est la précision d'un mécanisme.
 
-Parce qu'un serment mal prononcé ne lie pas, les Lieurs ont fixé la forme haute de la langue, le **Ghâzrûn ûlâr** : chaque voyelle longue tenue, chaque vers répondant au précédent, le vocatif en tête. Cette forme n'est pas un ornement, c'est une **exigence technique** : la beauté du haut registre est la précision d'un mécanisme.
+**Le registre bas** (*Ghâzrûn zhag*) est ce que la langue devient dans une bouche mortelle. Les Mârghâzar ont des serviteurs : des peuples des plaines capturés, façonnés, parfois corrompus (*vûrghûn*) jusqu'à ne plus ressembler à ce qu'ils étaient. Ces serviteurs, les **zûgar**, parlent la langue de leurs maîtres sans pouvoir la *faire* : chez eux, seule la première voyelle longue d'un mot subsiste, et les mots ne vont pas plus loin que la gorge. Le registre bas est une langue de commandements, de comptes et d'injures. Ses locuteurs sont les orques de ce monde, même si le mot n'existe pas ici : on dit *zûgar*, « les tenus ».
 
-Le registre bas, **Ghâzrûn zhag**, « la voix de gorge », est le même outil abîmé par l'usage. On y abrège tout ce qu'on peut. Un serment en registre bas ne vaut rien ; c'est pourquoi les guerriers, pour jurer, doivent faire venir un Lieur.
-
-### Les grands serments
-
-- **Le Serment des Lieurs** (voir `textes.md`, texte 2) : prononcé sur un enfant à dix ans, le jour où il reçoit son **ûkh ûlâr**, son « nom haut ». Avant cet âge, l'enfant n'a qu'un nom bas, souvent un simple surnom. Le nom haut est gravé sur une **ûrzhkrâz**, une « pierre de serment », déposée au bord du gouffre.
-- **Le Serment de la Porte** : prêté par tout étranger qui franchit Zhârdhûm. Il s'engage à ne pas prononcer « la voyelle volée » à l'intérieur de la faille (voir plus bas).
-- **Le Serment de Feu** : lien entre deux personnes, équivalent d'un mariage ou d'une fraternité d'armes. La formule tient en deux mots : *Vorz ûnok*, « un seul feu ».
-
-Rompre un serment se dit **krûshûth**, « la brisure ». Ce mot désigne aussi la honte, l'exil, et l'état de celui qui n'a plus de nom haut.
+Un zûga qui parvient, par un effort immense, à tenir toutes les longues d'une phrase sent brièvement la deuxième profondeur. C'est de cette façon que naissent les rares traîtres, et les rares chanteurs.
 
 ---
 
-## 6. La voyelle volée
+## 5. La voyelle volée
 
-Le Ghâzrûn n'a pas de *e*. Les Gôthrûn en donnent une raison.
+Le Ghâzrûn n'a pas de *e*. Les Voix disent que ce son n'était pas dans le mot *Ûn*, donc qu'il n'était pas dans le monde à l'origine : il est venu après, avec les peuples du soleil, les **Kôrgôth**, dont les langues sont pleines de voyelles ouvertes et claires. C'est la seule chose au monde que les Mârghâzar ne peuvent pas prononcer. Essayer leur est physiquement impossible, comme à un homme de voir l'ultraviolet. Ils l'appellent **zhâd nâkhûn**, « le mot pris », la voyelle volée, et c'est pour eux la preuve que les mortels ont dérobé quelque chose à la création.
 
-Les gens des plaines, les **Kôrgôth**, « le peuple du soleil », parlent une langue pleine de voyelles ouvertes et claires. À l'Âge du Feu, un prince gôthrûn descendit vers eux, apprit leur langue, et revint ; dans sa bouche, les mots anciens s'étaient déformés, et le serment qu'il prononça devant le roi ne lia personne. Les Lieurs décidèrent que la voyelle qu'il avait rapportée, « la voyelle de la bouche ouverte », avait rompu la chaîne. Ils l'interdirent. On l'appelle depuis **zhâd nâkhûn**, « le mot pris », ou plus simplement la voyelle volée.
+Pour les mortels, c'est un refuge. Un nom qui contient un *e* ne peut pas être prononcé par une Voix, donc ne peut pas être *décrété*. Les peuples qui luttent contre le Mârdrîm donnent à leurs enfants des noms pleins de *e*, et à leurs forteresses aussi.
 
-Un étranger qui prononce un *e* dans le Mârdrîm n'est pas puni, mais tout ce qu'il dit ensuite est tenu pour nul. Les marchands des plaines apprennent donc à dire *Mârdrîm* et non *Merdrim*, et c'est à cela qu'on reconnaît ceux qui ont déjà passé la Porte.
+---
+
+## 6. Les serments et le silence
+
+Chez les Voix, un serment (*ûrzh*) est une **chaîne** (*zârghan*), et c'est le même mot. Un serment prononcé par un Ghâzgor lie celui qui le reçoit comme un fer lie un captif, et un Ghâzgor lui-même ne peut pas rompre un serment qu'il a prononcé : ce serait défaire une partie du monde. Rompre un serment se dit **krûshûth**, « la brisure », et ce mot désigne aussi l'exil, la honte, et l'état d'un Ghâzgor qui s'est contredit : il perd la deuxième et la troisième profondeur, et ne parle plus que de la gorge. On dit qu'il est devenu un **zhôrgor**, une ombre vivante.
+
+Les Mârghâzar ont fait des serments leur instrument de règne. Le **Serment des Lieurs** (`textes.md`, texte 2) est prononcé sur chaque serviteur et sur chaque roi vassal ; le **Serment de Feu**, *Vorz ûnok*, « un seul feu », lie deux êtres pour la durée du monde. Leurs prêtres-juristes, les **Zârgorar**, « les Lieurs », sont des Ghâzgorar de second rang qui n'ont gardé que la deuxième profondeur : ils ne décrètent pas, ils lient.
+
+**La chute de Thâlmârok.** La Tour-Sombre est tombée le jour où un chanteur mortel, un **lômgor** dont on ne connaît que le nom bas, *Ushk*, « cendre », s'est tu au milieu d'un chant que Mârokhâr lui avait ordonné de chanter. Le silence (*hûsh*) a, au sens de racine, « défait un mot » : le mot qui tenait la tour. Depuis, les Voix craignent le silence des mortels plus que leurs armées, et le chant est la seule chose qu'un Lieur ne peut pas lier (*lôm*, racine : « ce qu'on ne peut lier »). La *Lamentation de la tour tombée* (`textes.md`, texte 3) est, selon qui la chante, un chant de deuil ou un chant de victoire.
 
 ---
 
 ## 7. Les signes gravés
 
-Les **zhâkar** furent inventés à l'Âge du Feu pour fixer les serments. On les grave au burin (*zhâkghan*) sur les pierres de serment, sur les linteaux des portes et sur les lames.
+Le Ghâzrûn se grave avant de s'écrire, car une Voix n'a pas besoin d'écrire : le mot dit suffit. Les **zhâkar**, « marques », furent inventés pour les serviteurs et les vassaux, pour que les serments tiennent dans une mémoire mortelle. Un signe gravé est un mot **arrêté à la deuxième profondeur** : il lie, mais il ne fait pas. C'est pourquoi les Voix méprisent l'écriture et pourquoi les mortels la vénèrent.
 
-Leur forme découle de leur usage : des traits droits, parce qu'une courbe au burin éclate la pierre ; des consonnes hautes et des voyelles en entailles, parce que la consonne est « l'os » du mot (*ghrôm*) et la voyelle sa « chair » (*zhamb*), et qu'un serment se reconnaît à ses os. Le vocatif noble, l'entaille triple, est réservé aux noms que l'on invoque : les graver autrement est un sacrilège.
-
-Les Lieurs gravent de droite à gauche, « vers la porte », car on grave face à l'entrée d'une salle et l'on finit toujours un serment en regardant le seuil. Les chanteurs, eux, écrivent sur peau de gauche à droite, et les Lieurs disent que c'est pour cela que les chansons mentent.
+Les signes sont carrés et faits de traits droits, parce qu'une courbe au burin éclate la pierre ; les consonnes sont « l'os » du mot (*ghrôm*), les voyelles sa « chair » (*zhamb*), portées en entailles au-dessus de l'os. L'alphabet complet est décrit dans `alphabet.md` et dessiné dans `alphabet.svg`.
 
 ---
 
-## 8. Noms et vie quotidienne
+## 8. Figures
 
-**Les noms.** Un enfant reçoit un nom bas à la naissance, souvent descriptif et court : *Nîk* « petit », *Krâkh* « corbeau », *Vorz* « feu ». À dix ans, le nom haut, composé de deux racines dont l'une au moins porte une longue : **Nôkhzhâl** « qui-voit-la-nuit », **Krâzdrâng** « pierre-forte », **Lûmîshâ** « larme ». Le nom haut est le seul qu'on grave ; le nom bas est le seul qu'on crie.
-
-**Le feu et l'eau.** Chaque maison a son foyer et son bassin. On salue par le feu (*Vorz thatar*) et l'on pleure par l'eau : *lûmîsh*, la larme, est « l'eau de l'œil », et pleurer un mort se dit « donner de l'eau au gouffre ».
-
-**Le chant.** Les Gôthrûn chantent dans le noir, en descendant les étages. Le chant (*lôm*) est la seule chose qu'un Lieur ne peut pas lier : un chant n'engage à rien, et c'est sa liberté. La *Lamentation de la tour tombée* (`textes.md`, texte 3) est le chant le plus connu ; on dit qu'il fut composé par le dernier gardien de Thâlmârok, un **shûlgor** dont on ne connaît que le nom bas, *Ushk*, « cendre ».
-
-**Ce qu'on craint.** Les Gôthrûn ne craignent ni la nuit ni le gouffre. Ils craignent trois choses : la brisure (*krûshûth*), le feu qui s'éteint, et le jour plein (*dâldhûm*), « tout le jour », l'idée d'un lieu sans aucune ombre où l'on ne pourrait rien cacher ni rien garder.
+- **Mârokhâr**, le Seigneur-Sombre. Premier à avoir parlé en son nom. Ne peut plus mentir ni dormir. Cherche le mot qui fermerait le monde et l'a presque trouvé deux fois.
+- **Ghâzûlâr**, « Haute-Voix », le héraut. Celui par qui Mârokhâr parle aux mortels, parce que sa propre voix les tuerait.
+- **Nôkhzhâl**, « Qui-voit-la-nuit », la Lieuse en chef. Garde les pierres de serment. On dit qu'elle a prêté un serment à elle-même et que personne ne sait lequel.
+- **Zârgor Ûnok**, « le Lieur Unique », fondateur de l'ordre des Lieurs, premier à avoir compris qu'un mot pouvait lier sans faire.
+- **Vrôzân**, « la Flamboyante », Voix non déchue, sœur en origine de Mârokhâr. Elle n'a jamais prononcé de Décret, par choix. C'est la seule que Mârokhâr craigne.
+- **Ushk**, « Cendre », chanteur mortel. Il s'est tu une fois.
 
 ---
 
 ## 9. Pistes pour écrire dans ce monde
 
-- Une Lieuse (*zârgor* n'a pas de genre) découvre que le Serment de la Porte ne lie plus les marchands : la langue des plaines change le Ghâzrûn de l'intérieur.
-- Le roi meurt avant d'avoir transmis la Première Voix. Que lie un serment prononcé devant un trône vide ?
-- Un enfant des plaines, *zûga*, prête serment et reçoit un nom haut. Son nom haut est-il vrai s'il a été prononcé avec un accent ?
-- Quelqu'un reconstruit Thâlmârok et retrouve, gravée sous les fondations, une pierre de serment dans une langue plus ancienne encore que le Ghâzrûn : l'Âge de la Nuit avait-il déjà des Lieurs ?
+- Un mortel apprend le registre haut en secret, et découvre qu'il peut décréter. Chaque mot lui coûte un an. Combien de mots vaut une vie ?
+- Mârokhâr prononce par erreur une phrase vraie sur lui-même, et doit vivre avec.
+- Une Lieuse découvre un vieux serment gravé qui contredit un Décret du Seigneur-Sombre. Lequel tient ?
+- Une armée des plaines marche sur Khâstrûn avec, pour toute arme, un nom plein de *e* et l'ordre de ne jamais répondre.

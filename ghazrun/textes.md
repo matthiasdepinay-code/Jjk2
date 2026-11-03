@@ -1,6 +1,8 @@
 # Textes en Ghâzrûn
 
-Chaque texte est donné en Ghâzrûn (registre haut sauf mention), puis en traduction, puis en glose mot à mot. Abréviations : NÉG négation, PL pluriel, TOT totalité, GÉN génitif, LOC locatif, ALL allatif, ABL ablatif, INS instrumental, VOC vocatif, PASSÉ, FUT futur, IMP impératif, INF infinitif, PP participe passif, 1s/2s/3s… personnes.
+Chaque texte est donné en Ghâzrûn (registre haut sauf mention), puis en traduction, puis en glose mot à mot. Abréviations : NÉG négation, PL pluriel, TOT totalité, GÉN génitif, LOC locatif, ALL allatif, ABL ablatif, INS instrumental, VOC vocatif, PASSÉ, FUT futur, IMP impératif, INF infinitif, PP participe passif, DÉCRET mode du Décret, 1s/2s/3s… personnes.
+
+Pour graver un de ces textes : `python3 outils/zhakar.py "..." -o fichier.svg`. Pour vérifier une forme : `python3 outils/ghazrun.py analyse <forme>`.
 
 ---
 
@@ -142,7 +144,57 @@ que ton nom demeure.
 
 ---
 
-## 6. Clin d'œil au modèle
+## 6. Le Décret de Khâstrûn
+
+*Les mots par lesquels Mârokhâr a dressé sa forteresse après la chute de la Tour-Sombre. Mode du Décret : pas de sujet, parce que celui qui parle est la phrase. Chaque vers est un mur.*
+
+> **Krâz ûzgôth. Gûrk zârôthdhûm.**
+> **Zhâr krûzôth, dha ûkh ghôk shûlôthuz.**
+> **Nôkh tâz dhârôth nâldhûmzhâ.**
+> **Ûl ghâzagh, vânôth.**
+
+Pierre : se dresse. Mur : tout se lie.
+Porte : se ferme, et mon nom la garde.
+Nuit : ici demeure, pour toujours.
+Ce que je dis, est.
+
+| Ghâzrûn | Glose |
+|---|---|
+| Krâz ûzg-ôth | pierre se.lever-DÉCRET |
+| Gûrk zâr-ôth-dhûm | mur lier-DÉCRET-TOT |
+| Zhâr krûz-ôth | porte fermer-DÉCRET |
+| dha ûkh ghôk shûl-ôth-uz | et nom mon garder-DÉCRET-3s.OBJ |
+| Nôkh tâz dhâr-ôth nâldhûm-zhâ | nuit ici demeurer-DÉCRET éternité-LOC |
+| Ûl ghâz-agh, vân-ôth | ce.que dire-1s être-DÉCRET |
+
+Le dernier vers est la formule que les Voix de la Nuit ont fait graver sur chaque seuil du Mârdrîm. Les mortels la lisent comme une menace ; les Voix, comme une définition.
+
+---
+
+## 7. Phrases de magie, de guerre et de prière
+
+*Registre haut, pour montrer le lexique étendu en situation.*
+
+| Ghâzrûn | Français | Analyse |
+|---|---|---|
+| **Khrâmagh Mârâ.** | J'invoque la Nuit. | khrâm-agh Mâr-VOC |
+| **Thrûnônaghot drâkhtar.** | Je t'ai tissé à l'épée. (sort de garde) | thrûn-ôn-agh-ot drâkh-ALL |
+| **Zhûrkûth thâlzhâ dhâr.** | Une malédiction demeure dans la tour. | |
+| **Rûnzhâd narkhôrâr !** | N'écoutez pas le mot de pouvoir ! | nar-khôr-IMP.PL |
+| **Zâl Zhârdhûmtar grâm.** | L'armée marche vers la Porte-de-Tout. | |
+| **Varkhâr brâng nâkhôn, thrôkh gharôk.** | Le capitaine a pris la bannière : la victoire est nôtre. | |
+| **Thîkar vâshghan thôrnar.** | Les flèches arrivent avec le vent. | thîk-PL vâsh-INS thôrn-3p |
+| **Hûrzdrâng ghûm ûnok.** | Le courageux meurt une seule fois. | |
+| **Sûl ghôk thatar dôragh.** | Je te donne mon âme. | sûl ghôk tha-ALL dôr-1s |
+| **Ô Ûn, khôrâ gharam.** | Ô Un, entends-nous. | ghar-am, forme pleine du pronom + objet |
+| **Dôrnârg vorzkrâzzhâ, thâmûth drîmzhâ.** | Sacrifice sur l'autel, bénédiction dans la maison. | |
+| **Thrûnâl narkrûshûn.** | Le destin ne se brise pas. (« destin non-brisé ») | |
+| **Brûkh dha krîsh, vorzghâz.** | Du pain et du sel, merci. | |
+| **Dâlthûzzhâ thrâmaghar, dâlghûmzhâ dhôlaghar.** | À l'aube nous courons, au crépuscule nous dormons. | |
+
+---
+
+## 8. Clin d'œil au modèle
 
 Pour montrer la mécanique héritée du Noir Parler, voici la phrase la plus célèbre de ce dernier rendue en Ghâzrûn :
 

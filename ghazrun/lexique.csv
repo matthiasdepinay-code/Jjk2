@@ -1,208 +1,354 @@
-mot,categorie,sens,theme,note
-ghâz,n./v.,"voix, parole ; parler, dire",Parole et esprit,dérivation zéro
-rûn,adj./n.,"profond, ancien, originel ; la profondeur",Qualités,
-Ghâzrûn,n.,la langue elle-même (« la Voix profonde »),Parole et esprit,
-zhâd,n.,mot,Parole et esprit,
-ûkh,n.,nom,Parole et esprit,
-zhâk,n./v.,"signe gravé, rune ; graver, écrire",Parole et esprit,pl. zhâkar « l'écriture »
-lôm,n./v.,chant ; chanter,Parole et esprit,dérivation zéro
-ûrzh,n./v.,serment ; jurer,Parole et esprit,
-thîr,n.,vérité,Parole et esprit,
-slâkh,n.,"mensonge, tromperie",Parole et esprit,
-hûsh,n./v.,silence ; se taire,Parole et esprit,
-rûnûth,n.,sagesse,Parole et esprit,rûn + -ûth
-mâlûth,n.,amour,Parole et esprit,mâl + -ûth
-mârokûth,n.,ténèbres,Parole et esprit,mârok + -ûth
-lîthûth,n.,beauté,Parole et esprit,lîth + -ûth
-zrâgûth,n.,"quête, recherche",Parole et esprit,zrâg + -ûth
-ghûmûth,n.,la mort,Parole et esprit,ghûm + -ûth
-vorz,n.,feu (le feu commun),Éléments et nature,
-vrôz,n.,flamme (le feu noble),Éléments et nature,
-ushk,n.,cendre,Éléments et nature,
-shâkh,n.,fumée,Éléments et nature,
-lûm,n.,eau,Éléments et nature,
-ghôl,n.,mer,Éléments et nature,
-dâgh,n.,"terre, sol",Éléments et nature,
-dâghdhûm,n.,le monde,Éléments et nature,« toute la terre »
-krâz,n.,"pierre, roche",Éléments et nature,
-zhorg,n.,montagne,Éléments et nature,
-gûrth,n.,"gouffre, abîme",Éléments et nature,
-ghrân,n.,forêt,Éléments et nature,
-tharn,n.,arbre,Éléments et nature,
-vâsh,n.,vent,Éléments et nature,
-krîl,n./adj.,glace ; froid,Éléments et nature,
-shîl,n.,neige,Éléments et nature,
-thâng,n.,ciel,Éléments et nature,
-kôr,n.,soleil,Éléments et nature,
-gôrn,n.,lune,Éléments et nature,
-thîz,n.,étoile,Éléments et nature,
-dâl,n.,"jour, lumière du jour",Éléments et nature,
-nôkh,n.,nuit,Éléments et nature,
-mâr,n.,"obscurité profonde, la Nuit originelle",Éléments et nature,
-zhôr,n.,ombre (portée),Éléments et nature,
-nâl,n.,"temps, moment, heure",Éléments et nature,
-nâldhûm,n.,éternité,Éléments et nature,« tout le temps »
-zôr,n.,or (métal),Éléments et nature,
-krûkh,n.,fer,Éléments et nature,
-vrâgh,n.,loup,Créatures,
-krâkh,n.,corbeau,Créatures,
-zlîsh,n.,serpent,Créatures,
-drôgh,n.,dragon,Créatures,
-gor,n.,"personne, quelqu'un",Personnes,aussi suffixe d'agent -gor
-nargor,pron.,"personne, nul",Personnes,nar- + gor
-khâr,n.,"seigneur, dame, maître",Personnes,sans genre
-khârdhûm,n.,"roi, reine",Personnes,« seigneur de tout »
-zûga,n.,"serviteur, esclave",Personnes,pl. zûgar
-varkh,n.,guerrier,Personnes,
-gôth,n.,"peuple, tribu",Personnes,
-nûk,n.,enfant,Personnes,
-mâth,n.,mère,Personnes,
-dâth,n.,père,Personnes,
-thâkh,n.,"frère, sœur",Personnes,
-thûm,n.,"ami, compagnon",Personnes,
-nârkh,n./v.,ennemi ; haïr,Personnes,dérivation zéro
-zârgor,n.,le Lieur (maître de serment),Personnes,zâr + -gor
-shûlgor,n.,gardien,Personnes,shûl + -gor
-lômgor,n.,"chanteur, barde",Personnes,lôm + -gor
-thâl,n.,tour,Lieux et objets,
-zhâr,n.,"porte, seuil",Lieux et objets,
-khâst,n.,forteresse,Lieux et objets,
-gûrk,n.,"mur, rempart",Lieux et objets,
-brâz,n.,pont,Lieux et objets,
-drûth,n.,"route, chemin",Lieux et objets,
-drîm,n.,"lieu, demeure",Lieux et objets,aussi suffixe de lieu -drîm
-dhôldrîm,n.,"dortoir, tombe",Lieux et objets,dhôl + -drîm
-drâkh,n.,épée,Lieux et objets,
-thrôm,n.,lance,Lieux et objets,
-shrûk,n.,bouclier,Lieux et objets,
-dromb,n.,marteau,Lieux et objets,
-zârghan,n.,"chaîne, lien",Lieux et objets,zâr + -ghan
-zhâkghan,n.,burin,Lieux et objets,zhâk + -ghan
-khrûl,n.,anneau,Lieux et objets,
-zhârkh,n.,couronne,Lieux et objets,
-nârg,n.,sang,Corps,
-ghrôm,n.,"os ; au figuré, consonne",Corps,sens figuré ajouté
-zhamb,n.,"chair, corps ; au figuré, voyelle",Corps,sens figuré ajouté
-zhân,n.,main,Corps,
-îsh,n.,œil,Corps,pl. îshar
-lûmîsh,n.,larme,Corps,« eau de l'œil »
-hûrz,n.,cœur,Corps,
-krûm,n.,tête,Corps,
-ghâzdrîm,n.,bouche,Corps,« lieu de la voix »
-vîth,n./v.,vie ; vivre,Corps,
-vân,v.,être (passé et futur seulement),Verbes,pas de copule au présent
-drûk,v.,"régner, gouverner",Verbes,
-zâr,v.,"lier, attacher",Verbes,
-zrâg,v.,trouver,Verbes,
-narzrâg,v.,perdre,Verbes,« ne pas trouver »
-ghûrk,v.,"apporter, amener",Verbes,
-krûsh,v.,briser,Verbes,
-dhôl,v.,dormir,Verbes,
-zhâl,v.,voir,Verbes,
-khôr,v.,"entendre, écouter",Verbes,
-grâm,v.,"aller, marcher",Verbes,
-thôrn,v.,venir,Verbes,
-thrâm,v.,courir,Verbes,
-mûrk,v.,tuer,Verbes,
-shrâk,v.,frapper,Verbes,
-nâkh,v.,"prendre, saisir",Verbes,
-ghâl,v.,tenir,Verbes,
-dôr,v.,donner,Verbes,
-thûl,v.,"savoir, connaître",Verbes,
-narthûl,v.,oublier,Verbes,« ne pas savoir »
-rûnthûl,v.,se souvenir,Verbes,« savoir en profondeur »
-rûm,v.,craindre,Verbes,
-zhrôk,v.,brûler,Verbes,
-shûl,v.,"garder, veiller sur",Verbes,
-ghîm,v.,cacher,Verbes,
-thûz,v.,naître,Verbes,
-ghûm,v.,mourir,Verbes,
-zhârk,v.,ouvrir,Verbes,
-krûz,v.,fermer,Verbes,
-dhâr,v.,"attendre, demeurer",Verbes,
-glûm,v.,tomber,Verbes,
-ûzg,v.,se lever,Verbes,
-nîl,v.,pleurer,Verbes,
-slûg,v.,boire,Verbes,
-mûkh,v.,manger,Verbes,
-bûl,v.,faire,Verbes,
-ûrg,v.,vouloir,Verbes,
-drâng,v./adj.,pouvoir ; fort,Verbes,dérivation zéro
-mâl,v.,"aimer, chérir",Verbes,
-mârok,adj.,sombre,Qualités,
-khûl,adj.,noir,Qualités,
-ghîl,adj.,"blanc, pâle",Qualités,
-nârgok,adj.,"rouge, sanglant",Qualités,nârg + -ok
-ûlâr,adj.,"haut, élevé, noble",Qualités,
-zhag,adj.,"bas, grossier, guttural",Qualités,
-thîn,adj.,"jeune, nouveau",Qualités,
-bôrg,adj.,grand,Qualités,
-nîk,adj.,petit,Qualités,
-slîm,adj.,faible,Qualités,
-vorzok,adj.,ardent,Qualités,vorz + -ok
-vorzân,adj.,"brûlant, chaud",Qualités,participe de vorz
-lîth,adj.,beau,Qualités,
-thîrok,adj.,vrai,Qualités,thîr + -ok
-slâkhok,adj.,"faux, trompeur",Qualités,slâkh + -ok
-ûnok,adj.,"seul, unique",Qualités,ûn + -ok
-nâldhûmok,adj.,éternel,Qualités,nâldhûm + -ok
-narvîth,adj.,inanimé,Qualités,nar- + vîth
-gha,pron.,je,Pronoms et particules,gén. ghôk
-tha,pron.,tu,Pronoms et particules,gén. thôk
-uz,pron.,"il, elle, ce",Pronoms et particules,gén. uzôk
-ghar,pron.,nous,Pronoms et particules,gén. gharôk
-thar,pron.,vous,Pronoms et particules,gén. tharôk
-uzar,pron.,"ils, elles",Pronoms et particules,gén. uzarôk
-tâz,pron./adv.,"ceci, ici",Pronoms et particules,
-dûz,pron./adv.,"cela, là",Pronoms et particules,
-kâ,pron./part.,"quoi, qui ; particule interrogative finale",Pronoms et particules,
-kâzhâ,adv.,où,Pronoms et particules,kâ + locatif
-kâtar,adv.,vers où,Pronoms et particules,kâ + allatif
-kâvôr,adv.,d'où ; pourquoi,Pronoms et particules,kâ + ablatif
-kâghan,adv.,comment,Pronoms et particules,kâ + instrumental
-kânâl,adv.,quand,Pronoms et particules,kâ + nâl
-tâznâl,adv.,maintenant,Pronoms et particules,« ce temps »
-nâldhûmzhâ,adv.,"toujours, pour toujours",Pronoms et particules,« dans l'éternité »
-narnâl,adv.,jamais,Pronoms et particules,« pas de temps »
-zhûn,adv.,encore,Pronoms et particules,
-ûl,conj.,"qui, que (relatif) ; ce qui",Pronoms et particules,
-dha,conj.,et,Pronoms et particules,
-vai,conj.,ou,Pronoms et particules,
-khor,conj.,mais,Pronoms et particules,
-zûm,conj.,"car, parce que",Pronoms et particules,
-gûr,conj.,si,Pronoms et particules,
-dok,conj.,"ainsi, donc",Pronoms et particules,
-ûnâl,conj.,jusqu'à ce que,Pronoms et particules,
-nar,part.,non ; ne… pas (préfixe nar-),Pronoms et particules,
-ûn,num./part.,un ; oui,Pronoms et particules,
-ô,part.,ô (exclamatif noble) ; ô + futur = souhait,Pronoms et particules,
-tâk,num.,deux,Nombres,
-ghrum,num.,trois,Nombres,
-nâk,num.,quatre,Nombres,
-khâl,num.,cinq,Nombres,
-shûm,num.,six,Nombres,
-drî,num.,sept,Nombres,
-dhâk,num.,huit,Nombres,
-zhîk,num.,neuf,Nombres,
-zûl,num.,dix,Nombres,
-mâz,num.,cent,Nombres,
-ûlmaz,num.,mille,Nombres,
-Mârdrîm,n.pr.,le pays sans soleil (« demeure de la Nuit »),Monde,mâr + -drîm
-Gôthrûn,n.pr.,"le peuple profond, habitants du Mârdrîm",Monde,gôth + rûn
-Kôrgôth,n.pr.,"le peuple du soleil, gens des plaines",Monde,kôr + gôth
-Thâlmârok,n.pr.,la Tour-Sombre (tombée),Monde,thâl + mârok
-Zhârdhûm,n.pr.,"la Porte-de-Tout, passage vers les plaines",Monde,zhâr + -dhûm
-Gûrthlûm,n.pr.,"le gouffre d'eau, lac sans fond",Monde,gûrth + lûm
-Mârnâl,n.pr.,l'Âge de la Nuit,Monde,mâr + nâl
-Vorznâl,n.pr.,l'Âge du Feu,Monde,vorz + nâl
-Zhârnâl,n.pr.,l'Âge de la Porte (âge présent),Monde,zhâr + nâl
-Ûn Ghâz,n.pr.,"la Première Voix, mot interdit gardé par le roi",Monde,
-Zârgor Ûnok,n.pr.,"le Lieur Unique, fondateur des serments",Monde,
-zârûth,n.,la liaison : rite du serment et du nom haut,Monde,zâr + -ûth
-ûrzhkrâz,n.,pierre de serment,Monde,ûrzh + krâz
-ûkh ûlâr,n.,"nom haut, reçu à dix ans",Monde,
-ûkh zhag,n.,"nom bas, nom d'enfant",Monde,
-krûshûth,n.,"la brisure : parjure, honte, exil",Monde,krûsh + -ûth
-zhâd nâkhûn,n.,« le mot pris » : la voyelle volée (le e),Monde,
-dâldhûm,n.,"« tout le jour » : lieu sans ombre, objet d'effroi",Monde,dâl + -dhûm
-vorz ûnok,loc.,« un seul feu » : formule du Serment de Feu,Monde,
+mot,categorie,sens,theme,note,profondeur
+ghâz,n./v.,"voix, parole ; parler, dire",Parole et esprit,dérivation zéro,serment : engagement ; racine : faire être
+rûn,adj./n.,"profond, ancien, originel ; la profondeur",Qualités,,serment : ancienneté ; racine : ce qui est au-dessous de tout
+Ghâzrûn,n.,la langue elle-même (« la Voix profonde »),Parole et esprit,,
+zhâd,n.,mot,Parole et esprit,,
+ûkh,n.,nom,Parole et esprit,,serment : identité ; racine : ce par quoi on est tenu
+zhâk,n./v.,"signe gravé, rune ; graver, écrire",Parole et esprit,pl. zhâkar « l'écriture »,serment : mémoire gravée ; racine : ce qui ne s'efface pas
+lôm,n./v.,chant ; chanter,Parole et esprit,dérivation zéro,serment : liberté ; racine : ce qu'on ne peut lier
+ûrzh,n./v.,serment ; jurer,Parole et esprit,,serment : parole liée ; racine : un mot qui devient chaîne
+thîr,n.,vérité,Parole et esprit,,
+slâkh,n.,"mensonge, tromperie",Parole et esprit,,
+hûsh,n./v.,silence ; se taire,Parole et esprit,,serment : respect ; racine : défaire un mot
+rûnûth,n.,sagesse,Parole et esprit,rûn + -ûth,
+mâlûth,n.,amour,Parole et esprit,mâl + -ûth,
+mârokûth,n.,ténèbres,Parole et esprit,mârok + -ûth,
+lîthûth,n.,beauté,Parole et esprit,lîth + -ûth,
+zrâgûth,n.,"quête, recherche",Parole et esprit,zrâg + -ûth,
+ghûmûth,n.,la mort,Parole et esprit,ghûm + -ûth,
+vorz,n.,feu (le feu commun),Éléments et nature,,"serment : ardeur, hospitalité ; racine : ce qui transforme"
+vrôz,n.,flamme (le feu noble),Éléments et nature,,
+ushk,n.,cendre,Éléments et nature,,
+shâkh,n.,fumée,Éléments et nature,,
+lûm,n.,eau,Éléments et nature,,serment : mémoire ; racine : ce qui relie en coulant
+ghôl,n.,mer,Éléments et nature,,serment : oubli ; racine : ce qui engloutit
+dâgh,n.,"terre, sol",Éléments et nature,,
+dâghdhûm,n.,le monde,Éléments et nature,« toute la terre »,
+krâz,n.,"pierre, roche",Éléments et nature,,serment : fidélité ; racine : ce qui demeure
+zhorg,n.,montagne,Éléments et nature,,
+gûrth,n.,"gouffre, abîme",Éléments et nature,,
+ghrân,n.,forêt,Éléments et nature,,
+tharn,n.,arbre,Éléments et nature,,
+vâsh,n.,vent,Éléments et nature,,serment : rumeur ; racine : ce qui emporte
+krîl,n./adj.,glace ; froid,Éléments et nature,,
+shîl,n.,neige,Éléments et nature,,
+thâng,n.,ciel,Éléments et nature,,
+kôr,n.,soleil,Éléments et nature,,serment : jugement ; racine : ce qui brûle sans toucher
+gôrn,n.,lune,Éléments et nature,,serment : mesure ; racine : ce qui revient
+thîz,n.,étoile,Éléments et nature,,serment : promesse lointaine ; racine : ce qui guide
+dâl,n.,"jour, lumière du jour",Éléments et nature,,serment : révélation ; racine : ce qui expose
+nôkh,n.,nuit,Éléments et nature,,serment : repos ; racine : ce qui cache
+mâr,n.,"obscurité profonde, la Nuit originelle",Éléments et nature,,serment : secret ; racine : ce d'où tout sort
+zhôr,n.,ombre (portée),Éléments et nature,,
+nâl,n.,"temps, moment, heure",Éléments et nature,,serment : échéance ; racine : ce qui passe
+dhûm,n.,"le Tout, la totalité (suffixe -dhûm « tous »)",Religion,,serment : totalité ; racine : ce qui ferme le cercle
+nâldhûm,n.,éternité,Éléments et nature,« tout le temps »,
+zôr,n.,or (métal),Éléments et nature,,
+krûkh,n.,fer,Éléments et nature,,
+vrâgh,n.,loup,Créatures,,
+krâkh,n.,corbeau,Créatures,,
+zlîsh,n.,serpent,Créatures,,
+drôgh,n.,dragon,Créatures,,
+gor,n.,"personne, quelqu'un",Personnes,aussi suffixe d'agent -gor,serment : témoin ; racine : ce qui porte un nom
+nargor,pron.,"personne, nul",Personnes,nar- + gor,
+khâr,n.,"seigneur, dame, maître",Personnes,sans genre,serment : responsabilité ; racine : celui qui répond
+khârdhûm,n.,"roi, reine",Personnes,« seigneur de tout »,
+zûga,n.,"serviteur, esclave",Personnes,pl. zûgar,serment : dette ; racine : celui qui est tenu
+varkh,n.,guerrier,Personnes,,
+gôth,n.,"peuple, tribu",Personnes,,
+nûk,n.,enfant,Personnes,,
+mâth,n.,mère,Personnes,,
+dâth,n.,père,Personnes,,
+thâkh,n.,"frère, sœur",Personnes,,
+thûm,n.,"ami, compagnon",Personnes,,
+nârkh,n./v.,ennemi ; haïr,Personnes,dérivation zéro,serment : rupture ; racine : vouloir défaire
+zârgor,n.,le Lieur (maître de serment),Personnes,zâr + -gor,
+shûlgor,n.,gardien,Personnes,shûl + -gor,
+lômgor,n.,"chanteur, barde",Personnes,lôm + -gor,
+thâl,n.,tour,Lieux et objets,,serment : veille ; racine : ce qui se dresse contre
+zhâr,n.,"porte, seuil",Lieux et objets,,serment : accueil ; racine : ce qui sépare et joint
+khâst,n.,forteresse,Lieux et objets,,
+gûrk,n.,"mur, rempart",Lieux et objets,,
+brâz,n.,pont,Lieux et objets,,
+drûth,n.,"route, chemin",Lieux et objets,,
+drîm,n.,"lieu, demeure",Lieux et objets,aussi suffixe de lieu -drîm,
+dhôldrîm,n.,"dortoir, tombe",Lieux et objets,dhôl + -drîm,
+drâkh,n.,épée,Lieux et objets,,serment : justice ; racine : ce qui tranche
+thrôm,n.,lance,Lieux et objets,,
+shrûk,n.,bouclier,Lieux et objets,,
+dromb,n.,marteau,Lieux et objets,,
+zârghan,n.,"chaîne, lien",Lieux et objets,zâr + -ghan,
+zhâkghan,n.,burin,Lieux et objets,zhâk + -ghan,
+khrûl,n.,anneau,Lieux et objets,,serment : alliance ; racine : ce qui n'a ni début ni fin
+zhârkh,n.,couronne,Lieux et objets,,
+nârg,n.,sang,Corps,,serment : parenté ; racine : ce qui porte la vie
+ghrôm,n.,"os ; au figuré, consonne",Corps,sens figuré ajouté,
+zhamb,n.,"chair, corps ; au figuré, voyelle",Corps,sens figuré ajouté,
+zhân,n.,main,Corps,,
+îsh,n.,œil,Corps,pl. îshar,serment : témoignage ; racine : ce qui juge
+lûmîsh,n.,larme,Corps,« eau de l'œil »,
+hûrz,n.,cœur,Corps,,
+krûm,n.,tête,Corps,,
+ghâzdrîm,n.,bouche,Corps,« lieu de la voix »,
+vîth,n./v.,vie ; vivre,Corps,,serment : devoir ; racine : ce qui pousse hors de la Nuit
+vân,v.,être (passé et futur seulement),Verbes,pas de copule au présent,serment : permanence ; racine : être posé dans le monde
+drûk,v.,"régner, gouverner",Verbes,,serment : autorité ; racine : plier
+zâr,v.,"lier, attacher",Verbes,,serment : obligation ; racine : rendre un
+zrâg,v.,trouver,Verbes,,serment : connaissance ; racine : faire venir à soi
+narzrâg,v.,perdre,Verbes,« ne pas trouver »,
+ghûrk,v.,"apporter, amener",Verbes,,
+krûsh,v.,briser,Verbes,,serment : parjure ; racine : défaire
+dhôl,v.,dormir,Verbes,,
+zhâl,v.,voir,Verbes,,
+khôr,v.,"entendre, écouter",Verbes,,
+grâm,v.,"aller, marcher",Verbes,,
+thôrn,v.,venir,Verbes,,
+thrâm,v.,courir,Verbes,,
+mûrk,v.,tuer,Verbes,,
+shrâk,v.,frapper,Verbes,,
+nâkh,v.,"prendre, saisir",Verbes,,serment : droit ; racine : faire sien
+ghâl,v.,tenir,Verbes,,
+dôr,v.,donner,Verbes,,serment : lien ; racine : créer une dette
+thûl,v.,"savoir, connaître",Verbes,,serment : maîtrise ; racine : tenir dans la voix
+narthûl,v.,oublier,Verbes,« ne pas savoir »,
+rûnthûl,v.,se souvenir,Verbes,« savoir en profondeur »,
+rûm,v.,craindre,Verbes,,
+zhrôk,v.,brûler,Verbes,,
+shûl,v.,"garder, veiller sur",Verbes,,serment : fidélité ; racine : retenir
+ghîm,v.,cacher,Verbes,,serment : secret ; racine : soustraire au jour
+thûz,v.,naître,Verbes,,
+ghûm,v.,mourir,Verbes,,serment : retour ; racine : rendre à la Nuit
+zhârk,v.,ouvrir,Verbes,,
+krûz,v.,fermer,Verbes,,
+dhâr,v.,"attendre, demeurer",Verbes,,
+glûm,v.,tomber,Verbes,,
+ûzg,v.,se lever,Verbes,,
+nîl,v.,pleurer,Verbes,,
+slûg,v.,boire,Verbes,,
+mûkh,v.,manger,Verbes,,
+bûl,v.,faire,Verbes,,serment : œuvre ; racine : tirer du néant
+ûrg,v.,vouloir,Verbes,,
+drâng,v./adj.,pouvoir ; fort,Verbes,dérivation zéro,
+mâl,v.,"aimer, chérir",Verbes,,serment : protection ; racine : tenir au chaud
+mârok,adj.,sombre,Qualités,,
+khûl,adj.,noir,Qualités,,
+ghîl,adj.,"blanc, pâle",Qualités,,
+nârgok,adj.,"rouge, sanglant",Qualités,nârg + -ok,
+ûlâr,adj.,"haut, élevé, noble",Qualités,,
+zhag,adj.,"bas, grossier, guttural",Qualités,,
+thîn,adj.,"jeune, nouveau",Qualités,,
+bôrg,adj./adv.,"grand ; beaucoup, grandement",Qualités,,
+nîk,adj.,petit,Qualités,,
+slîm,adj.,faible,Qualités,,
+vorzok,adj.,ardent,Qualités,vorz + -ok,
+vorzân,adj.,"brûlant, chaud",Qualités,participe de vorz,
+lîth,adj.,beau,Qualités,,
+thîrok,adj.,vrai,Qualités,thîr + -ok,
+slâkhok,adj.,"faux, trompeur",Qualités,slâkh + -ok,
+ûnok,adj.,"seul, unique",Qualités,ûn + -ok,
+nâldhûmok,adj.,éternel,Qualités,nâldhûm + -ok,
+narvîth,adj.,inanimé,Qualités,nar- + vîth,
+gha,pron.,je,Pronoms et particules,gén. ghôk,
+tha,pron.,tu,Pronoms et particules,gén. thôk,
+uz,pron.,"il, elle, ce",Pronoms et particules,gén. uzôk,
+ghar,pron.,nous,Pronoms et particules,gén. gharôk,
+thar,pron.,vous,Pronoms et particules,gén. tharôk,
+uzar,pron.,"ils, elles",Pronoms et particules,gén. uzarôk,
+tâz,pron./adv.,"ceci, ici",Pronoms et particules,,
+dûz,pron./adv.,"cela, là",Pronoms et particules,,
+kâ,pron./part.,"quoi, qui ; particule interrogative finale",Pronoms et particules,,
+kâzhâ,adv.,où,Pronoms et particules,kâ + locatif,
+kâtar,adv.,vers où,Pronoms et particules,kâ + allatif,
+kâvôr,adv.,d'où ; pourquoi,Pronoms et particules,kâ + ablatif,
+kâghan,adv.,comment,Pronoms et particules,kâ + instrumental,
+kânâl,adv.,quand,Pronoms et particules,kâ + nâl,
+tâznâl,adv.,maintenant,Pronoms et particules,« ce temps »,
+nâldhûmzhâ,adv.,"toujours, pour toujours",Pronoms et particules,« dans l'éternité »,
+narnâl,adv.,jamais,Pronoms et particules,« pas de temps »,
+zhûn,adv.,encore,Pronoms et particules,,
+ûl,conj.,"qui, que (relatif) ; ce qui",Pronoms et particules,,
+dha,conj.,et,Pronoms et particules,,
+vai,conj.,ou,Pronoms et particules,,
+khor,conj.,mais,Pronoms et particules,,
+zûm,conj.,"car, parce que",Pronoms et particules,,
+gûr,conj.,si,Pronoms et particules,,
+dok,conj.,"ainsi, donc",Pronoms et particules,,
+ûnâl,conj.,jusqu'à ce que,Pronoms et particules,,
+nar,part.,non ; ne… pas (préfixe nar-),Pronoms et particules,,
+ûn,num./part.,un ; oui,Pronoms et particules,,serment : vérité ; racine : l'acte même d'être
+ô,part.,ô (exclamatif noble) ; ô + futur = souhait,Pronoms et particules,,
+tâk,num.,deux,Nombres,,
+ghrum,num.,trois,Nombres,,
+nâk,num.,quatre,Nombres,,
+khâl,num.,cinq,Nombres,,
+shûm,num.,six,Nombres,,
+drî,num.,sept,Nombres,,
+dhâk,num.,huit,Nombres,,
+zhîk,num.,neuf,Nombres,,
+zûl,num.,dix,Nombres,,
+mâz,num.,cent,Nombres,,
+ûlmaz,num.,mille,Nombres,,
+Mârdrîm,n.pr.,le pays sans soleil (« demeure de la Nuit »),Monde,mâr + -drîm,
+Gôthrûn,n.pr.,"le peuple profond, habitants du Mârdrîm",Monde,gôth + rûn,
+Kôrgôth,n.pr.,"le peuple du soleil, gens des plaines",Monde,kôr + gôth,
+Thâlmârok,n.pr.,la Tour-Sombre (tombée),Monde,thâl + mârok,
+Zhârdhûm,n.pr.,"la Porte-de-Tout, passage vers les plaines",Monde,zhâr + -dhûm,
+Gûrthlûm,n.pr.,"le gouffre d'eau, lac sans fond",Monde,gûrth + lûm,
+Mârnâl,n.pr.,l'Âge de la Nuit,Monde,mâr + nâl,
+Vorznâl,n.pr.,l'Âge du Feu,Monde,vorz + nâl,
+Zhârnâl,n.pr.,l'Âge de la Porte (âge présent),Monde,zhâr + nâl,
+Ûn Ghâz,n.pr.,"la Première Voix, mot interdit gardé par le roi",Monde,,
+Zârgor Ûnok,n.pr.,"le Lieur Unique, fondateur des serments",Monde,,
+zârûth,n.,la liaison : rite du serment et du nom haut,Monde,zâr + -ûth,
+ûrzhkrâz,n.,pierre de serment,Monde,ûrzh + krâz,
+ûkh ûlâr,n.,"nom haut, reçu à dix ans",Monde,,
+ûkh zhag,n.,"nom bas, nom d'enfant",Monde,,
+krûshûth,n.,"la brisure : parjure, honte, exil",Monde,krûsh + -ûth,
+zhâd nâkhûn,n.,« le mot pris » : la voyelle volée (le e),Monde,,
+dâldhûm,n.,"« tout le jour » : lieu sans ombre, objet d'effroi",Monde,dâl + -dhûm,
+vorz ûnok,loc.,« un seul feu » : formule du Serment de Feu,Monde,,
+ghâzûth,n.,"le Pouvoir : la magie, « ce que fait la voix »",Magie et pouvoir,ghâz + -ûth,
+rûnzhâd,n.,mot de pouvoir,Magie et pouvoir,« mot profond »,
+dôth,n./v.,"décret, parole qui fait ; décréter",Magie et pouvoir,voir le mode du Décret,serment : loi ; racine : dire et que cela soit
+khrâm,v.,"invoquer, appeler une puissance",Magie et pouvoir,,
+khrâmûth,n.,"invocation, prière",Magie et pouvoir,khrâm + -ûth,
+zhûrk,v.,maudire,Magie et pouvoir,,
+zhûrkûth,n.,malédiction,Magie et pouvoir,zhûrk + -ûth,
+thâm,v.,bénir,Magie et pouvoir,,
+thâmûth,n.,bénédiction,Magie et pouvoir,thâm + -ûth,
+zhôrgor,n.,"spectre, ombre vivante",Magie et pouvoir,« personne d'ombre »,
+vrâkh,v.,"changer, transformer",Magie et pouvoir,,
+vrâkhûth,n.,métamorphose,Magie et pouvoir,vrâkh + -ûth,
+shâz,v.,sceller,Magie et pouvoir,,
+shâzghan,n.,sceau,Magie et pouvoir,shâz + -ghan,
+thrûn,v.,"tisser (un fil, un sort, un destin)",Magie et pouvoir,,serment : destin ; racine : croiser des fils
+thrûnûth,n.,"sortilège, chose tissée",Magie et pouvoir,thrûn + -ûth,
+thrûnghan,n.,"fil, corde",Vie quotidienne,thrûn + -ghan,
+zhâkrûn,n.,"glyphe actif, rune de pouvoir",Magie et pouvoir,« signe profond »,
+nâkhûth,n.,"possession, emprise",Magie et pouvoir,nâkh + -ûth,
+dhûmzhâl,n./v.,clairvoyance ; voir tout,Magie et pouvoir,« tout-voir »,
+zhâlgor,n.,"voyant, prophète",Magie et pouvoir,zhâl + -gor,
+zhâlûth,n.,"vision, prophétie",Magie et pouvoir,zhâl + -ûth,
+ghrûz,n.,"flamme noire, feu de sorcellerie",Magie et pouvoir,,
+lûmrûn,n.,"eau profonde, miroir de divination",Magie et pouvoir,,
+thrôl,n.,"bâton, sceptre",Magie et pouvoir,,
+zôrkhrûl,n.,anneau d'or,Magie et pouvoir,zôr + khrûl,
+thîzlûm,n.,"lumière d'étoile, substance sacrée",Magie et pouvoir,« eau d'étoile »,
+vûrgh,v.,"corrompre, pervertir",Magie et pouvoir,,
+vûrghûn,adj.,corrompu,Magie et pouvoir,participe passif,
+ûzgûth,n.,"relèvement, résurrection",Magie et pouvoir,ûzg + -ûth,
+ghûmkhâr,n.,"nécromant, seigneur de la mort",Magie et pouvoir,,
+narvân,n./v.,néant ; annihiler,Magie et pouvoir,« ne pas être »,
+sûl,n.,"âme, souffle",Religion,,serment : vie intérieure ; racine : ce qui reste quand le corps tombe
+narsûl,adj.,sans âme,Religion,,
+ghâzdôr,n.,le prix de la parole : ce qu'un mot de pouvoir coûte à un mortel,Magie et pouvoir,« voix-donner »,
+lômrûn,n.,"incantation chantée, chant profond",Magie et pouvoir,,
+bûlgor,n.,"faiseur, artisan de réalité",Magie et pouvoir,bûl + -gor,
+lîkh,n.,lumière,Religion,,
+varkhûth,n.,guerre,Guerre,varkh + -ûth,
+ghrâkh,n.,bataille,Guerre,,
+zâl,n.,"armée, ost",Guerre,,
+thrômgor,n.,lancier,Guerre,,
+drâkhgor,n.,"épéiste, bretteur",Guerre,,
+thûrz,n.,armure,Guerre,,
+krûmghan,n.,casque,Guerre,« instrument de tête »,
+thrâgh,n.,arc,Guerre,,
+thîk,n.,flèche,Guerre,,
+krôkh,n.,hache,Guerre,,
+nîkdrâkh,n.,"dague, couteau",Guerre,« petite épée »,
+brâng,n.,"bannière, étendard",Guerre,,
+gûrkdhâr,n.,siège,Guerre,« attendre au mur »,
+thrôkh,n.,victoire,Guerre,,
+glûmûth,n.,"chute, défaite",Guerre,glûm + -ûth,
+nîrg,n.,blessure,Guerre,,
+varkhâr,n.,"chef de guerre, capitaine",Guerre,varkh + khâr,
+drûz,n.,butin,Guerre,,
+varkhdrîm,n.,"camp, garnison",Guerre,« lieu des guerriers »,
+thrâmûth,n.,"charge, assaut",Guerre,thrâm + -ûth,
+khrâ,n./v.,cri ; crier,Guerre,,
+ghrûm,n.,cadavre,Guerre,,
+rûmûth,n.,peur,Guerre,rûm + -ûth,
+hûrzdrâng,adj.,courageux (« cœur-fort »),Guerre,,
+narhûrz,n./adj.,lâcheté ; lâche,Guerre,« sans cœur »,
+drâz,n.,"monture, cheval",Guerre,,
+lûmdrîm,n.,"navire, bateau",Guerre,« demeure d'eau »,
+krûkhdrîm,n.,forge,Vie quotidienne,« lieu du fer »,
+krûkhgor,n.,forgeron,Vie quotidienne,,
+zlîshlûm,n.,poison,Guerre,« eau de serpent »,
+mûrkdhûm,v.,"massacrer, exterminer",Guerre,« tuer-tout »,
+zhûl,v.,"obéir, servir",Guerre,,
+dhârûth,n.,"paix, repos",Guerre,dhâr + -ûth,
+Ghâzgorar,n.pr.,les Voix : les êtres quasi divins nés de la Première Voix,Religion,sg. ghâzgor,
+Mârghâzar,n.pr.,"les Voix de la Nuit : les Ghâzgorar déchus, maîtres du Mârdrîm",Religion,sg. mârghâz,
+ûlkhâr,n.,"puissance divine, haut seigneur",Religion,,
+ûrzhdrîm,n.,"temple, lieu des serments",Religion,,
+vorzkrâz,n.,autel,Religion,« pierre de feu »,
+dôrnârg,n.,sacrifice,Religion,« donner le sang »,
+dôrûth,n.,"offrande, don",Religion,dôr + -ûth,
+thrûnâl,n.,destin (« le temps tissé »),Religion,thrûn + nâl,
+ghâzok,adj.,sacré,Religion,« de la Voix »,
+narghâzok,adj.,"impie, profane",Religion,,
+thûlhûrz,n.,"foi, croyance",Religion,« savoir du cœur »,
+lômnâl,n.,"fête, cérémonie",Religion,« temps du chant »,
+bûlûth,n.,"création, œuvre, travail",Religion,bûl + -ûth,
+khârdrîm,n.,trône,Religion,« lieu du seigneur »,
+lômûlâr,n.,hymne,Religion,« chant haut »,
+mârtar grâm,loc.,mourir (« aller vers la Nuit »),Religion,euphémisme,
+vorzdrîm,n.,foyer,Vie quotidienne,,
+dhôlghan,n.,lit,Vie quotidienne,« instrument de sommeil »,
+thâmb,n.,table,Vie quotidienne,,
+brûkh,n.,pain,Vie quotidienne,,
+ghrôsh,n.,viande,Vie quotidienne,,
+krîsh,n.,sel,Vie quotidienne,,
+slûgvorz,n.,"boisson forte, alcool",Vie quotidienne,« boisson de feu »,
+ghîllûm,n.,lait,Vie quotidienne,« eau blanche »,
+zôrlûm,n.,miel,Vie quotidienne,« eau d'or »,
+tharnûk,n.,fruit,Vie quotidienne,« enfant de l'arbre »,
+dâghzôr,n.,"grain, blé",Vie quotidienne,« or de la terre »,
+slûm,n.,poisson,Vie quotidienne,,
+thûk,n.,vêtement,Vie quotidienne,,
+vâshghan,n.,manteau,Vie quotidienne,« instrument contre le vent »,
+grâmghan,n.,"botte, chaussure",Vie quotidienne,,
+ghan,n.,"outil, instrument",Vie quotidienne,figé à partir du cas instrumental,
+dhrâk,n.,bois,Vie quotidienne,,
+khûlvorz,n.,charbon,Vie quotidienne,« feu noir »,
+dâlthûz,n.,"matin, aube",Vie quotidienne,« naissance du jour »,
+dâlghûm,n.,"soir, crépuscule",Vie quotidienne,« mort du jour »,
+nôkhrûn,n.,minuit,Vie quotidienne,« nuit profonde »,
+kôrnâl,n.,année,Vie quotidienne,« temps du soleil »,
+gôrnâl,n.,mois,Vie quotidienne,« temps de la lune »,
+tâkdôr,n./v.,"échange, commerce ; échanger",Vie quotidienne,« donner à deux »,
+nâkhdôr,n.,prix,Vie quotidienne,« prendre-donner »,
+tâkdôrgor,n.,marchand,Vie quotidienne,,
+zôrnîk,n.,"monnaie, pièce",Vie quotidienne,« petit or »,
+grâmûth,n.,voyage,Vie quotidienne,grâm + -ûth,
+zhârgor,n.,"étranger, voyageur",Vie quotidienne,« celui de la porte »,
+drîmdhûm,n.,"ville, cité",Vie quotidienne,« toutes les demeures »,
+drîmnîk,n.,"village, hameau",Vie quotidienne,,
+vorzthûm,n.,"époux, épouse, compagnon de feu",Vie quotidienne,,
+nârgdhûm,n.,"famille, lignée",Vie quotidienne,« tout le sang »,
+rûngor,n.,"ancien, vieillard, sage",Vie quotidienne,,
+slîmûth,n.,maladie,Vie quotidienne,slîm + -ûth,
+vîthgor,n.,"guérisseur, médecin",Vie quotidienne,,
+vîthdôr,v.,"guérir, soigner",Vie quotidienne,« donner la vie »,
+lômgrâm,n./v.,danse ; danser,Vie quotidienne,« marche chantée »,
+khrâkh,v.,rire,Vie quotidienne,,
+kâghâz,v.,"demander, interroger",Vie quotidienne,« parler-quoi »,
+dôrghâz,v.,répondre,Vie quotidienne,« donner la voix »,
+dhôlzhâl,n.,rêve,Vie quotidienne,« voir en dormant »,
+thânglûm,n.,pluie,Éléments et nature,« eau du ciel »,
+vâshdhûm,n.,tempête,Éléments et nature,« tout le vent »,
+shâkhlûm,n.,brouillard,Éléments et nature,« eau de fumée »,
+narlîth,adj.,laid,Qualités,,
+ushkok,adj.,"gris ; sale, cendreux",Qualités,ushk + -ok,
+dhûmok,adj.,"plein, entier",Qualités,,
+gûrthok,adj.,"vide, creux",Qualités,« comme un gouffre »,
+thrâmok,adj.,rapide,Qualités,,
+dhârok,adj.,lent,Qualités,,
+krâzok,adj.,"lourd, dur",Qualités,« comme la pierre »,
+vâshok,adj.,léger,Qualités,« comme le vent »,
+drûthok,adj.,"long, lointain",Qualités,,
+zôrok,adj.,doré,Qualités,,
+lûmok,adj.,"bleu, couleur d'eau",Qualités,,
+ghrânok,adj.,vert,Qualités,« couleur de forêt »,
+vorzghâz,interj.,merci (« ta parole est feu »),Vie quotidienne,,

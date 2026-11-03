@@ -5,8 +5,11 @@
 | Fichier | Contenu |
 |---|---|
 | `README.md` | Présentation, phonologie, grammaire complète, formation des noms |
-| `monde.md` | L'univers inventé : le Mârdrîm, les Gôthrûn, le mythe de la Première Voix, les serments, la voyelle volée |
-| `lexique.md` | Lexique classé par thème (~210 entrées) |
+| `monde.md` | L'univers : la Première Voix, les Voix déchues, ce que fait un mot, les serments, la voyelle volée |
+| `alphabet.md`, `alphabet.svg` | L'écriture gravée, dessinée |
+| `outils/ghazrun.py` | Déclinaison, conjugaison, lexique, analyse de formes, registre bas |
+| `outils/zhakar.py` | Rend un texte en écriture gravée (SVG) |
+| `lexique.md` | Lexique classé par thème (~350 entrées : parole, magie, religion, guerre, nature, corps, vie quotidienne) |
 | `lexique.csv` | Le même lexique, exploitable par script |
 | `textes.md` | Textes avec traduction et glose mot à mot |
 
@@ -14,20 +17,21 @@
 
 ## 1. Esprit de la langue
 
-Le Ghâzrûn (*ghâz* « voix » + *rûn* « profond, ancien ») est la langue des **Gôthrûn**, le peuple d'une vallée sans soleil, le **Mârdrîm** (voir `monde.md`). Chez eux, un serment prononcé est une chaîne : la langue a donc été fixée par des prêtres-juristes, les Lieurs, pour que chaque formule lie exactement. Elle a deux visages :
+Le Ghâzrûn (*ghâz* « voix » + *rûn* « profond, ancien ») est la langue des **Ghâzgorar**, les Voix : des êtres antérieurs au monde, nés du premier mot, dont la parole fait advenir ce qu'elle dit. Ceux d'entre eux qui ont voulu finir le monde à leur nom, les **Mârghâzar**, Voix de la Nuit, règnent depuis le **Mârdrîm** (voir `monde.md`). C'est **la langue de la réalité** : chaque mot y a trois profondeurs, et la plus profonde plie le monde. Elle a deux visages :
 
 - **Le registre haut** (*Ghâzrûn ûlâr*, « la voix haute ») : langue des serments, des inscriptions et des chants. Les voyelles longues y sont toutes prononcées, les phrases s'ouvrent sur un vocatif, les vers se répondent en parallèle. Sa beauté est une exigence technique : un serment mal prononcé ne lie pas.
-- **Le registre bas** (*Ghâzrûn zhag*, « la voix de gorge ») : parler des soldats et des serviteurs. Les mots sont les mêmes, mais clipsés : seule la première voyelle longue d'un mot garde sa longueur.
+- **Le registre bas** (*Ghâzrûn zhag*, « la voix de gorge ») : ce que la langue devient dans une bouche mortelle, celle des serviteurs (*zûgar*). Les mots sont les mêmes, mais clipsés : seule la première voyelle longue d'un mot garde sa longueur, et le mot ne descend pas plus bas que la gorge.
 
 > *Mârokûth nâldhûmzhâ* (haut) → *Mârokuth nâldhumzha* (bas) — « les ténèbres, pour toujours »
 
 Ce qui rend la langue « ancienne et belle » tient à quelques choix délibérés :
 
-1. **Pas de voyelle *e*.** Le système est fermé, grave : *a, o, u* et leurs longues. Les Gôthrûn l'appellent « la voyelle volée » et l'ont bannie (`monde.md`, § 6).
+1. **Pas de voyelle *e*.** Le système est fermé, grave : *a, o, u* et leurs longues. Les Voix ne peuvent pas prononcer ce son, « la voyelle volée » (`monde.md`, § 5).
 2. **Les voyelles longues portent l'accent** et donnent au discours un rythme lent, psalmodié.
 3. **Les fricatives sonores *gh, dh, zh*** adoucissent la dureté des groupes *kr-, zg-, -rz*.
 4. **Les suffixes s'empilent** comme dans le Noir Parler : *zâr-ôl-uzar-dhûm* « pour-les-lier-tous ».
 5. **La dérivation est régulière** : on peut forger un mot nouveau et il « sonne » juste.
+6. **Chaque syllabe coûte** : pas d'article, pas de pronom sujet, pas de copule, pas de préposition. Une phrase tient en deux ou trois mots (§ 8).
 
 ---
 
@@ -211,6 +215,21 @@ Clin d'œil au modèle : **Ûn khrûl zârôluzardhûm** — « Un anneau pour l
 - **Avoir** : on dit « chez X est Y » avec le locatif. *Ghazhâ drâkh.* « J'ai une épée » (litt. « en moi, épée »).
 - **Souhait (optatif)** : particule **ô** + futur. *Ô nôkh shûlûshot.* « Que la nuit te garde. »
 
+### 4.7 Le Décret
+
+Le mode du **Décret**, suffixe **-ôth**, est la forme par laquelle une Voix fait advenir ce qu'elle dit. Il ne se traduit ni par un souhait ni par un ordre : c'est un constat qui précède le fait.
+
+| Forme | Analyse | Sens |
+|---|---|---|
+| *Vorz vânôth.* | feu être-DÉCRET | Feu : est. (Et le feu est.) |
+| *Thâl ûzgôth.* | tour se.lever-DÉCRET | La tour se dresse. (Et elle se dresse.) |
+| *Zhâr krûzôthdhûm.* | porte fermer-DÉCRET-TOT | Toute porte se ferme. |
+| *Ûkh thôk narvânôth.* | nom ton néant-DÉCRET | Ton nom n'est plus. |
+
+Le Décret ne prend **pas de suffixe de sujet** : celui qui décrète n'est jamais dans la phrase, parce qu'il est la phrase. Il peut prendre un objet et la totalité.
+
+Dans la bouche d'un mortel, le Décret agit aussi, mais se paie : c'est le **ghâzdôr**, « le prix de la parole » (`monde.md`, § 3). Les serviteurs n'y ont pas accès : au registre bas, *vânôth* n'est qu'un mot de plus.
+
 ---
 
 ## 5. Syntaxe
@@ -251,17 +270,52 @@ Le nombre précède le nom et le nom reste au singulier : *ghrum thâl* « trois
 
 ---
 
-## 7. Noms propres
+## 7. Les trois profondeurs d'un mot
+
+Chaque racine du Ghâzrûn a trois sens superposés, comme une pierre vue à travers l'eau. Le lexique les note pour les racines majeures (colonne « Profondeur »).
+
+| Profondeur | Nom | Qui l'entend | Exemple : *vorz* | Exemple : *zâr* |
+|---|---|---|---|---|
+| 1 | **sens de gorge** (*zhag*) | tout le monde | feu | lier |
+| 2 | **sens de serment** (*ûrzh*) | les Lieurs, les mortels instruits | ardeur, hospitalité, ce qu'on ne laisse pas mourir | obligation |
+| 3 | **sens de racine** (*rûn*) | les Voix | ce qui transforme | rendre un |
+
+Les trois profondeurs sont **le même mot**. Un locuteur ne choisit pas la profondeur ; c'est ce qu'il est qui la choisit. Dans un serment, *vorzghan zâraghot* « par le feu je te lie » engage la deuxième profondeur : *par ce qu'on ne laisse pas mourir, je te fais obligation*. Dans un Décret, la troisième : *par ce qui transforme, je te rends un avec moi.*
+
+C'est la source de la « profondeur » que l'on sent dans la langue : un mot simple y est toujours lourd de ce qu'il pourrait faire. Pour écrire en Ghâzrûn, choisir un mot, c'est choisir trois choses à la fois.
+
+---
+
+## 8. Densité : dire beaucoup en peu de mots
+
+La grammaire a été taillée pour que chaque syllabe compte, comme en latin mais plus loin : **pas d'article, pas de pronom sujet, pas de copule au présent, pas de préposition**, et un objet qui s'accroche au verbe.
+
+| Ghâzrûn | Mots | Français |
+|---|---|---|
+| *Drâkhghan mûrkônaghuz.* | 2 | C'est avec l'épée que je l'ai tué. |
+| *Thâl mârok.* | 2 | La tour est sombre. |
+| *Zrâgûshaghuzardhûm.* | 1 | Je les trouverai tous. |
+| *Khâr thâlzhâ dhâr.* | 3 | Le seigneur attend dans la tour. |
+| *Nôkhzhâ narzhâlath, khor khôrath.* | 4 | Dans la nuit tu ne vois pas, mais tu entends. |
+| *Ûkh thôk kâ ?* | 3 | Comment t'appelles-tu ? |
+| *Gûr grâmath, ghûmath.* | 3 | Si tu y vas, tu meurs. |
+| *Ô thâlâ, dhârâ.* | 3 | Ô tour, demeure. |
+
+Les mots pleins sont pour la plupart monosyllabiques, et les mots longs sont toujours des **empilements lisibles** : *zrâg-ûsh-agh-uzar-dhûm*. L'outil `outils/ghazrun.py analyse` découpe n'importe quelle forme.
+
+---
+
+## 9. Noms propres
 
 Un nom se bâtit par composition ou par suffixe d'agent. Le registre haut aime les noms à deux voyelles longues.
 
 **Personnes**
 - **Zârgor** — « le Lieur », titre des maîtres de serment
-- **Mârokhâr** — « Seigneur-Sombre » (*mârok* + *khâr*)
+- **Mârokhâr** — « Seigneur-Sombre » (*mârok* + *khâr*), chef des Voix de la Nuit
 - **Ghâzûlâr** — « Haute-Voix », le héraut
-- **Nôkhzhâl** — « Qui-voit-la-nuit », nom d'éclaireur
+- **Nôkhzhâl** — « Qui-voit-la-nuit », la Lieuse en chef
 - **Krâzdrâng** — « Pierre-Forte »
-- **Vrôzân** — « la Flamboyante / le Flamboyant »
+- **Vrôzân** — « la Flamboyante », Voix non déchue
 - **Varkhôr** — « Guerrier-du-soleil » (*varkh* + *kôr*, consonnes fusionnées)
 - **Lûmîshâ** — « Larme » (vocatif figé en prénom)
 
@@ -275,9 +329,9 @@ Un nom se bâtit par composition ou par suffixe d'agent. Le registre haut aime l
 
 ---
 
-## 8. L'écriture : les *zhâkar*
+## 10. L'écriture : les *zhâkar*
 
-Le Ghâzrûn se grave avant de s'écrire. Ses signes, les **zhâkar** (« marques »), furent inventés à l'Âge du Feu pour fixer les serments. Ils sont faits de traits droits et d'angles, sans courbe, pour mordre la pierre et le métal.
+L'alphabet est dessiné dans `alphabet.svg` et décrit dans `alphabet.md`. En résumé : le Ghâzrûn se grave avant de s'écrire. Ses signes, les **zhâkar** (« marques »), furent inventés pour les serviteurs, afin que les serments tiennent dans une mémoire mortelle. Ils sont faits de traits droits et d'angles, sans courbe, pour mordre la pierre et le métal.
 
 - **Vingt signes de consonnes**, hauts et étroits comme des lames plantées.
 - **Les voyelles ne sont pas des lettres** mais des entailles portées sur la consonne qui précède : une entaille pour une brève, deux pour une longue. Un mot sans entaille se lit avec *a*.
@@ -287,8 +341,24 @@ Le Ghâzrûn se grave avant de s'écrire. Ses signes, les **zhâkar** (« marque
 
 ---
 
-## 9. Pour aller plus loin
+## 11. Outils
 
-- L'univers (peuple, histoire, religion des serments) est dans `monde.md`.
+Deux scripts Python sans dépendance, dans `outils/` :
+
+```
+python3 outils/ghazrun.py nom thâl --table                 # toutes les formes d'un nom
+python3 outils/ghazrun.py verbe zâr --table                # toutes les formes d'un verbe
+python3 outils/ghazrun.py verbe zrâg --mode inf --objet 3p --tout   # zrâgôluzardhûm
+python3 outils/ghazrun.py verbe vân --mode decret          # vânôth
+python3 outils/ghazrun.py mot feu                          # cherche en français ou en ghâzrûn
+python3 outils/ghazrun.py analyse zârôluzardhûm            # découpe en morphèmes
+python3 outils/ghazrun.py bas "Mârokûth nâldhûmzhâ"        # registre bas
+python3 outils/zhakar.py "Vorzghan zâraghot" -o serment.svg   # écriture gravée
+```
+
+## 12. Pour aller plus loin
+
+- L'univers (les Voix, ce que fait un mot, les serments) est dans `monde.md`.
+- L'écriture est dans `alphabet.md` et `alphabet.svg`.
 - Le lexique complet est dans `lexique.md` et `lexique.csv`.
 - Les textes glosés (inscription, serment, lamentation, phrases de tous les jours, bénédiction) sont dans `textes.md`.
