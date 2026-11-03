@@ -206,6 +206,22 @@ const DATA = (() => {
     fulgurite:  { id: 'fulgurite',  nom: 'La foudre vitrifie',        glyphe: null,      desc: 'Un éclair change le sable en verre.' },
   };
 
+  // Espèces : comportement, goûts et craintes (à découvrir), cadeau quand apprivoisée
+  const ESPECES = {
+    limace:   { id: 'limace',   nom: 'Limace d\'encre',     mode: 'hop',   w: 36, h: 24, hp: 3, dmg: 1, hostile: true,  aime: 'vie',     craint: 'lumiere', drop: 'fil',        desc: 'Bondit vers qui passe. Gonfle quand on l\'arrose.' },
+    follet:   { id: 'follet',   nom: 'Feu follet',          mode: 'fly',   w: 24, h: 24, hp: 2, dmg: 1, hostile: true,  aime: 'feu',     craint: 'eau',     drop: 'plume',      desc: 'Une petite flamme curieuse. L\'eau la dissipe en plume.', nocturne: true },
+    golem:    { id: 'golem',    nom: 'Golem',               mode: 'walk',  w: 50, h: 70, hp: 8, dmg: 2, hostile: true,  aime: 'terre',   craint: 'force',   drop: 'poussiere',  desc: 'Lourd, patient, insensible au feu. Le vent le fait reculer.', immune: ['feu'] },
+    grenouille: { id: 'grenouille', nom: 'Grenouille',     mode: 'hop',   w: 26, h: 18, hp: 2, dmg: 0, hostile: false, aime: 'eau',     craint: 'froid',   drop: 'rosee',      desc: 'Saute haut, nage bien, chante le soir. Le froid la fige.', couleur: '#5c8f3e', peur: 90 },
+    corbeau:  { id: 'corbeau',  nom: 'Corbeau',             mode: 'fly',   w: 26, h: 18, hp: 2, dmg: 0, hostile: false, aime: 'lumiere', craint: 'son',     drop: 'plume',      desc: 'Méfiant. S\'envole au moindre bruit, revient pour ce qui brille.', couleur: '#1f1a16', peur: 160, diurne: true },
+    salamandre: { id: 'salamandre', nom: 'Salamandre',     mode: 'walk',  w: 34, h: 16, hp: 4, dmg: 1, hostile: true,  aime: 'feu',     craint: 'froid',   drop: 'braise',     desc: 'Vit dans la lave comme dans un bain. Déteste la neige.', couleur: '#d9622b', immune: ['feu', 'acide'], faible: ['froid', 'eau'], lave: true },
+    poisson:  { id: 'poisson',  nom: 'Poisson d\'argent',  mode: 'swim',  w: 22, h: 12, hp: 2, dmg: 0, hostile: false, aime: 'eau',     craint: 'foudre',  drop: 'rosee',      desc: 'Ne vit que dans l\'eau. La foudre l\'étourdit. Hors de l\'eau, il se débat.', couleur: '#8fb8d8', peur: 70 },
+    chauve:   { id: 'chauve',   nom: 'Chauve-souris',       mode: 'fly',   w: 24, h: 14, hp: 2, dmg: 1, hostile: true,  aime: 'ombre',   craint: 'lumiere', drop: 'champignon', desc: 'Dort le jour la tête en bas, fuit la lumière.', couleur: '#4a3a5a', nocturne: true, grotte: true },
+    escargot: { id: 'escargot', nom: 'Escargot de cristal', mode: 'crawl', w: 22, h: 16, hp: 3, dmg: 0, hostile: false, aime: 'lumiere', craint: 'son',     drop: 'eclat',      desc: 'Lent, luisant, et immunisé à l\'acide. Sa coquille est un cristal.', couleur: '#b58fd8', immune: ['acide'], peur: 0, lumineux: true },
+    tortue:   { id: 'tortue',   nom: 'Tortue des sables',   mode: 'walk',  w: 34, h: 18, hp: 6, dmg: 0, hostile: false, aime: 'eau',     craint: 'gravite', drop: 'poussiere',  desc: 'Une carapace à toute épreuve. Adore l\'eau, déteste flotter.', couleur: '#a3844f', immune: ['feu', 'foudre', 'acide', 'froid'], peur: 0 },
+    lapin:    { id: 'lapin',    nom: 'Lapin de neige',      mode: 'hop',   w: 22, h: 20, hp: 2, dmg: 0, hostile: false, aime: 'froid',   craint: 'feu',     drop: 'flocon',     desc: 'Bondit dans la poudreuse, fuit la moindre flamme.', couleur: '#f6f8fa', peur: 110, diurne: true },
+    familier: { id: 'familier', nom: 'Familier',            mode: 'fly',   w: 20, h: 20, hp: 4, dmg: 0, hostile: false, aime: null, craint: null, drop: null, desc: 'Un petit élémentaire invoqué.' },
+  };
+
   // Pages déchirées du grimoire du maître, cachées dans le monde
   const PAGES = [
     { id: 'p_puits', titre: 'Note sur les puits', texte: 'Les grottes gardent des champignons qui préfèrent l\'ombre. Les cueillir m\'a toujours donné des idées sombres... et un glyphe.', don: null },
@@ -240,6 +256,8 @@ const DATA = (() => {
     { id: 'd_pages', titre: 'Bibliothécaire', texte: 'Retrouve 8 pages déchirées.', xp: 80, cond: (p, w) => (p.pagesLues || []).length >= 8 },
     { id: 'd_foret', titre: 'Pyromane repenti', texte: 'Brûle 200 cellules de forêt... puis fais repousser 200 cellules de plantes avec Vie.', xp: 60, cond: (p, w) => (p.compteurs.brule || 0) >= 200 && (p.compteurs.pousse || 0) >= 200 },
     { id: 'd_portail', titre: 'Plombier', texte: 'Fais passer de l\'eau par un portail.', xp: 40, cond: (p, w) => (p.compteurs.portailEau || 0) >= 20 },
+    { id: 'd_bestiaire', titre: 'Naturaliste', texte: 'Découvre ce qu\'aiment et craignent 6 espèces.', xp: 80, cond: (p, w) => Object.values(p.bestiaire || {}).filter((b) => b.aime && b.craint).length >= 6 },
+    { id: 'd_cadeaux', titre: 'Bon maître', texte: 'Reçois 5 cadeaux de créatures apprivoisées.', xp: 50, cond: (p, w) => (p.compteurs.cadeaux || 0) >= 5 },
   ];
 
   // Découvertes : ce qui est débloqué et comment
@@ -308,5 +326,5 @@ const DATA = (() => {
   const ACCESSOIRES = ['Bâton', 'Plume', 'Grimoire'];
 
   Object.assign(POTIONS, BIZARRES);
-  return { CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
+  return { CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES };
 })();

@@ -21,7 +21,7 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 | Miroir | Changer d'apparence (chapeau, cape, objet en main). |
 | Table des sceaux | Composer un sceau : **centre** = glyphe d'effet, **premier anneau** = forme, **second anneau** = modificateurs, **pointes** = déclencheur. Consigner, puis « Mettre dans la barre ». |
 | Chaudron | Jusqu'à trois ingrédients et trois étapes dans l'ordre. Le chaudron guide par l'odeur, le bruit et la couleur ; un raté donne une potion bizarre (hoquet de fumée, grenouille, ballon, boussole folle...). Les fioles de liquide puisées dehors sont des ingrédients et se lancent depuis la barre. |
-| Grimoire | Découvertes, glyphes et fusions, recettes, ingrédients, encyclopédie des réactions, pages déchirées retrouvées, défis du maître, journal. |
+| Grimoire | Découvertes, glyphes et fusions, recettes, ingrédients, encyclopédie des réactions, bestiaire, pages déchirées retrouvées, défis du maître, journal. |
 | Lettre du maître | L'aide, les contrôles, et « Restaurer le monde ». |
 | Porte | Sortir. Revenir restaure encre et vitalité et sauvegarde le monde. |
 
@@ -36,6 +36,8 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 - Chaque glyphe coûte de l'encre. L'expérience de découverte augmente l'encre et sa régénération.
 
 ## Dehors
+
+Onze espèces peuplent le monde (limaces d'encre, feux follets, golems, grenouilles, corbeaux, salamandres, poissons d'argent, chauves-souris, escargots de cristal, tortues des sables, lapins de neige), avec habitats, rythme jour/nuit, goûts et craintes à découvrir ; une créature apprivoisée suit et offre des cadeaux.
 
 Treize pages déchirées du grimoire du maître sont cachées aux endroits difficiles (îles, fond du lac, sommet, volcan, grottes, fond du monde) : chacune apprend une recette ou un glyphe. Quinze défis facultatifs rapportent de l'expérience.
 

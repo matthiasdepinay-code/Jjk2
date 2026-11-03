@@ -16,7 +16,7 @@
   function makeProgress() {
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
-      recettes: [], ingredientsVus: [], done: [], nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [],
+      recettes: [], ingredientsVus: [], done: [], nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [],
       compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0, terre: 0, creaturesTouchees: 0, vols: 0, portes: 0, lancers: 0, niveau: 1, sceaux: 0 },
       event(name, data) {
         const k = this.compteurs;
@@ -40,6 +40,9 @@
           case 'portailEau': k.portailEau = (k.portailEau || 0) + 1; return;
           case 'combo': if (!k.combos) k.combos = []; if (!k.combos.includes(data)) k.combos.push(data); break;
           case 'ile': if (!k.iles) k.iles = []; if (!k.iles.includes(data)) k.iles.push(data); break;
+          case 'cadeau': k.cadeaux = (k.cadeaux || 0) + 1; return;
+          case 'espece': if (!this.especesVues.includes(data)) { this.especesVues.push(data); game.toast('Nouvelle espèce : ' + DATA.ESPECES[data].nom + '. ' + DATA.ESPECES[data].desc); game.addXp(DATA.XP.ingredient); } return;
+          case 'bestiaire': { const b = this.bestiaire[data.t] || (this.bestiaire[data.t] = {}); if (!b[data.k]) { b[data.k] = true; const sp = DATA.ESPECES[data.t]; game.toast('Bestiaire : ' + sp.nom + ' ' + (data.k === 'aime' ? 'aime' : 'craint') + ' ' + DATA.CORES[sp[data.k]].nom.toLowerCase() + '.', 'unlock'); game.addXp(DATA.XP.observation); } break; }
           case 'ingredient': if (!this.ingredientsVus.includes(data)) { this.ingredientsVus.push(data); game.addXp(DATA.XP.ingredient); } break;
           case 'recette': if (!this.recettes.includes(data)) { this.recettes.push(data); game.addXp(DATA.XP.recette); } k.potions++; break;
         }
@@ -260,7 +263,7 @@
       this.progress.compteurs.sceaux = this.seals.length;
       try {
         const data = { look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
-          progress: { cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs, pagesLues: this.progress.pagesLues, defisFaits: this.progress.defisFaits, bizarresVues: this.progress.bizarresVues || [] } };
+          progress: { cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs, pagesLues: this.progress.pagesLues, defisFaits: this.progress.defisFaits, bizarresVues: this.progress.bizarresVues || [], bestiaire: this.progress.bestiaire, especesVues: this.progress.especesVues } };
         localStorage.setItem(SAVE_KEY, JSON.stringify(data));
       } catch (e) { /* stockage indisponible */ }
     },
@@ -273,6 +276,7 @@
         if (d.progress) Object.assign(this.progress, d.progress);
         if (!this.progress.obs) this.progress.obs = {};
         if (!this.progress.pagesLues) this.progress.pagesLues = []; if (!this.progress.defisFaits) this.progress.defisFaits = [];
+        if (!this.progress.bestiaire) this.progress.bestiaire = {}; if (!this.progress.especesVues) this.progress.especesVues = [];
         const K = this.progress.compteurs; for (const k of ['terre', 'creaturesTouchees', 'vols', 'portes', 'lancers', 'sceaux']) if (K[k] == null) K[k] = 0; K.niveau = this.niveau;
         this.hotbar = this.hotbar.map((e) => (e && e.type === 'seal' ? { type: 'seal', seal: Seal.clone(e.seal) } : e)); this.seals = this.seals.map((q) => Seal.clone(q));
         return this.started;

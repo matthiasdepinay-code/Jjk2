@@ -365,6 +365,14 @@ const UI = (() => {
         const g = O.glyphe ? DATA.CORES[O.glyphe] : null; const connu = g && p.cores.includes(O.glyphe);
         c.appendChild(el('div', 'decouverte' + (n > 0 ? ' ok' : ''), '<span class="check">' + (n >= 3 || connu ? '✓' : n > 0 ? n : '○') + '</span><div><b>' + (n > 0 ? O.nom : '???') + '</b> ' + (g ? '<small>→ glyphe ' + (connu ? g.nom : '???') + '</small>' : '<small>(expérience)</small>') + '<br><em>' + O.desc + '</em></div>'));
       }
+    } else if (grimTab === 'bestiaire') {
+      c.appendChild(el('p', 'intro', 'Les créatures du monde. Chacune aime un élément (qui l\'apprivoise) et en craint un autre (qui la fait fuir). Une créature apprivoisée te suit et t\'offre un cadeau de temps en temps.'));
+      for (const id in DATA.ESPECES) {
+        if (id === 'familier') continue;
+        const sp = DATA.ESPECES[id]; const vu = p.especesVues.includes(id) || ['limace', 'follet', 'golem'].includes(id) && p.compteurs.kindsHit.includes('creature:' + id);
+        const b = p.bestiaire[id] || {};
+        c.appendChild(el('div', 'decouverte' + (vu ? ' ok' : ''), '<span class="check"><i class="dot" style="background:' + (vu ? (sp.couleur || '#1f1a16') : '#aaa') + '"></i></span><div><b>' + (vu ? sp.nom : '???') + '</b>' + (vu ? ' <small>' + (sp.hostile ? 'bouscule' : 'paisible') + (sp.nocturne ? ', nocturne' : sp.diurne ? ', diurne' : '') + '</small>' : '') + '<br><em>' + (vu ? sp.desc : 'Espèce non rencontrée.') + '</em>' + (vu ? '<br><small>Aime : ' + (b.aime ? DATA.CORES[sp.aime].nom : '???') + ' · Craint : ' + (b.craint ? DATA.CORES[sp.craint].nom : '???') + ' · Cadeau : ' + (b.aime && sp.drop ? DATA.INGREDIENTS[sp.drop].nom : '???') + '</small>' : '') + '</div>'));
+      }
     } else if (grimTab === 'pages') {
       c.appendChild(el('p', 'intro', 'Le maître a semé des pages de son grimoire aux quatre coins du monde : en hauteur, au fond, dans le noir. Chacune apprend quelque chose.'));
       for (const P of DATA.PAGES) {

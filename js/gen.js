@@ -182,6 +182,15 @@ const Gen = (() => {
       c('golem', 575, 70), c('limace', 630, 24), c('limace', 740, 24), c('golem', 800, 70), c('limace', 870, 24),
       { t: 'follet', x: px(150), y: py(172) }, { t: 'follet', x: px(255), y: py(200) }, { t: 'follet', x: px(650), y: py(185) }, { t: 'limace', x: px(790), y: py(220) },
       { t: 'follet', x: px(300), y: py(26) },
+      // écosystème
+      c('grenouille', 232, 18), c('grenouille', 322, 18), c('grenouille', 716, 18), c('grenouille', 748, 18),
+      { t: 'corbeau', x: px(140), y: py(100) }, { t: 'corbeau', x: px(650), y: py(100) }, { t: 'corbeau', x: px(790), y: py(95) },
+      c('salamandre', 492, 16), { t: 'salamandre', x: px(500), y: py(186) },
+      { t: 'poisson', x: px(262), y: py(142) }, { t: 'poisson', x: px(288), y: py(148) }, { t: 'poisson', x: px(300), y: py(140) }, { t: 'poisson', x: px(270), y: py(214) },
+      { t: 'chauve', x: px(140), y: py(170) }, { t: 'chauve', x: px(290), y: py(196) }, { t: 'chauve', x: px(650), y: py(184) },
+      { t: 'escargot', x: px(166), y: py(189) - 16 }, { t: 'escargot', x: px(778), y: py(221) - 16 },
+      c('tortue', 838, 18), c('tortue', 880, 18),
+      c('lapin', 390, 20), c('lapin', 421, 20),
     ];
     for (const q of crs) if (q.t === 'follet') q.y -= 60;
     const zones = [

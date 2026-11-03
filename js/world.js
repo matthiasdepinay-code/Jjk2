@@ -67,7 +67,9 @@ const World = (() => {
       case 'limace': Object.assign(b, { w: 36, h: 24, hp: 3, hpMax: 3, dmg: 1, portable: true }); break;
       case 'follet': Object.assign(b, { w: 24, h: 24, hp: 2, hpMax: 2, dmg: 1, vole: true, portable: true }); break;
       case 'golem': Object.assign(b, { w: 50, h: 70, hp: 8, hpMax: 8, dmg: 2 }); break;
+      default: { const sp = DATA.ESPECES[c.t]; if (sp) Object.assign(b, { w: sp.w, h: sp.h, hp: sp.hp, hpMax: sp.hp, dmg: sp.dmg, vole: sp.mode === 'fly', generique: true, portable: sp.w <= 36 }); }
     }
+    b.cadeauT = 0;
     if (c.hp !== undefined) b.hp = c.hp;
     return b;
   }
@@ -149,7 +151,7 @@ const World = (() => {
       if (o.burning > 0) ls.push({ x: o.x + o.w / 2, y: o.y + o.h / 2, r: 130 });
       if (o.t === 'rune' && o.revele > 0) ls.push({ x: o.x + o.w / 2, y: o.y + o.h / 2, r: 60 * o.revele });
     }
-    for (const c of st.crs) if (c.t === 'follet' && c.hp > 0) ls.push({ x: c.x + c.w / 2, y: c.y + c.h / 2, r: 110 });
+    for (const c of st.crs) { if (c.t === 'follet' && c.hp > 0) ls.push({ x: c.x + c.w / 2, y: c.y + c.h / 2, r: 110 }); else if (c.hp > 0 && DATA.ESPECES[c.t] && DATA.ESPECES[c.t].lumineux) ls.push({ x: c.x + c.w / 2, y: c.y + c.h / 2, r: 70 }); else if (c.t === 'familier' && c.hp > 0) ls.push({ x: c.x + c.w / 2, y: c.y + c.h / 2, r: 90 }); }
     for (const s of st.sp) {
       if (s.k === 'field' && (s.core === 'lumiere' || s.core === 'feu')) ls.push({ x: s.x, y: s.y, r: s.r * (s.core === 'lumiere' ? 2.2 : 1.4) });
       if (s.k === 'proj' && (s.core === 'lumiere' || s.core === 'feu' || s.core === 'foudre')) ls.push({ x: s.x, y: s.y, r: s.core === 'lumiere' ? 160 : 80 });
@@ -337,6 +339,33 @@ const World = (() => {
       const ccx = c.x + c.w / 2, ccy = c.y + c.h / 2;
       let dx = ccx - cx, dy = ccy - cy; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
       if (burst) evt('hit', 'creature:' + c.t);
+      const sp = DATA.ESPECES[c.t];
+      if (sp && burst) { if (core === sp.aime) evt('bestiaire', { t: c.t, k: 'aime' }); if (core === sp.craint) evt('bestiaire', { t: c.t, k: 'craint' }); }
+      if (c.generique && sp) {
+        const immune = (sp.immune || []).includes(core), faible = (sp.faible || []).includes(core) ? 2 : 1;
+        if (core === sp.aime) { c.hp = Math.min(c.hpMax, c.hp + 2 * k); if (!c.sta.tame && (burst || Math.random() < k)) tame(c); if (burst) part(ccx, ccy - 8, '#c45a8a', 6, 50, 0.8, 3, -60, 'coeur'); continue; }
+        if (core === sp.craint) { c.fuite = { x: cx, y: cy, t: 5 }; c.sta.stun = 0; c.dort = false; if (!immune) hurt(c, 1 * power * k * faible); c.vx += dx * 400 * k; c.vy -= 200 * k; if (burst) part(ccx, ccy, C, 6, 60); continue; }
+        if (immune) { if (burst) part(ccx, ccy, '#aaa', 4, 40, 0.4); continue; }
+        switch (core) {
+          case 'feu': if (!c.sta.wet) { hurt(c, 2 * power * k * faible); c.sta.burn = Math.max(c.sta.burn, 3 * dur); } break;
+          case 'eau': c.sta.burn = 0; c.sta.wet = 6; if (c.t === 'poisson') c.hp = Math.min(c.hpMax, c.hp + 2 * k); break;
+          case 'vent': case 'son': c.vx += dx * 500 * power * k; c.vy += (dy * 300 - 150) * power * k; c.dort = false; break;
+          case 'terre': if (burst) { hurt(c, 1 * power * faible); c.vy -= 200; } break;
+          case 'lumiere': c.sta.stun = Math.max(c.sta.stun, (burst ? 2 : 0.4) * dur); break;
+          case 'ombre': case 'silence': c.sta.sleep = Math.max(c.sta.sleep, (burst ? 6 : 0.5) * dur); break;
+          case 'vie': c.hp = Math.min(c.hpMax, c.hp + 2 * k); if (!c.sta.tame && (burst || Math.random() < k * 0.5)) tame(c); break;
+          case 'force': case 'metal': c.vx -= dx * 600 * power * k; c.vy -= dy * 400 * power * k; break;
+          case 'froid': c.sta.stun = Math.max(c.sta.stun, (burst ? 3 : 0.5) * dur); c.sta.burn = 0; break;
+          case 'foudre': hurt(c, 2 * power * k * faible); c.sta.stun = Math.max(c.sta.stun, 2 * dur); break;
+          case 'acide': case 'fanaison': hurt(c, 1.5 * power * k * faible); break;
+          case 'gravite': c.vy -= (burst ? 450 : 1900 * mode) * power; c.onGround = false; break;
+          case 'poids': c.vy += (burst ? 500 : 1500 * mode) * power; break;
+          case 'temps': case 'ralentir': c.sta.lent = Math.max(c.sta.lent || 0, (burst ? 8 : 0.5) * dur); break;
+          case 'esprit': if (burst) controlCreature(c, 12 * dur); break;
+          case 'lien': if (burst) attachLien(c, cx, cy, dur); break;
+        }
+        continue;
+      }
       switch (core) {
         case 'feu':
           if (c.t === 'golem') { if (burst) part(ccx, ccy, '#aaa', 4, 40, 0.4); }
@@ -475,7 +504,7 @@ const World = (() => {
       if (st.p.carry === c) st.p.carry = null;
     }
   }
-  function nomCreature(t) { return t === 'limace' ? 'La limace d\'encre' : t === 'follet' ? 'Le feu follet' : t === 'familier' ? 'Le familier' : 'Le golem'; }
+  function nomCreature(t) { const sp = DATA.ESPECES[t]; if (t === 'limace') return 'La limace d\'encre'; if (t === 'follet') return 'Le feu follet'; if (t === 'golem') return 'Le golem'; return sp ? (/^[aeiouéè]/i.test(sp.nom) ? 'L\'' : (sp.nom.endsWith('e') && !/corbeau|poisson|lapin|escargot|familier/.test(t) ? 'La ' : 'Le ')) + sp.nom.toLowerCase() : 'La créature'; }
   function dropPickup(ing, x, y) { st.pickups.push({ ing, x, y, vy: -120, vx: (Math.random() - 0.5) * 80, bob: 0 }); }
 
   // ---------- Sur soi ----------
@@ -1090,6 +1119,10 @@ const World = (() => {
       if (c.curieux) { c.curieux.t -= dt; if (c.curieux.t <= 0) c.curieux = null; }
       if (c.ench) { c.ench.t -= dt; c.ench.tick += dt; if (c.ench.t <= 0) c.ench = null; else { doContinuous(c.ench.spec, c.x + c.w / 2, c.y + c.h / 2, 50 * (c.ench.spec.prm.size || 1), dt, { noPlayer: true, noField: true }); if (Math.random() < 0.3) part(c.x + Math.random() * c.w, c.y + Math.random() * c.h, c.ench.spec.color, 1, 20, 0.5, 2, -40, 'spark'); } }
       if (c.t === 'familier') { updateFamilier(c, dt, p); continue; }
+      // cadeaux des créatures apprivoisées
+      if (c.sta.tame && DATA.ESPECES[c.t] && DATA.ESPECES[c.t].drop) { c.cadeauT += dt; if (c.cadeauT > 90) { c.cadeauT = 0; dropPickup(DATA.ESPECES[c.t].drop, c.x + c.w / 2, c.y - 8); evt('cadeau'); msg(nomCreature(c.t) + ' te fait un cadeau.'); } }
+      if (c.generique) { updateGenerique(c, dt, p); continue; }
+      if (!c.vu && inView(c.x, c.y)) { c.vu = true; evt('espece', c.t); }
       if (c.hurt > 0) c.hurt -= dt;
       if (c.sta.burn > 0) { hurt(c, dt * 0.7); if (Math.random() < 0.4) part(c.x + Math.random() * c.w, c.y, '#d9622b', 1, 30, 0.5, 3, -200); if (c.hp <= 0) continue; }
       const lq = liquidOf(c);
@@ -1159,6 +1192,71 @@ const World = (() => {
     }
   }
 
+  function updateGenerique(c, dt, p) {
+    const sp = DATA.ESPECES[c.t]; const ccx = c.x + c.w / 2, ccy = c.y + c.h / 2; const pcx = p.x + p.w / 2, pcy = p.y + p.h / 2;
+    const dpx = pcx - ccx, dpy = pcy - ccy, dp = Math.hypot(dpx, dpy);
+    if (!c.vu && inView(ccx, ccy)) { c.vu = true; evt('espece', c.t); }
+    // jour / nuit
+    const nuit = daylight() < 0.3;
+    const veutDormir = (sp.nocturne && !nuit) || (sp.diurne && nuit);
+    if (veutDormir && !c.sta.tame && !c.fuite && c.hurt <= 0) c.dort = true; else if (!veutDormir) c.dort = false;
+    if (c.fuite) { c.fuite.t -= dt; if (c.fuite.t <= 0) c.fuite = null; }
+    const actif = c.sta.stun <= 0 && c.sta.sleep <= 0 && !c.dort;
+    const lq = liquidOf(c);
+    const peur = sp.peur || 0;
+    const fuitJoueur = actif && !c.sta.tame && peur > 0 && dp < peur && p.sta.invisible <= 0;
+    const aggro = actif && sp.hostile && !c.sta.tame && p.sta.invisible <= 0 && dp < 240;
+    const lentMul = c.sta.lent > 0 ? 0.3 : 1;
+    let tx = null, ty = null;
+    if (c.fuite) { tx = ccx + Math.sign(ccx - c.fuite.x || 1) * 200; ty = ccy - 40; }
+    else if (fuitJoueur) { tx = ccx - Math.sign(dpx || 1) * 200; ty = ccy - 60; }
+    else if (aggro) { tx = pcx; ty = pcy; }
+    else if (c.sta.tame && dp > 110) { tx = pcx - p.face * 50; ty = pcy; }
+    else if (c.controlled && c.ctl) { tx = ccx + c.ctl.dirX * 100; ty = ccy + (c.ctl.dirY || 0) * 100; }
+    c.phase += dt;
+    if (sp.mode === 'fly') {
+      if (tx == null) { tx = c.x0 + Math.cos(c.phase * 0.4) * 120; ty = c.y0 + Math.sin(c.phase * 1.3) * 30; }
+      if (actif || c.controlled) { c.vx += (tx - ccx) * 2 * dt * lentMul; c.vy += (ty - ccy) * 2 * dt * lentMul; c.dir = Math.sign(c.vx) || c.dir; }
+      else if (c.dort) { c.vy += GRAV * 0.3 * dt; }
+      c.vx *= Math.max(0, 1 - 2.5 * dt); c.vy *= Math.max(0, 1 - 2.5 * dt);
+      c.canStep = false; moveBody(c, dt);
+    } else if (sp.mode === 'swim') {
+      if (lq) {
+        if (tx == null) { tx = c.x0 + Math.cos(c.phase * 0.5) * 60; ty = c.y0 + Math.sin(c.phase * 0.9) * 10; }
+        if (actif) { c.vx += (tx - ccx) * 1.5 * dt * lentMul; c.vy += (ty - ccy) * 1.5 * dt * lentMul; c.dir = Math.sign(c.vx) || c.dir; }
+        c.vx *= Math.max(0, 1 - 2 * dt); c.vy *= Math.max(0, 1 - 2 * dt);
+        c.hors = 0;
+      } else {
+        c.vy = Math.min(c.vy + GRAV * dt, 900); c.hors = (c.hors || 0) + dt;
+        if (c.onGround && Math.random() < dt * 3) { c.vx = (Math.random() - 0.5) * 160; c.vy = -220; }
+        if (c.hors > 12) { hurt(c, dt * 0.5); if (c.hp <= 0) return; }
+      }
+      c.canStep = false; moveBody(c, dt);
+    } else {
+      // hop / walk / crawl
+      const sw = sp.lave && lq === M.LAVE;
+      c.vy = Math.min(c.vy + GRAV * dt * (gravField(c) ? -0.6 : 1) * (lq ? 0.2 : 1), 1000);
+      if (lq) c.vy *= Math.max(0, 1 - 1.5 * dt);
+      if (sw && actif) { c.vy -= 900 * dt * (Math.sin(c.phase * 2) > 0 ? 1 : 0.3); }
+      if (actif || c.controlled) {
+        const dir = tx != null ? Math.sign(tx - ccx) || c.dir : (Math.random() < dt * 0.4 ? -c.dir : c.dir);
+        if (tx == null && Math.abs(c.x - c.x0) > 140) c.dir = Math.sign(c.x0 - c.x) || c.dir; else c.dir = dir;
+        if (sp.mode === 'hop') { c.hop -= dt; if (c.onGround && c.hop <= 0) { c.hop = tx != null ? 0.7 : 1.5 + Math.random() * 2; c.vx = c.dir * (tx != null ? 140 : 60) * lentMul; c.vy = -(c.t === 'grenouille' ? 380 : 280); } }
+        else { const sp2 = (sp.mode === 'crawl' ? 18 : 55) * (tx != null ? 1.6 : 1) * lentMul; c.vx = lerp(c.vx, c.dir * sp2 * (tx == null && Math.random() < 0.3 ? 0 : 1), Math.min(1, dt * 4)); }
+        if (c.hitX && c.onGround && sp.mode !== 'crawl' && Math.random() < 0.3) c.vy = -260;
+      } else c.vx *= Math.max(0, 1 - 6 * dt);
+      if (c.onGround) c.vx *= Math.max(0, 1 - (c.sta.glisse > 0 ? 0.2 : 2) * dt);
+      c.hitX = false;
+      moveBody(c, dt);
+    }
+    if (c.y > L.h + 50) { c.hp = 0; c.respawn = 10; }
+    // contact
+    if (sp.hostile && U.rectsOverlap(c, p) && actif && !c.sta.tame && !c.controlled && p.inv <= 0 && p.sta.geant <= 0) {
+      const dx = Math.sign(pcx - ccx) || 1; p.vx = dx * 280; p.vy = -240; p.inv = 1;
+      if (p.sta.stone <= 0 && p.sta.armure <= 0 && c.dmg > 0) { p.hp -= c.dmg; Son.sfx('hurt'); msg(nomCreature(c.t) + ' te bouscule !', 'warn'); }
+      c.vx = -dx * 150;
+    }
+  }
   function updateFamilier(c, dt, p) {
     c.life -= dt; c.cd -= dt;
     if (c.life <= 0 || c.hp <= 0) { c.hp = 0; c.respawn = 1e9; c.mort = true; part(c.x + c.w / 2, c.y + c.h / 2, c.spec.color, 10, 60); return; }
@@ -1539,6 +1637,7 @@ const World = (() => {
     const cx = c.x + c.w / 2, by = c.y + c.h;
     switch (c.t) {
       case 'familier': { const r = 9; const g = ctx.createRadialGradient(cx, c.y + c.h / 2, 2, cx, c.y + c.h / 2, r * 3); g.addColorStop(0, U.hexA(c.spec.color, 0.5)); g.addColorStop(1, U.hexA(c.spec.color, 0)); ctx.fillStyle = g; ctx.fillRect(cx - r * 3, c.y + c.h / 2 - r * 3, r * 6, r * 6); ctx.fillStyle = c.spec.color; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, c.y + c.h / 2 + Math.sin(c.phase * 4) * 2, r, 0, TAU); ctx.fill(); ctx.stroke(); Seal.glyph(ctx, c.core, cx, c.y + c.h / 2 + Math.sin(c.phase * 4) * 2, r * 0.6, '#efe3c4', 1); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(cx - 3, c.y + c.h / 2 - 2, 1.3, 0, TAU); ctx.arc(cx + 3, c.y + c.h / 2 - 2, 1.3, 0, TAU); ctx.fill(); break; }
+      case 'grenouille': case 'corbeau': case 'salamandre': case 'poisson': case 'chauve': case 'escargot': case 'tortue': case 'lapin': drawEspece(ctx, c, cx, by); break;
       case 'limace': {
         const sq = c.onGround ? 1 : 0.85;
         ctx.fillStyle = c.sta.tame ? 'rgba(196,90,138,0.55)' : 'rgba(31,26,22,0.75)';
@@ -1575,7 +1674,7 @@ const World = (() => {
         break;
       }
     }
-    if (c.sta.sleep > 0) U.txt(ctx, 'z z', cx + 14, c.y - 10 + Math.sin(time * 3) * 3, 14, 'left', '#5a4a7d', 'IM Fell English', 'italic');
+    if (c.sta.sleep > 0 || c.dort) U.txt(ctx, 'z z', cx + 14, c.y - 10 + Math.sin(time * 3) * 3, 14, 'left', '#5a4a7d', 'IM Fell English', 'italic');
     if (c.sta.stun > 0) { ctx.strokeStyle = '#d8a63a'; ctx.lineWidth = 1.5; for (let i = 0; i < 3; i++) { const a = time * 5 + (i / 3) * TAU; ctx.beginPath(); ctx.arc(cx + Math.cos(a) * 14, c.y - 8 + Math.sin(a) * 4, 2, 0, TAU); ctx.stroke(); } }
     if (c.sta.tame && c.t !== 'familier' && !c.controlled) { ctx.fillStyle = '#c45a8a'; ctx.font = '14px serif'; ctx.textAlign = 'center'; ctx.fillText('♥', cx, c.y - 8 + Math.sin(time * 3) * 2); }
     if (c.sta.lent > 0) { ctx.strokeStyle = '#8a8f9a'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); U.inkCircle(ctx, cx, c.y + c.h / 2, Math.max(c.w, c.h) * 0.7, 1, 1); ctx.setLineDash([]); }
@@ -1584,6 +1683,24 @@ const World = (() => {
     ctx.restore();
   }
 
+  function drawEspece(ctx, c, cx, by) {
+    const sp = DATA.ESPECES[c.t]; const col = sp.couleur; const d = c.dir || 1; const w = c.w, h = c.h;
+    ctx.save(); ctx.translate(cx, by); ctx.scale(d, 1); ctx.fillStyle = col; ctx.strokeStyle = c.hurt > 0 ? '#9a2a2a' : INK; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+    const eye = (x, y) => { ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.arc(x, y, 2.6, 0, TAU); ctx.fill(); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x + 0.8, y, 1.2, 0, TAU); ctx.fill(); ctx.fillStyle = col; };
+    const bob = Math.sin(c.phase * 6) * (Math.abs(c.vx) > 10 ? 2 : 0);
+    switch (c.t) {
+      case 'grenouille': ctx.beginPath(); ctx.ellipse(0, -h * 0.5, w * 0.5, h * 0.45, 0, 0, TAU); ctx.fill(); ctx.stroke(); U.inkLine(ctx, -w * 0.4, -2, -w * 0.55, 0, 1, 0.3); U.inkLine(ctx, w * 0.3, -2, w * 0.5, 0, 2, 0.3); eye(w * 0.25, -h * 0.85); eye(w * 0.05, -h * 0.9); break;
+      case 'corbeau': { const fl = Math.sin(c.phase * 14) * 8; ctx.beginPath(); ctx.ellipse(0, -h * 0.5, w * 0.45, h * 0.4, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-w * 0.2, -h * 0.6); ctx.quadraticCurveTo(-w * 0.6, -h * 0.9 - fl, -w * 0.9, -h * 0.5 - fl); ctx.lineTo(-w * 0.1, -h * 0.4); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#d8a63a'; ctx.beginPath(); ctx.moveTo(w * 0.4, -h * 0.55); ctx.lineTo(w * 0.7, -h * 0.45); ctx.lineTo(w * 0.4, -h * 0.35); ctx.closePath(); ctx.fill(); ctx.stroke(); eye(w * 0.25, -h * 0.65); break; }
+      case 'salamandre': ctx.beginPath(); ctx.ellipse(0, -h * 0.5, w * 0.42, h * 0.4, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-w * 0.4, -h * 0.5); ctx.quadraticCurveTo(-w * 0.7, -h * 0.3 + bob, -w * 0.85, -h * 0.9); ctx.stroke(); ctx.beginPath(); ctx.arc(w * 0.45, -h * 0.55, h * 0.3, 0, TAU); ctx.fill(); ctx.stroke(); for (const lx of [-w * 0.25, w * 0.2]) { U.inkLine(ctx, lx, -h * 0.2, lx - 3 + bob, 0, 1, 0.3); } ctx.fillStyle = '#f0c060'; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(-w * 0.2 + i * w * 0.2, -h * 0.55, 1.5, 0, TAU); ctx.fill(); } ctx.fillStyle = col; eye(w * 0.5, -h * 0.65); break;
+      case 'poisson': ctx.beginPath(); ctx.ellipse(0, -h * 0.5, w * 0.42, h * 0.45, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-w * 0.35, -h * 0.5); ctx.lineTo(-w * 0.6, -h * 0.9 + Math.sin(c.phase * 8) * 2); ctx.lineTo(-w * 0.6, -h * 0.1); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.strokeStyle = 'rgba(31,26,22,0.4)'; ctx.lineWidth = 1; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(-w * 0.1 + i * 4, -h * 0.5, 3, -1, 1); ctx.stroke(); } ctx.strokeStyle = INK; eye(w * 0.22, -h * 0.6); break;
+      case 'chauve': { const fl = c.dort ? 0 : Math.sin(c.phase * 18) * 7; if (c.dort) { ctx.beginPath(); ctx.ellipse(0, -h * 0.4, w * 0.25, h * 0.55, 0, 0, TAU); ctx.fill(); ctx.stroke(); U.inkLine(ctx, 0, -h, 0, -h - 6, 1, 0.3); } else { ctx.beginPath(); ctx.ellipse(0, -h * 0.5, w * 0.2, h * 0.4, 0, 0, TAU); ctx.fill(); ctx.stroke(); for (const sg of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sg * w * 0.15, -h * 0.5); ctx.quadraticCurveTo(sg * w * 0.5, -h * 0.9 - fl, sg * w * 0.95, -h * 0.5 - fl); ctx.quadraticCurveTo(sg * w * 0.6, -h * 0.4 - fl * 0.5, sg * w * 0.15, -h * 0.3); ctx.closePath(); ctx.fill(); ctx.stroke(); } eye(w * 0.05, -h * 0.6); } break; }
+      case 'escargot': ctx.beginPath(); ctx.ellipse(w * 0.1, -h * 0.2, w * 0.45, h * 0.2, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = U.hexA(col, 0.9); ctx.beginPath(); ctx.arc(-w * 0.1, -h * 0.55, h * 0.42, 0, TAU); ctx.fill(); ctx.stroke(); ctx.beginPath(); for (let i = 0; i <= 30; i++) { const t = i / 30, a = t * TAU * 1.8, rr = h * 0.4 * (1 - t); const px = -w * 0.1 + Math.cos(a) * rr, py = -h * 0.55 + Math.sin(a) * rr; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); } ctx.stroke(); ctx.strokeStyle = '#efe3c4'; ctx.lineWidth = 1; U.inkLine(ctx, -w * 0.3, -h * 0.5, -w * 0.05, -h * 0.75, 1, 0.3); ctx.strokeStyle = INK; U.inkLine(ctx, w * 0.45, -h * 0.35, w * 0.55, -h * 0.75, 2, 0.3); U.inkLine(ctx, w * 0.35, -h * 0.35, w * 0.38, -h * 0.7, 3, 0.3); break;
+      case 'tortue': ctx.beginPath(); ctx.arc(0, -h * 0.25, w * 0.42, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke(); U.hatch(ctx, -w * 0.42, -h, w * 0.84, h * 0.75, 4, Math.PI / 3, c.seed, 0.3); ctx.fillStyle = '#8a9a5a'; ctx.beginPath(); ctx.arc(w * 0.5, -h * 0.3, h * 0.25, 0, TAU); ctx.fill(); ctx.stroke(); for (const lx of [-w * 0.3, w * 0.25]) U.inkLine(ctx, lx, -h * 0.2, lx + bob, 0, 1, 0.3); ctx.fillStyle = col; eye(w * 0.55, -h * 0.38); break;
+      case 'lapin': ctx.beginPath(); ctx.ellipse(0, -h * 0.4, w * 0.45, h * 0.38, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(w * 0.3, -h * 0.7, h * 0.25, 0, TAU); ctx.fill(); ctx.stroke(); for (const ex of [w * 0.2, w * 0.38]) { ctx.beginPath(); ctx.ellipse(ex, -h * 1.05, 2.5, h * 0.3, 0, 0, TAU); ctx.fill(); ctx.stroke(); } ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.arc(-w * 0.45, -h * 0.45, 3, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = col; eye(w * 0.38, -h * 0.75); break;
+    }
+    ctx.restore();
+    if (c.dort) U.txt(ctx, 'z', cx + c.w * 0.5, c.y - 4 + Math.sin(time * 2) * 2, 12, 'left', '#5a4a7d', 'IM Fell English', 'italic');
+  }
   function drawApprenti(ctx, x, y, h, look, face = 1, anim = 0, sta = null, moving = false) {
     ctx.save();
     ctx.translate(x, y);
