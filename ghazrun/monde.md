@@ -70,11 +70,11 @@ Les Mârghâzar ont fait des serments leur instrument de règne. Le **Serment de
 
 ---
 
-## 7. Les signes gravés
+## 7. Les signes
 
-Le Ghâzrûn se grave avant de s'écrire, car une Voix n'a pas besoin d'écrire : le mot dit suffit. Les **zhâkar**, « marques », furent inventés pour les serviteurs et les vassaux, pour que les serments tiennent dans une mémoire mortelle. Un signe gravé est un mot **arrêté à la deuxième profondeur** : il lie, mais il ne fait pas. C'est pourquoi les Voix méprisent l'écriture et pourquoi les mortels la vénèrent.
+Le Ghâzrûn n'a pas besoin d'écriture, car une Voix n'a pas besoin d'écrire : le mot dit suffit. Les **zhâkar**, « marques », furent inventés pour les serviteurs et les vassaux, pour que les serments tiennent dans une mémoire mortelle. Un signe écrit est un mot **arrêté à la deuxième profondeur** : il lie, mais il ne fait pas. C'est pourquoi les Voix méprisent l'écriture et pourquoi les mortels la vénèrent.
 
-Les signes sont carrés et faits de traits droits, parce qu'une courbe au burin éclate la pierre ; les consonnes sont « l'os » du mot (*ghrôm*), les voyelles sa « chair » (*zhamb*), portées en entailles au-dessus de l'os. L'alphabet complet est décrit dans `alphabet.md` et dessiné dans `alphabet.svg`.
+Chaque signe se trace d'un seul souffle, sans lever la main, et l'on dit qu'il reproduit le chemin de la voix dans la gorge : les consonnes sont « l'os » du mot (*ghrôm*), les voyelles sa « chair » (*zhamb*), posées en marques au-dessus de l'os. Les consonnes sonores descendent sous la ligne par une boucle qu'on appelle la racine ; un serment écrit sans racine ne tient pas. L'alphabet complet est décrit dans `alphabet.md` et dessiné dans `alphabet.svg`.
 
 ---
 

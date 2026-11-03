@@ -6,9 +6,9 @@
 |---|---|
 | `README.md` | Présentation, phonologie, grammaire complète, formation des noms |
 | `monde.md` | L'univers : la Première Voix, les Voix déchues, ce que fait un mot, les serments, la voyelle volée |
-| `alphabet.md`, `alphabet.svg` | L'écriture gravée, dessinée |
+| `alphabet.md`, `alphabet.svg` | L'écriture, dessinée : un abugida de vingt signes |
 | `outils/ghazrun.py` | Déclinaison, conjugaison, lexique, analyse de formes, registre bas |
-| `outils/zhakar.py` | Rend un texte en écriture gravée (SVG) |
+| `outils/zhakar.py` | Rend un texte dans l'écriture du Ghâzrûn (SVG) |
 | `lexique.md` | Lexique classé par thème (~350 entrées : parole, magie, religion, guerre, nature, corps, vie quotidienne) |
 | `lexique.csv` | Le même lexique, exploitable par script |
 | `textes.md` | Textes avec traduction et glose mot à mot |
@@ -331,13 +331,13 @@ Un nom se bâtit par composition ou par suffixe d'agent. Le registre haut aime l
 
 ## 10. L'écriture : les *zhâkar*
 
-L'alphabet est dessiné dans `alphabet.svg` et décrit dans `alphabet.md`. En résumé : le Ghâzrûn se grave avant de s'écrire. Ses signes, les **zhâkar** (« marques »), furent inventés pour les serviteurs, afin que les serments tiennent dans une mémoire mortelle. Ils sont faits de traits droits et d'angles, sans courbe, pour mordre la pierre et le métal.
+L'alphabet est dessiné dans `alphabet.svg` et décrit dans `alphabet.md`. En résumé :
 
-- **Vingt signes de consonnes**, hauts et étroits comme des lames plantées.
-- **Les voyelles ne sont pas des lettres** mais des entailles portées sur la consonne qui précède : une entaille pour une brève, deux pour une longue. Un mot sans entaille se lit avec *a*.
-- **Un point** sous le signe marque la fin du mot ; **un trait horizontal** sépare les vers.
-- Sur les monuments on grave **de droite à gauche**, « vers la porte » ; dans les livres de peau, de gauche à droite.
-- Au registre haut, le vocatif *-â* s'écrit avec une entaille triple : c'est le seul signe « ornemental » de l'écriture, réservé aux noms que l'on invoque.
+- C'est un **abugida** : on écrit les consonnes, les voyelles se posent dessus en marques. Une marque = brève, deux = longue, trois = vocatif.
+- **Vingt signes** tracés d'un seul souffle, par familles : hampe pour les occlusives, racine sous la ligne pour les sonores, boucle fermée pour les fricatives de gorge, serpent pour les sifflantes, arches pour les nasales, volute et crosse pour les liquides.
+- Un mot qui commence par une voyelle s'appuie sur **le signe muet**, une volute.
+- Un **losange** ferme le mot, une **ligne ondulée** sépare les vers. Sur la pierre on grave de droite à gauche, « vers la porte ».
+- Les signes furent inventés pour les serviteurs : un mot écrit lie, mais ne fait pas (`monde.md`, § 7).
 
 ---
 
@@ -353,7 +353,7 @@ python3 outils/ghazrun.py verbe vân --mode decret          # vânôth
 python3 outils/ghazrun.py mot feu                          # cherche en français ou en ghâzrûn
 python3 outils/ghazrun.py analyse zârôluzardhûm            # découpe en morphèmes
 python3 outils/ghazrun.py bas "Mârokûth nâldhûmzhâ"        # registre bas
-python3 outils/zhakar.py "Vorzghan zâraghot" -o serment.svg   # écriture gravée
+python3 outils/zhakar.py "Vorzghan zâraghot" -o serment.svg   # écriture en SVG
 ```
 
 ## 12. Pour aller plus loin

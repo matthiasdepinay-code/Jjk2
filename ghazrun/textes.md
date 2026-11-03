@@ -2,7 +2,7 @@
 
 Chaque texte est donné en Ghâzrûn (registre haut sauf mention), puis en traduction, puis en glose mot à mot. Abréviations : NÉG négation, PL pluriel, TOT totalité, GÉN génitif, LOC locatif, ALL allatif, ABL ablatif, INS instrumental, VOC vocatif, PASSÉ, FUT futur, IMP impératif, INF infinitif, PP participe passif, DÉCRET mode du Décret, 1s/2s/3s… personnes.
 
-Pour graver un de ces textes : `python3 outils/zhakar.py "..." -o fichier.svg`. Pour vérifier une forme : `python3 outils/ghazrun.py analyse <forme>`.
+Pour écrire un de ces textes dans les zhâkar : `python3 outils/zhakar.py "..." -o fichier.svg`. Pour vérifier une forme : `python3 outils/ghazrun.py analyse <forme>`.
 
 ---
 

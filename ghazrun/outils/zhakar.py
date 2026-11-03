@@ -1,65 +1,75 @@
 #!/usr/bin/env python3
-"""Rend un texte en Ghâzrûn dans l'écriture gravée (zhâkar), au format SVG.
+"""Rend un texte en Ghâzrûn dans son écriture (zhâkar), au format SVG.
 
 Usage :
     python3 zhakar.py "Vorzghan zâraghot" -o sortie.svg
     python3 zhakar.py --alphabet -o alphabet.svg     # table complète des signes
     python3 zhakar.py --inscription "Ûn zhâr, ûn ghâz" -o linteau.svg  # de droite à gauche
 
-Principe du système : chaque consonne est un signe carré (« l'os »), chaque voyelle
-une entaille portée au-dessus de la consonne qui la précède (« la chair »).
-Une entaille = voyelle brève, deux = voyelle longue, trois = vocatif.
-Un mot qui commence par une voyelle s'appuie sur le signe muet (un trait vertical).
-Un point sous la ligne ferme le mot ; un trait horizontal sépare les vers.
+Principe du système : chaque consonne est un signe tracé d'un seul souffle (« l'os »),
+chaque voyelle une marque posée au-dessus de la consonne qui la précède (« la chair »).
+Une marque = voyelle brève, deux = voyelle longue, trois = vocatif.
+Un mot qui commence par une voyelle s'appuie sur le signe muet (une volute).
+Un losange ferme le mot ; une ligne ondulée sépare les vers.
 """
 import argparse
 import re
 import sys
 
-# Chaque consonne : liste de segments ((x1,y1),(x2,y2)) sur une grille 4x4.
-# Système : une sonore = la sourde + barre de base ; une fricative = l'occlusive fermée.
+# Chaque consonne est un tracé d'un seul souffle sur une grille de 4 (largeur) x 6 (hauteur),
+# y vers le bas ; les marques de voyelle se posent au-dessus (y négatif), la « racine »
+# des sonores descend sous la ligne (y > 6).
+# Commandes : M (déplacer), L (ligne), Q (courbe quadratique), C (courbe cubique).
+STEM1 = [('M',1,0),('L',1,6)]
+STEM2 = [('M',2,0),('L',2,6)]
+def racine(x):            # boucle de base des consonnes sonores
+    return [('M',x,6),('Q',x,7.4,x+1.5,7.0)]
+LOBE_P   = [('M',1,1.6),('Q',3.7,1.4,3.6,3),('Q',3.5,4.6,1,4.4)]
+CAP_T    = [('M',0.3,0.9),('Q',2,-0.3,3.7,0.9)]
+ARC_TH   = [('M',0.6,2.4),('Q',2,1.5,3.4,2.4)]
+BRAS_K   = [('M',1,3.6),('C',2.6,3.6,3.9,2.6,3.6,0.5)]
+BOUCLE_K = [('C',3.4,-0.3,1.2,0.6,1,1.7)]
+SERP_S   = [('M',3.2,0.6),('C',0.4,0.4,0.4,3,2,3),('C',3.6,3,3.6,5.8,0.8,5.6)]
+SERP_Z   = [('M',0.8,0.6),('C',3.6,0.4,3.6,3,2,3),('C',0.4,3,0.4,5.8,3.2,5.6),('M',0.7,3),('L',3.3,3)]
 CONS = {
-    # occlusives : un linteau (barre haute) ; la sonore ajoute la barre de base
-    'p':  [((0,0),(4,0)), ((0,0),(0,4)), ((4,0),(4,2)), ((4,2),(2,2))],
-    'b':  [((0,0),(4,0)), ((0,0),(0,4)), ((4,0),(4,2)), ((4,2),(2,2)), ((0,4),(4,4))],
-    't':  [((0,0),(4,0)), ((2,0),(2,4)), ((0,0),(0,2))],
-    'd':  [((0,0),(4,0)), ((2,0),(2,4)), ((0,0),(0,2)), ((0,4),(4,4))],
-    'k':  [((0,0),(4,0)), ((0,0),(0,4)), ((4,0),(2,2)), ((2,2),(4,4))],
-    'g':  [((0,0),(4,0)), ((0,0),(0,4)), ((4,0),(2,2)), ((2,2),(4,4)), ((0,4),(4,4))],
-    # fricatives de gorge : l'occlusive fermée sur la droite
-    'kh': [((0,0),(4,0)), ((0,0),(0,4)), ((4,0),(2,2)), ((2,2),(4,4)), ((4,0),(4,4))],
-    'gh': [((0,0),(4,0)), ((0,0),(0,4)), ((4,0),(2,2)), ((2,2),(4,4)), ((4,0),(4,4)), ((0,4),(4,4))],
-    'th': [((0,0),(4,0)), ((2,0),(2,4)), ((0,0),(0,2)), ((0,2),(4,2))],
-    'dh': [((0,0),(4,0)), ((2,0),(2,4)), ((0,0),(0,2)), ((0,2),(4,2)), ((0,4),(4,4))],
-    # sifflantes : marches et zigzags
-    's':  [((1,0),(4,0)), ((1,0),(1,2)), ((1,2),(4,2)), ((4,2),(4,4))],
-    'z':  [((0,0),(4,0)), ((4,0),(0,2)), ((0,2),(4,4))],
-    'sh': [((1,0),(4,0)), ((1,0),(1,2)), ((1,2),(4,2)), ((4,2),(4,4)), ((2,2),(2,4))],
-    'zh': [((0,0),(4,0)), ((4,0),(0,2)), ((0,2),(4,4)), ((0,2),(0,4))],
-    'h':  [((0,0),(0,4)), ((0,2),(4,2)), ((4,2),(4,4))],
-    'v':  [((0,0),(0,2)), ((0,2),(2,4)), ((2,4),(4,2)), ((4,2),(4,0))],
-    # nasales : le portique ; m ajoute le pilier central
-    'n':  [((0,4),(0,0)), ((0,0),(4,0)), ((4,0),(4,4))],
-    'm':  [((0,4),(0,0)), ((0,0),(4,0)), ((4,0),(4,4)), ((2,0),(2,4))],
-    # liquides
-    'r':  [((0,0),(4,0)), ((2,0),(2,4)), ((2,2),(4,4))],
-    'l':  [((0,0),(0,4)), ((0,4),(4,4)), ((4,4),(4,2))],
-    # signe muet : porte une voyelle initiale
-    '_':  [((2,1),(2,4))],
+    'p':  STEM1 + LOBE_P,
+    'b':  STEM1 + LOBE_P + racine(1),
+    't':  STEM2 + CAP_T,
+    'd':  STEM2 + CAP_T + racine(2),
+    'k':  STEM1 + BRAS_K,
+    'g':  STEM1 + BRAS_K + racine(1),
+    'kh': STEM1 + BRAS_K + BOUCLE_K,
+    'gh': STEM1 + BRAS_K + BOUCLE_K + racine(1),
+    'th': STEM2 + CAP_T + ARC_TH,
+    'dh': STEM2 + CAP_T + ARC_TH + racine(2),
+    's':  SERP_S,
+    'z':  SERP_Z,
+    'sh': SERP_S + [('Q',0.1,6.8,1.5,7.3)],
+    'zh': SERP_Z[:3] + [('M',3.2,5.6),('Q',3.9,6.8,2.5,7.3)] + SERP_Z[3:],
+    'h':  [('M',2.8,0.6),('C',0.2,0.8,0.2,5.4,2.8,5.6),('M',1.3,3),('L',2.5,3)],
+    'v':  [('M',0.4,0.8),('C',0.4,5.2,3.6,5.2,3.6,0.8),('Q',3.7,-0.1,4.3,0.5)],
+    'n':  [('M',0.6,6),('L',0.6,1.3),('Q',0.6,0.2,1.9,0.4),('Q',3.4,0.6,3.4,2.3),('L',3.4,4.7),('Q',3.4,5.7,2.5,5.4)],
+    'm':  [('M',0.4,6),('L',0.4,1.3),('Q',0.4,0.2,1.3,0.4),('Q',2.2,0.6,2.2,2),('L',2.2,4.2),
+           ('M',2.2,1.3),('Q',2.2,0.2,3.1,0.4),('Q',4,0.6,4,2),('L',4,6)],
+    'r':  STEM1 + [('M',1,3.4),('C',2.6,3.4,3.9,4.2,3.3,5.6),('C',2.9,6.5,1.7,5.9,2.3,5.2)],
+    'l':  [('M',1,0),('L',1,5.1),('Q',1,6.5,2.5,6.3),('Q',3.7,6.1,3.4,4.8)],
+    # signe muet (hûsh) : porte une voyelle initiale
+    '_':  [('M',1.3,1.2),('Q',2.6,1.1,2.6,2.6),('L',2.6,6)],
 }
 CONS_ORDER = ['p','b','t','d','k','g','kh','gh','th','dh','s','z','sh','zh','h','v','m','n','r','l','_']
 NOMS = {'p':'pâ','b':'bâ','t':'tâ','d':'dâ','k':'kâ','g':'gâ','kh':'khâ','gh':'ghâ','th':'thâ','dh':'dhâ',
         's':'sâ','z':'zâ','sh':'shâ','zh':'zhâ','h':'hâ','v':'vâ','m':'mâ','n':'nâ','r':'râ','l':'lâ','_':'hûsh (muet)'}
 
-# Entailles de voyelle : forme selon la qualité, nombre selon la longueur.
-# Chaque entaille est une liste de segments dans une boîte 1x1 (y vers le haut, au-dessus du signe).
+# Marques de voyelle, dans une boîte 1x1 posée au-dessus du signe.
+# a : point ; o : anneau ; u : flamme ; i : trait. Une marque = brève, deux = longue, trois = vocatif.
 VOY = {
-    'a': [((0.5,0),(0.5,1))],                       # trait vertical
-    'o': [((0,0.5),(1,0.5))],                       # trait horizontal
-    'u': [((0,0),(1,1))],                           # diagonale
-    'i': [((0,0),(1,0)),((1,0),(1,1)),((1,1),(0,1)),((0,1),(0,0))],  # petit carré
+    'a': [('M',0.5,0.5),('L',0.5,0.5)],                                 # point (rendu par le cap rond)
+    'o': [('M',0.5,0.1),('C',1.05,0.1,1.05,0.9,0.5,0.9),('C',-0.05,0.9,-0.05,0.1,0.5,0.1)],
+    'u': [('M',0.1,0.9),('Q',0.2,0.1,0.9,0.1)],                         # flamme
+    'i': [('M',0.5,0.05),('L',0.5,0.95)],                               # trait
 }
 LONG = {'â':'a','ô':'o','û':'u','î':'i'}
+LONG_INV = {v:k for k,v in LONG.items()}
 
 TOKEN = re.compile(r"kh|gh|th|dh|sh|zh|[pbtdkgszhvmnrl]|[aouiâôûî]|[^\w]", re.I)
 
@@ -78,32 +88,36 @@ def tokenize(word):
             raise ValueError(f"caractère inconnu dans le Ghâzrûn : {t!r} (dans {word!r})")
     return cells
 
-def seg_path(segs, ox, oy, s):
-    d = []
-    for (x1,y1),(x2,y2) in segs:
-        d.append(f"M{ox+x1*s:.1f},{oy+y1*s:.1f}L{ox+x2*s:.1f},{oy+y2*s:.1f}")
-    return "".join(d)
+def path_d(cmds, ox, oy, s):
+    out = []
+    for c in cmds:
+        k, nums = c[0], c[1:]
+        pts = [f"{ox + nums[i]*s:.1f},{oy + nums[i+1]*s:.1f}" for i in range(0, len(nums), 2)]
+        out.append(k + " ".join(pts))
+    return "".join(out)
+
+CELL_W, CELL_H, MARK_H = 4.8, 7.8, 2.4   # en unités de grille
 
 def draw_cell(cons, vowels, ox, oy, s, vocatif=False):
-    """Dessine un signe et ses entailles. Renvoie le fragment SVG."""
-    out = [f'<path d="{seg_path(CONS[cons], ox, oy+2*s, s)}"/>']
-    # entailles au-dessus, de gauche à droite
-    x = ox
+    """Dessine un signe et ses marques. (ox, oy) = coin haut-gauche de la zone des marques."""
+    body_y = oy + MARK_H*s
+    out = [f'<path d="{path_d(CONS[cons], ox, body_y, s)}"/>']
+    x = ox + 0.2*s
     for v in vowels:
         base = LONG.get(v, v)
         n = 2 if v in LONG else 1
-        if vocatif and base == 'a' and v == 'â':
+        if vocatif and v == 'â':
             n = 3
         for i in range(n):
-            out.append(f'<path d="{seg_path(VOY[base], x + i*0.7*s, oy + 0.4*s, 0.6*s)}"/>')
-        x += (n*0.7 + 0.3) * s
+            out.append(f'<path d="{path_d(VOY[base], x + i*0.85*s, oy + 0.6*s, 0.8*s)}"/>')
+        x += (n*0.85 + 0.4) * s
     return "".join(out)
 
 def render_words(text, s=18, rtl=False, vocatif_words=()):
     """Rend un texte (plusieurs lignes possibles) ; renvoie (svg_body, largeur, hauteur)."""
     lines = [l for l in text.split("\n")]
     body = []
-    cell_w, line_h = 5*s, 8*s
+    cell_w, line_h = CELL_W*s, (CELL_H+MARK_H+1.2)*s
     maxw = 0
     for li, line in enumerate(lines):
         words = line.split()
@@ -132,45 +146,47 @@ def render_words(text, s=18, rtl=False, vocatif_words=()):
                 body.append(draw_cell(c, vs, cx, y, s, vocatif=voc and ci == len(cells)-1))
             # point de fin de mot
             px = x0 - 0.6*s if rtl else x0 + len(cells)*cell_w + 0.2*s
-            body.append(f'<rect x="{px:.1f}" y="{y+6.4*s:.1f}" width="{0.5*s:.1f}" height="{0.5*s:.1f}"/>')
+            py = y + (MARK_H + 5.9)*s
+            body.append(f'<path d="M{px:.1f},{py-0.45*s:.1f}L{px+0.45*s:.1f},{py:.1f}L{px:.1f},{py+0.45*s:.1f}L{px-0.45*s:.1f},{py:.1f}Z"/>')
         if li < len(lines)-1:
-            body.append(f'<path d="M{s},{y+7.4*s:.1f}L{total-s:.1f},{y+7.4*s:.1f}" stroke-width="{0.12*s:.2f}"/>')
+            yy = y + (MARK_H + CELL_H + 0.5)*s
+            body.append(f'<path d="M{s},{yy:.1f}Q{(total)/2:.1f},{yy-0.5*s:.1f} {total-s:.1f},{yy:.1f}" fill="none" stroke-width="{0.12*s:.2f}"/>')
     return "".join(body), maxw, s + len(lines)*line_h
 
 def svg_wrap(body, w, h, s):
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w:.0f} {h:.0f}" width="{w:.0f}" height="{h:.0f}">'
             f'<rect width="100%" height="100%" fill="#f3efe6"/>'
-            f'<g fill="#1d1a16" stroke="#1d1a16" stroke-width="{0.28*s:.2f}" stroke-linecap="square" stroke-linejoin="miter">'
+            f'<g fill="none" stroke="#1d1a16" stroke-width="{0.3*s:.2f}" stroke-linecap="round" stroke-linejoin="round">'
             f'{body}</g></svg>')
 
 def alphabet_svg(s=16):
     body = []
     cols = 7
-    cw, ch = 8.5*s, 10*s
+    cw, ch = 8.5*s, 13*s
     for i, c in enumerate(CONS_ORDER):
         col, row = i % cols, i // cols
         ox, oy = s + col*cw, s + row*ch
         body.append(draw_cell(c, [], ox + 1.5*s, oy, s))
         label = c if c != '_' else 'muet'
-        body.append(f'<text x="{ox+3.5*s:.1f}" y="{oy+8.2*s:.1f}" font-family="serif" font-size="{1.3*s:.0f}" '
-                    f'text-anchor="middle" stroke="none">{label} · {NOMS[c]}</text>')
+        body.append(f'<text x="{ox+3.5*s:.1f}" y="{oy+11.6*s:.1f}" font-family="serif" font-size="{1.3*s:.0f}" '
+                    f'text-anchor="middle" fill="#1d1a16" stroke="none">{label} · {NOMS[c]}</text>')
     rows = (len(CONS_ORDER)+cols-1)//cols
     # voyelles
     oy = s + rows*ch + s
-    body.append(f'<text x="{s}" y="{oy+s:.0f}" font-family="serif" font-size="{1.4*s:.0f}" stroke="none">Entailles de voyelle (portées au-dessus de la consonne) : une = brève, deux = longue, trois = vocatif</text>')
+    body.append(f'<text x="{s}" y="{oy+s:.0f}" font-family="serif" font-size="{1.4*s:.0f}" fill="#1d1a16" stroke="none">Marques de voyelle, posées au-dessus du signe : une = brève, deux = longue, trois = vocatif</text>')
     demo = [('a','a / â'),('o','o / ô'),('u','u / û'),('i','i / î')]
     for j,(v,lab) in enumerate(demo):
         ox = s + j*cw*1.2
         body.append(draw_cell('k', [v], ox+1.5*s, oy+2*s, s))
         body.append(draw_cell('k', [LONG_INV[v]], ox+1.5*s+5.5*s, oy+2*s, s))
-        body.append(f'<text x="{ox+5*s:.1f}" y="{oy+10.2*s:.1f}" font-family="serif" font-size="{1.3*s:.0f}" text-anchor="middle" stroke="none">k{lab}</text>')
+        body.append(f'<text x="{ox+5*s:.1f}" y="{oy+13.6*s:.1f}" font-family="serif" font-size="{1.3*s:.0f}" text-anchor="middle" fill="#1d1a16" stroke="none">k{lab}</text>')
     # vocatif
     ox = s + 4*cw*1.2
     body.append(draw_cell('l', ['â'], ox+1.5*s, oy+2*s, s, vocatif=True))
-    body.append(f'<text x="{ox+3.5*s:.1f}" y="{oy+10.2*s:.1f}" font-family="serif" font-size="{1.3*s:.0f}" text-anchor="middle" stroke="none">lâ (vocatif)</text>')
+    body.append(f'<text x="{ox+3.5*s:.1f}" y="{oy+13.6*s:.1f}" font-family="serif" font-size="{1.3*s:.0f}" text-anchor="middle" fill="#1d1a16" stroke="none">lâ (vocatif)</text>')
     # exemple de mot
-    oy2 = oy + 12*s
-    body.append(f'<text x="{s}" y="{oy2+s:.0f}" font-family="serif" font-size="{1.4*s:.0f}" stroke="none">Exemple : Ghâzrûn (point = fin de mot)</text>')
+    oy2 = oy + 15*s
+    body.append(f'<text x="{s}" y="{oy2+s:.0f}" font-family="serif" font-size="{1.4*s:.0f}" fill="#1d1a16" stroke="none">Exemple : Ghâzrûn (le losange ferme le mot)</text>')
     b, w, h = render_words("Ghâzrûn", s)
     body.append(f'<g transform="translate(0,{oy2+1.5*s:.0f})">{b}</g>')
     W = s + cols*cw + s
