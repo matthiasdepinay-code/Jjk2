@@ -148,6 +148,9 @@
   .courrier-out { min-height: 1.4em; margin: 6px 0; font-style: italic; }
   .seal-list-c { display: flex; flex-wrap: wrap; gap: 6px; }
   button:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: none; }
+  canvas.carte { width: 100%; height: auto; display: block; border: 2px solid var(--ink); image-rendering: pixelated; }
+  body[data-texte="grand"] .panel { zoom: 1.12; }
+  body[data-texte="grand"] #toasts, body[data-texte="grand"] #hud .world-only { zoom: 1.1; }
   /* aide */
   #panel-help { width: calc(760px * var(--s)); }
   #panel-help p, #panel-help li { line-height: 1.45; }
@@ -173,6 +176,7 @@
       <button id="btn-lab" title="Retourner au labo">🏠 Labo</button>
       <button id="btn-grim" title="Grimoire (G)">📖</button>
       <button id="btn-help" title="Aide (H)">?</button>
+      <button id="btn-opt" title="Options">⚙</button>
       <button id="btn-mute" title="Son (M)">🔊</button>
     </div>
     <div id="hotbar"></div>
@@ -266,12 +270,19 @@
         <button data-tab="bestiaire">Bestiaire</button>
         <button data-tab="pages">Pages</button>
         <button data-tab="defis">Défis</button>
+        <button data-tab="carte">Carte</button>
         <button data-tab="lettres">Lettres</button>
         <button data-tab="journal">Journal</button>
       </div>
       <div id="grim-content"></div>
     </section>
 
+    <!-- Options -->
+    <section id="panel-options" class="panel hidden" style="width: calc(640px * var(--s))">
+      <button class="fermer" title="Fermer (Échap)">✕</button>
+      <h2>Options</h2>
+      <div id="options-content"></div>
+    </section>
     <!-- Courrier -->
     <section id="panel-courrier" class="panel hidden" style="width: calc(720px * var(--s))">
       <button class="fermer" title="Fermer (Échap)">✕</button>
@@ -317,6 +328,8 @@
       <p>Dehors, <b>tout réagit</b> : le feu brûle le bois et l'herbe, l'eau éteint et fait pousser, la glace fond, la lave fige l'eau en pierre noire, l'acide creuse, l'huile flotte et s'enflamme, la foudre court dans l'eau et le métal. Regarde bien : chaque phénomène observé trois fois fait germer un glyphe dans ta palette (onglet <b>Intuitions</b> du grimoire). Les orages sont de bons professeurs.</p>
       <p>Avec l'expérience, la table s'enrichit : un <b>second glyphe d'effet</b> en bas du premier anneau fusionne avec le premier (feu + vent = tornade de feu, eau + froid = banquise, feu + terre = lave...), et un emplacement de modificateur peut recevoir un <b>sous-sceau</b> : un sceau consigné entier, lancé là où le premier éclate.</p>
       <p>Le <b>chaudron</b> accepte jusqu'à trois ingrédients et trois étapes dans l'ordre. Commence par <b>cendre + eau de source</b>, <b>chauffer</b> puis <b>remuer</b> : tu auras de l'encre à boire. Les ingrédients rares se trouvent dehors ; on peut aussi puiser n'importe quel liquide dans une fiole (<kbd>E</kbd>) pour le lancer ou le brasser.</p>
+      <p>La <b>Gravité</b> ne sert pas qu'à voler : elle pose un champ de pesanteur dans le sens où tu la lances. Lancée vers la droite, tout y tombe à droite, même l'eau et le sable ; vers le haut, tout tombe vers le ciel. Avec Puissance, la pesanteur écrase ; avec Inverser, plus rien ne pèse. Sur toi, elle pointe vers la surface que tu vises : tu marches sur les murs et au plafond. Vise le vide pour voler, ajoute Puissance pour devenir une enclume.</p>
+      <p>Mon <b>corbeau</b> passera de temps en temps à la fenêtre avec une lettre : des commandes, des épreuves, des sceaux à inventer. Réponds-y, il te rapportera des choses qu'on ne trouve nulle part ailleurs.</p>
       <p>Le labo grandit avec toi : un <b>bac d'essai</b> sous verre pour tester un sceau, un <b>alambic</b> qui distille deux fioles en une forte, une <b>presse à glyphes</b> qui tire des parchemins lançables sans encre, et un <b>terrarium</b> pour loger les créatures apprivoisées que tu ramènes dans tes bras.</p>
       <h3>Dehors</h3>
       <ul>

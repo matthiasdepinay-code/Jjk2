@@ -4,6 +4,8 @@
   const VW = 1280, VH = 720;
   const SAVE_KEY = 'atelier-des-sceaux-v2';
   const WORLD_KEY = 'atelier-monde-v2';
+  const OPT_KEY = 'atelier-options';
+  const CB = 20; // taille d'un bloc de carte (cellules)
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   let paperPat = null;
@@ -80,7 +82,8 @@
     seals: [], hotbar: [null, null, null, null, null], selected: 0,
     editSeal: Seal.create(), lastPotion: null, started: false,
     xp: 0, niveau: 1,
-    courrier: { active: null, faites: [], pret: false, t: 0, exploitOk: false }, bonus: { encre: 0, vie: 0 }, trophees: [],
+    courrier: { active: null, faites: [], pret: false, t: 0, exploitOk: false }, bonus: { encre: 0, vie: 0 }, trophees: [], carte: '',
+    opt: { feu: 1, pluie: 1, encre: 'normale', cout: 1, regen: 1, texte: 'normal', musique: 1, effets: 1 },
     toast(m, k) { UI.toast(m, k); },
     zoneChange(nom) { UI.zoneTitle(nom); },
     gainIngredient(id) {
@@ -114,6 +117,29 @@
         p.check();
       }
       this.save();
+    },
+    // ---------- Carte et options ----------
+    explorer(x0, y0, w, h) {
+      const bw = Math.ceil(900 / CB), bh = Math.ceil(260 / CB);
+      if (this.carte.length !== bw * bh) this.carte = '0'.repeat(bw * bh);
+      const a = this.carte.split(''); let ch = false;
+      for (let by = Math.max(0, Math.floor(y0 / CB)); by <= Math.min(bh - 1, Math.floor((y0 + h) / CB)); by++)
+        for (let bx = Math.max(0, Math.floor(x0 / CB)); bx <= Math.min(bw - 1, Math.floor((x0 + w) / CB)); bx++) { const i = by * bw + bx; if (a[i] !== '1') { a[i] = '1'; ch = true; } }
+      if (ch) this.carte = a.join('');
+    },
+    ensureWorld() {
+      if (World.state()) return;
+      let saved = null; try { const raw = localStorage.getItem(WORLD_KEY); if (raw) saved = JSON.parse(raw); } catch (e) { saved = null; }
+      World.ensure(this, saved); this.applyNiveau();
+    },
+    appliquerOptions() {
+      const o = this.opt;
+      o.cout = o.encre === 'genereuse' ? 0.75 : o.encre === 'rare' ? 1.25 : 1;
+      o.regen = o.encre === 'genereuse' ? 1.5 : o.encre === 'rare' ? 0.7 : 1;
+      Sim.feuMul = o.feu;
+      Son.setVolumes(o.musique, o.effets);
+      document.body.dataset.texte = o.texte;
+      try { localStorage.setItem(OPT_KEY, JSON.stringify(o)); } catch (e) { }
     },
     // ---------- Courrier du maître ----------
     lettreCourante() { return DATA.LETTRES.find((l) => l.id === this.courrier.active) || null; },
@@ -353,7 +379,7 @@
     save() {
       this.progress.compteurs.sceaux = this.seals.length;
       try {
-        const data = { courrier: this.courrier, bonus: this.bonus, trophees: this.trophees, look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
+        const data = { carte: this.carte, courrier: this.courrier, bonus: this.bonus, trophees: this.trophees, look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
           progress: { labo: this.progress.labo, cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs, pagesLues: this.progress.pagesLues, defisFaits: this.progress.defisFaits, bizarresVues: this.progress.bizarresVues || [], bestiaire: this.progress.bestiaire, especesVues: this.progress.especesVues } };
         localStorage.setItem(SAVE_KEY, JSON.stringify(data));
       } catch (e) { /* stockage indisponible */ }
@@ -364,6 +390,7 @@
         const d = JSON.parse(raw);
         this.look = d.look || this.look; this.started = !!d.started; this.inv = d.inv || this.inv; this.seals = d.seals || []; this.hotbar = d.hotbar || this.hotbar; this.lastPotion = d.lastPotion || null;
         this.xp = d.xp || 0; this.niveau = d.niveau || 1;
+        if (d.carte) this.carte = d.carte;
         if (d.courrier) this.courrier = Object.assign(this.courrier, d.courrier); if (d.bonus) this.bonus = Object.assign(this.bonus, d.bonus); if (d.trophees) this.trophees = d.trophees;
         if (d.progress) Object.assign(this.progress, d.progress);
         if (!this.progress.obs) this.progress.obs = {};
@@ -453,6 +480,7 @@
     const dt = Math.min(0.033, (t - last) / 1000 || 0.016); last = t;
     const open = UI.isOpen();
     if (game.state === 'lab') {
+      Son.setMood('lab', false);
       Lab.update(dt, inp);
       Lab.draw(ctx, paperPat, inp, game.editSeal);
     } else if (game.state === 'world') {
@@ -477,7 +505,9 @@
     if (booted) return; booted = true;
     paperPat = ctx.createPattern(U.paper(512, 512, 7), 'repeat');
     resize();
+    try { const o = JSON.parse(localStorage.getItem(OPT_KEY) || 'null'); if (o) Object.assign(game.opt, o); } catch (e) { }
     UI.init(game); Lab.init(game);
+    game.appliquerOptions();
     const ok = game.load();
     UI.refreshHotbar();
     if (ok) { game.state = 'lab'; UI.setMode('lab'); game.toast('Bon retour, ' + game.look.nom + '.'); }

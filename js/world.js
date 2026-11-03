@@ -649,7 +649,7 @@ const World = (() => {
   function castSeal(seal, aim, gratuit) {
     const p = st.p;
     if (p.geste) return false;
-    const cost = gratuit ? 0 : Seal.cost(seal);
+    const cost = gratuit ? 0 : Math.max(1, Math.round(Seal.cost(seal) * (game.opt ? game.opt.cout : 1)));
     if (p.ink < cost) { msg('Plus assez d\'encre (' + Math.floor(p.ink) + '/' + cost + ').', 'warn'); Son.sfx('fail'); return false; }
     p.ink -= cost;
     if (gratuit) part(p.x + p.w / 2, p.y + p.h * 0.4, '#efe3c4', 8, 40, 0.6, 3, 60);
@@ -1011,7 +1011,7 @@ const World = (() => {
       else { const cx = p.x + p.w / 2, cy = p.y + p.h / 2; p.w = W2; p.h = H2; p.x = cx - p.w / 2; p.y = cy - p.h / 2; }
       unstick(p);
     }
-    p.ink = Math.min(p.inkMax, p.ink + dt * p.inkRegen);
+    p.ink = Math.min(p.inkMax, p.ink + dt * p.inkRegen * (game.opt ? game.opt.regen : 1));
     // statuts qui blessent / coûtent
     if (p.sta.burning > 0 && !p.sta.stone) { p.hp -= dt * 0.8; if (Math.random() < 0.3) part(p.x + p.w / 2, p.y + p.h * 0.3, '#d9622b', 1, 40, 0.5, 3, -150); }
     if (p.sta.lumiere > 0 && Math.random() < 0.2) part(p.x + p.w / 2, p.y + p.h * 0.4, '#d8a63a', 1, 30, 0.6, 2, -40, 'spark');
@@ -1125,6 +1125,16 @@ const World = (() => {
     if (p.x > 380 * CS && p.x < 420 * CS && p.y < 90 * CS) st.vuSommet = true;
     st.maxDepth = Math.max(st.maxDepth, (p.y + p.h) / CS);
     st.defiT -= dt; if (st.defiT <= 0) { st.defiT = 1; game.checkDefis(defiInfo()); }
+    // ambiance musicale et exploration de la carte
+    st.ambT = (st.ambT || 0) - dt;
+    if (st.ambT <= 0) {
+      st.ambT = 0.5;
+      const pcx = clamp(Math.floor((p.x + p.w / 2) / CS), 0, Sim.W - 1), pcy = (p.y + p.h / 2) / CS;
+      const sous = Sim.surf && pcy > Sim.surf[pcx] + 14, ciel = pcy < 85;
+      const zn = (L.zones.find((z) => p.x >= z.x && p.x < z.x + z.w) || {}).nom;
+      Son.setMood(sous ? 'souterrain' : ciel ? 'ciel' : zn || 'Le Jardin', daylight() < 0.3);
+      game.explorer(st.cam.x / CS, st.cam.y / CS, VW / CS, VH / CS);
+    }
     // zone courante
     const z = L.zones.find((z) => p.x >= z.x && p.x < z.x + z.w);
     if (z && z.nom !== st.lastZone) { st.lastZone = z.nom; game.zoneChange(z.nom); }
@@ -1189,7 +1199,7 @@ const World = (() => {
     if (m.t <= 0) {
       const r = Math.random();
       if (m.type === 'clair') { m.type = 'nuages'; m.t = 30 + Math.random() * 40; }
-      else if (m.type === 'nuages') { if (r < 0.4) { m.type = 'pluie'; m.t = 40 + Math.random() * 40; } else if (r < 0.65) { m.type = 'orage'; m.t = 35 + Math.random() * 30; msg('Le ciel gronde...'); } else { m.type = 'clair'; m.t = 90 + Math.random() * 120; } }
+      else if (m.type === 'nuages') { const pl = game.opt ? game.opt.pluie : 1; if (r < 0.4 * pl) { m.type = 'pluie'; m.t = 40 + Math.random() * 40; } else if (r < 0.65 * pl && pl > 0) { m.type = 'orage'; m.t = 35 + Math.random() * 30; msg('Le ciel gronde...'); } else { m.type = 'clair'; m.t = 90 + Math.random() * 120; } }
       else { m.type = r < 0.5 ? 'clair' : 'nuages'; m.t = 60 + Math.random() * 120; }
     }
     Sim.sunny = m.type === 'clair' && daylight() > 0.4;
@@ -2014,10 +2024,11 @@ const World = (() => {
     ctx.restore();
   }
 
+  function objets() { return st ? st.objs : []; }
   function toWorld(mx, my) { return { x: mx + st.cam.x, y: my + st.cam.y }; }
   function state() { return st; }
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher };
+  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets };
 })();

@@ -57,6 +57,7 @@ const UI = (() => {
     }
     $('#btn-mute').addEventListener('click', () => { const m = Son.toggleMute(); $('#btn-mute').textContent = m ? '🔇' : '🔊'; });
     $('#btn-help').addEventListener('click', () => openPanel('help'));
+    $('#btn-opt').addEventListener('click', () => openPanel('options'));
     $('#btn-grim').addEventListener('click', () => openPanel('grimoire'));
     $('#btn-lab').addEventListener('click', () => { if (game.state === 'world') game.goLab(); });
     $$('#hotbar .slot').forEach(() => {});
@@ -88,6 +89,7 @@ const UI = (() => {
     if (name === 'cauldron') refreshCauldron();
     if (name === 'grimoire') { game.progress.nouveau = false; refreshGrimoire(); }
     if (name === 'courrier') refreshCourrier();
+    if (name === 'options') refreshOptions();
     if (name === 'alambic') refreshAlambic();
     if (name === 'presse') refreshPresse();
     if (name === 'terrarium') refreshTerrarium();
@@ -371,6 +373,12 @@ const UI = (() => {
         const g = O.glyphe ? DATA.CORES[O.glyphe] : null; const connu = g && p.cores.includes(O.glyphe);
         c.appendChild(el('div', 'decouverte' + (n > 0 ? ' ok' : ''), '<span class="check">' + (n >= 3 || connu ? '✓' : n > 0 ? n : '○') + '</span><div><b>' + (n > 0 ? O.nom : '???') + '</b> ' + (g ? '<small>→ glyphe ' + (connu ? g.nom : '???') + '</small>' : '<small>(expérience)</small>') + '<br><em>' + O.desc + '</em></div>'));
       }
+    } else if (grimTab === 'carte') {
+      game.ensureWorld();
+      c.appendChild(el('p', 'intro', 'La carte se dessine à mesure que tu explores. Les pages déchirées retrouvées y sont marquées.'));
+      const cv = document.createElement('canvas'); cv.width = 900; cv.height = 260; cv.className = 'carte'; c.appendChild(cv);
+      dessinerCarte(cv);
+      const leg = el('p', 'muted', '● toi · ⌂ le labo · ✎ pages retrouvées · les zones grises restent à explorer'); c.appendChild(leg);
     } else if (grimTab === 'lettres') {
       c.appendChild(el('p', 'intro', 'Les lettres du maître auxquelles tu as répondu, et les souvenirs qu\'il t\'a envoyés.'));
       const faites = DATA.LETTRES.filter((l) => game.courrier.faites.includes(l.id));
@@ -408,6 +416,46 @@ const UI = (() => {
     }
   }
 
+  // ---------- Carte ----------
+  const COUL_CARTE = {};
+  function dessinerCarte(cv) {
+    const ctx = cv.getContext('2d'); const W = Sim.W, H = Sim.H; const M = Sim.M, P = Sim.P;
+    if (!COUL_CARTE.ok) { for (let m = 0; m < P.length; m++) { const h = (P[m].color || '#000000').replace('#', ''); COUL_CARTE[m] = [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; } COUL_CARTE.ok = true; }
+    const img = ctx.createImageData(W, H); const d = img.data; const mat = Sim.mat;
+    const CB = 20, bw = Math.ceil(W / CB); const carte = game.carte || '';
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const k = (y * W + x) * 4; const vu = carte[Math.floor(y / CB) * bw + Math.floor(x / CB)] === '1';
+      if (!vu) { const hh = ((x + y) % 6 === 0) ? 170 : 205; d[k] = hh; d[k + 1] = hh - 12; d[k + 2] = hh - 40; d[k + 3] = 255; continue; }
+      const m = mat[y * W + x];
+      if (m === M.AIR || P[m].gas) { d[k] = 246; d[k + 1] = 238; d[k + 2] = 216; d[k + 3] = 255; continue; }
+      const c = COUL_CARTE[m]; const sh = P[m].solid && !P[m].powder ? 0.82 : 1;
+      d[k] = c[0] * sh; d[k + 1] = c[1] * sh; d[k + 2] = c[2] * sh; d[k + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    // contours des zones et marques
+    ctx.font = '14px "IM Fell English", Georgia, serif'; ctx.textAlign = 'center'; ctx.fillStyle = U.INK;
+    for (const z of World.level().zones) { const zx = z.x / Sim.CS + z.w / Sim.CS / 2; if (carte[Math.floor(110 / CB) * bw + Math.floor(zx / CB)] === '1') ctx.fillText(z.nom, zx, 12); }
+    const pr = World.state().p; ctx.fillStyle = '#9a4a3a'; ctx.beginPath(); ctx.arc((pr.x + pr.w / 2) / Sim.CS, (pr.y + pr.h / 2) / Sim.CS, 4, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = U.INK; ctx.stroke();
+    ctx.fillStyle = U.INK; ctx.fillText('⌂', 7, 128);
+    for (const o of World.objets()) if (o.t === 'page' && o.lue) { ctx.fillText('✎', (o.x + 10) / Sim.CS, (o.y + 12) / Sim.CS); }
+  }
+  // ---------- Options ----------
+  function refreshOptions() {
+    const c = $('#options-content'); c.innerHTML = '';
+    const o = game.opt;
+    const groupe = (titre, cle, choix) => {
+      c.appendChild(el('h3', '', titre)); const g = el('div', 'choices');
+      for (const [v, lab] of choix) { const b = el('button', 'choice' + (o[cle] === v ? ' on' : ''), lab); b.addEventListener('click', () => { o[cle] = v; game.appliquerOptions(); refreshOptions(); Son.sfx('click'); }); g.appendChild(b); }
+      c.appendChild(g);
+    };
+    groupe('Vitesse du feu', 'feu', [[0.5, 'Lente'], [1, 'Normale'], [2, 'Vive']]);
+    groupe('Pluie et orages', 'pluie', [[0, 'Jamais'], [0.5, 'Rares'], [1, 'Normaux'], [2, 'Fréquents']]);
+    groupe('Encre', 'encre', [['genereuse', 'Généreuse'], ['normale', 'Normale'], ['rare', 'Précieuse']]);
+    groupe('Taille du texte', 'texte', [['normal', 'Normale'], ['grand', 'Grande']]);
+    groupe('Musique', 'musique', [[0, 'Muette'], [0.5, 'Douce'], [1, 'Normale']]);
+    groupe('Effets sonores', 'effets', [[0, 'Muets'], [0.5, 'Doux'], [1, 'Normaux']]);
+    c.appendChild(el('p', 'muted', 'Encre généreuse : les sceaux coûtent un quart de moins et l\'encre revient moitié plus vite. Précieuse : l\'inverse.'));
+  }
   // ---------- Courrier ----------
   function descCmd(m) {
     if (m.type === 'potion') return m.n + ' × ' + DATA.POTIONS[m.id].nom + ' <small>(tu en as ' + (game.inv.potions[m.id] || 0) + ')</small>';

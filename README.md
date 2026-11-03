@@ -26,11 +26,14 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 | Alambic | Deux fioles identiques distillées en une fiole forte (effet doublé). |
 | Presse à glyphes | Un sceau consigné + une poussière de pierre = trois parchemins lançables sans encre. |
 | Terrarium | Les créatures apprivoisées ramenées dans tes bras y vivent et offrent des cadeaux. |
+| Fenêtre et corbeau | Treize lettres du maître : commandes de potions, de matières, d'exploits et de sceaux à inventer, récompensées par des ingrédients rares, de l'encre permanente et des trophées. |
 | Lettre du maître | L'aide, les contrôles, et « Restaurer le monde ». |
+| ⚙ Options | Vitesse du feu, fréquence de la pluie, générosité de l'encre, taille du texte, volumes. |
 | Porte | Sortir. Revenir restaure encre et vitalité et sauvegarde le monde. |
 
 ## Les sceaux
 
+- **Gravité** : pose un champ de pesanteur orienté dans le sens du lancer (l'eau, le sable, les créatures et les caisses y tombent de ce côté) ; Puissance l'alourdit, Inverser donne l'apesanteur. Sur soi : marcher sur le mur ou le plafond visé, voler en visant le vide, devenir une enclume avec Puissance.
 - **Effets** (19) : Feu, Vent, Eau, Terre au départ. Lumière, Ombre, Vie, Force, Froid, Foudre, Acide, Gravité, Temps, Transmutation, Son, Esprit, Lien, Portail et Métal se découvrent (par exploits ou par observation de phénomènes).
 - **Fusion** : deux glyphes d'effet dans un sceau, avec des combos nommés (tornade de feu, banquise, lave, orage, blizzard...).
 - **Sous-sceaux** : un emplacement de modificateur peut contenir un sceau consigné entier, lancé là où le premier éclate (deux niveaux).
@@ -44,6 +47,8 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 Onze espèces peuplent le monde (limaces d'encre, feux follets, golems, grenouilles, corbeaux, salamandres, poissons d'argent, chauves-souris, escargots de cristal, tortues des sables, lapins de neige), avec habitats, rythme jour/nuit, goûts et craintes à découvrir ; une créature apprivoisée suit et offre des cadeaux.
 
 Treize pages déchirées du grimoire du maître sont cachées aux endroits difficiles (îles, fond du lac, sommet, volcan, grottes, fond du monde) : chacune apprend une recette ou un glyphe. Quinze défis facultatifs rapportent de l'expérience.
+
+Nouvelles matières : poudre explosive, mousse sur la pierre humide, miel des ruches (à enfumer), sel des salines (saumure qui ne gèle pas, fait fondre la glace), boue. La carte du grimoire se dévoile en explorant ; la musique change selon le lieu et l'heure.
 
 Un seul grand monde : jardin, forêt, lac, montagne enneigée, volcan, clairière, ruines de métal, désert ; des îles volantes dans le ciel ; des grottes à cristaux, un lac souterrain, une poche d'acide et une nappe d'huile sous terre. Le monde est une grille de matières : on creuse, on inonde, on gèle, on brûle, et le tout persiste.
 

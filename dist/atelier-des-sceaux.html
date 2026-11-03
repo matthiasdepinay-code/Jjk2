@@ -148,6 +148,9 @@
   .courrier-out { min-height: 1.4em; margin: 6px 0; font-style: italic; }
   .seal-list-c { display: flex; flex-wrap: wrap; gap: 6px; }
   button:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: none; }
+  canvas.carte { width: 100%; height: auto; display: block; border: 2px solid var(--ink); image-rendering: pixelated; }
+  body[data-texte="grand"] .panel { zoom: 1.12; }
+  body[data-texte="grand"] #toasts, body[data-texte="grand"] #hud .world-only { zoom: 1.1; }
   /* aide */
   #panel-help { width: calc(760px * var(--s)); }
   #panel-help p, #panel-help li { line-height: 1.45; }
@@ -173,6 +176,7 @@
       <button id="btn-lab" title="Retourner au labo">🏠 Labo</button>
       <button id="btn-grim" title="Grimoire (G)">📖</button>
       <button id="btn-help" title="Aide (H)">?</button>
+      <button id="btn-opt" title="Options">⚙</button>
       <button id="btn-mute" title="Son (M)">🔊</button>
     </div>
     <div id="hotbar"></div>
@@ -266,12 +270,19 @@
         <button data-tab="bestiaire">Bestiaire</button>
         <button data-tab="pages">Pages</button>
         <button data-tab="defis">Défis</button>
+        <button data-tab="carte">Carte</button>
         <button data-tab="lettres">Lettres</button>
         <button data-tab="journal">Journal</button>
       </div>
       <div id="grim-content"></div>
     </section>
 
+    <!-- Options -->
+    <section id="panel-options" class="panel hidden" style="width: calc(640px * var(--s))">
+      <button class="fermer" title="Fermer (Échap)">✕</button>
+      <h2>Options</h2>
+      <div id="options-content"></div>
+    </section>
     <!-- Courrier -->
     <section id="panel-courrier" class="panel hidden" style="width: calc(720px * var(--s))">
       <button class="fermer" title="Fermer (Échap)">✕</button>
@@ -317,6 +328,8 @@
       <p>Dehors, <b>tout réagit</b> : le feu brûle le bois et l'herbe, l'eau éteint et fait pousser, la glace fond, la lave fige l'eau en pierre noire, l'acide creuse, l'huile flotte et s'enflamme, la foudre court dans l'eau et le métal. Regarde bien : chaque phénomène observé trois fois fait germer un glyphe dans ta palette (onglet <b>Intuitions</b> du grimoire). Les orages sont de bons professeurs.</p>
       <p>Avec l'expérience, la table s'enrichit : un <b>second glyphe d'effet</b> en bas du premier anneau fusionne avec le premier (feu + vent = tornade de feu, eau + froid = banquise, feu + terre = lave...), et un emplacement de modificateur peut recevoir un <b>sous-sceau</b> : un sceau consigné entier, lancé là où le premier éclate.</p>
       <p>Le <b>chaudron</b> accepte jusqu'à trois ingrédients et trois étapes dans l'ordre. Commence par <b>cendre + eau de source</b>, <b>chauffer</b> puis <b>remuer</b> : tu auras de l'encre à boire. Les ingrédients rares se trouvent dehors ; on peut aussi puiser n'importe quel liquide dans une fiole (<kbd>E</kbd>) pour le lancer ou le brasser.</p>
+      <p>La <b>Gravité</b> ne sert pas qu'à voler : elle pose un champ de pesanteur dans le sens où tu la lances. Lancée vers la droite, tout y tombe à droite, même l'eau et le sable ; vers le haut, tout tombe vers le ciel. Avec Puissance, la pesanteur écrase ; avec Inverser, plus rien ne pèse. Sur toi, elle pointe vers la surface que tu vises : tu marches sur les murs et au plafond. Vise le vide pour voler, ajoute Puissance pour devenir une enclume.</p>
+      <p>Mon <b>corbeau</b> passera de temps en temps à la fenêtre avec une lettre : des commandes, des épreuves, des sceaux à inventer. Réponds-y, il te rapportera des choses qu'on ne trouve nulle part ailleurs.</p>
       <p>Le labo grandit avec toi : un <b>bac d'essai</b> sous verre pour tester un sceau, un <b>alambic</b> qui distille deux fioles en une forte, une <b>presse à glyphes</b> qui tire des parchemins lançables sans encre, et un <b>terrarium</b> pour loger les créatures apprivoisées que tu ramènes dans tes bras.</p>
       <h3>Dehors</h3>
       <ul>
@@ -1238,7 +1251,22 @@ const Seal = (() => {
 'use strict';
 // ---------- Sons génératifs (WebAudio) : doux, cosy, sans fichier externe ----------
 const Son = (() => {
-  let ctx = null, master = null, muted = false, ambient = null;
+  let ctx = null, master = null, muted = false, ambient = null, sfxBus = null, musicBus = null;
+  let volMusique = 1, volEffets = 1, mood = null, nuit = false, melodyT = null;
+  // Ambiances : accord tenu, gamme de la mélodie, densité, filtre
+  const MOODS = {
+    lab:        { chord: [130.81, 164.81, 196.0, 246.94], scale: [523.25, 587.33, 659.25, 783.99, 880.0], dens: 0.32, f: 700 },
+    'Le Jardin': { chord: [146.83, 185.0, 220.0, 277.18], scale: [587.33, 659.25, 739.99, 880.0, 987.77], dens: 0.3, f: 750 },
+    'La Forêt':  { chord: [110.0, 130.81, 164.81, 196.0], scale: [440.0, 523.25, 587.33, 659.25, 783.99], dens: 0.28, f: 520 },
+    'Le Lac':    { chord: [155.56, 196.0, 233.08, 293.66], scale: [622.25, 698.46, 783.99, 932.33, 1046.5], dens: 0.24, f: 650 },
+    'La Montagne': { chord: [220.0, 277.18, 329.63, 440.0], scale: [880.0, 987.77, 1108.7, 1318.5, 1480.0], dens: 0.2, f: 1200 },
+    'Le Volcan': { chord: [73.42, 110.0, 146.83, 155.56], scale: [587.33, 622.25, 739.99, 880.0, 932.33], dens: 0.22, f: 420 },
+    'La Clairière': { chord: [98.0, 123.47, 146.83, 185.0], scale: [392.0, 440.0, 493.88, 587.33, 659.25], dens: 0.34, f: 700 },
+    'Les Ruines': { chord: [123.47, 146.83, 185.0, 220.0], scale: [493.88, 587.33, 659.25, 739.99, 880.0], dens: 0.2, f: 600 },
+    'Le Désert': { chord: [82.41, 123.47, 164.81, 174.61], scale: [659.25, 698.46, 830.61, 987.77, 1046.5], dens: 0.24, f: 800 },
+    souterrain: { chord: [65.41, 77.78, 98.0, 116.54], scale: [261.63, 311.13, 349.23, 392.0, 466.16], dens: 0.12, f: 350 },
+    ciel:       { chord: [261.63, 329.63, 392.0, 493.88], scale: [1046.5, 1174.7, 1318.5, 1568.0, 1760.0], dens: 0.3, f: 1500 },
+  };
   const ELEM_FREQ = { feu: 220, vent: 392, eau: 330, terre: 147, lumiere: 523, ombre: 196, vie: 440, force: 262 };
 
   function init() {
@@ -1248,7 +1276,10 @@ const Son = (() => {
       master = ctx.createGain();
       master.gain.value = muted ? 0 : 0.5;
       master.connect(ctx.destination);
+      sfxBus = ctx.createGain(); sfxBus.gain.value = volEffets; sfxBus.connect(master);
+      musicBus = ctx.createGain(); musicBus.gain.value = volMusique; musicBus.connect(master);
       startAmbient();
+      melodyT = setInterval(melodie, 420);
     } catch (e) { ctx = null; }
   }
   function resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); }
@@ -1261,7 +1292,7 @@ const Son = (() => {
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(vol, t + attack);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(master);
+    o.connect(g); g.connect(sfxBus);
     o.start(t); o.stop(t + dur + 0.05);
   }
   function noise(dur, vol = 0.15, hp = 800) {
@@ -1273,7 +1304,7 @@ const Son = (() => {
     const src = ctx.createBufferSource(); src.buffer = buf;
     const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = hp;
     const g = ctx.createGain(); g.gain.value = vol;
-    src.connect(f); f.connect(g); g.connect(master);
+    src.connect(f); f.connect(g); g.connect(sfxBus);
     src.start();
   }
 
@@ -1301,7 +1332,7 @@ const Son = (() => {
   // Nappe ambiante très douce : deux oscillateurs lents + LFO
   function startAmbient() {
     if (!ctx || ambient) return;
-    const g = ctx.createGain(); g.gain.value = 0.045; g.connect(master);
+    const g = ctx.createGain(); g.gain.value = 0.045; g.connect(musicBus);
     const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 600; f.connect(g);
     const notes = [130.81, 196.0, 261.63, 329.63];
     const oscs = notes.map((n, i) => {
@@ -1313,7 +1344,35 @@ const Son = (() => {
       o.connect(og); og.connect(f); o.start(); lfo.start();
       return o;
     });
-    ambient = { g, oscs };
+    ambient = { g, f, oscs };
+    setMood(mood || 'lab', nuit);
+  }
+  function setMood(key, isNuit) {
+    const m = MOODS[key] || MOODS.lab;
+    if (key === mood && !!isNuit === nuit) return;
+    mood = key; nuit = !!isNuit;
+    if (!ctx || !ambient) return;
+    const t = ctx.currentTime;
+    ambient.oscs.forEach((o, i) => o.frequency.setTargetAtTime(m.chord[i] * (nuit ? 0.5 : 1), t, 1.5));
+    ambient.f.frequency.setTargetAtTime(m.f * (nuit ? 0.7 : 1), t, 1.5);
+    ambient.g.gain.setTargetAtTime(nuit ? 0.035 : 0.045, t, 1.5);
+  }
+  // mélodie clairsemée : quelques notes pincées dans la gamme de l'ambiance
+  function melodie() {
+    if (!ctx || muted || ctx.state !== 'running') return;
+    const m = MOODS[mood] || MOODS.lab;
+    if (Math.random() > m.dens * (nuit ? 0.55 : 1)) return;
+    const f = m.scale[Math.floor(Math.random() * m.scale.length)] * (nuit ? 0.5 : 1) * (Math.random() < 0.15 ? 0.5 : 1);
+    const o = ctx.createOscillator(), g = ctx.createGain(), fl = ctx.createBiquadFilter();
+    o.type = 'triangle'; o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.value = m.f * 2.5;
+    const t = ctx.currentTime, dur = 1.6 + Math.random() * 1.4;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.05, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(fl); fl.connect(g); g.connect(musicBus); o.start(t); o.stop(t + dur + 0.05);
+    if (Math.random() < 0.3) { const o2 = ctx.createOscillator(), g2 = ctx.createGain(); o2.type = 'sine'; o2.frequency.value = f * 1.5; g2.gain.setValueAtTime(0, t + 0.25); g2.gain.linearRampToValueAtTime(0.025, t + 0.27); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.25 + dur * 0.7); o2.connect(g2); g2.connect(musicBus); o2.start(t + 0.25); o2.stop(t + 0.3 + dur); }
+  }
+  function setVolumes(mu, fx) {
+    volMusique = mu; volEffets = fx;
+    if (musicBus) musicBus.gain.value = mu; if (sfxBus) sfxBus.gain.value = fx;
   }
   function toggleMute() {
     muted = !muted;
@@ -1322,7 +1381,7 @@ const Son = (() => {
   }
   function isMuted() { return muted; }
 
-  return { init, resume, sfx, toggleMute, isMuted };
+  return { init, resume, sfx, toggleMute, isMuted, setMood, setVolumes };
 })();
 
 </script>
@@ -2643,7 +2702,7 @@ const World = (() => {
   function castSeal(seal, aim, gratuit) {
     const p = st.p;
     if (p.geste) return false;
-    const cost = gratuit ? 0 : Seal.cost(seal);
+    const cost = gratuit ? 0 : Math.max(1, Math.round(Seal.cost(seal) * (game.opt ? game.opt.cout : 1)));
     if (p.ink < cost) { msg('Plus assez d\'encre (' + Math.floor(p.ink) + '/' + cost + ').', 'warn'); Son.sfx('fail'); return false; }
     p.ink -= cost;
     if (gratuit) part(p.x + p.w / 2, p.y + p.h * 0.4, '#efe3c4', 8, 40, 0.6, 3, 60);
@@ -3005,7 +3064,7 @@ const World = (() => {
       else { const cx = p.x + p.w / 2, cy = p.y + p.h / 2; p.w = W2; p.h = H2; p.x = cx - p.w / 2; p.y = cy - p.h / 2; }
       unstick(p);
     }
-    p.ink = Math.min(p.inkMax, p.ink + dt * p.inkRegen);
+    p.ink = Math.min(p.inkMax, p.ink + dt * p.inkRegen * (game.opt ? game.opt.regen : 1));
     // statuts qui blessent / coûtent
     if (p.sta.burning > 0 && !p.sta.stone) { p.hp -= dt * 0.8; if (Math.random() < 0.3) part(p.x + p.w / 2, p.y + p.h * 0.3, '#d9622b', 1, 40, 0.5, 3, -150); }
     if (p.sta.lumiere > 0 && Math.random() < 0.2) part(p.x + p.w / 2, p.y + p.h * 0.4, '#d8a63a', 1, 30, 0.6, 2, -40, 'spark');
@@ -3119,6 +3178,16 @@ const World = (() => {
     if (p.x > 380 * CS && p.x < 420 * CS && p.y < 90 * CS) st.vuSommet = true;
     st.maxDepth = Math.max(st.maxDepth, (p.y + p.h) / CS);
     st.defiT -= dt; if (st.defiT <= 0) { st.defiT = 1; game.checkDefis(defiInfo()); }
+    // ambiance musicale et exploration de la carte
+    st.ambT = (st.ambT || 0) - dt;
+    if (st.ambT <= 0) {
+      st.ambT = 0.5;
+      const pcx = clamp(Math.floor((p.x + p.w / 2) / CS), 0, Sim.W - 1), pcy = (p.y + p.h / 2) / CS;
+      const sous = Sim.surf && pcy > Sim.surf[pcx] + 14, ciel = pcy < 85;
+      const zn = (L.zones.find((z) => p.x >= z.x && p.x < z.x + z.w) || {}).nom;
+      Son.setMood(sous ? 'souterrain' : ciel ? 'ciel' : zn || 'Le Jardin', daylight() < 0.3);
+      game.explorer(st.cam.x / CS, st.cam.y / CS, VW / CS, VH / CS);
+    }
     // zone courante
     const z = L.zones.find((z) => p.x >= z.x && p.x < z.x + z.w);
     if (z && z.nom !== st.lastZone) { st.lastZone = z.nom; game.zoneChange(z.nom); }
@@ -3183,7 +3252,7 @@ const World = (() => {
     if (m.t <= 0) {
       const r = Math.random();
       if (m.type === 'clair') { m.type = 'nuages'; m.t = 30 + Math.random() * 40; }
-      else if (m.type === 'nuages') { if (r < 0.4) { m.type = 'pluie'; m.t = 40 + Math.random() * 40; } else if (r < 0.65) { m.type = 'orage'; m.t = 35 + Math.random() * 30; msg('Le ciel gronde...'); } else { m.type = 'clair'; m.t = 90 + Math.random() * 120; } }
+      else if (m.type === 'nuages') { const pl = game.opt ? game.opt.pluie : 1; if (r < 0.4 * pl) { m.type = 'pluie'; m.t = 40 + Math.random() * 40; } else if (r < 0.65 * pl && pl > 0) { m.type = 'orage'; m.t = 35 + Math.random() * 30; msg('Le ciel gronde...'); } else { m.type = 'clair'; m.t = 90 + Math.random() * 120; } }
       else { m.type = r < 0.5 ? 'clair' : 'nuages'; m.t = 60 + Math.random() * 120; }
     }
     Sim.sunny = m.type === 'clair' && daylight() > 0.4;
@@ -4008,12 +4077,13 @@ const World = (() => {
     ctx.restore();
   }
 
+  function objets() { return st ? st.objs : []; }
   function toWorld(mx, my) { return { x: mx + st.cam.x, y: my + st.cam.y }; }
   function state() { return st; }
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher };
+  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets };
 })();
 
 </script>
@@ -4380,6 +4450,7 @@ const UI = (() => {
     }
     $('#btn-mute').addEventListener('click', () => { const m = Son.toggleMute(); $('#btn-mute').textContent = m ? '🔇' : '🔊'; });
     $('#btn-help').addEventListener('click', () => openPanel('help'));
+    $('#btn-opt').addEventListener('click', () => openPanel('options'));
     $('#btn-grim').addEventListener('click', () => openPanel('grimoire'));
     $('#btn-lab').addEventListener('click', () => { if (game.state === 'world') game.goLab(); });
     $$('#hotbar .slot').forEach(() => {});
@@ -4411,6 +4482,7 @@ const UI = (() => {
     if (name === 'cauldron') refreshCauldron();
     if (name === 'grimoire') { game.progress.nouveau = false; refreshGrimoire(); }
     if (name === 'courrier') refreshCourrier();
+    if (name === 'options') refreshOptions();
     if (name === 'alambic') refreshAlambic();
     if (name === 'presse') refreshPresse();
     if (name === 'terrarium') refreshTerrarium();
@@ -4694,6 +4766,12 @@ const UI = (() => {
         const g = O.glyphe ? DATA.CORES[O.glyphe] : null; const connu = g && p.cores.includes(O.glyphe);
         c.appendChild(el('div', 'decouverte' + (n > 0 ? ' ok' : ''), '<span class="check">' + (n >= 3 || connu ? '✓' : n > 0 ? n : '○') + '</span><div><b>' + (n > 0 ? O.nom : '???') + '</b> ' + (g ? '<small>→ glyphe ' + (connu ? g.nom : '???') + '</small>' : '<small>(expérience)</small>') + '<br><em>' + O.desc + '</em></div>'));
       }
+    } else if (grimTab === 'carte') {
+      game.ensureWorld();
+      c.appendChild(el('p', 'intro', 'La carte se dessine à mesure que tu explores. Les pages déchirées retrouvées y sont marquées.'));
+      const cv = document.createElement('canvas'); cv.width = 900; cv.height = 260; cv.className = 'carte'; c.appendChild(cv);
+      dessinerCarte(cv);
+      const leg = el('p', 'muted', '● toi · ⌂ le labo · ✎ pages retrouvées · les zones grises restent à explorer'); c.appendChild(leg);
     } else if (grimTab === 'lettres') {
       c.appendChild(el('p', 'intro', 'Les lettres du maître auxquelles tu as répondu, et les souvenirs qu\'il t\'a envoyés.'));
       const faites = DATA.LETTRES.filter((l) => game.courrier.faites.includes(l.id));
@@ -4731,6 +4809,46 @@ const UI = (() => {
     }
   }
 
+  // ---------- Carte ----------
+  const COUL_CARTE = {};
+  function dessinerCarte(cv) {
+    const ctx = cv.getContext('2d'); const W = Sim.W, H = Sim.H; const M = Sim.M, P = Sim.P;
+    if (!COUL_CARTE.ok) { for (let m = 0; m < P.length; m++) { const h = (P[m].color || '#000000').replace('#', ''); COUL_CARTE[m] = [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; } COUL_CARTE.ok = true; }
+    const img = ctx.createImageData(W, H); const d = img.data; const mat = Sim.mat;
+    const CB = 20, bw = Math.ceil(W / CB); const carte = game.carte || '';
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const k = (y * W + x) * 4; const vu = carte[Math.floor(y / CB) * bw + Math.floor(x / CB)] === '1';
+      if (!vu) { const hh = ((x + y) % 6 === 0) ? 170 : 205; d[k] = hh; d[k + 1] = hh - 12; d[k + 2] = hh - 40; d[k + 3] = 255; continue; }
+      const m = mat[y * W + x];
+      if (m === M.AIR || P[m].gas) { d[k] = 246; d[k + 1] = 238; d[k + 2] = 216; d[k + 3] = 255; continue; }
+      const c = COUL_CARTE[m]; const sh = P[m].solid && !P[m].powder ? 0.82 : 1;
+      d[k] = c[0] * sh; d[k + 1] = c[1] * sh; d[k + 2] = c[2] * sh; d[k + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    // contours des zones et marques
+    ctx.font = '14px "IM Fell English", Georgia, serif'; ctx.textAlign = 'center'; ctx.fillStyle = U.INK;
+    for (const z of World.level().zones) { const zx = z.x / Sim.CS + z.w / Sim.CS / 2; if (carte[Math.floor(110 / CB) * bw + Math.floor(zx / CB)] === '1') ctx.fillText(z.nom, zx, 12); }
+    const pr = World.state().p; ctx.fillStyle = '#9a4a3a'; ctx.beginPath(); ctx.arc((pr.x + pr.w / 2) / Sim.CS, (pr.y + pr.h / 2) / Sim.CS, 4, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = U.INK; ctx.stroke();
+    ctx.fillStyle = U.INK; ctx.fillText('⌂', 7, 128);
+    for (const o of World.objets()) if (o.t === 'page' && o.lue) { ctx.fillText('✎', (o.x + 10) / Sim.CS, (o.y + 12) / Sim.CS); }
+  }
+  // ---------- Options ----------
+  function refreshOptions() {
+    const c = $('#options-content'); c.innerHTML = '';
+    const o = game.opt;
+    const groupe = (titre, cle, choix) => {
+      c.appendChild(el('h3', '', titre)); const g = el('div', 'choices');
+      for (const [v, lab] of choix) { const b = el('button', 'choice' + (o[cle] === v ? ' on' : ''), lab); b.addEventListener('click', () => { o[cle] = v; game.appliquerOptions(); refreshOptions(); Son.sfx('click'); }); g.appendChild(b); }
+      c.appendChild(g);
+    };
+    groupe('Vitesse du feu', 'feu', [[0.5, 'Lente'], [1, 'Normale'], [2, 'Vive']]);
+    groupe('Pluie et orages', 'pluie', [[0, 'Jamais'], [0.5, 'Rares'], [1, 'Normaux'], [2, 'Fréquents']]);
+    groupe('Encre', 'encre', [['genereuse', 'Généreuse'], ['normale', 'Normale'], ['rare', 'Précieuse']]);
+    groupe('Taille du texte', 'texte', [['normal', 'Normale'], ['grand', 'Grande']]);
+    groupe('Musique', 'musique', [[0, 'Muette'], [0.5, 'Douce'], [1, 'Normale']]);
+    groupe('Effets sonores', 'effets', [[0, 'Muets'], [0.5, 'Doux'], [1, 'Normaux']]);
+    c.appendChild(el('p', 'muted', 'Encre généreuse : les sceaux coûtent un quart de moins et l\'encre revient moitié plus vite. Précieuse : l\'inverse.'));
+  }
   // ---------- Courrier ----------
   function descCmd(m) {
     if (m.type === 'potion') return m.n + ' × ' + DATA.POTIONS[m.id].nom + ' <small>(tu en as ' + (game.inv.potions[m.id] || 0) + ')</small>';
@@ -4909,6 +5027,8 @@ const UI = (() => {
   const VW = 1280, VH = 720;
   const SAVE_KEY = 'atelier-des-sceaux-v2';
   const WORLD_KEY = 'atelier-monde-v2';
+  const OPT_KEY = 'atelier-options';
+  const CB = 20; // taille d'un bloc de carte (cellules)
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   let paperPat = null;
@@ -4985,7 +5105,8 @@ const UI = (() => {
     seals: [], hotbar: [null, null, null, null, null], selected: 0,
     editSeal: Seal.create(), lastPotion: null, started: false,
     xp: 0, niveau: 1,
-    courrier: { active: null, faites: [], pret: false, t: 0, exploitOk: false }, bonus: { encre: 0, vie: 0 }, trophees: [],
+    courrier: { active: null, faites: [], pret: false, t: 0, exploitOk: false }, bonus: { encre: 0, vie: 0 }, trophees: [], carte: '',
+    opt: { feu: 1, pluie: 1, encre: 'normale', cout: 1, regen: 1, texte: 'normal', musique: 1, effets: 1 },
     toast(m, k) { UI.toast(m, k); },
     zoneChange(nom) { UI.zoneTitle(nom); },
     gainIngredient(id) {
@@ -5019,6 +5140,29 @@ const UI = (() => {
         p.check();
       }
       this.save();
+    },
+    // ---------- Carte et options ----------
+    explorer(x0, y0, w, h) {
+      const bw = Math.ceil(900 / CB), bh = Math.ceil(260 / CB);
+      if (this.carte.length !== bw * bh) this.carte = '0'.repeat(bw * bh);
+      const a = this.carte.split(''); let ch = false;
+      for (let by = Math.max(0, Math.floor(y0 / CB)); by <= Math.min(bh - 1, Math.floor((y0 + h) / CB)); by++)
+        for (let bx = Math.max(0, Math.floor(x0 / CB)); bx <= Math.min(bw - 1, Math.floor((x0 + w) / CB)); bx++) { const i = by * bw + bx; if (a[i] !== '1') { a[i] = '1'; ch = true; } }
+      if (ch) this.carte = a.join('');
+    },
+    ensureWorld() {
+      if (World.state()) return;
+      let saved = null; try { const raw = localStorage.getItem(WORLD_KEY); if (raw) saved = JSON.parse(raw); } catch (e) { saved = null; }
+      World.ensure(this, saved); this.applyNiveau();
+    },
+    appliquerOptions() {
+      const o = this.opt;
+      o.cout = o.encre === 'genereuse' ? 0.75 : o.encre === 'rare' ? 1.25 : 1;
+      o.regen = o.encre === 'genereuse' ? 1.5 : o.encre === 'rare' ? 0.7 : 1;
+      Sim.feuMul = o.feu;
+      Son.setVolumes(o.musique, o.effets);
+      document.body.dataset.texte = o.texte;
+      try { localStorage.setItem(OPT_KEY, JSON.stringify(o)); } catch (e) { }
     },
     // ---------- Courrier du maître ----------
     lettreCourante() { return DATA.LETTRES.find((l) => l.id === this.courrier.active) || null; },
@@ -5258,7 +5402,7 @@ const UI = (() => {
     save() {
       this.progress.compteurs.sceaux = this.seals.length;
       try {
-        const data = { courrier: this.courrier, bonus: this.bonus, trophees: this.trophees, look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
+        const data = { carte: this.carte, courrier: this.courrier, bonus: this.bonus, trophees: this.trophees, look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
           progress: { labo: this.progress.labo, cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs, pagesLues: this.progress.pagesLues, defisFaits: this.progress.defisFaits, bizarresVues: this.progress.bizarresVues || [], bestiaire: this.progress.bestiaire, especesVues: this.progress.especesVues } };
         localStorage.setItem(SAVE_KEY, JSON.stringify(data));
       } catch (e) { /* stockage indisponible */ }
@@ -5269,6 +5413,7 @@ const UI = (() => {
         const d = JSON.parse(raw);
         this.look = d.look || this.look; this.started = !!d.started; this.inv = d.inv || this.inv; this.seals = d.seals || []; this.hotbar = d.hotbar || this.hotbar; this.lastPotion = d.lastPotion || null;
         this.xp = d.xp || 0; this.niveau = d.niveau || 1;
+        if (d.carte) this.carte = d.carte;
         if (d.courrier) this.courrier = Object.assign(this.courrier, d.courrier); if (d.bonus) this.bonus = Object.assign(this.bonus, d.bonus); if (d.trophees) this.trophees = d.trophees;
         if (d.progress) Object.assign(this.progress, d.progress);
         if (!this.progress.obs) this.progress.obs = {};
@@ -5358,6 +5503,7 @@ const UI = (() => {
     const dt = Math.min(0.033, (t - last) / 1000 || 0.016); last = t;
     const open = UI.isOpen();
     if (game.state === 'lab') {
+      Son.setMood('lab', false);
       Lab.update(dt, inp);
       Lab.draw(ctx, paperPat, inp, game.editSeal);
     } else if (game.state === 'world') {
@@ -5382,7 +5528,9 @@ const UI = (() => {
     if (booted) return; booted = true;
     paperPat = ctx.createPattern(U.paper(512, 512, 7), 'repeat');
     resize();
+    try { const o = JSON.parse(localStorage.getItem(OPT_KEY) || 'null'); if (o) Object.assign(game.opt, o); } catch (e) { }
     UI.init(game); Lab.init(game);
+    game.appliquerOptions();
     const ok = game.load();
     UI.refreshHotbar();
     if (ok) { game.state = 'lab'; UI.setMode('lab'); game.toast('Bon retour, ' + game.look.nom + '.'); }

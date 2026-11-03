@@ -33,3 +33,15 @@ Un vrai bac à sable de magie, style encre & parchemin, ambiance cosy. On compos
 4. Brassage sensoriel, potions bizarres, nouvelles potions. *(fait)*
 5. Écosystème de créatures. *(fait)*
 6. Labo qui grandit : bac d'essai, alambic, presse à glyphes, terrarium. *(fait)*
+
+## Deuxième vague (décisions de l'auteur)
+
+| Sujet | Choix |
+| --- | --- |
+| Gravité | Le glyphe manipule la pesanteur ; le vol n'en est qu'une conséquence. Champ orienté dans le sens du lancer (toutes directions), auquel obéissent matières, créatures, objets et projectiles. Puissance : écrasante. Inverser : apesanteur. Sur soi : vers la surface visée (murs, plafond), vide visé = vol, Puissance = enclume, Inverser = chute vers le ciel. |
+| Lettres du maître | Commandes apportées par un corbeau : potions, matières et ingrédients, exploits racontés, sceaux à inventer (évalués sur ce qu'ils font). Récompenses : ingrédients rares, encre maximale permanente, trophées. |
+| Geste | Le sceau se trace 0,2 s avant de partir. |
+| Matières | Poudre explosive, mousse et miel, sel (saumure) et boue. |
+| Visée | Pointillés courts sur l'arc des projectiles. |
+| Carte | Dans le grimoire, se dévoile en explorant. |
+| Confort | Options de simulation (feu, pluie, encre, texte, volumes) ; musique par zone et par heure. |
