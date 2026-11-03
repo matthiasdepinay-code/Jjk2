@@ -85,8 +85,13 @@
   .intro { font-style: italic; opacity: 0.8; }
 
   /* création */
-  #panel-create { width: calc(720px * var(--s)); }
-  #create-canvas { width: calc(220px * var(--s)); height: calc(260px * var(--s)); background: rgba(255,255,255,0.25); border: 1.5px solid var(--ink); border-radius: 50% 50% 6px 6px; }
+  #panel-create { width: calc(980px * var(--s)); }
+  .create-gauche { flex: none; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .create-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+  .create-grille .choices { margin-bottom: 4px; }
+  .create-grille .choice { padding: 3px 8px; font-size: calc(13px * var(--s)); }
+  .create-grille .choice.swatch { width: calc(26px * var(--s)); height: calc(26px * var(--s)); }
+  #create-canvas { width: calc(260px * var(--s)); height: calc(320px * var(--s)); background: rgba(255,255,255,0.25); border: 1.5px solid var(--ink); border-radius: 50% 50% 6px 6px; }
   .choices { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
   .choice.swatch { width: calc(34px * var(--s)); height: calc(34px * var(--s)); padding: 0; border-radius: 50%; }
   .choice.swatch.on { outline: 3px solid var(--gold); }
@@ -197,16 +202,25 @@
   <div id="panels" class="hidden">
     <!-- Création -->
     <section id="panel-create" class="panel hidden">
-      <h2>Un(e) nouvel(le) apprenti(e)</h2>
+      <h2>Un(e) apprenti(e)</h2>
       <div class="cols">
-        <div><canvas id="create-canvas" width="220" height="260"></canvas></div>
-        <div style="flex:2">
+        <div class="create-gauche"><canvas id="create-canvas" width="260" height="320"></canvas>
+          <button id="create-hasard">Au hasard</button></div>
+        <div style="flex:2.2">
           <h3>Nom</h3>
           <input id="create-nom" type="text" maxlength="18" placeholder="Comment t'appelle-t-on ?">
-          <h3>Chapeau</h3><div id="create-chapeaux" class="choices"></div>
-          <h3>Cape</h3><div id="create-capes" class="choices"></div>
-          <h3>À la main</h3><div id="create-acc" class="choices"></div>
-          <button id="create-go">Entrer dans l'atelier</button>
+          <div class="create-grille">
+            <div><h3>Peau</h3><div id="create-peau" class="choices"></div></div>
+            <div><h3>Coiffure</h3><div id="create-coiffure" class="choices"></div></div>
+            <div><h3>Cheveux</h3><div id="create-cheveux" class="choices"></div></div>
+            <div><h3>Chapeau</h3><div id="create-chapeau" class="choices"></div></div>
+            <div><h3>Couleur du chapeau</h3><div id="create-chapeauC" class="choices"></div></div>
+            <div><h3>Cape</h3><div id="create-cape" class="choices"></div></div>
+            <div><h3>Robe</h3><div id="create-robe" class="choices"></div></div>
+            <div><h3>Écharpe</h3><div id="create-echarpe" class="choices"></div></div>
+            <div><h3>À la main</h3><div id="create-acc" class="choices"></div></div>
+          </div>
+          <button id="create-go">C'est moi</button>
         </div>
       </div>
     </section>
@@ -1318,6 +1332,184 @@ const Seal = (() => {
   }
 
   return { create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, slotList, draw, drawMini, isSub, subs, depth, modId, comboName, taille, nbSlots, triggers, NMODS };
+})();
+
+</script>
+<script>
+'use strict';
+// ---------- L'apprenti(e) : dessin à l'encre, poses, personnalisation ----------
+const Perso = (() => {
+  const { TAU, INK } = U;
+  const PEAUX = ['#f3dcc0', '#e8c39e', '#c99a6e', '#9c6b45', '#6e4a30'];
+  const TEINTES = ['#2a2521', '#6b4f2a', '#a3782e', '#d8b060', '#9a4a3a', '#e8e0d0', '#5a6b8a', '#c45a8a'];
+  const ETOFFES = ['#6b3f73', '#2f4a7a', '#4a6b3a', '#9a4a3a', '#2a2521', '#a3782e', '#3f7a7a', '#c4a35a', '#8a3a5a', '#e8dcc0'];
+  const CHAPEAUX = ['Pointu', 'Large', 'Tordu', 'Béret', 'Capuche', 'Couronne de fleurs', 'Aucun'];
+  const COIFFURES = ['Court', 'Long', 'Tresse', 'Boucles', 'Chignon', 'Ras'];
+  const OBJETS = ['Bâton', 'Plume', 'Grimoire', 'Baguette', 'Lanterne'];
+  const ECHARPES = ['Aucune', 'Rouge', 'Moutarde', 'Vert', 'Bleu'];
+  const ECH_C = [null, '#9a3a2a', '#c4a35a', '#4a6b3a', '#3a5a8a'];
+
+  // complète un look (anciennes sauvegardes : chapeau, cape, acc seulement)
+  function norm(l) {
+    l = l || {};
+    const capeC = (DATA.CAPES[l.cape] && DATA.CAPES[l.cape].c) || ETOFFES[0];
+    return {
+      nom: l.nom || '', chapeau: l.chapeau || 0, cape: l.cape || 0, acc: l.acc || 0,
+      peau: l.peau != null ? l.peau : 0, coiffure: l.coiffure != null ? l.coiffure : 0, cheveux: l.cheveux != null ? l.cheveux : 1,
+      chapeauC: l.chapeauC != null ? l.chapeauC : -1, robe: l.robe != null ? l.robe : -1, echarpe: l.echarpe || 0,
+      _cape: capeC,
+    };
+  }
+  const shade = (hex, k) => { const h = hex.replace('#', ''); const c = [0, 2, 4].map((i) => Math.max(0, Math.min(255, Math.round(parseInt(h.substr(i, 2), 16) * k)))); return '#' + c.map((v) => v.toString(16).padStart(2, '0')).join(''); };
+
+  // pose : { t, vx, vy, air, cast (angle monde ou null), lumiere }
+  function draw(ctx, x, y, h, look, face = 1, anim = 0, sta = null, moving = false, pose = {}) {
+    const L = norm(look);
+    const t = pose.t != null ? pose.t : performance.now() / 1000;
+    const s = h / 50;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s * face, s);
+    ctx.lineWidth = 1.5 / Math.max(0.6, s * 0.9); ctx.strokeStyle = INK; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    if (sta && sta.invisible > 0) ctx.globalAlpha = 0.35;
+    const capeC = L._cape, robeC = L.robe >= 0 ? ETOFFES[L.robe] : shade(capeC, 1.18), hatC = L.chapeauC >= 0 ? ETOFFES[L.chapeauC] : capeC;
+    const peau = PEAUX[L.peau] || PEAUX[0], chev = TEINTES[L.cheveux] || TEINTES[1];
+    const air = !!pose.air;
+    const walk = moving && !air ? Math.sin(anim) : 0;
+    const bob = moving && !air ? Math.abs(Math.sin(anim)) * 1.3 : Math.sin(t * 2.2) * 0.45;
+    const vx = (pose.vx || 0) * face, vy = pose.vy || 0;
+    const flot = Math.max(-1, Math.min(1, -vx / 260)) + (air ? Math.max(-0.6, Math.min(0.6, vy / 900)) : 0);
+    const vague = Math.sin(t * 7 + anim * 0.5) * (0.6 + Math.abs(flot));
+    const yb = bob; // décalage du buste
+
+    // ----- cape (derrière) -----
+    ctx.fillStyle = capeC;
+    ctx.beginPath();
+    ctx.moveTo(-4, -33 + yb);
+    ctx.quadraticCurveTo(-10 + flot * 4, -24 + yb, -13 + flot * 9 + vague, -7 + (air ? -2 : 0));
+    ctx.quadraticCurveTo(-6 + flot * 5, -5 + vague * 0.6, -1, -8);
+    ctx.lineTo(4, -33 + yb); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.save(); ctx.globalAlpha *= 0.5; ctx.beginPath(); ctx.moveTo(-3, -30 + yb); ctx.quadraticCurveTo(-8 + flot * 4, -20 + yb, -9 + flot * 7 + vague, -8); ctx.stroke(); ctx.restore();
+
+    // ----- cheveux longs (derrière la tête) -----
+    if (L.coiffure === 1 && L.chapeau !== 4) { ctx.fillStyle = chev; ctx.beginPath(); ctx.moveTo(-6, -44 + yb); ctx.quadraticCurveTo(-9 + flot * 2, -34 + yb, -7 + flot * 3, -27 + yb); ctx.lineTo(-1, -30 + yb); ctx.lineTo(1, -42 + yb); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    if (L.coiffure === 2 && L.chapeau !== 4) { ctx.fillStyle = chev; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.ellipse(-6 + flot * k * 0.8, -37 + yb + k * 3.4, 2.1, 2.3, 0.3, 0, TAU); ctx.fill(); ctx.stroke(); } ctx.fillStyle = '#9a3a2a'; ctx.beginPath(); ctx.arc(-6 + flot * 3, -24.5 + yb, 1.2, 0, TAU); ctx.fill(); }
+    if (L.coiffure === 4 && L.chapeau !== 4) { ctx.fillStyle = chev; ctx.beginPath(); ctx.arc(-5.5, -44 + yb, 3.4, 0, TAU); ctx.fill(); ctx.stroke(); }
+
+    // ----- bras arrière -----
+    ctx.fillStyle = shade(robeC, 0.82);
+    ctx.beginPath(); ctx.moveTo(-3, -31 + yb); ctx.quadraticCurveTo(-7 - walk * 3, -25 + yb, -6 - walk * 4, -19 + yb); ctx.lineTo(-3.5 - walk * 4, -19.5 + yb); ctx.quadraticCurveTo(-4, -25 + yb, -1, -30 + yb); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    // ----- jambes et bottes -----
+    const jambe = (x0, dx, lift) => { ctx.lineWidth *= 1.6; ctx.strokeStyle = '#3a2f28'; ctx.beginPath(); ctx.moveTo(x0, -12); ctx.lineTo(x0 + dx, -3 - lift); ctx.stroke(); ctx.lineWidth /= 1.6; ctx.strokeStyle = INK; ctx.fillStyle = '#4a3528'; ctx.beginPath(); ctx.ellipse(x0 + dx + 1.4, -1.6 - lift, 3.1, 1.9, 0, 0, TAU); ctx.fill(); ctx.stroke(); };
+    if (air) { jambe(-2.5, -2.5, 3 + (vy < 0 ? 2 : 0)); jambe(2.5, 2, vy < 0 ? 5 : 1); }
+    else { jambe(-2.5, walk * 4, Math.max(0, walk) * 1.5); jambe(2.5, -walk * 4, Math.max(0, -walk) * 1.5); }
+
+    // ----- robe -----
+    ctx.fillStyle = robeC;
+    ctx.beginPath();
+    ctx.moveTo(-5.5, -32 + yb); ctx.lineTo(5.5, -32 + yb);
+    ctx.quadraticCurveTo(8, -20 + yb, 10.5 + flot * 1.5, -9);
+    ctx.quadraticCurveTo(5, -6.5 + Math.sin(t * 5) * 0.4, 0, -8);
+    ctx.quadraticCurveTo(-5, -6.5 - Math.sin(t * 5) * 0.4, -10.5 + flot * 2, -9);
+    ctx.quadraticCurveTo(-8, -20 + yb, -5.5, -32 + yb);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.save(); ctx.globalAlpha *= 0.45; ctx.beginPath(); ctx.moveTo(-1, -21 + yb); ctx.quadraticCurveTo(-2.5, -15, -4, -9); ctx.moveTo(3, -21 + yb); ctx.quadraticCurveTo(4.5, -15, 6, -9.5); ctx.stroke(); ctx.restore();
+    // ceinture et boucle
+    ctx.fillStyle = shade(robeC, 0.6); ctx.beginPath(); ctx.moveTo(-7, -23.5 + yb); ctx.lineTo(7.2, -23.5 + yb); ctx.lineTo(7.6, -21.2 + yb); ctx.lineTo(-7.4, -21.2 + yb); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#d8a63a'; ctx.fillRect(1.2, -23.6 + yb, 2.4, 2.4); ctx.strokeRect(1.2, -23.6 + yb, 2.4, 2.4);
+    // col
+    ctx.fillStyle = shade(robeC, 0.75); ctx.beginPath(); ctx.moveTo(-4.5, -32 + yb); ctx.quadraticCurveTo(0, -28.5 + yb, 4.5, -32 + yb); ctx.lineTo(0, -30.5 + yb); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    // ----- écharpe -----
+    const ech = ECH_C[L.echarpe];
+    if (ech) { ctx.fillStyle = ech; ctx.beginPath(); ctx.ellipse(0, -32.5 + yb, 5.6, 2.2, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-3, -32 + yb); ctx.quadraticCurveTo(-8 + flot * 4, -31 + yb + vague * 0.6, -12 + flot * 7, -28 + yb + vague); ctx.lineTo(-11 + flot * 6, -25.5 + yb + vague); ctx.quadraticCurveTo(-7 + flot * 3, -29 + yb, -2, -30.5 + yb); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+
+    // ----- tête -----
+    const hx = 0.6, hy = -40.5 + yb;
+    ctx.fillStyle = peau; ctx.beginPath(); ctx.ellipse(hx, hy, 7.3, 7.6, 0, 0, TAU); ctx.fill(); ctx.stroke();
+    // oreille
+    ctx.beginPath(); ctx.ellipse(hx - 4.2, hy + 0.8, 1.4, 2, 0, 0, TAU); ctx.fill(); ctx.stroke();
+    // visage
+    const cligne = (t % 4.3) < 0.12;
+    ctx.fillStyle = INK;
+    if (cligne || (sta && sta.sleep > 0)) { ctx.beginPath(); ctx.moveTo(hx + 2.2, hy + 0.2); ctx.lineTo(hx + 4.6, hy + 0.2); ctx.stroke(); }
+    else { ctx.beginPath(); ctx.ellipse(hx + 3.6, hy - 0.2, 1.2, 1.55, 0, 0, TAU); ctx.fill(); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(hx + 4, hy - 0.8, 0.45, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = 'rgba(214,110,110,0.35)'; ctx.beginPath(); ctx.ellipse(hx + 3.6, hy + 2.9, 1.8, 1.1, 0, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + 4.2, hy + 3.8, 1.3, 0.2, Math.PI - 0.6); ctx.stroke();
+    // cheveux devant
+    if (L.chapeau !== 4 && L.coiffure !== 5) {
+      ctx.fillStyle = chev; ctx.beginPath();
+      if (L.coiffure === 3) { for (let k = 0; k < 6; k++) { const a = Math.PI * (0.95 + k * 0.17); ctx.moveTo(hx + Math.cos(a) * 7, hy + Math.sin(a) * 7); ctx.arc(hx + Math.cos(a) * 7, hy + Math.sin(a) * 7, 2.6, 0, TAU); } ctx.fill(); ctx.stroke(); }
+      else { ctx.moveTo(hx - 7.4, hy + 1.5); ctx.quadraticCurveTo(hx - 7.5, hy - 8.5, hx + 1, hy - 8); ctx.quadraticCurveTo(hx + 7.2, hy - 7.6, hx + 7.4, hy - 2.5); ctx.quadraticCurveTo(hx + 4.5, hy - 4.6, hx + 2.6, hy - 3.4); ctx.quadraticCurveTo(hx + 1.2, hy - 5.4, hx - 1.4, hy - 3.8); ctx.quadraticCurveTo(hx - 3.5, hy - 3, hx - 4.6, hy + 2.4); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    }
+    if (L.coiffure === 5) { ctx.save(); ctx.globalAlpha *= 0.4; ctx.fillStyle = chev; ctx.beginPath(); ctx.arc(hx, hy - 3, 6.5, Math.PI * 1.05, Math.PI * 1.95); ctx.fill(); ctx.restore(); }
+
+    // ----- chapeau -----
+    ctx.fillStyle = hatC;
+    const bande = shade(hatC, 0.6);
+    const hb = hy - 5.5; // base du chapeau
+    switch (L.chapeau) {
+      case 0: // pointu, pointe repliée
+        ctx.beginPath(); ctx.ellipse(hx, hb, 11.5, 2.6, -0.05, 0, TAU); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(hx - 6.5, hb - 0.5); ctx.quadraticCurveTo(hx - 3, hb - 12, hx - 1 + flot, hb - 18); ctx.quadraticCurveTo(hx - 5 + flot * 2, hb - 21, hx - 9 + flot * 3, hb - 18.5 + vague * 0.3); ctx.quadraticCurveTo(hx - 3, hb - 17, hx + 1.5, hb - 14); ctx.quadraticCurveTo(hx + 5, hb - 7, hx + 6.5, hb - 0.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = bande; ctx.beginPath(); ctx.moveTo(hx - 6.3, hb - 1); ctx.lineTo(hx + 6.3, hb - 1); ctx.lineTo(hx + 5.6, hb - 3.6); ctx.lineTo(hx - 5.6, hb - 3.6); ctx.closePath(); ctx.fill(); ctx.stroke();
+        break;
+      case 1: // large bord
+        ctx.beginPath(); ctx.ellipse(hx, hb + 0.5, 16, 3.2, -0.04, 0, TAU); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(hx - 6, hb); ctx.quadraticCurveTo(hx - 2, hb - 11, hx + 1, hb - 16); ctx.quadraticCurveTo(hx + 4, hb - 9, hx + 6, hb); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = bande; ctx.fillRect(hx - 5.6, hb - 3.4, 11.2, 2.8); ctx.strokeRect(hx - 5.6, hb - 3.4, 11.2, 2.8);
+        break;
+      case 2: // tordu
+        ctx.beginPath(); ctx.ellipse(hx, hb, 11, 2.5, 0.05, 0, TAU); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(hx - 6, hb); ctx.lineTo(hx - 3, hb - 8); ctx.lineTo(hx + 3, hb - 11); ctx.lineTo(hx - 1, hb - 15); ctx.lineTo(hx + 5 + flot * 2, hb - 21); ctx.lineTo(hx + 2.5, hb - 13.5); ctx.lineTo(hx + 6, hb - 9); ctx.lineTo(hx + 6, hb); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#d8a63a'; ctx.beginPath(); ctx.arc(hx + 5 + flot * 2, hb - 21, 1.3, 0, TAU); ctx.fill(); ctx.stroke();
+        break;
+      case 3: // béret
+        ctx.beginPath(); ctx.ellipse(hx - 1.5, hb - 1, 8.8, 3.6, -0.2, 0, TAU); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(hx - 1, hb - 4.5); ctx.lineTo(hx - 0.4, hb - 6.6); ctx.stroke();
+        break;
+      case 4: // capuche (avec la cape)
+        ctx.fillStyle = capeC; ctx.beginPath(); ctx.moveTo(hx + 5.5, hy + 6.5); ctx.quadraticCurveTo(hx - 1, hy + 9, hx - 7.5, hy + 4); ctx.quadraticCurveTo(hx - 10.5 + flot * 2, hy - 4, hx - 5 + flot * 3, hy - 10.5); ctx.quadraticCurveTo(hx + 3, hy - 12, hx + 7.6, hy - 5); ctx.quadraticCurveTo(hx + 4.6, hy - 6.6, hx + 1.6, hy - 5.8); ctx.quadraticCurveTo(hx - 3.2, hy - 2, hx - 1.5, hy + 4.5); ctx.quadraticCurveTo(hx + 2, hy + 6.2, hx + 5.5, hy + 6.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+        break;
+      case 5: // couronne de fleurs
+        for (let k = 0; k < 7; k++) { const a = Math.PI * (1.0 + k * 0.155); const fx = hx + Math.cos(a) * 7.4, fy = hy - 1 + Math.sin(a) * 6.8; ctx.fillStyle = ['#e8a0b0', '#f6eed8', '#d8b060'][k % 3]; ctx.beginPath(); ctx.arc(fx, fy, 2, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#c4a35a'; ctx.beginPath(); ctx.arc(fx, fy, 0.7, 0, TAU); ctx.fill(); }
+        ctx.fillStyle = '#5c8f3e'; ctx.beginPath(); ctx.ellipse(hx - 6.5, hy - 5.5, 2, 1, 0.8, 0, TAU); ctx.fill();
+        break;
+    }
+
+    // ----- bras avant et objet -----
+    let ax = 8.5, ay = -21 + yb + walk * 1.5; // main au repos
+    const sx0 = 3.5, sy0 = -30.5 + yb;
+    if (pose.cast != null) { let a = pose.cast; if (face < 0) a = Math.PI - a; ax = sx0 + Math.cos(a) * 10.5; ay = sy0 + Math.sin(a) * 10.5; }
+    else if (air) { ax = 9.5; ay = -27 + yb; }
+    ctx.fillStyle = robeC;
+    ctx.beginPath(); ctx.moveTo(sx0 - 1.5, sy0 - 1); ctx.lineTo(sx0 + 1.8, sy0 - 1); ctx.lineTo(ax + 1.6, ay + 0.6); ctx.lineTo(ax - 1.8, ay + 1.8); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = peau; ctx.beginPath(); ctx.arc(ax, ay, 1.9, 0, TAU); ctx.fill(); ctx.stroke();
+    const glow = pose.glow || '#d8a63a';
+    switch (L.acc) {
+      case 0: { // bâton à cristal
+        ctx.lineWidth *= 1.5; ctx.strokeStyle = '#6b4f2a'; ctx.beginPath(); ctx.moveTo(ax - 1.2, ay + 15); ctx.lineTo(ax + 1.4, ay - 17); ctx.stroke(); ctx.lineWidth /= 1.5; ctx.strokeStyle = INK;
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(ax + 1.6, ay - 19.5, 0.5, ax + 1.6, ay - 19.5, 7); g.addColorStop(0, U.hexA(glow, 0.55)); g.addColorStop(1, U.hexA(glow, 0)); ctx.fillStyle = g; ctx.fillRect(ax - 6, ay - 27, 15, 15); ctx.restore();
+        ctx.fillStyle = glow; ctx.beginPath(); ctx.moveTo(ax + 1.6, ay - 23); ctx.lineTo(ax + 3.6, ay - 19.5); ctx.lineTo(ax + 1.6, ay - 16.5); ctx.lineTo(ax - 0.4, ay - 19.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+        break;
+      }
+      case 1: ctx.fillStyle = '#f6eed8'; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(ax + 4, ay - 10, ax + 9, ay - 15); ctx.quadraticCurveTo(ax + 6, ay - 6, ax + 1.6, ay + 1); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(ax + 0.8, ay - 0.5); ctx.lineTo(ax + 7, ay - 12); ctx.stroke(); break;
+      case 2: ctx.fillStyle = '#9a4a3a'; ctx.save(); ctx.translate(ax + 2, ay - 2); ctx.rotate(-0.2); ctx.fillRect(-4, -5, 8, 10); ctx.strokeRect(-4, -5, 8, 10); ctx.fillStyle = '#efe3c4'; ctx.fillRect(-3.4, -4.4, 1.2, 8.8); ctx.fillStyle = '#d8a63a'; ctx.beginPath(); ctx.arc(1, 0, 1.4, 0, TAU); ctx.fill(); ctx.restore(); break;
+      case 3: { const a = pose.cast != null ? (face < 0 ? Math.PI - pose.cast : pose.cast) : -1.1; ctx.lineWidth *= 1.2; ctx.strokeStyle = '#3a2a1e'; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + Math.cos(a) * 9, ay + Math.sin(a) * 9); ctx.stroke(); ctx.lineWidth /= 1.2; ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(ax + Math.cos(a) * 9.6, ay + Math.sin(a) * 9.6, 1.1, 0, TAU); ctx.fill(); ctx.strokeStyle = INK; break; }
+      case 4: { // lanterne
+        U.inkLine(ctx, ax, ay, ax, ay + 3, 1, 0.1);
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(ax, ay + 7, 1, ax, ay + 7, 12); g.addColorStop(0, 'rgba(240,190,90,0.6)'); g.addColorStop(1, 'rgba(240,190,90,0)'); ctx.fillStyle = g; ctx.fillRect(ax - 12, ay - 5, 24, 24); ctx.restore();
+        ctx.fillStyle = 'rgba(240,200,110,0.85)'; ctx.fillRect(ax - 2.8, ay + 3, 5.6, 7); ctx.strokeRect(ax - 2.8, ay + 3, 5.6, 7); ctx.beginPath(); ctx.moveTo(ax - 3.4, ay + 3); ctx.lineTo(ax, ay + 1); ctx.lineTo(ax + 3.4, ay + 3); ctx.stroke();
+        break;
+      }
+    }
+    // pierre de peau
+    if (sta && sta.stone > 0) { ctx.save(); ctx.globalAlpha *= 0.45; U.hatch(ctx, -11, -48, 22, 40, 3, Math.PI / 4, 1, 0.6, '#8a6b2f'); ctx.restore(); }
+    ctx.restore();
+  }
+
+  return { draw, norm, PEAUX, TEINTES, ETOFFES, CHAPEAUX, COIFFURES, OBJETS, ECHARPES, ECH_C };
 })();
 
 </script>
@@ -3335,7 +3527,7 @@ const World = (() => {
     if (dirX !== 0) for (const o of st.objs) if (o.t === 'caisse' && !o.mort && !o.carried) { const probe = { x: p.x + dirX * 2, y: p.y, w: p.w, h: p.h }; if (U.rectsOverlap(probe, o)) o.vx = dirX * (p.sta.geant > 0 ? 160 : 70); }
     if (p.y > L.h + 50) { msg('Tu tombes dans l\'encre noire... et te réveilles devant ta porte.'); respawn(); }
     if (p.onGround && Math.abs(p.vx) > 30 && Math.random() < dt * 6) Son.sfx('step', 'terre');
-    if (p.gestes) for (const h of ['R', 'L']) { const g = p.gestes[h]; if (!g) continue; g.t -= dt; if (g.t <= 0) { p.gestes[h] = null; launch(g.seal, { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, g.aim, { depth: 0, player: true, charge: g.charge }); } }
+    if (p.gestes) for (const h of ['R', 'L']) { const g = p.gestes[h]; if (!g) continue; g.t -= dt; if (g.t <= 0) { p.gestes[h] = null; p.lastCast = { t: time, a: Math.atan2(g.aim.y - (p.y + p.h * 0.4), g.aim.x - (p.x + p.w / 2)), c: g.color }; launch(g.seal, { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, g.aim, { depth: 0, player: true, charge: g.charge }); } }
     if (p.selfTimer) { p.selfTimer.t -= dt; if (p.selfTimer.t <= 0) { const q = p.selfTimer; p.selfTimer = null; selfCast(q.spec, q.aim); } }
     if (p.hp <= 0 && p.sta.phenix > 0) { p.sta.phenix = 0; p.hp = p.hpMax; p.inv = 2; p.sta.burning = 0; part(p.x + p.w / 2, p.y + p.h / 2, '#e8842a', 30, 140, 1, 4, -120); Son.sfx('unlock'); msg('Tu te relèves dans un battement d\'ailes de feu.'); }
     if (p.hp <= 0) { msg('Tu t\'évanouis... et te réveilles devant ta porte, un peu honteux(se).', 'warn'); Son.sfx('hurt'); respawn(); }
@@ -4241,32 +4433,17 @@ const World = (() => {
     ctx.restore();
     if (c.dort) U.txt(ctx, 'z', cx + c.w * 0.5, c.y - 4 + Math.sin(time * 2) * 2, 12, 'left', '#5a4a7d', 'IM Fell English', 'italic');
   }
-  function drawApprenti(ctx, x, y, h, look, face = 1, anim = 0, sta = null, moving = false) {
-    ctx.save();
-    ctx.translate(x, y);
-    const s = h / 50;
-    ctx.scale(s * face, s);
-    ctx.lineWidth = 1.8 / s; ctx.strokeStyle = INK; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    const cape = DATA.CAPES[look.cape] ? DATA.CAPES[look.cape].c : '#6b3f73';
-    if (sta && sta.invisible > 0) ctx.globalAlpha = 0.4;
-    const bob = moving ? Math.sin(anim) * 1.5 : 0;
-    const leg = moving ? Math.sin(anim) * 5 : 0;
-    U.inkLine(ctx, -4, -14, -5 + leg, 0, 1, 0.3); U.inkLine(ctx, 4, -14, 5 - leg, 0, 2, 0.3);
-    ctx.fillStyle = cape;
-    U.inkPolyPath(ctx, [[-6, -34 + bob], [6, -34 + bob], [13, -8], [-13, -8]], 3, 0.6); ctx.fill(); ctx.stroke();
-    if (sta && sta.stone > 0) { ctx.save(); ctx.globalAlpha = 0.5; U.hatch(ctx, -13, -34, 26, 26, 3, Math.PI / 4, 1, 0.5, '#8a6b2f'); ctx.restore(); }
-    U.inkLine(ctx, 5, -30 + bob, 12, -22 + bob, 4, 0.3);
-    if (look.acc === 0) { ctx.strokeStyle = '#6b4f2a'; ctx.lineWidth = 2.2 / s; U.inkLine(ctx, 12, -6, 15, -46 + bob, 5, 0.4); ctx.strokeStyle = INK; ctx.lineWidth = 1.8 / s; ctx.fillStyle = '#d8a63a'; ctx.beginPath(); ctx.arc(15.5, -48 + bob, 3, 0, TAU); ctx.fill(); ctx.stroke(); }
-    else if (look.acc === 1) { ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.moveTo(12, -22 + bob); ctx.quadraticCurveTo(16, -34 + bob, 22, -40 + bob); ctx.quadraticCurveTo(18, -30 + bob, 14, -20 + bob); ctx.fill(); ctx.stroke(); }
-    else { ctx.fillStyle = '#9a4a3a'; ctx.fillRect(10, -27 + bob, 9, 7); U.inkRect(ctx, 10, -27 + bob, 9, 7, 6, 0.3); }
-    ctx.fillStyle = '#efdcc0';
-    ctx.beginPath(); ctx.arc(0, -40 + bob, 7, 0, TAU); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(3, -41 + bob, 1, 0, TAU); ctx.fill();
-    ctx.fillStyle = cape;
-    if (look.chapeau === 0) { U.inkPolyPath(ctx, [[-11, -45 + bob], [11, -45 + bob], [2, -68 + bob]], 7, 0.5); ctx.fill(); ctx.stroke(); }
-    else if (look.chapeau === 1) { U.inkPolyPath(ctx, [[-15, -45 + bob], [15, -45 + bob], [5, -50 + bob], [1, -62 + bob], [-5, -50 + bob]], 8, 0.5); ctx.fill(); ctx.stroke(); }
-    else { U.inkPolyPath(ctx, [[-11, -45 + bob], [11, -45 + bob], [4, -58 + bob], [12, -70 + bob], [-2, -60 + bob]], 9, 0.5); ctx.fill(); ctx.stroke(); }
-    ctx.restore();
+  function drawApprenti(ctx, x, y, h, look, face = 1, anim = 0, sta = null, moving = false, pose = {}) { Perso.draw(ctx, x, y, h, look, face, anim, sta, moving, pose); }
+  function poseJoueur(p) {
+    const g = p.gestes && (p.gestes.R || p.gestes.L);
+    const ch = game.charging && (game.charging.R || game.charging.L);
+    let cast = null, glow = null;
+    if (g) { cast = Math.atan2(g.aim.y - (p.y + p.h * 0.4), g.aim.x - (p.x + p.w / 2)); glow = g.color; }
+    else if (ch) { const aim = toWorld(game.inp.mouse.x, game.inp.mouse.y); cast = Math.atan2(aim.y - (p.y + p.h * 0.4), aim.x - (p.x + p.w / 2)); glow = ch.color; }
+    else if (p.lastCast && time - p.lastCast.t < 0.35) { cast = p.lastCast.a; glow = p.lastCast.c; }
+    if (g || ch) { const d = Math.cos(cast); if (Math.abs(d) > 0.2) p.face = d > 0 ? 1 : -1; }
+    const sel = game.hotbar[game.selected];
+    return { t: time, vx: p.vx, vy: p.vy, air: !p.onGround && !p.climbing && p.liq === 0, cast, glow: glow || (sel && sel.type === 'seal' && sel.seal.core ? colorOf(sel.seal.core) : '#d8a63a') };
   }
   function drawPlayer(ctx, p) {
     const moving = (Math.abs(p.vx) > 20 && (p.onGround || p.climbing)) || p.sta.vol > 0;
@@ -4278,12 +4455,12 @@ const World = (() => {
     if (G && G.mag > 0 && !(G.gx === 0 && G.gy === 1) && p.sta.vol <= 0) {
       const th = Math.atan2(G.gy, G.gx) - Math.PI / 2; const hs = Math.max(p.w, p.h);
       ctx.save(); ctx.translate(p.x + p.w / 2, p.y + p.h / 2); ctx.rotate(th);
-      drawApprenti(ctx, 0, hs / 2, hs, game.look, p.face, p.anim, p.sta, moving || (Math.abs(p.vx) + Math.abs(p.vy) > 30 && p.onGround));
+      drawApprenti(ctx, 0, hs / 2, hs, game.look, p.face, p.anim, p.sta, moving || (Math.abs(p.vx) + Math.abs(p.vy) > 30 && p.onGround), poseJoueur(p));
       ctx.restore();
       ctx.save(); ctx.strokeStyle = '#6c5ab8'; ctx.globalAlpha = 0.5; ctx.lineWidth = 1.5; const cx = p.x + p.w / 2, cy = p.y + p.h / 2; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + G.gx * 34, cy + G.gy * 34); ctx.stroke(); ctx.restore();
     } else {
       if (p.pg && p.pg.enclume) { ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = '#4a4a55'; ctx.beginPath(); ctx.ellipse(p.x + p.w / 2, p.y + p.h, p.w * 0.9, 4, 0, 0, TAU); ctx.fill(); ctx.restore(); }
-      drawApprenti(ctx, p.x + p.w / 2, p.y + p.h, p.h, game.look, p.face, p.anim, p.sta, moving);
+      drawApprenti(ctx, p.x + p.w / 2, p.y + p.h, p.h, game.look, p.face, p.anim, p.sta, moving, poseJoueur(p));
     }
     for (const g of p.gestes ? [p.gestes.R, p.gestes.L] : []) {
       if (!g) continue;
@@ -4697,9 +4874,7 @@ const UI = (() => {
     $$('.panel .fermer').forEach((b) => b.addEventListener('click', () => close()));
     // --- création ---
     $('#create-nom').addEventListener('input', (e) => { look.nom = e.target.value; });
-    buildChoices('#create-chapeaux', DATA.CHAPEAUX, (i) => { look.chapeau = i; refreshCreate(); });
-    buildChoices('#create-capes', DATA.CAPES.map((c) => c.nom), (i) => { look.cape = i; refreshCreate(); }, DATA.CAPES.map((c) => c.c));
-    buildChoices('#create-acc', DATA.ACCESSOIRES, (i) => { look.acc = i; refreshCreate(); });
+    $('#create-hasard').addEventListener('click', () => { const r = (n) => Math.floor(Math.random() * n); Object.assign(look, { peau: r(Perso.PEAUX.length), coiffure: r(Perso.COIFFURES.length), cheveux: r(Perso.TEINTES.length), chapeau: r(Perso.CHAPEAUX.length), chapeauC: r(Perso.ETOFFES.length + 1) - 1, cape: r(DATA.CAPES.length), robe: r(Perso.ETOFFES.length + 1) - 1, echarpe: r(Perso.ECHARPES.length), acc: r(Perso.OBJETS.length) }); majChoixCreation(); Son.sfx('click'); });
     $('#create-go').addEventListener('click', () => { if (!look.nom.trim()) look.nom = 'Apprenti(e)'; game.setLook({ ...look }); close(); Son.sfx('unlock'); });
     // --- sceaux ---
     const sc = $('#seal-canvas');
@@ -4747,6 +4922,35 @@ const UI = (() => {
     $('#btn-restaurer').addEventListener('click', () => { if (confirm('Remettre le monde à neuf ? Tes découvertes et ton inventaire sont conservés.')) { close(); game.restaurerMonde(); } });
   }
 
+  // choix de la création : [{v, label, color}]
+  const CHOIX_CREATION = () => [
+    ['peau', '#create-peau', Perso.PEAUX.map((c, i) => ({ v: i, color: c, label: 'Teint ' + (i + 1) }))],
+    ['coiffure', '#create-coiffure', Perso.COIFFURES.map((n, i) => ({ v: i, label: n }))],
+    ['cheveux', '#create-cheveux', Perso.TEINTES.map((c, i) => ({ v: i, color: c, label: 'Teinte ' + (i + 1) }))],
+    ['chapeau', '#create-chapeau', Perso.CHAPEAUX.map((n, i) => ({ v: i, label: n }))],
+    ['chapeauC', '#create-chapeauC', [{ v: -1, label: 'Comme la cape' }].concat(Perso.ETOFFES.map((c, i) => ({ v: i, color: c, label: 'Étoffe ' + (i + 1) })))],
+    ['cape', '#create-cape', DATA.CAPES.map((c, i) => ({ v: i, color: c.c, label: c.nom }))],
+    ['robe', '#create-robe', [{ v: -1, label: 'Assortie' }].concat(Perso.ETOFFES.map((c, i) => ({ v: i, color: c, label: 'Étoffe ' + (i + 1) })))],
+    ['echarpe', '#create-echarpe', Perso.ECHARPES.map((n, i) => ({ v: i, label: n, color: Perso.ECH_C[i] || null }))],
+    ['acc', '#create-acc', Perso.OBJETS.map((n, i) => ({ v: i, label: n }))],
+  ];
+  function construireCreation() {
+    for (const [cle, sel, items] of CHOIX_CREATION()) {
+      const c = $(sel); c.innerHTML = '';
+      for (const it of items) {
+        const b = el('button', 'choice' + (it.color ? ' swatch' : ''), it.color ? '' : it.label);
+        if (it.color) { b.style.background = it.color; b.title = it.label; }
+        b.dataset.v = it.v;
+        b.addEventListener('click', () => { look[cle] = it.v; majChoixCreation(); Son.sfx('click'); });
+        c.appendChild(b);
+      }
+    }
+  }
+  function majChoixCreation() {
+    const N = Perso.norm(look);
+    for (const [cle, sel] of CHOIX_CREATION()) $$(sel + ' .choice').forEach((b) => b.classList.toggle('on', +b.dataset.v === N[cle]));
+    refreshCreate();
+  }
   function buildChoices(sel, noms, cb, colors) {
     const c = $(sel);
     noms.forEach((n, i) => {
@@ -4777,7 +4981,7 @@ const UI = (() => {
     if (name === 'presse') refreshPresse();
     if (name === 'terrarium') refreshTerrarium();
     if (name === 'bac') openBac();
-    if (name === 'create') { look = { ...game.look }; $('#create-nom').value = look.nom || ''; $$('#create-chapeaux .choice').forEach((q, k) => q.classList.toggle('on', k === look.chapeau)); $$('#create-capes .choice').forEach((q, k) => q.classList.toggle('on', k === look.cape)); $$('#create-acc .choice').forEach((q, k) => q.classList.toggle('on', k === look.acc)); refreshCreate(); }
+    if (name === 'create') { if (!$('#create-peau').children.length) construireCreation(); look = { ...Perso.norm(game.look) }; delete look._cape; $('#create-nom').value = look.nom || ''; majChoixCreation(); }
   }
   function close() {
     open = null; selSlot = null;
@@ -4792,7 +4996,9 @@ const UI = (() => {
   function refreshCreate() {
     const c = $('#create-canvas'), ctx = c.getContext('2d');
     ctx.clearRect(0, 0, c.width, c.height);
-    World.drawApprenti(ctx, c.width / 2, c.height - 20, 150, look, 1, 0, null, false);
+    ctx.save(); ctx.fillStyle = 'rgba(31,26,22,0.12)'; ctx.beginPath(); ctx.ellipse(c.width / 2, c.height - 22, 50, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    const t = time, cast = (t % 6) > 4.6 ? -0.7 : null;
+    World.drawApprenti(ctx, c.width / 2, c.height - 22, 230, look, 1, 0, null, false, { t, cast, glow: '#d8a63a' });
   }
 
   // ---------- Éditeur de sceaux ----------
@@ -5424,7 +5630,7 @@ const UI = (() => {
     if (open === 'seal') { drawSealCanvas(); drawPreview(); }
     if (open === 'cauldron' && Math.floor(time * 30) % 2 === 0) drawCaulCanvas(caulSens);
     if (open === 'bac') drawBac();
-    if (open === 'create' && Math.floor(time * 10) % 3 === 0) refreshCreate();
+    if (open === 'create') refreshCreate();
     if (Math.floor(time * 30) % 2 === 0) refreshHotbarIcons();
   }
   function refreshHotbarIcons() {

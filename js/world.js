@@ -1207,7 +1207,7 @@ const World = (() => {
     if (dirX !== 0) for (const o of st.objs) if (o.t === 'caisse' && !o.mort && !o.carried) { const probe = { x: p.x + dirX * 2, y: p.y, w: p.w, h: p.h }; if (U.rectsOverlap(probe, o)) o.vx = dirX * (p.sta.geant > 0 ? 160 : 70); }
     if (p.y > L.h + 50) { msg('Tu tombes dans l\'encre noire... et te réveilles devant ta porte.'); respawn(); }
     if (p.onGround && Math.abs(p.vx) > 30 && Math.random() < dt * 6) Son.sfx('step', 'terre');
-    if (p.gestes) for (const h of ['R', 'L']) { const g = p.gestes[h]; if (!g) continue; g.t -= dt; if (g.t <= 0) { p.gestes[h] = null; launch(g.seal, { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, g.aim, { depth: 0, player: true, charge: g.charge }); } }
+    if (p.gestes) for (const h of ['R', 'L']) { const g = p.gestes[h]; if (!g) continue; g.t -= dt; if (g.t <= 0) { p.gestes[h] = null; p.lastCast = { t: time, a: Math.atan2(g.aim.y - (p.y + p.h * 0.4), g.aim.x - (p.x + p.w / 2)), c: g.color }; launch(g.seal, { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, g.aim, { depth: 0, player: true, charge: g.charge }); } }
     if (p.selfTimer) { p.selfTimer.t -= dt; if (p.selfTimer.t <= 0) { const q = p.selfTimer; p.selfTimer = null; selfCast(q.spec, q.aim); } }
     if (p.hp <= 0 && p.sta.phenix > 0) { p.sta.phenix = 0; p.hp = p.hpMax; p.inv = 2; p.sta.burning = 0; part(p.x + p.w / 2, p.y + p.h / 2, '#e8842a', 30, 140, 1, 4, -120); Son.sfx('unlock'); msg('Tu te relèves dans un battement d\'ailes de feu.'); }
     if (p.hp <= 0) { msg('Tu t\'évanouis... et te réveilles devant ta porte, un peu honteux(se).', 'warn'); Son.sfx('hurt'); respawn(); }
@@ -2113,32 +2113,17 @@ const World = (() => {
     ctx.restore();
     if (c.dort) U.txt(ctx, 'z', cx + c.w * 0.5, c.y - 4 + Math.sin(time * 2) * 2, 12, 'left', '#5a4a7d', 'IM Fell English', 'italic');
   }
-  function drawApprenti(ctx, x, y, h, look, face = 1, anim = 0, sta = null, moving = false) {
-    ctx.save();
-    ctx.translate(x, y);
-    const s = h / 50;
-    ctx.scale(s * face, s);
-    ctx.lineWidth = 1.8 / s; ctx.strokeStyle = INK; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    const cape = DATA.CAPES[look.cape] ? DATA.CAPES[look.cape].c : '#6b3f73';
-    if (sta && sta.invisible > 0) ctx.globalAlpha = 0.4;
-    const bob = moving ? Math.sin(anim) * 1.5 : 0;
-    const leg = moving ? Math.sin(anim) * 5 : 0;
-    U.inkLine(ctx, -4, -14, -5 + leg, 0, 1, 0.3); U.inkLine(ctx, 4, -14, 5 - leg, 0, 2, 0.3);
-    ctx.fillStyle = cape;
-    U.inkPolyPath(ctx, [[-6, -34 + bob], [6, -34 + bob], [13, -8], [-13, -8]], 3, 0.6); ctx.fill(); ctx.stroke();
-    if (sta && sta.stone > 0) { ctx.save(); ctx.globalAlpha = 0.5; U.hatch(ctx, -13, -34, 26, 26, 3, Math.PI / 4, 1, 0.5, '#8a6b2f'); ctx.restore(); }
-    U.inkLine(ctx, 5, -30 + bob, 12, -22 + bob, 4, 0.3);
-    if (look.acc === 0) { ctx.strokeStyle = '#6b4f2a'; ctx.lineWidth = 2.2 / s; U.inkLine(ctx, 12, -6, 15, -46 + bob, 5, 0.4); ctx.strokeStyle = INK; ctx.lineWidth = 1.8 / s; ctx.fillStyle = '#d8a63a'; ctx.beginPath(); ctx.arc(15.5, -48 + bob, 3, 0, TAU); ctx.fill(); ctx.stroke(); }
-    else if (look.acc === 1) { ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.moveTo(12, -22 + bob); ctx.quadraticCurveTo(16, -34 + bob, 22, -40 + bob); ctx.quadraticCurveTo(18, -30 + bob, 14, -20 + bob); ctx.fill(); ctx.stroke(); }
-    else { ctx.fillStyle = '#9a4a3a'; ctx.fillRect(10, -27 + bob, 9, 7); U.inkRect(ctx, 10, -27 + bob, 9, 7, 6, 0.3); }
-    ctx.fillStyle = '#efdcc0';
-    ctx.beginPath(); ctx.arc(0, -40 + bob, 7, 0, TAU); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(3, -41 + bob, 1, 0, TAU); ctx.fill();
-    ctx.fillStyle = cape;
-    if (look.chapeau === 0) { U.inkPolyPath(ctx, [[-11, -45 + bob], [11, -45 + bob], [2, -68 + bob]], 7, 0.5); ctx.fill(); ctx.stroke(); }
-    else if (look.chapeau === 1) { U.inkPolyPath(ctx, [[-15, -45 + bob], [15, -45 + bob], [5, -50 + bob], [1, -62 + bob], [-5, -50 + bob]], 8, 0.5); ctx.fill(); ctx.stroke(); }
-    else { U.inkPolyPath(ctx, [[-11, -45 + bob], [11, -45 + bob], [4, -58 + bob], [12, -70 + bob], [-2, -60 + bob]], 9, 0.5); ctx.fill(); ctx.stroke(); }
-    ctx.restore();
+  function drawApprenti(ctx, x, y, h, look, face = 1, anim = 0, sta = null, moving = false, pose = {}) { Perso.draw(ctx, x, y, h, look, face, anim, sta, moving, pose); }
+  function poseJoueur(p) {
+    const g = p.gestes && (p.gestes.R || p.gestes.L);
+    const ch = game.charging && (game.charging.R || game.charging.L);
+    let cast = null, glow = null;
+    if (g) { cast = Math.atan2(g.aim.y - (p.y + p.h * 0.4), g.aim.x - (p.x + p.w / 2)); glow = g.color; }
+    else if (ch) { const aim = toWorld(game.inp.mouse.x, game.inp.mouse.y); cast = Math.atan2(aim.y - (p.y + p.h * 0.4), aim.x - (p.x + p.w / 2)); glow = ch.color; }
+    else if (p.lastCast && time - p.lastCast.t < 0.35) { cast = p.lastCast.a; glow = p.lastCast.c; }
+    if (g || ch) { const d = Math.cos(cast); if (Math.abs(d) > 0.2) p.face = d > 0 ? 1 : -1; }
+    const sel = game.hotbar[game.selected];
+    return { t: time, vx: p.vx, vy: p.vy, air: !p.onGround && !p.climbing && p.liq === 0, cast, glow: glow || (sel && sel.type === 'seal' && sel.seal.core ? colorOf(sel.seal.core) : '#d8a63a') };
   }
   function drawPlayer(ctx, p) {
     const moving = (Math.abs(p.vx) > 20 && (p.onGround || p.climbing)) || p.sta.vol > 0;
@@ -2150,12 +2135,12 @@ const World = (() => {
     if (G && G.mag > 0 && !(G.gx === 0 && G.gy === 1) && p.sta.vol <= 0) {
       const th = Math.atan2(G.gy, G.gx) - Math.PI / 2; const hs = Math.max(p.w, p.h);
       ctx.save(); ctx.translate(p.x + p.w / 2, p.y + p.h / 2); ctx.rotate(th);
-      drawApprenti(ctx, 0, hs / 2, hs, game.look, p.face, p.anim, p.sta, moving || (Math.abs(p.vx) + Math.abs(p.vy) > 30 && p.onGround));
+      drawApprenti(ctx, 0, hs / 2, hs, game.look, p.face, p.anim, p.sta, moving || (Math.abs(p.vx) + Math.abs(p.vy) > 30 && p.onGround), poseJoueur(p));
       ctx.restore();
       ctx.save(); ctx.strokeStyle = '#6c5ab8'; ctx.globalAlpha = 0.5; ctx.lineWidth = 1.5; const cx = p.x + p.w / 2, cy = p.y + p.h / 2; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + G.gx * 34, cy + G.gy * 34); ctx.stroke(); ctx.restore();
     } else {
       if (p.pg && p.pg.enclume) { ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = '#4a4a55'; ctx.beginPath(); ctx.ellipse(p.x + p.w / 2, p.y + p.h, p.w * 0.9, 4, 0, 0, TAU); ctx.fill(); ctx.restore(); }
-      drawApprenti(ctx, p.x + p.w / 2, p.y + p.h, p.h, game.look, p.face, p.anim, p.sta, moving);
+      drawApprenti(ctx, p.x + p.w / 2, p.y + p.h, p.h, game.look, p.face, p.anim, p.sta, moving, poseJoueur(p));
     }
     for (const g of p.gestes ? [p.gestes.R, p.gestes.L] : []) {
       if (!g) continue;

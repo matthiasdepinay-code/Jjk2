@@ -14,9 +14,7 @@ const UI = (() => {
     $$('.panel .fermer').forEach((b) => b.addEventListener('click', () => close()));
     // --- création ---
     $('#create-nom').addEventListener('input', (e) => { look.nom = e.target.value; });
-    buildChoices('#create-chapeaux', DATA.CHAPEAUX, (i) => { look.chapeau = i; refreshCreate(); });
-    buildChoices('#create-capes', DATA.CAPES.map((c) => c.nom), (i) => { look.cape = i; refreshCreate(); }, DATA.CAPES.map((c) => c.c));
-    buildChoices('#create-acc', DATA.ACCESSOIRES, (i) => { look.acc = i; refreshCreate(); });
+    $('#create-hasard').addEventListener('click', () => { const r = (n) => Math.floor(Math.random() * n); Object.assign(look, { peau: r(Perso.PEAUX.length), coiffure: r(Perso.COIFFURES.length), cheveux: r(Perso.TEINTES.length), chapeau: r(Perso.CHAPEAUX.length), chapeauC: r(Perso.ETOFFES.length + 1) - 1, cape: r(DATA.CAPES.length), robe: r(Perso.ETOFFES.length + 1) - 1, echarpe: r(Perso.ECHARPES.length), acc: r(Perso.OBJETS.length) }); majChoixCreation(); Son.sfx('click'); });
     $('#create-go').addEventListener('click', () => { if (!look.nom.trim()) look.nom = 'Apprenti(e)'; game.setLook({ ...look }); close(); Son.sfx('unlock'); });
     // --- sceaux ---
     const sc = $('#seal-canvas');
@@ -64,6 +62,35 @@ const UI = (() => {
     $('#btn-restaurer').addEventListener('click', () => { if (confirm('Remettre le monde à neuf ? Tes découvertes et ton inventaire sont conservés.')) { close(); game.restaurerMonde(); } });
   }
 
+  // choix de la création : [{v, label, color}]
+  const CHOIX_CREATION = () => [
+    ['peau', '#create-peau', Perso.PEAUX.map((c, i) => ({ v: i, color: c, label: 'Teint ' + (i + 1) }))],
+    ['coiffure', '#create-coiffure', Perso.COIFFURES.map((n, i) => ({ v: i, label: n }))],
+    ['cheveux', '#create-cheveux', Perso.TEINTES.map((c, i) => ({ v: i, color: c, label: 'Teinte ' + (i + 1) }))],
+    ['chapeau', '#create-chapeau', Perso.CHAPEAUX.map((n, i) => ({ v: i, label: n }))],
+    ['chapeauC', '#create-chapeauC', [{ v: -1, label: 'Comme la cape' }].concat(Perso.ETOFFES.map((c, i) => ({ v: i, color: c, label: 'Étoffe ' + (i + 1) })))],
+    ['cape', '#create-cape', DATA.CAPES.map((c, i) => ({ v: i, color: c.c, label: c.nom }))],
+    ['robe', '#create-robe', [{ v: -1, label: 'Assortie' }].concat(Perso.ETOFFES.map((c, i) => ({ v: i, color: c, label: 'Étoffe ' + (i + 1) })))],
+    ['echarpe', '#create-echarpe', Perso.ECHARPES.map((n, i) => ({ v: i, label: n, color: Perso.ECH_C[i] || null }))],
+    ['acc', '#create-acc', Perso.OBJETS.map((n, i) => ({ v: i, label: n }))],
+  ];
+  function construireCreation() {
+    for (const [cle, sel, items] of CHOIX_CREATION()) {
+      const c = $(sel); c.innerHTML = '';
+      for (const it of items) {
+        const b = el('button', 'choice' + (it.color ? ' swatch' : ''), it.color ? '' : it.label);
+        if (it.color) { b.style.background = it.color; b.title = it.label; }
+        b.dataset.v = it.v;
+        b.addEventListener('click', () => { look[cle] = it.v; majChoixCreation(); Son.sfx('click'); });
+        c.appendChild(b);
+      }
+    }
+  }
+  function majChoixCreation() {
+    const N = Perso.norm(look);
+    for (const [cle, sel] of CHOIX_CREATION()) $$(sel + ' .choice').forEach((b) => b.classList.toggle('on', +b.dataset.v === N[cle]));
+    refreshCreate();
+  }
   function buildChoices(sel, noms, cb, colors) {
     const c = $(sel);
     noms.forEach((n, i) => {
@@ -94,7 +121,7 @@ const UI = (() => {
     if (name === 'presse') refreshPresse();
     if (name === 'terrarium') refreshTerrarium();
     if (name === 'bac') openBac();
-    if (name === 'create') { look = { ...game.look }; $('#create-nom').value = look.nom || ''; $$('#create-chapeaux .choice').forEach((q, k) => q.classList.toggle('on', k === look.chapeau)); $$('#create-capes .choice').forEach((q, k) => q.classList.toggle('on', k === look.cape)); $$('#create-acc .choice').forEach((q, k) => q.classList.toggle('on', k === look.acc)); refreshCreate(); }
+    if (name === 'create') { if (!$('#create-peau').children.length) construireCreation(); look = { ...Perso.norm(game.look) }; delete look._cape; $('#create-nom').value = look.nom || ''; majChoixCreation(); }
   }
   function close() {
     open = null; selSlot = null;
@@ -109,7 +136,9 @@ const UI = (() => {
   function refreshCreate() {
     const c = $('#create-canvas'), ctx = c.getContext('2d');
     ctx.clearRect(0, 0, c.width, c.height);
-    World.drawApprenti(ctx, c.width / 2, c.height - 20, 150, look, 1, 0, null, false);
+    ctx.save(); ctx.fillStyle = 'rgba(31,26,22,0.12)'; ctx.beginPath(); ctx.ellipse(c.width / 2, c.height - 22, 50, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    const t = time, cast = (t % 6) > 4.6 ? -0.7 : null;
+    World.drawApprenti(ctx, c.width / 2, c.height - 22, 230, look, 1, 0, null, false, { t, cast, glow: '#d8a63a' });
   }
 
   // ---------- Éditeur de sceaux ----------
@@ -741,7 +770,7 @@ const UI = (() => {
     if (open === 'seal') { drawSealCanvas(); drawPreview(); }
     if (open === 'cauldron' && Math.floor(time * 30) % 2 === 0) drawCaulCanvas(caulSens);
     if (open === 'bac') drawBac();
-    if (open === 'create' && Math.floor(time * 10) % 3 === 0) refreshCreate();
+    if (open === 'create') refreshCreate();
     if (Math.floor(time * 30) % 2 === 0) refreshHotbarIcons();
   }
   function refreshHotbarIcons() {

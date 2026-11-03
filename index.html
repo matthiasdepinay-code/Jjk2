@@ -85,8 +85,13 @@
   .intro { font-style: italic; opacity: 0.8; }
 
   /* création */
-  #panel-create { width: calc(720px * var(--s)); }
-  #create-canvas { width: calc(220px * var(--s)); height: calc(260px * var(--s)); background: rgba(255,255,255,0.25); border: 1.5px solid var(--ink); border-radius: 50% 50% 6px 6px; }
+  #panel-create { width: calc(980px * var(--s)); }
+  .create-gauche { flex: none; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .create-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+  .create-grille .choices { margin-bottom: 4px; }
+  .create-grille .choice { padding: 3px 8px; font-size: calc(13px * var(--s)); }
+  .create-grille .choice.swatch { width: calc(26px * var(--s)); height: calc(26px * var(--s)); }
+  #create-canvas { width: calc(260px * var(--s)); height: calc(320px * var(--s)); background: rgba(255,255,255,0.25); border: 1.5px solid var(--ink); border-radius: 50% 50% 6px 6px; }
   .choices { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
   .choice.swatch { width: calc(34px * var(--s)); height: calc(34px * var(--s)); padding: 0; border-radius: 50%; }
   .choice.swatch.on { outline: 3px solid var(--gold); }
@@ -197,16 +202,25 @@
   <div id="panels" class="hidden">
     <!-- Création -->
     <section id="panel-create" class="panel hidden">
-      <h2>Un(e) nouvel(le) apprenti(e)</h2>
+      <h2>Un(e) apprenti(e)</h2>
       <div class="cols">
-        <div><canvas id="create-canvas" width="220" height="260"></canvas></div>
-        <div style="flex:2">
+        <div class="create-gauche"><canvas id="create-canvas" width="260" height="320"></canvas>
+          <button id="create-hasard">Au hasard</button></div>
+        <div style="flex:2.2">
           <h3>Nom</h3>
           <input id="create-nom" type="text" maxlength="18" placeholder="Comment t'appelle-t-on ?">
-          <h3>Chapeau</h3><div id="create-chapeaux" class="choices"></div>
-          <h3>Cape</h3><div id="create-capes" class="choices"></div>
-          <h3>À la main</h3><div id="create-acc" class="choices"></div>
-          <button id="create-go">Entrer dans l'atelier</button>
+          <div class="create-grille">
+            <div><h3>Peau</h3><div id="create-peau" class="choices"></div></div>
+            <div><h3>Coiffure</h3><div id="create-coiffure" class="choices"></div></div>
+            <div><h3>Cheveux</h3><div id="create-cheveux" class="choices"></div></div>
+            <div><h3>Chapeau</h3><div id="create-chapeau" class="choices"></div></div>
+            <div><h3>Couleur du chapeau</h3><div id="create-chapeauC" class="choices"></div></div>
+            <div><h3>Cape</h3><div id="create-cape" class="choices"></div></div>
+            <div><h3>Robe</h3><div id="create-robe" class="choices"></div></div>
+            <div><h3>Écharpe</h3><div id="create-echarpe" class="choices"></div></div>
+            <div><h3>À la main</h3><div id="create-acc" class="choices"></div></div>
+          </div>
+          <button id="create-go">C'est moi</button>
         </div>
       </div>
     </section>
@@ -365,6 +379,7 @@
 <script src="js/util.js"></script>
 <script src="js/data.js"></script>
 <script src="js/seal.js"></script>
+<script src="js/perso.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/sim.js"></script>
 <script src="js/gen.js"></script>
