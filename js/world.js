@@ -28,7 +28,7 @@ const World = (() => {
     for (const c of L.crs) st.crs.push(makeCreature(c));
     if (saved) restore(saved);
     st.cam.x = clamp(st.p.x - VW / 2, 0, L.w - VW); st.cam.y = clamp(st.p.y - VH / 2, 0, L.h - VH);
-    if (!darkCv) { darkCv = document.createElement('canvas'); darkCv.width = VW; darkCv.height = VH; }
+    if (!darkCv) { darkCv = document.createElement('canvas'); darkCv.width = VW / 2; darkCv.height = VH / 2; } // l'obscurité, toute en dégradés, se calcule à demi-résolution
     Sim.onEvent = onSimEvent;
   }
   function ensure(g, saved) { if (!st) build(g, saved); game = g; }
@@ -173,7 +173,7 @@ const World = (() => {
     return {
       mat: Sim.serialize(), tod: st.tod, jour: st.jour || 0, meteo: st.meteo, mecaV: 1,
       objs: st.objs.filter((o) => !o.mort).map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
-      crs: st.crs.map((c) => ({ t: c.orig ? c.orig.t : c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.orig ? c.orig.hp : c.hp, tame: c.sta.tame, aff: c.aff ? Math.round(c.aff) : undefined, affJ: c.affJ, affDuJour: c.affDuJour })),
+      crs: st.crs.filter((c) => c.t !== 'familier').map((c) => ({ t: c.orig ? c.orig.t : c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.orig ? c.orig.hp : c.hp, tame: c.sta.tame, aff: c.aff ? Math.round(c.aff) : undefined, affJ: c.affJ, affDuJour: c.affDuJour })),
     };
   }
   function restore(d) {
@@ -480,6 +480,11 @@ const World = (() => {
         });
         break;
       case 'ralentir': break;
+      case 'fumee': if (Sim !== MainSim) Sim.forRadius(cx, cy, rad * 0.9, (x, y, i, m) => { if (m === M.AIR && Math.random() < 0.5) Sim.set(x, y, M.FUMEE, 160); else if (m === M.FEU) Sim.set(x, y, M.FUMEE, 80); }); break;
+      case 'explosion': if (Sim !== MainSim) Sim.forRadius(cx, cy, rad * 0.6, (x, y, i, m) => { if (m && m !== M.OBSIDIENNE && m !== M.METAL && Math.random() < 0.85) Sim.set(x, y, Math.random() < 0.25 ? M.FEU : M.AIR, 20); }); break;
+      case 'courant': if (Sim !== MainSim) { Sim.forRadius(cx, cy, rad * 0.6, (x, y, i, m) => { if (m === M.AIR && Math.random() < 0.4) Sim.set(x, y, M.EAU); }); for (let k2 = 0; k2 < 6; k2++) Sim.forRadius(cx, cy, rad * 1.2, (x, y, i, m) => { if (P[m].liquid && m !== M.LAVE && Sim.get(x + 2, y) === M.AIR && Math.random() < 0.7) Sim.swap(i, y * Sim.W + x + 2); }); } break;
+      case 'seisme': if (Sim !== MainSim) Sim.forRadius(cx, cy, rad * 1.5, (x, y, i, m) => { const r = Math.random(); if (m === M.VERRE && r < 0.5) Sim.set(x, y, M.SABLE); else if (m === M.GLACE && r < 0.3) Sim.set(x, y, M.NEIGE); else if (m === M.PIERRE && r < 0.05 && Sim.get(x, y + 1) === M.AIR) Sim.set(x, y, M.SABLE); }); break;
+      case 'repulsion': return gridEffectOn(Sim, 'vent', cx, cy, rad, prm, burst, k);
       case 'transmutation': {
         const MAP = { [M.PIERRE]: M.SABLE, [M.SABLE]: M.TERRE, [M.TERRE]: M.PIERRE, [M.BOIS]: M.PIERRE, [M.EAU]: M.HUILE, [M.HUILE]: M.EAU, [M.GLACE]: M.VERRE, [M.VERRE]: M.SABLE, [M.CENDRE]: M.TERRE, [M.NEIGE]: M.SABLE, [M.METAL]: M.OBSIDIENNE, [M.OBSIDIENNE]: M.METAL, [M.PLANTE]: M.BOIS, [M.SEVE]: M.ACIDE, [M.ACIDE]: M.SEVE };
         Sim.forRadius(cx, cy, rad, (x, y, i, m) => { const t = MAP[m]; if (t !== undefined && Math.random() < pr * 0.9) Sim.set(x, y, t); });
@@ -646,9 +651,12 @@ const World = (() => {
     if (c.aff >= 100) tame(c);
     else if (f >= 1 && (!c.affMsgT || time - c.affMsgT > 4)) { c.affMsgT = time; msg(nomCreature(c.t) + ' te regarde autrement (affinité ' + Math.round(c.aff) + ' %).'); }
   }
+  // au plus 24 répétitions vivantes : la plus ancienne s'arrête
+  function capRepetitions() { const R = st.sp.filter((q) => q.k === 'repeat' && !q.mort); if (R.length >= 24) R[0].mort = true; }
   // ---------- Bulles de temps ----------
   function poserBulle(mode, cx, cy, rad, prm) {
     const dur = prm.duration || 1, r = Math.max(50, rad * 1.1);
+    { const bulles = st.sp.filter((q) => q.k === 'bulle' && !q.mort); if (bulles.length >= 8) bulles[0].life = 0.01; }
     st.sp.push({ k: 'bulle', mode, x: cx, y: cy, r, life: 5 * dur * (1 + (prm.persist || 0)), max: 5 * dur * (1 + (prm.persist || 0)), f: mode === 'vite' ? 5 * (prm.power || 1) : 0.25 });
     Son.sfx('cast', 'temps'); part(cx, cy, mode === 'vite' ? '#c8ccd8' : '#8aa0d8', 16, 90, 0.7, 3, 0, 'glow');
   }
@@ -1227,6 +1235,7 @@ const World = (() => {
   function doBurst(spec, x, y, r, opts = {}, dir = null) {
     const pm = spec.cores.length > 1 ? 0.85 : 1;
     if (spec.player && !opts.noCombo && spec.depth === 0) enchainement(spec, x, y, r);
+    if (spec.repeat && !opts.noRepeat) capRepetitions();
     if (spec.repeat && !opts.noRepeat) st.sp.push({ k: 'repeat', spec, x, y, r, ent: opts.ent || null, opts: { ...opts, noRepeat: true, noExpire: true, noEcho: true, noCombo: true }, t: spec.repeat, max: spec.repeat, left: clamp(Math.round(8 * spec.prm.duration / spec.repeat), 2, 8) });
     if (spec.expire && !opts.noExpire) { const T = (spec.repeat ? spec.repeat * clamp(Math.round(8 * spec.prm.duration / spec.repeat), 2, 8) : 0) + 4 * spec.prm.duration * (1 + (spec.prm.persist || 0)); st.sp.push({ k: 'expire', spec, x, y, r, t: T, max: T }); }
     for (const core of spec.cores) applyEffect(core, x, y, r, { ...spec.prm, power: spec.prm.power * pm }, 'burst', opts);
@@ -1396,6 +1405,7 @@ const World = (() => {
   }
   function selfCast(spec, aim, noRepeat) {
     for (const core of spec.cores) applySelf(core, spec.prm, aim, spec);
+    if (spec.repeat && !noRepeat) capRepetitions();
     if (spec.repeat && !noRepeat) st.sp.push({ k: 'repeat', self: true, spec, aim, t: spec.repeat, max: spec.repeat, left: clamp(Math.round(8 * spec.prm.duration / spec.repeat), 2, 8) });
     if (noRepeat) return;
     if (spec.combo) comboEffect(spec.combo, st.p.x + st.p.w / 2, st.p.y + st.p.h / 2, 60 * (spec.prm.size || 1), spec.prm);
@@ -1551,7 +1561,7 @@ const World = (() => {
   // ---------- Mains : interagir, creuser, porter ----------
   function nearestLiquid(px, py, r) {
     let best = null, bd = 1e9;
-    Sim.forRadius(px, py, r, (x, y, i, m) => { if (P[m].liquid) { const d = dist(px, py, (x + 0.5) * CS, (y + 0.5) * CS); if (d < bd) { bd = d; best = { x, y, m }; } } });
+    Sim.forRadius(px, py, r, (x, y, i, m) => { if (P[m].liquid && LIQ_ING[m]) { const d = dist(px, py, (x + 0.5) * CS, (y + 0.5) * CS); if (d < bd) { bd = d; best = { x, y, m }; } } });
     return best;
   }
   function interactible(o) {
@@ -1651,11 +1661,14 @@ const World = (() => {
     if (n > 0) { p.anim += 0.5; if (Math.random() < 0.3) Son.sfx('step', 'terre'); }
   }
 
+  const CAPS_SORTS = { trap: 30, expire: 40, totem: 12, field: 40, attente: 20, orbit: 9, bulle: 8, repeat: 24, timer: 30, beamtimer: 20, tornade: 6, singularite: 6, rain: 10, echo: 30 };
   // ---------- Mise à jour ----------
   function update(dt, inp, aim) {
     time += dt;
     const p = st.p;
     memoriser(dt);
+    // plafond des sorts posés : au-delà, le plus ancien s'éteint
+    { const vus = {}; for (let i = st.sp.length - 1; i >= 0; i--) { const q = st.sp[i]; const c = CAPS_SORTS[q.k]; if (!c || q.mort) continue; vus[q.k] = (vus[q.k] || 0) + 1; if (vus[q.k] > c) q.mort = true; } }
     if (p.forme && !(p.sta.forme > 0)) finFormeSoi();
     updateGFields(dt);
     majMecanismes(dt);
@@ -2315,6 +2328,7 @@ const World = (() => {
     Son.sfx('burst', 'force'); return att.length;
   }
   function updateFamilier(c, dt, p) {
+    if (!c.spec) { c.hp = 0; c.respawn = 1e9; c.mort = true; return; }
     c.life -= dt; c.cd -= dt;
     if (c.life <= 0 || c.hp <= 0) { c.hp = 0; c.respawn = 1e9; c.mort = true; part(c.x + c.w / 2, c.y + c.h / 2, c.spec.color, 10, 60); return; }
     // cible : créature hostile proche ; sinon suit le joueur
@@ -2484,7 +2498,8 @@ const World = (() => {
         case 'label': s.life -= dt; s.y -= 20 * dt; if (s.life <= 0) s.mort = true; break;
         case 'bulle': {
           s.life -= dt; if (s.life <= 0) { s.mort = true; if (s.mode === 'fige') for (const q of st.sp) if (q.gelV) { [q.vx, q.vy, q.grav] = q.gelV; q.gelV = null; } break; }
-          vieillir(s.mode, s.x, s.y, s.r, dt, s.f);
+          if (s.mode !== 'vite') vieillir(s.mode, s.x, s.y, s.r, dt, s.f);
+          else { s.acc = (s.acc || 0) + dt; if (s.acc >= 0.05) { vieillir(s.mode, s.x, s.y, s.r, s.acc, s.f); s.acc = 0; } } // 20 fois par seconde suffit
           if (Math.random() < 0.5) { const a = Math.random() * TAU, rr = s.r * (0.3 + Math.random() * 0.7); st.parts.push({ x: s.x + Math.cos(a) * rr, y: s.y + Math.sin(a) * rr, vx: s.mode === 'vite' ? -Math.sin(a) * 160 : -Math.sin(a) * 12, vy: s.mode === 'vite' ? Math.cos(a) * 160 : Math.cos(a) * 12, life: 0.6, max: 0.6, color: s.mode === 'vite' ? '#c8ccd8' : '#8aa0d8', size: 2, grav: 0, type: 'glow' }); }
           break;
         }
@@ -2679,34 +2694,48 @@ const World = (() => {
     for (let i = 0; i < n; i++) { const x = (U.hash2(i, 9) * VW + time * 300 * (0.7 + U.hash2(i, 2) * 0.6)) % VW, y = (U.hash2(i, 4) * VH + time * 700 * (0.8 + U.hash2(i, 6) * 0.4)) % VH; ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 14); }
     ctx.stroke(); ctx.restore();
   }
+  // calques précalculés : dégradé de profondeur et tache de lumière
+  let gradProf = null, tacheLum = null;
+  function calquesNuit() {
+    gradProf = document.createElement('canvas'); gradProf.width = 1; gradProf.height = 180;
+    { const g = gradProf.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 180); gr.addColorStop(0, 'rgba(18,14,11,0)'); gr.addColorStop(1, 'rgba(18,14,11,0.93)'); g.fillStyle = gr; g.fillRect(0, 0, 1, 180); }
+    tacheLum = document.createElement('canvas'); tacheLum.width = tacheLum.height = 128;
+    { const g = tacheLum.getContext('2d'); const gr = g.createRadialGradient(64, 64, 64 * 0.15 / 1.1, 64, 64, 64 / 1.1); gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(0.6, 'rgba(0,0,0,0.7)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }
+  }
   function drawDark(ctx, cam) {
-    const d = darkCv.getContext('2d');
-    d.clearRect(0, 0, VW, VH);
+    if (!gradProf) calquesNuit();
     const nightA = (1 - daylight()) * 0.62;
-    if (nightA > 0.01) { d.fillStyle = 'rgba(14,12,22,' + nightA + ')'; d.fillRect(0, 0, VW, VH); }
-    // profondeur : plus sombre sous la surface
-    const surf = Sim.surf;
+    // profondeur : plus sombre sous la surface (colonnes de 8 px, fusionnées quand elles se suivent)
+    const surf = Sim.surf, cols = [];
+    let sous = false;
     if (surf) {
       for (let sx = 0; sx < VW; sx += 8) {
         const cx = clamp(Math.floor((cam.x + sx + 4) / CS), 0, Sim.W - 1);
         let acc = 0, n = 0; for (let k = -5; k <= 5; k++) { const q = cx + k; if (q >= 0 && q < Sim.W) { acc += surf[q]; n++; } }
-        const sy = (acc / n) * CS - cam.y;
-        const g = d.createLinearGradient(0, sy + 60, 0, sy + 240);
-        g.addColorStop(0, 'rgba(18,14,11,0)'); g.addColorStop(1, 'rgba(18,14,11,0.93)');
-        d.fillStyle = g; d.fillRect(sx, sy + 60, 8, VH);
+        const sy = Math.round((acc / n) * CS - cam.y + 60);
+        if (sy < VH) sous = true;
+        const last = cols[cols.length - 1];
+        if (last && Math.abs(last.sy - sy) <= 1) last.w += 8; else cols.push({ sx, sy, w: 8 });
       }
     }
+    if (nightA <= 0.01 && !sous) return; // plein jour, à l'air libre : rien à assombrir
+    const d = darkCv.getContext('2d');
+    d.setTransform(0.5, 0, 0, 0.5, 0, 0);
+    d.clearRect(0, 0, VW, VH);
+    if (nightA > 0.01) { d.fillStyle = 'rgba(14,12,22,' + nightA + ')'; d.fillRect(0, 0, VW, VH); }
+    if (sous) { d.fillStyle = 'rgba(18,14,11,0.93)'; for (const c of cols) { if (c.sy >= VH) continue; d.drawImage(gradProf, c.sx, c.sy, c.w, 180); if (c.sy + 180 < VH) d.fillRect(c.sx, c.sy + 180, c.w, VH - c.sy - 180); } }
     d.globalCompositeOperation = 'destination-out';
+    // lumières : regroupées par cases de 40 px (on garde la plus grande)
+    const cases = new Map();
     for (const l of lights()) {
       const x = l.x - cam.x, y = l.y - cam.y;
       if (x < -l.r || x > VW + l.r || y < -l.r || y > VH + l.r) continue;
-      const fl = 1 + Math.sin(time * 7 + x) * 0.04;
-      const g = d.createRadialGradient(x, y, l.r * 0.15, x, y, l.r * fl);
-      g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.6, 'rgba(0,0,0,0.7)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-      d.fillStyle = g; d.fillRect(x - l.r * 1.1, y - l.r * 1.1, l.r * 2.2, l.r * 2.2);
+      const key = ((x / 40) | 0) * 4096 + ((y / 40) | 0); const q = cases.get(key);
+      if (!q || q.r < l.r) cases.set(key, { x, y, r: l.r });
     }
+    for (const l of cases.values()) { const R = l.r * (1 + Math.sin(time * 7 + l.x) * 0.04) * 1.1; d.drawImage(tacheLum, l.x - R, l.y - R, R * 2, R * 2); }
     d.globalCompositeOperation = 'source-over';
-    ctx.drawImage(darkCv, 0, 0);
+    ctx.drawImage(darkCv, 0, 0, VW, VH);
   }
 
   function drawObj(ctx, o) {

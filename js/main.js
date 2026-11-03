@@ -115,6 +115,7 @@
     toast(m, k) { UI.toast(m, k); },
     zoneChange(nom) { UI.zoneTitle(nom); },
     gainIngredient(id) {
+      if (!DATA.INGREDIENTS[id]) return;
       this.inv.ingredients[id] = (this.inv.ingredients[id] || 0) + 1;
       const first = !this.progress.ingredientsVus.includes(id);
       this.progress.event('ingredient', id);
@@ -454,7 +455,7 @@
         for (const [k, v] of [['tailles', DATA.DEBUT.tailles], ['filtres', []], ['cibles', ['souris']], ['enchainements', []]]) if (!this.progress[k]) this.progress[k] = v.slice();
         if (this.inv.parchemins) for (const q of Object.values(this.inv.parchemins)) q.seal = Seal.clone(q.seal);
         this.editSeal = Seal.clone(this.editSeal);
-        if (!this.inv.fortes) this.inv.fortes = {}; if (!this.inv.encres) this.inv.encres = {}; if (!this.inv.parchemins) this.inv.parchemins = {}; if (!this.inv.terrarium) this.inv.terrarium = [];
+        if (!this.inv.fortes) this.inv.fortes = {}; if (!this.inv.encres) this.inv.encres = {}; for (const k in this.inv.ingredients) if (!DATA.INGREDIENTS[k]) delete this.inv.ingredients[k]; for (const k in this.inv.potions) if (!DATA.POTIONS[k]) delete this.inv.potions[k]; if (!this.inv.parchemins) this.inv.parchemins = {}; if (!this.inv.terrarium) this.inv.terrarium = [];
         const K = this.progress.compteurs; for (const k of ['terre', 'creaturesTouchees', 'vols', 'portes', 'lancers', 'sceaux']) if (K[k] == null) K[k] = 0; K.niveau = this.niveau;
         this.hotbar = this.hotbar.map((e) => (e && e.type === 'seal' ? { type: 'seal', seal: Seal.clone(e.seal) } : e)); this.seals = this.seals.map((q) => Seal.clone(q));
         return this.started;

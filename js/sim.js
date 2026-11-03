@@ -6,7 +6,7 @@ function createSim() {
   const CH = 32;       // cellules par côté de morceau (chunk)
   const CPX = CS * CH; // pixels par morceau
   let W = 0, H = 0, CW = 0, CHn = 0;
-  let mat, aux, elec, upd, chaud;
+  let mat, aux, elec, upd, chaud, chunkVide, chunkRendu, nDraw = 0;
   let chunkActive, chunkDirty, chunkCv, chunkLights, chunkHasLiquid;
   let frame = 0;
   let onEvent = null;
@@ -59,7 +59,7 @@ function createSim() {
     W = w; H = h; CW = Math.ceil(W / CH); CHn = Math.ceil(H / CH);
     mat = new Uint8Array(W * H); aux = new Uint8Array(W * H); elec = new Uint8Array(W * H); upd = new Uint8Array(W * H); chaud = new Uint8Array(W * H);
     chunkActive = new Int32Array(CW * CHn); chunkDirty = new Uint8Array(CW * CHn).fill(1); chunkHasLiquid = new Uint8Array(CW * CHn);
-    chunkCv = new Array(CW * CHn).fill(null); chunkLights = new Array(CW * CHn).fill(null);
+    chunkCv = new Array(CW * CHn).fill(null); chunkLights = new Array(CW * CHn).fill(null); chunkVide = new Uint8Array(CW * CHn); chunkRendu = new Uint32Array(CW * CHn);
     frame = 0;
   }
   const idx = (x, y) => y * W + x;
@@ -322,11 +322,11 @@ function createSim() {
     const cx = c % CW, cy = (c - cx) / CW;
     const x0 = cx * CH, y0 = cy * CH, x1 = Math.min(W, x0 + CH), y1 = Math.min(H, y0 + CH);
     const lights = [];
-    let anySolid = false;
+    let anySolid = false, plein = 0;
     // 1. remplissages
     for (let y = y0; y < y1; y++) {
       for (let x = x0; x < x1; x++) {
-        const i = y * W + x; const m = mat[i]; if (!m) continue;
+        const i = y * W + x; const m = mat[i]; if (!m) continue; plein = 1;
         const p = P[m]; const lx = (x - x0) * CS, ly = (y - y0) * CS;
         if (p.solid && !p.powder) anySolid = true;
         if (m === M.FEU) {
@@ -406,7 +406,8 @@ function createSim() {
       }
     }
     g.restore();
-    chunkLights[c] = lights;
+    chunkLights[c] = lights.length ? lights : null;
+    chunkVide[c] = plein ? 0 : 1;
     chunkDirty[c] = 0;
   }
   function edge(g, x1, y1, x2, y2, kind, seed) {
@@ -417,11 +418,12 @@ function createSim() {
   function draw(ctx, cam, vw, vh) {
     const cx0 = Math.max(0, Math.floor(cam.x / CPX)), cx1 = Math.min(CW - 1, Math.floor((cam.x + vw) / CPX));
     const cy0 = Math.max(0, Math.floor(cam.y / CPX)), cy1 = Math.min(CHn - 1, Math.floor((cam.y + vh) / CPX));
-    let budget = 40;
+    let budget = 40; nDraw++;
     for (let cy = cy0; cy <= cy1; cy++) for (let cx = cx0; cx <= cx1; cx++) {
       const c = cy * CW + cx;
-      if ((chunkDirty[c] || !chunkCv[c]) && budget-- > 0) renderChunk(c);
-      if (chunkCv[c]) ctx.drawImage(chunkCv[c], cx * CPX, cy * CPX);
+      // un bloc qui change sans cesse (feu, eau qui coule) n'est redessiné qu'une image sur deux
+      if ((!chunkCv[c] || (chunkDirty[c] && nDraw - chunkRendu[c] >= 2)) && budget-- > 0) { renderChunk(c); chunkRendu[c] = nDraw; }
+      if (chunkCv[c] && !chunkVide[c]) ctx.drawImage(chunkCv[c], cx * CPX, cy * CPX);
     }
   }
   function lights(cam, vw, vh) {

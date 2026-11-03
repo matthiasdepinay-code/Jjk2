@@ -743,7 +743,7 @@ const UI = (() => {
         const r = c.getBoundingClientRect(); const x = (e.clientX - r.left) * (c.width / r.width), y = (e.clientY - r.top) * (c.height / r.height);
         if (e.button === 2 || e.shiftKey) { let n = 0; bac.forRadius(x, y, 14, (cx, cy, i, m) => { if (m === bac.M.AIR && n < 40) { bac.set(cx, cy, bac.M[bacMat.toUpperCase()]); n++; } }); return; }
         const s = game.editSeal; if (!s.core) { toast('Compose d\'abord un sceau avec un glyphe d\'effet.', 'warn'); return; }
-        const prm = Seal.params(s); let cores = [s.core]; if (s.core2) cores.push(s.core2); if (prm.inverse) cores = cores.map((q) => DATA.INVERSE[q] || q);
+        const prm = Seal.params(s); let cores = Seal.effets(s); if (prm.inverse) cores = cores.map((q) => DATA.INVERSE[q] || q);
         for (const core of cores) World.gridEffectOn(bac, core, x, y, 36 * (prm.size || 1), prm, true, 1);
         Son.sfx('burst', cores[0]);
       });
