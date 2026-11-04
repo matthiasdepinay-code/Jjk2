@@ -16,12 +16,12 @@
 
   // ---------- Progression ----------
   // les événements qui valident les leçons du maître
-  const LECON_EVTS = new Set(['sort', 'combo_decouvert', 'combo_decouvert_trio', 'ordre', 'effondrement', 'stele']);
+  const LECON_EVTS = new Set(['sort', 'combo_decouvert', 'combo_decouvert_trio', 'ordre', 'effondrement', 'stele', 'gardien']);
   function makeProgress() {
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
       tailles: DATA.DEBUT.tailles.slice(), filtres: DATA.DEBUT.filtres.slice(), cibles: DATA.DEBUT.cibles.slice(), deuxMains: false, enchainements: [],
-      recettes: [], ingredientsVus: [], done: [], maitrise: {}, combos: {}, familiers: {}, leconsVues: [], leconsFaites: [], _evts: [], nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
+      recettes: [], ingredientsVus: [], done: [], maitrise: {}, combos: {}, familiers: {}, gardiens: {}, gardiensVus: [], leconsVues: [], leconsFaites: [], _evts: [], nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
       compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0, terre: 0, creaturesTouchees: 0, vols: 0, portes: 0, lancers: 0, niveau: 1, sceaux: 0 },
       event(name, data) {
         const k = this.compteurs;
@@ -460,7 +460,7 @@
         if (d.carte) this.carte = d.carte;
         if (d.courrier) this.courrier = Object.assign(this.courrier, d.courrier); if (d.bonus) this.bonus = Object.assign(this.bonus, d.bonus); if (d.trophees) this.trophees = d.trophees;
         if (d.progress) Object.assign(this.progress, d.progress);
-        if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {}; if (!this.progress.combos) this.progress.combos = {}; if (!this.progress.familiers) this.progress.familiers = {}; if (!this.progress.leconsVues) this.progress.leconsVues = []; if (!this.progress.leconsFaites) this.progress.leconsFaites = []; this.progress._evts = [];
+        if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {}; if (!this.progress.combos) this.progress.combos = {}; if (!this.progress.gardiens) this.progress.gardiens = {}; if (!this.progress.familiers) this.progress.familiers = {}; if (!this.progress.leconsVues) this.progress.leconsVues = []; if (!this.progress.leconsFaites) this.progress.leconsFaites = []; this.progress._evts = [];
         { // refonte : les anciennes essences deviennent des aspects
           const p = this.progress; if (!p.mods.includes('reduire')) p.mods.push('reduire');
           for (const c of p.cores.slice()) { const M2 = DATA.MIGRATION[c]; if (!M2) continue; p.cores = p.cores.filter((q) => q !== c); if (!p.mods.includes(M2[1])) p.mods.push(M2[1]); if (p.maitrise[c]) { p.maitrise[M2[0]] = (p.maitrise[M2[0]] || 0) + p.maitrise[c]; delete p.maitrise[c]; } }

@@ -688,6 +688,12 @@ const UI = (() => {
       c.appendChild(el('h3', '', 'Familiers (' + Object.keys(pf).filter((e) => DATA.FAMILIERS[e]).length + ' / ' + Object.keys(DATA.FAMILIERS).length + ')'));
       c.appendChild(el('p', 'intro', 'La forme Invocation fait naître le familier de l\'essence au centre du sceau. Il te suit, te défend, et chacun a son don.'));
       for (const e of DATA.ESSENCES) { const F = DATA.FAMILIERS[e]; if (!F) continue; const vu = !!pf[e]; const ligne = c.appendChild(el('div', 'decouverte' + (vu ? ' ok' : ''), '<span class="check"><i class="dot" style="background:' + (vu ? DATA.CORES[e].couleur : '#aaa') + '"></i></span><div><b>' + (vu ? F.nom : '???') + '</b> <small>' + DATA.CORES[e].nom + '</small><br>' + (vu ? F.desc : '<span class="muted">Invoque un familier ' + (DATA.DE[e] || ({ contre: 'du Contre-sort', metamorphose: 'de la Métamorphose' })[e] || '') + ' pour le rencontrer.</span>') + '</div>')); if (vu && p.shapes.includes('invocation') && p.cores.includes(e)) { const b = el('button', 'choice mini', 'Copier sur la table'); b.addEventListener('click', () => versLaTable({ core: e, shape: 'invocation' })); ligne.lastChild.appendChild(b); } }
+      // les gardiens : un par région
+      { const pv = p.gardiens || {}, vus = p.gardiensVus || [];
+        c.appendChild(el('h3', '', 'Gardiens (' + Object.keys(DATA.GARDIENS).filter((g) => pv[g]).length + ' / ' + Object.keys(DATA.GARDIENS).length + ' vaincus)'));
+        c.appendChild(el('p', 'intro', 'Chaque région a son gardien. Aucun ne tombe sous la seule force : chacun a son tour à trouver. Ils dorment tant que tu n\'as pas pris assez de forces, sauf si tu les provoques.'));
+        for (const g in DATA.GARDIENS) { const G = DATA.GARDIENS[g], vu = vus.includes(g) || pv[g]; c.appendChild(el('div', 'decouverte' + (pv[g] ? ' ok' : ''), '<span class="check">' + (pv[g] ? '✦' : '<i class="dot" style="background:' + (vu ? G.couleur : '#aaa') + '"></i>') + '</span><div><b>' + (vu ? G.nom : '???') + '</b> <small>' + G.region + (pv[g] ? ', vaincu' : '') + '</small><br>' + (vu ? '<em>' + G.desc + '</em><br><small>' + G.indice + '</small>' : '<span class="muted">Quelque chose garde ' + G.region.replace(/^La /, 'la ').replace(/^Les /, 'les ').replace(/^Le /, 'le ') + '.</span>') + '</div>')); }
+      }
     } else if (grimTab === 'pages') {
       c.appendChild(el('p', 'intro', 'Le maître a semé des pages de son grimoire aux quatre coins du monde : en hauteur, au fond, dans le noir. Chacune apprend quelque chose.'));
       for (const P of DATA.PAGES) {

@@ -5,7 +5,7 @@ const World = (() => {
   const GRAV = 1500;
   const CHAUD_OK = ['follet', 'salamandre', 'golem', 'familier'], FROID_OK = ['lapin', 'golem', 'familier', 'poisson'];
   // ---------- Masse et flottaison ----------
-  const MASSE = { caisse: 0.8, rocher: 4, golem: 6, tortue: 1.6, lapin: 0.4, limace: 0.5, grenouille: 0.3, poisson: 0.2, corbeau: 0.2, follet: 0.1, salamandre: 0.5, chauve: 0.2, escargot: 0.4, familier: 0.2 };
+  const MASSE = { caisse: 0.8, rocher: 4, golem: 6, tortue: 1.6, lapin: 0.4, limace: 0.5, grenouille: 0.3, poisson: 0.2, corbeau: 0.2, follet: 0.1, salamandre: 0.5, chauve: 0.2, escargot: 0.4, familier: 0.2, gardien: 12 };
   const DENS = { caisse: 0.5, rocher: 2.6, golem: 2.4, tortue: 1.05, escargot: 1.2, salamandre: 0.95, limace: 0.9, lapin: 0.8, grenouille: 0.85 };
   function masse(e) { return e === (st && st.p) ? 1 : (e && MASSE[e.t]) || 1; }
   const VW = 1280, VH = 720;
@@ -32,7 +32,7 @@ const World = (() => {
     for (const o of L.objs) st.objs.push(makeObj(o));
     for (const c of L.crs) st.crs.push(makeCreature(c));
     if (saved) restore(saved);
-    Sim.ancrer(); PH.reset();
+    Sim.ancrer(); PH.reset(); GD.reset();
     if (aRestaurer) { const R = aRestaurer; aRestaurer = null; try { for (const q of R.familiers) { if (!DATA.FAMILIERS[q.espece]) continue; const spec = makeSpec(Seal.clone(q.seal)); const f = nouveauFamilier(spec, q.espece, q.x, q.y); f.life = q.life; f.hp = Math.min(f.hpMax, q.hp); f.age = q.age || 0; st.crs.push(f); } PH.restaurer(R.phen); } catch (e) { console.warn('restauration des familiers et phénomènes', e); } }
     st.cam.x = clamp(st.p.x - VW / 2, 0, L.w - VW); st.cam.y = clamp(st.p.y - VH / 2, 0, L.h - VH);
     if (!darkCv) { darkCv = document.createElement('canvas'); darkCv.width = VW / 2; darkCv.height = VH / 2; } // l'obscurité, toute en dégradés, se calcule à demi-résolution
@@ -48,6 +48,12 @@ const World = (() => {
     flash: (v) => { st.flash = Math.max(st.flash, v); }, shake: (v) => { st.shake = Math.max(st.shake, v); }, son: (a, b) => Son.sfx(a, b), colorOf: (c) => colorOf(c),
     daylight: () => daylight(), revenir: (c) => finMorph(c), makeSpec: (s) => makeSpec(s), ventAt: (x, y) => Sim.ventAt(x, y), tient: (h) => tientMain(h), boire: (n) => { if (st.p.ink < n) return false; st.p.ink -= n; return true; },
     origine: () => ({ x: st.p.x + st.p.w / 2, y: st.p.y + st.p.h * 0.45 }), cible: (R) => { const p = st.p, o = { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, a = toWorld(game.inp.mouse.x, game.inp.mouse.y); const dx = a.x - o.x, dy = a.y - o.y, d = Math.hypot(dx, dy) || 1, k = Math.min(1, R / d); return { x: o.x + dx * k, y: o.y + dy * k }; }, addXp: (n) => { if (game && game.addXp) game.addXp(n); }, tempsDe: (x, y) => (bullesT.length ? tempsDe(x, y, 2) : 1),
+  });
+  // ---------- Gardiens (un par région, js/gardiens.js) ----------
+  const GD = creerGardiens({
+    get st() { return st; }, get L() { return L; }, game: () => game, part: (...a) => part(...a), msg: (...a) => msg(...a), evt: (...a) => evt(...a),
+    son: (a, b) => Son.sfx(a, b), shake: (v) => { st.shake = Math.max(st.shake, v); }, flash: (v) => { st.flash = Math.max(st.flash, v); },
+    moveBody: (b, dt) => moveBody(b, dt), applyGrav: (b, dt, k) => applyGrav(b, dt, k), dropPickup: (i, x, y) => dropPickup(i, x, y),
   });
   function respawn() {
     const p = st.p;
@@ -202,10 +208,12 @@ const World = (() => {
       case 'limace': Object.assign(b, { w: 36, h: 24, hp: 3, hpMax: 3, dmg: 1, portable: true }); break;
       case 'follet': Object.assign(b, { w: 24, h: 24, hp: 2, hpMax: 2, dmg: 1, vole: true, portable: true }); break;
       case 'golem': Object.assign(b, { w: 50, h: 70, hp: 8, hpMax: 8, dmg: 2 }); break;
+      case 'gardien': Object.assign(b, GD.stats(c.g)); if (game && game.progress && game.progress.gardiens && game.progress.gardiens[c.g]) { b.vaincu = true; b.respawn = 1e9; } break;
       default: { const sp = DATA.ESPECES[c.t]; if (sp) Object.assign(b, { w: sp.w, h: sp.h, hp: sp.hp, hpMax: sp.hp, dmg: sp.dmg, vole: sp.mode === 'fly', generique: true, portable: sp.w <= 36 }); }
     }
     b.cadeauT = 0;
     if (c.hp !== undefined) b.hp = c.hp;
+    if (b.vaincu) b.hp = 0;
     if (c.aff) { b.aff = c.aff; b.affJ = c.affJ; b.affDuJour = c.affDuJour; }
     return b;
   }
@@ -217,7 +225,7 @@ const World = (() => {
       objs: st.objs.filter((o) => !o.mort && o.t !== 'magie').map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur', 'veut', 'grave', 'style', 'par']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
       familiers: st.crs.filter((c) => c.t === 'familier' && c.hp > 0 && c.spec && c.spec.seal && c.life > 1).map((c) => ({ espece: c.espece, seal: c.spec.seal, x: Math.round(c.x), y: Math.round(c.y), life: Math.round(c.life), hp: c.hp, age: Math.round(c.age || 0) })),
       phen: PH.sauver(),
-      crs: st.crs.filter((c) => c.t !== 'familier' && !c.temporaire).map((c) => ({ t: c.orig ? c.orig.t : c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.orig ? c.orig.hp : c.hp, tame: c.sta.tame, aff: c.aff ? Math.round(c.aff) : undefined, affJ: c.affJ, affDuJour: c.affDuJour })),
+      crs: st.crs.filter((c) => c.t !== 'familier' && !c.temporaire).map((c) => ({ t: c.orig ? c.orig.t : c.t, g: c.g, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.orig ? c.orig.hp : c.hp, tame: c.sta.tame, aff: c.aff ? Math.round(c.aff) : undefined, affJ: c.affJ, affDuJour: c.affDuJour })),
     };
   }
   let aRestaurer = null, nappeT = 0;
@@ -227,6 +235,8 @@ const World = (() => {
       if (d.objs) st.objs = d.objs.map(makeObj);
       if (d.objs && !d.mecaV) for (const q of L.objs) if (MECA.includes(q.t)) st.objs.push(makeObj(q));
       if (d.crs) st.crs = d.crs.map(makeCreature);
+      if (d.objs) for (const q of L.objs) if (q.v === 2 && !st.objs.some((o) => o.t === q.t && Math.abs(o.x - q.x) < 3 && Math.abs(o.y - q.y) < 3)) st.objs.push(makeObj(q));
+      if (d.crs) for (const q of L.crs) if (q.t === 'gardien' && !st.crs.some((c) => c.t === 'gardien' && c.g === q.g)) st.crs.push(makeCreature(q));
       if (d.tod != null) st.tod = d.tod;
       if (d.jour != null) st.jour = d.jour;
       if (d.meteo) st.meteo = d.meteo;
@@ -379,6 +389,7 @@ const World = (() => {
       if (o.t === 'coffre' && !o.ouvert) ls.push({ x: o.x + o.w / 2, y: o.y + 10, r: 40 });
       if (o.t === 'rune' && o.revele > 0) ls.push({ x: o.x + o.w / 2, y: o.y + o.h / 2, r: 60 * o.revele });
     }
+    GD.lumieres(ls);
     for (const c of st.crs) { if (c.t === 'follet' && c.hp > 0) ls.push({ x: c.x + c.w / 2, y: c.y + c.h / 2, r: 110 }); else if (c.hp > 0 && DATA.ESPECES[c.t] && DATA.ESPECES[c.t].lumineux) ls.push({ x: c.x + c.w / 2, y: c.y + c.h / 2, r: 70 }); else if (c.t === 'familier' && c.hp > 0) ls.push({ x: c.x + c.w / 2, y: c.y + c.h / 2, r: 90 }); }
     for (const s of st.sp) {
       if (s.k === 'field' && (s.core === 'lumiere' || s.core === 'feu')) ls.push({ x: s.x, y: s.y, r: s.r * (s.core === 'lumiere' ? 2.2 : 1.4) });
@@ -719,7 +730,7 @@ const World = (() => {
   }
   // ---------- Affinité : on gagne une créature avec le temps ----------
   function affinite(c, f) {
-    if (c.sta.tame || c.t === 'familier' || c.controlled) return;
+    if (c.sta.tame || c.t === 'familier' || c.t === 'gardien' || c.controlled) return;
     const A = DATA.AFFINITE[c.t] || {}; const sp = DATA.ESPECES[c.t];
     let gain = (A.gain || (sp && !sp.hostile ? 34 : 20)) * f;
     if (A.parJour) {
@@ -828,7 +839,7 @@ const World = (() => {
   function metamorphoser(cx, cy, rad, prm) {
     const dur = prm.duration || 1; let n = 0;
     for (const c of st.crs) {
-      if (c.hp <= 0 || c.t === 'familier' || c.controlled || !U.circleRect(cx, cy, rad, c)) continue;
+      if (c.hp <= 0 || c.t === 'familier' || c.t === 'gardien' || c.controlled || !U.circleRect(cx, cy, rad, c)) continue;
       if (prm.inverse || c.orig) { if (c.orig) { finMorph(c); n++; } continue; }
       if (c.t === 'follet') continue;
       const choix = MORPHS.filter((t) => t !== c.t); const T = choix[(Math.random() * choix.length) | 0];
@@ -988,6 +999,7 @@ const World = (() => {
       const ccx = c.x + c.w / 2, ccy = c.y + c.h / 2;
       let dx = ccx - cx, dy = ccy - cy; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
       if (burst) evt('hit', 'creature:' + c.t);
+      if (c.t === 'gardien') { GD.sort(c, core, { power, k, burst, dur, dx, dy }); continue; }
       const sp = DATA.ESPECES[c.t];
       if (sp && burst) { if (core === sp.aime) evt('bestiaire', { t: c.t, k: 'aime' }); if (core === sp.craint) evt('bestiaire', { t: c.t, k: 'craint' }); }
       if (sp && !c.generique && core === sp.aime) { affinite(c, burst ? 1 : k * 0.3); c.hp = Math.min(c.hpMax, c.hp + k); if (c.t === 'follet') c.size = Math.min(1.8, c.size + 0.15 * k); continue; }
@@ -1156,6 +1168,7 @@ const World = (() => {
   }
   function hurt(c, dmg, source) {
     if (c.t === 'familier' && source !== 'coup') return;
+    if (c.t === 'gardien') { GD.hurt(c, dmg, source); return; }
     c.hp -= dmg; c.hurt = 0.25; if (!c.sta.tame && c.aff > 0) c.aff = Math.max(0, c.aff - (c.t === 'golem' ? 30 : 10));
     if (c.hp <= 0) {
       c.hp = 0; part(c.x + c.w / 2, c.y + c.h / 2, c.t === 'follet' ? '#3f9c9b' : '#1f1a16', 14, 90, 0.8);
@@ -1598,6 +1611,7 @@ const World = (() => {
 
   // ---------- Esprit, Lien, Portails ----------
   function controlCreature(c, t) {
+    if (c.t === 'gardien') { msg('Son esprit est bien trop vaste pour le tien.', 'warn'); GD.sort(c, 'esprit', { power: 1, k: 0, burst: true }); return; }
     st.control = { c, t }; c.sta.tame = true; c.controlled = true;
     msg('Tu es dans la tête de ' + nomCreature(c.t).toLowerCase() + '. Flèches pour bouger, E pour revenir.');
     part(c.x + c.w / 2, c.y, '#b08ad8', 14, 60, 0.9, 2, 0, 'spark');
@@ -1991,6 +2005,7 @@ const World = (() => {
     majBulles();
     updateObjs(dt);
     updateCreatures(dt);
+    GD.majTirs(dt);
     retenir();
     if (Sim.ventVif) {
       const pousse = (e, k) => { const [vx, vy] = Sim.ventAt(e.x + e.w / 2, e.y + e.h / 2); if (Math.abs(vx) + Math.abs(vy) < 0.25) return; e.vx += vx * k * dt / masse(e); e.vy += vy * k * 0.7 * dt / masse(e); };
@@ -2234,6 +2249,7 @@ const World = (() => {
       if (c.hp <= 0) { c.respawn -= dt; if (c.respawn <= 0) { c.hp = c.hpMax; c.x = c.x0; c.y = c.y0; c.vx = 0; c.vy = 0; c.size = 1; c.sta.tame = false; if (c.t === 'limace') { c.w = 36; c.h = 24; } } continue; }
       if (c.carried) { c.sta.burn = 0; continue; }
       for (const k of ['burn', 'stun', 'sleep', 'wet', 'glisse', 'lent', 'gele']) if (c.sta[k] > 0) c.sta[k] = Math.max(0, c.sta[k] - dt);
+      if (c.t === 'gardien') { GD.update(c, dt); continue; }
       if (c.morphT > 0) { c.morphT -= dt; if (c.morphT <= 0) finMorph(c); }
       if (c.affT > 0) c.affT -= dt;
       if (c.bebe > 0 && c.hp > 0) { c.bebe -= dt; const k = c.bebe > 0 ? 0.55 + 0.45 * (1 - c.bebe / 90) : 1; const bas = c.y + c.h, mil = c.x + c.w / 2; c.w = Math.round(c.wPlein * k); c.h = Math.round(c.hPlein * k); c.y = bas - c.h; c.x = mil - c.w / 2; }
@@ -2926,6 +2942,7 @@ const World = (() => {
     for (const o of st.objs) if (o.x + o.w > cam.x - 100 && o.x < cam.x + VW + 100 && o.y + o.h > cam.y - 100 && o.y < cam.y + VH + 100) drawObj(ctx, o);
     for (const k of st.pickups) { const ing = DATA.INGREDIENTS[k.ing]; const yy = k.y - 10 + Math.sin(k.bob * 4) * 3; ctx.save(); ctx.fillStyle = ing.couleur; ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(k.x, yy, 7, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.arc(k.x - 2, yy - 2, 2, 0, TAU); ctx.fill(); ctx.restore(); }
     for (const c of st.crs) if (c.hp > 0) drawCreature(ctx, c);
+    GD.dessinerTirs(ctx, time);
     drawPlayer(ctx, p);
     for (const q of st.portails) { ctx.save(); ctx.strokeStyle = '#4fb0a0'; ctx.lineWidth = 3; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.ellipse(q.x, q.y, q.r * 0.55, q.r, 0, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.2; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.ellipse(q.x, q.y, q.r * 0.3, q.r * 0.7, time * 2, 0, TAU); ctx.stroke(); ctx.restore(); if (Math.random() < 0.3) part(q.x + (Math.random() - 0.5) * 20, q.y + (Math.random() - 0.5) * 40, '#4fb0a0', 1, 10, 0.5, 2, 0, 'spark'); }
     if (st.lien) { ctx.save(); ctx.strokeStyle = '#c9a63a'; ctx.lineWidth = 2.5; U.inkLine(ctx, p.x + p.w / 2, p.y + p.h * 0.4, st.lien.x, st.lien.y, Math.floor(time * 3), 2); ctx.fillStyle = '#c9a63a'; ctx.beginPath(); ctx.arc(st.lien.x, st.lien.y, 4, 0, TAU); ctx.fill(); ctx.restore(); }
@@ -2953,6 +2970,7 @@ const World = (() => {
       ctx.restore();
     }
     FX.vignette(ctx, VW, VH);
+    GD.hud(ctx, VW, VH, time);
     { const S = saison(); U.txt(ctx, { printemps: '❀ Printemps', ete: '☀ Été', automne: '❧ Automne', hiver: '❄ Hiver' }[S] + ' · jour ' + ((st.jour || 0) + 1), VW - 20, 62, 15, 'right', 'rgba(31,26,22,0.7)', 'IM Fell English', 'italic'); }
     if (st.flash > 0) { ctx.fillStyle = 'rgba(255,250,220,' + (st.flash * 4) + ')'; ctx.fillRect(0, 0, VW, VH); }
     // réticule
@@ -3293,6 +3311,7 @@ const World = (() => {
     const cx = c.x + c.w / 2, by = c.y + c.h;
     switch (c.t) {
       case 'familier': Familiers.dessiner(ctx, c, time); break;
+      case 'gardien': GD.dessiner(ctx, c, time); break;
       case 'grenouille': case 'corbeau': case 'salamandre': case 'poisson': case 'chauve': case 'escargot': case 'tortue': case 'lapin': drawEspece(ctx, c, cx, by); break;
       case 'limace': {
         const sq = c.onGround ? 1 : 0.85;
@@ -3337,7 +3356,7 @@ const World = (() => {
     if (c.sta.tame && c.t !== 'familier' && !c.controlled) { ctx.fillStyle = '#c45a8a'; ctx.font = '14px serif'; ctx.textAlign = 'center'; ctx.fillText('♥', cx, c.y - 8 + Math.sin(time * 3) * 2); }
     if (c.sta.lent > 0) { ctx.strokeStyle = '#8a8f9a'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); U.inkCircle(ctx, cx, c.y + c.h / 2, Math.max(c.w, c.h) * 0.7, 1, 1); ctx.setLineDash([]); }
     if (c.sta.wet > 0 && Math.random() < 0.05) part(cx, by - 4, '#6aa0d8', 1, 10, 0.6, 2, 300);
-    if (c.hp < c.hpMax) { ctx.fillStyle = 'rgba(31,26,22,0.3)'; ctx.fillRect(c.x, c.y - 6, c.w, 3); ctx.fillStyle = '#9a4a3a'; ctx.fillRect(c.x, c.y - 6, c.w * c.hp / c.hpMax, 3); }
+    if (c.hp < c.hpMax && c.t !== 'gardien') { ctx.fillStyle = 'rgba(31,26,22,0.3)'; ctx.fillRect(c.x, c.y - 6, c.w, 3); ctx.fillStyle = '#9a4a3a'; ctx.fillRect(c.x, c.y - 6, c.w * c.hp / c.hpMax, 3); }
     ctx.restore();
   }
 
@@ -3552,5 +3571,5 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a), get phen() { return PH; }, ordonner };
+  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a), get phen() { return PH; }, get gardiens() { return GD; }, ordonner };
 })();

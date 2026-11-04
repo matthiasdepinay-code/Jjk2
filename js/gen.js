@@ -224,15 +224,15 @@ const Gen = (() => {
       sol('moulin', 824, 76, { canal: 'd1' }), sol('pancarte', 834, 70, { texte: 'Le vent fait tourner le moulin. Le moulin ouvre la trappe.' }),
       // énigmes de fusion : chaque stèle attend une fusion précise (ses essences y sont gravées)
       sol('stele', 69, 66, { canal: 'e1', nom: 'La stèle de la source', indice: 'L\'eau qui soigne.', veut: ['eau|vie'] }),
-      sol('coffre', 73.5, 30, { canal: 'e1', nom: 'Le coffre de la source', indice: 'La stèle veut une fusion. Ses deux essences y sont gravées.', recompense: { xp: 40, ing: { larme_lune: 1, pollen: 1 } } }),
-      sol('pancarte', 393, 70, { texte: 'Le passeur ne bâtit pas de pont : il le fait naître de rien.' }),
+      sol('coffre', 73.5, 30, { v: 2, canal: 'e1', nom: 'Le coffre de la source', indice: 'La stèle veut une fusion. Ses deux essences y sont gravées.', recompense: { xp: 40, ing: { larme_lune: 1, pollen: 1 } } }),
+      sol('pancarte', 393, 70, { v: 2, texte: 'Le passeur ne bâtit pas de pont : il le fait naître de rien.' }),
       sol('stele', 403, 66, { canal: 'e2', nom: 'La stèle du passeur', indice: 'Un pont qui ne tient à rien.', veut: ['eau|lumiere', 'transmutation|vent', 'terre|vie'] }),
-      sol('coffre', 407, 30, { canal: 'e2', nom: 'Le coffre du passeur', indice: 'Un pont de lumière, d\'air figé ou de racines, près de la stèle.', recompense: { xp: 60, ing: { plume_phenix: 1 }, encre: { encre_nacre: 6 } } }),
+      sol('coffre', 407, 30, { v: 2, canal: 'e2', nom: 'Le coffre du passeur', indice: 'Un pont de lumière, d\'air figé ou de racines, près de la stèle.', recompense: { xp: 60, ing: { plume_phenix: 1 }, encre: { encre_nacre: 6 } } }),
       sol('stele', 552, 66, { canal: 'e3', nom: 'Le cœur du volcan', indice: 'Le feu, la pierre et la pesanteur, ensemble : une fusion à trois.', veut: ['feu|gravite|terre'] }),
-      sol('coffre', 555.7, 30, { canal: 'e3', nom: 'Le coffre du cœur', indice: 'Fais naître une montagne qui crache, au grand sceau.', recompense: { xp: 120, ing: { coeur_braise: 2, sable_temps: 1 }, encre: { encre_or: 6 } } }),
-      sol('pancarte', 754, 70, { texte: 'Le carillon chante depuis mille ans. Qui le brise trouvera.' }),
+      sol('coffre', 555.7, 30, { v: 2, canal: 'e3', nom: 'Le coffre du cœur', indice: 'Fais naître une montagne qui crache, au grand sceau.', recompense: { xp: 120, ing: { coeur_braise: 2, sable_temps: 1 }, encre: { encre_or: 6 } } }),
+      sol('pancarte', 754, 70, { v: 2, texte: 'Le carillon chante depuis mille ans. Qui le brise trouvera.' }),
       sol('stele', 760, 60, { canal: 'e4', style: 'cloche', nom: 'Le carillon de verre', indice: 'Un fracas d\'orage, ou un choc de chaud et de froid.', veut: ['foudre|son', 'feu|froid'] }),
-      sol('coffre', 767, 30, { canal: 'e4', nom: 'Le coffre du carillon', indice: 'Le carillon doit se briser, d\'une fusion.', recompense: { xp: 80, ing: { poudre_or: 2, eclat: 2 } } }),
+      sol('coffre', 767, 30, { v: 2, canal: 'e4', nom: 'Le coffre du carillon', indice: 'Le carillon doit se briser, d\'une fusion.', recompense: { xp: 80, ing: { poudre_or: 2, eclat: 2 } } }),
     );
     objs.push({ t: 'grille', x: px(840), y: py(T_CAVE), horiz: true, canal: 'd1' }, { t: 'coffre', x: px(841), y: py(T_CAVE + 13) - 30, nom: 'Le coffre de la cave', recompense: { xp: 70, encre: { encre_or: 8 }, ing: { sable_chantant: 2 } } });
     // objets placés dans les grottes / îles (positions explicites)
@@ -319,7 +319,8 @@ const Gen = (() => {
           for (const x of [a + 10, a + 26, a + 44]) { const y = sAt(x); blob(x, y - 2, 3, 2, M.PLANTE, 0.3); }
           for (let x = a + 4; x < b - 4; x += 5) if (U.hash2(x, 3) < 0.5) { const y = sAt(x); Sim.set(x, y - 2, M.PLANTE); }
           arbreN(a + 36, 9, 4, 3);
-          objsN.push(oN('graine', a + 18, 10), oN('pancarte', a + 52, 70, { texte: 'La prairie. Les lapins y font leurs petits au printemps.' }));
+          objsN.push(oN('graine', a + 18, 10), oN('pancarte', a + 52, 70, { texte: 'La prairie. Les lapins y font leurs petits au printemps.' }), oN('pancarte', a + 4, 70, { v: 2, texte: 'L\'Ent-ronce garde l\'orée. Le bois vivant craint la flamme.' }));
+          crsN.push({ t: 'gardien', g: 'ent', x: px(mid + 4), y: py(sAt(mid + 4)) - 125 });
           crsN.push(oN('lapin', a + 20, 20), oN('lapin', a + 30, 20), oN('escargot', a + 46, 16));
           break;
         case 'riviere': {
@@ -337,6 +338,8 @@ const Gen = (() => {
           break;
         }
         case 'collines':
+          crsN.push({ t: 'gardien', g: 'cerf', x: px(mid - 4), y: py(sAt(mid - 4)) - 100 });
+          objsN.push(oN('pancarte', a + 50, 70, { v: 2, texte: 'Le Grand Cerf charge tout droit. Il ne voit pas les murs.' }));
           for (let x = a; x < b; x++) if (U.hash2(x, 9) < 0.5) herbe(x);
           for (const x of [a + 14, a + 40]) { const y = sAt(x); blob(x, y, 4, 3, M.PIERRE, 0.4); }
           { const y = sAt(mid); fillEllipse(mid, y + 14, 10, 5, M.AIR); for (let k = 0; k < 4; k++) blob(mid - 6 + k * 4, y + 18, 1.5, 1.5, M.CRISTAL, 0.4); tunnel(mid + 14, sAt(mid + 14) + 1, mid + 6, y + 13, 2); }
@@ -357,18 +360,20 @@ const Gen = (() => {
           break;
         }
         case 'cendres':
+          crsN.push({ t: 'gardien', g: 'magma', x: px(mid - 10), y: py(sAt(mid - 10)) - 110 });
           for (let x = a; x < b; x++) { const y = sAt(x); for (let k = 0; k < 2; k++) Sim.set(x, y + k, M.CENDRE); }
           for (const x of [a + 12, a + 30, b - 14]) { const y = sAt(x); blob(x, y - 1, 3, 2, M.OBSIDIENNE, 0.4); }
           for (const x of [a + 20, a + 44]) { const y = sAt(x); for (let k = 1; k <= 7; k++) Sim.set(x, y - k, M.BOIS); Sim.set(x + 1, y - 5, M.BOIS); Sim.set(x - 1, y - 6, M.BOIS); }
           { const y = sAt(mid + 6); fillEllipse(mid + 6, y + 1, 4, 2, M.AIR); fillEllipse(mid + 6, y + 2, 3, 1.5, M.LAVE); }
-          objsN.push(oN('pancarte', a + 4, 70, { texte: 'La plaine de cendres. Le sol est encore tiède.' }));
+          objsN.push(oN('pancarte', a + 4, 70, { texte: 'La plaine de cendres. Le sol est encore tiède. Ce qui coule ici se fige au froid.' }));
           crsN.push(oN('salamandre', mid + 2, 16), { t: 'follet', x: px(a + 36), y: py(sAt(a + 36)) - 90 });
           break;
         case 'marais':
+          crsN.push({ t: 'gardien', g: 'automate', x: px(mid + 6), y: py(sAt(mid + 6)) - 100 });
           for (const [x, w, m] of [[a + 10, 8, M.BOUE], [a + 26, 10, M.EAU], [a + 42, 8, M.BOUE], [b - 10, 7, M.EAU]]) { const y = sAt(x); fillEllipse(x, y + 1, w / 2, 3, M.AIR); fillEllipse(x, y + 2, w / 2 - 0.5, 2.5, m); }
           for (let x = a; x < b; x++) { if (U.hash2(x, 6) < 0.25) { const y = sAt(x); if (Sim.get(x, y - 1) === M.AIR) for (let k = 1; k <= 2 + (x % 3); k++) Sim.set(x, y - k, M.PLANTE); } if (U.hash2(x, 8) < 0.3) { const y = sAt(x); if (Sim.get(x, y) === M.TERRE) Sim.set(x, y, M.MOUSSE); } }
           arbreN(a + 18, 8, 3, 2); arbreN(b - 20, 11, 4, 3);
-          objsN.push(oN('pancarte', a + 2, 70, { texte: 'Le marais. La boue colle aux bottes.' }));
+          objsN.push(oN('pancarte', a + 2, 70, { texte: 'Le marais. La boue colle aux bottes. L\'eau conduit la foudre.' }));
           crsN.push(oN('grenouille', a + 24, 18), oN('grenouille', a + 30, 18), oN('limace', a + 36, 24), oN('escargot', b - 16, 16));
           break;
         case 'dunes':
