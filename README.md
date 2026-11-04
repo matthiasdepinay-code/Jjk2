@@ -33,6 +33,13 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 
 ## Les sceaux
 
+- **Composer à la table** :
+  - glisser un glyphe de la palette sur le cercle (à la souris, ou au doigt après un appui long) ; pendant le geste, les cases qui l'acceptent s'allument en doré ;
+  - glisser un glyphe posé le déplace sur une autre case du même anneau (s'il y en a déjà un, ils s'échangent) ; le glisser hors du cercle le retire ;
+  - on peut aussi cliquer une case puis un glyphe : les palettes qui n'y vont pas s'estompent ; survoler un glyphe de la palette allume les cases où il peut aller ;
+  - Ctrl+Z et Ctrl+Y (ou ↶ ↷) annulent et refont, même « Nouveau » ou le chargement d'un sceau ; Suppr retire le glyphe de la case choisie, Échap la désélectionne ;
+  - réduire la taille met de côté ce qui ne rentre plus, l'agrandir le remet en place ;
+  - le cercle reste à l'écran : les palettes défilent à part.
 - **Tailles** : petit (centre, forme, un modificateur, un déclencheur ; moitié prix, presque instantané), moyen, grand (cinq modificateurs, deux déclencheurs, tracé en 0,5 s).
 - **Filtres de matière** (pointe droite) : avec Au contact, le sort ne réagit qu'à l'eau, au feu, à la pierre, à la terre, au bois, au métal, à la glace ou aux créatures, et traverse tout le reste.
 - **Cibles** (pointe gauche) : souris, créature hostile la plus proche (le sort la suit), ou marque la plus récente posée par le glyphe Marque, même hors de vue.
@@ -237,11 +244,12 @@ Les modules extraits de `world.js` (phénomènes, gardiens, rendu, créatures, s
 - `node outils/extraire.js --essai f1 f2 ...` dit ce qu'un lot emprunte au monde, ce qu'il réaffecte et quels relais il faudrait, sans rien écrire ;
 - `node outils/extraire.js --module js/x.js --fabrique creerX --alias XX --titre "..." f1 f2 ... -- var1` écrit le module et met world.js à jour. Les variables après `--` partent avec le lot. Il reste à ajouter la balise `<script>` avant `world.js` et à lancer les tests.
 
-Tests : `node tests/lancer.js` lance tous les bancs dans un Chromium sans écran (Playwright) : glyphes, physique, fusions (les 69 fusions lancées dans plusieurs formes), fusions à trois, Maintenu, familiers, vent, énigmes, gardiens, sauvegarde, sons, lisibilité. `node tests/lancer.js gardiens enigmes` n'en lance que certains. `node tests/outils/tactile.js` vérifie les commandes tactiles sur un téléphone simulé.
+Tests : `node tests/lancer.js` lance tous les bancs dans un Chromium sans écran (Playwright) : glyphes, physique, fusions (les 69 fusions lancées dans plusieurs formes), fusions à trois, Maintenu, familiers, vent, énigmes, gardiens, sauvegarde, sons, lisibilité. `node tests/lancer.js gardiens enigmes` n'en lance que certains. `node tests/outils/tactile.js` vérifie les commandes tactiles sur un téléphone simulé, `node tests/outils/table.js` la table des sceaux avec de vrais gestes (souris, clavier, doigt).
 
 Le jeu lui-même n'a aucune dépendance ; `package.json` ne sert qu'aux tests et aux outils (`npm ci`, puis `npm test`). Sur GitHub, le workflow `.github/workflows/tests.yml` lance, à chaque pull request et à chaque envoi sur `main` :
 - les bancs d'essai ;
 - les commandes tactiles ;
+- la table des sceaux (glisser-déposer, annuler) ;
 - 300 sceaux au hasard ;
 - une vérification que `dist/atelier-des-sceaux.html` correspond bien au code (sinon : `./build.sh` et commiter).
 

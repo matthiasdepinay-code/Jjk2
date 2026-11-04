@@ -38,6 +38,9 @@ jobs:
       - name: Commandes tactiles (téléphone simulé)
         run: node tests/outils/tactile.js
 
+      - name: Table des sceaux (gestes réels)
+        run: node tests/outils/table.js
+
       - name: Sceaux au hasard
         run: node tests/outils/hasard.js 300 1
 

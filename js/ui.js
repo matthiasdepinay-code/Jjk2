@@ -18,8 +18,25 @@ const UI = (() => {
     $('#create-go').addEventListener('click', () => { if (!look.nom.trim()) look.nom = 'Apprenti(e)'; game.setLook({ ...look }); close(); Son.sfx('unlock'); });
     // --- sceaux ---
     const sc = $('#seal-canvas');
-    sc.addEventListener('click', (e) => onSealCanvasClick(e, sc));
-    sc.addEventListener('contextmenu', (e) => { e.preventDefault(); onSealCanvasClick(e, sc, true); });
+    sc.addEventListener('click', (e) => { if (performance.now() - finGlisse < 350) return; onSealCanvasClick(e, sc); });
+    sc.addEventListener('contextmenu', (e) => { e.preventDefault(); if (glisse) return; onSealCanvasClick(e, sc, true); });
+    // saisir un glyphe posé : on le déplace sur une autre case, ou hors du cercle pour le retirer
+    sc.addEventListener('pointerdown', (e) => { const sid = slotSous(e.clientX, e.clientY, null); if (!sid || !slotDispo(sid)) return; const v = lireSlot(game.editSeal, sid); if (v == null) return; preparerGlisser(e, { kind: genreDe(sid), id: v, from: sid }); });
+    document.addEventListener('pointermove', bougerGlisser);
+    document.addEventListener('pointerup', lacherGlisser);
+    document.addEventListener('pointercancel', () => annulerGlisser());
+    document.addEventListener('touchmove', (e) => { if (glisse && glisse.actif) e.preventDefault(); }, { passive: false });
+    $('#seal-annuler').addEventListener('click', () => annuler());
+    $('#seal-refaire').addEventListener('click', () => refaire());
+    // raccourcis de la table : annuler, refaire, retirer le glyphe choisi, désélectionner
+    window.addEventListener('keydown', (e) => {
+      if (open !== 'seal' || e.target.tagName === 'INPUT') return;
+      const mod = e.ctrlKey || e.metaKey;
+      if (mod && e.code === 'KeyZ') { e.preventDefault(); e.stopImmediatePropagation(); if (e.shiftKey) refaire(); else annuler(); }
+      else if (mod && e.code === 'KeyY') { e.preventDefault(); e.stopImmediatePropagation(); refaire(); }
+      else if ((e.code === 'Delete' || e.code === 'Backspace') && selSlot) { e.preventDefault(); e.stopImmediatePropagation(); retirer(selSlot); refreshSeal(); }
+      else if (e.code === 'Escape' && (selSlot || glisse)) { e.stopImmediatePropagation(); annulerGlisser(); selSlot = null; refreshSeal(); }
+    }, true);
     $('#seal-nom').addEventListener('input', (e) => { game.editSeal.nom = e.target.value; });
     $('#seal-new').addEventListener('click', () => { game.editSeal = Seal.create(); selSlot = null; refreshSeal(); Son.sfx('click'); });
     $('#seal-save').addEventListener('click', () => {
@@ -172,13 +189,109 @@ const UI = (() => {
     } else selSlot = id;
     refreshSeal();
   }
+
+  // ---------- Table des sceaux : cases, glisser-déposer, annuler ----------
+  // le genre d'une case : le centre et les essences fusionnées prennent des glyphes d'effet, etc.
+  const genreDe = (sid) => (sid === 'core' || sid === 'core2' || sid === 'core3' ? 'core' : sid.startsWith('mod') ? 'mod' : sid === 'trigger2' ? 'trigger' : sid);
+  const lireSlot = (s, sid) => (sid.startsWith('mod') ? s.mods[+sid.slice(3)] : s[sid]);
+  const ecrireSlot = (s, sid, v) => { if (sid.startsWith('mod')) s.mods[+sid.slice(3)] = v; else s[sid] = v; };
+  const OU_VA = { core: 'au centre (ou, la fusion apprise, sous le centre)', shape: 'sur le premier anneau, en haut', mod: 'sur le second anneau', trigger: 'sur la pointe du haut', filtre: 'sur la pointe droite', cible: 'sur la pointe gauche' };
+  const PALETTES = [['#pal-cores', 'core'], ['#pal-shapes', 'shape'], ['#pal-mods', 'mod'], ['#pal-triggers', 'trigger'], ['#pal-filtres', 'filtre'], ['#pal-cibles', 'cible']];
+  // les cases ouvertes qui acceptent un glyphe de ce genre
+  function casesPour(kind) { return Seal.slotList(0, 0, 1, game.editSeal.taille || 'moyen').map((q) => q.id).filter((sid) => genreDe(sid) === kind && slotDispo(sid)); }
+  function couleurGlyphe(kind, id) { return kind === 'core' ? DATA.CORES[id].couleur : kind === 'filtre' ? DATA.FILTRES[id].couleur : kind === 'mod' && DATA.MODS[id] && DATA.MODS[id].aspect ? DATA.CORES[DATA.MODS[id].aspect].couleur : U.INK; }
+  // la case sous le pointeur (parmi « liste » si on en donne une, avec une marge généreuse pour le doigt)
+  function slotSous(cx, cy, liste) {
+    const c = $('#seal-canvas'), r = c.getBoundingClientRect(); if (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom) return null;
+    const x = (cx - r.left) * (c.width / r.width), y = (cy - r.top) * (c.height / r.height);
+    let best = null, bd = 1e9;
+    for (const sl of Seal.slotList(c.width / 2, c.height / 2 + 10, sealR(), game.editSeal.taille || 'moyen')) { if (liste && !liste.includes(sl.id)) continue; const d = U.dist(x, y, sl.x, sl.y); if (d <= sl.r * (liste ? 1.9 : 1.3) && d < bd) { bd = d; best = sl.id; } }
+    return best;
+  }
+  function dansCercle(cx, cy) { const c = $('#seal-canvas'), r = c.getBoundingClientRect(); if (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom) return false; const x = (cx - r.left) * (c.width / r.width), y = (cy - r.top) * (c.height / r.height); return U.dist(x, y, c.width / 2, c.height / 2 + 10) < sealR() * 1.3; }
+  function poserEn(sid, kind, id) { if (!slotDispo(sid)) return; selSlot = sid; placeInSeal(kind, id); if (selSlot === sid && kind !== 'mod') selSlot = null; }
+  function deplacer(from, to) {
+    const s = game.editSeal; if (genreDe(from) !== genreDe(to) || !slotDispo(to)) return;
+    const a = lireSlot(s, from), b = lireSlot(s, to); ecrireSlot(s, to, a); ecrireSlot(s, from, b == null ? null : b);
+    selSlot = null; Son.sfx('cast', s.core || 'vent');
+  }
+  function retirer(sid, pouf) { const s = game.editSeal; if (lireSlot(s, sid) == null) return; ecrireSlot(s, sid, null); selSlot = null; Son.sfx(pouf ? 'fizzle' : 'click'); }
+
+  // glisser : à la souris dès qu'on bouge un peu ; au doigt, depuis la palette, après un appui long (sinon on fait défiler)
+  let glisse = null, finGlisse = 0, survolPal = null;
+  function preparerGlisser(e, q) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    annulerGlisser();
+    glisse = Object.assign({ x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, actif: false, ptr: e.pointerId, doigt: e.pointerType !== 'mouse' }, q);
+    if (glisse.doigt && !q.from) glisse.timer = setTimeout(() => { if (glisse && !glisse.actif) activerGlisser(); }, 280);
+  }
+  function activerGlisser() {
+    const g = glisse; g.actif = true; clearTimeout(g.timer);
+    g.accepte = casesPour(g.kind); if (g.from && !g.accepte.includes(g.from)) g.accepte.push(g.from);
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64; cv.className = 'fantome-glyphe'; const cx = cv.getContext('2d');
+    cx.fillStyle = 'rgba(246,238,216,0.9)'; cx.beginPath(); cx.arc(32, 32, 26, 0, Math.PI * 2); cx.fill();
+    if (Seal.isSub(g.id)) Seal.drawMini(cx, g.id.sub, 32, 32, 24, time); else Seal.glyph(cx, g.kind === 'filtre' ? 'f_' + g.id : g.kind === 'cible' ? 'c_' + g.id : g.id, 32, 32, 19, couleurGlyphe(g.kind, g.id), 1);
+    document.body.appendChild(cv); g.fantome = cv; placerFantome();
+    if (g.doigt && navigator.vibrate) navigator.vibrate(12);
+    Son.sfx('click');
+  }
+  // le fantôme se tient en haut à droite du pointeur (au-dessus du doigt) pour laisser voir la case visée
+  function placerFantome() { const g = glisse; if (!g || !g.fantome) return; g.fantome.style.left = (g.x - (g.doigt ? 32 : 6)) + 'px'; g.fantome.style.top = (g.y - (g.doigt ? 84 : 58)) + 'px'; }
+  function bougerGlisser(e) {
+    const g = glisse; if (!g || e.pointerId !== g.ptr) return;
+    g.x = e.clientX; g.y = e.clientY;
+    if (!g.actif) { const d = Math.hypot(g.x - g.x0, g.y - g.y0); if (g.doigt && !g.from) { if (d > 12) annulerGlisser(); return; } if (d < 6) return; activerGlisser(); }
+    placerFantome(); g.survol = slotSous(g.x, g.y, g.accepte);
+  }
+  function annulerGlisser() { const g = glisse; if (!g) return; clearTimeout(g.timer); if (g.fantome) g.fantome.remove(); if (g.actif) finGlisse = performance.now(); glisse = null; }
+  function lacherGlisser(e) {
+    const g = glisse; if (!g || e.pointerId !== g.ptr) return;
+    if (!g.actif) { annulerGlisser(); return; }
+    const cible = slotSous(e.clientX, e.clientY, g.accepte), dedans = dansCercle(e.clientX, e.clientY);
+    annulerGlisser();
+    if (cible && cible !== g.from) { if (g.from) deplacer(g.from, cible); else poserEn(cible, g.kind, g.id); }
+    else if (g.from && !cible && !dedans) retirer(g.from, true);
+    else if (!g.from && dedans && !cible) toast(g.accepte.length ? 'Ce glyphe va ' + OU_VA[g.kind] + '.' : 'Ce sceau n\'a pas de case ouverte pour ce glyphe.', 'warn');
+    refreshSeal();
+  }
+
+  // annuler, refaire : chaque état de la table est noté (le nom tapé seul ne compte pas)
+  let passe = [], avenir = [], vu = null, enRestauration = false;
+  const instantane = () => JSON.stringify(game.editSeal);
+  const sansNom = (j) => j.replace(/"nom":"(?:[^"\\]|\\.)*",?/, '');
+  function noterHistorique() {
+    const cur = instantane();
+    if (vu !== null && !enRestauration && sansNom(cur) !== sansNom(vu)) { passe.push(vu); if (passe.length > 80) passe.shift(); avenir = []; }
+    vu = cur;
+  }
+  function restaurer(j) { game.editSeal = Seal.clone(JSON.parse(j)); selSlot = null; enRestauration = true; refreshSeal(); enRestauration = false; Son.sfx('click'); }
+  function annuler() { if (!passe.length) return; avenir.push(instantane()); restaurer(passe.pop()); }
+  function refaire() { if (!avenir.length) return; passe.push(instantane()); restaurer(avenir.pop()); }
+  // réduire le sceau met de côté ce qui ne rentre plus ; l'agrandir le remet en place
+  let reserve = [], reserveDe = null;
   function changerTaille(t) {
-    const s = game.editSeal; s.taille = t;
+    const s = game.editSeal; if (reserveDe !== s) { reserve = []; reserveDe = s; }
+    const avant = { mods: s.mods.slice(), core2: s.core2, core3: s.core3, trigger2: s.trigger2, filtre: s.filtre, cible: s.cible };
+    s.taille = t;
     const nb = Seal.nbSlots(s, game.progress.slots);
     for (let i = nb; i < s.mods.length; i++) s.mods[i] = null;
     if (t === 'petit') { s.core2 = null; s.filtre = null; s.cible = null; }
     if (t !== 'grand') s.core3 = null;
     if (t !== 'grand') s.trigger2 = null;
+    const mis = [];
+    avant.mods.forEach((m, i) => { if (m && !s.mods[i]) mis.push({ sid: 'mod', v: m }); });
+    for (const k of ['core2', 'core3', 'trigger2', 'filtre', 'cible']) if (avant[k] && !s[k]) mis.push({ sid: k, v: avant[k] });
+    if (mis.length) { reserve = reserve.concat(mis); toast((mis.length === 1 ? 'Un glyphe mis de côté' : mis.length + ' glyphes mis de côté') + ' : ils reviendront si tu agrandis le sceau.'); }
+    else if (reserve.length) {
+      const reste = [];
+      for (const q of reserve) {
+        if (q.sid === 'mod') { const i = s.mods.findIndex((m, k) => !m && k < nb); if (i >= 0) { s.mods[i] = q.v; continue; } }
+        else if (!s[q.sid] && slotDispo(q.sid)) { s[q.sid] = q.v; continue; }
+        reste.push(q);
+      }
+      const n = reserve.length - reste.length; reserve = reste;
+      if (n) toast(n === 1 ? 'Le glyphe mis de côté reprend sa place.' : 'Les ' + n + ' glyphes mis de côté reprennent leur place.');
+    }
     selSlot = null; Son.sfx('click'); refreshSeal();
   }
   function placeInSeal(kind, id) {
@@ -227,9 +340,12 @@ const UI = (() => {
     const b = el('button', '', 'Annuler'); b.addEventListener('click', () => box.classList.add('hidden')); box.appendChild(b);
     box.classList.remove('hidden');
   }
+  let palSig = '';
   function refreshSeal() {
     const s = game.editSeal, p = game.progress;
     if (!('core2' in s)) s.core2 = null;
+    noterHistorique();
+    $('#seal-annuler').disabled = !passe.length; $('#seal-refaire').disabled = !avenir.length;
     $('#seal-nom').value = s.nom || '';
     $('#seal-nom').placeholder = Seal.autoNom(s);
     $('#seal-cost').textContent = Seal.cost(s);
@@ -243,6 +359,7 @@ const UI = (() => {
       for (const id of ids) {
         const d = dict[id]; const unlocked = list.includes(id);
         const b = el('button', 'glyph-btn' + (unlocked ? '' : ' locked'));
+        b.dataset.glyphe = kind + ':' + id;
         const cv = document.createElement('canvas'); cv.width = 44; cv.height = 44;
         const cx = cv.getContext('2d');
         if (unlocked) Seal.glyph(cx, kind === 'filtre' ? 'f_' + id : kind === 'cible' ? 'c_' + id : id, 22, 22, 15, kind === 'core' || kind === 'filtre' ? d.couleur : kind === 'mod' && d.aspect ? DATA.CORES[d.aspect].couleur : U.INK, 1);
@@ -251,8 +368,12 @@ const UI = (() => {
         b.appendChild(el('span', '', unlocked ? d.nom : '???'));
         b.appendChild(el('small', '', unlocked ? d.cout + ' encre' : ''));
         if (unlocked) {
-          b.addEventListener('click', () => placeInSeal(kind, id));
-          b.addEventListener('mouseenter', () => { $('#pal-desc').innerHTML = '<b>' + d.nom + '</b> — ' + (kind === 'filtre' ? 'Avec Au contact (ou un piège de zone), le sort ne réagit qu\'à : ' + d.nom.toLowerCase() + '. Il traverse tout le reste, murs compris.' : d.desc); });
+          const desc = () => { $('#pal-desc').innerHTML = '<b>' + d.nom + '</b> — ' + (kind === 'filtre' ? 'Avec Au contact (ou un piège de zone), le sort ne réagit qu\'à : ' + d.nom.toLowerCase() + '. Il traverse tout le reste, murs compris.' : d.desc); };
+          b.addEventListener('click', () => { if (performance.now() - finGlisse < 350) return; placeInSeal(kind, id); });
+          b.addEventListener('mouseenter', () => { desc(); survolPal = kind; });
+          b.addEventListener('mouseleave', () => { if (survolPal === kind) survolPal = null; });
+          b.addEventListener('pointerdown', (e) => { desc(); preparerGlisser(e, { kind, id }); });
+          b.addEventListener('contextmenu', (e) => e.preventDefault());
         } else {
           const u = DATA.UNLOCKS.find((q) => (q.type === kind || (kind === 'filtre' && q.type === 'filtres') || (kind === 'cible' && (q.type === 'cible' || q.type === 'marque')) || (kind === 'core' && (q.type === 'core' || q.type === 'marque')) || (kind === 'mod' && q.type === 'mods') || kind === 'shape' || kind === 'trigger') && (q.item === id || (Array.isArray(q.item) && q.item.includes(id))));
           b.addEventListener('mouseenter', () => { $('#pal-desc').innerHTML = '<b>Inconnu.</b> ' + (u ? 'Indice : ' + u.indice : ''); });
@@ -260,12 +381,18 @@ const UI = (() => {
         c.appendChild(b);
       }
     };
-    pal('#pal-cores', DATA.CORES, p.cores, 'core');
-    pal('#pal-shapes', DATA.SHAPES, p.shapes, 'shape');
-    pal('#pal-mods', DATA.MODS, p.mods, 'mod');
-    pal('#pal-triggers', DATA.TRIGGERS, p.triggers, 'trigger');
-    pal('#pal-filtres', DATA.FILTRES, p.filtres, 'filtre');
-    pal('#pal-cibles', DATA.CIBLES, p.cibles, 'cible');
+    const sig = [p.cores, p.shapes, p.mods, p.triggers, p.filtres, p.cibles].map((a) => a.join(',')).join('|');
+    if (sig !== palSig) {
+      palSig = sig;
+      pal('#pal-cores', DATA.CORES, p.cores, 'core');
+      pal('#pal-shapes', DATA.SHAPES, p.shapes, 'shape');
+      pal('#pal-mods', DATA.MODS, p.mods, 'mod');
+      pal('#pal-triggers', DATA.TRIGGERS, p.triggers, 'trigger');
+      pal('#pal-filtres', DATA.FILTRES, p.filtres, 'filtre');
+      pal('#pal-cibles', DATA.CIBLES, p.cibles, 'cible');
+    }
+    // une case choisie : les palettes qui n'y vont pas s'estompent
+    { const k = selSlot ? genreDe(selSlot) : null; for (const [sel, kind] of PALETTES) { const c = $(sel), hors = !!k && kind !== k; c.classList.toggle('horsjeu', hors); if (c.previousElementSibling) c.previousElementSibling.classList.toggle('horsjeu', hors); } }
     // tailles
     const tz = $('#seal-tailles'); tz.innerHTML = '<span class="label">Taille</span>';
     for (const t in DATA.TAILLES) { const T = DATA.TAILLES[t]; const ok = p.tailles.includes(t); const b = el('button', 'choice' + ((s.taille || 'moyen') === t ? ' on' : '') + (ok ? '' : ' locked'), T.nom); b.title = ok ? T.desc : 'Pas encore débloqué. ' + ((DATA.UNLOCKS.find((u) => u.item === t) || {}).indice || ''); if (ok) b.addEventListener('click', () => changerTaille(t)); else b.disabled = true; tz.appendChild(b); }
@@ -448,10 +575,12 @@ const UI = (() => {
     const c = $('#seal-canvas'); if (!c || open !== 'seal') return;
     const ctx = c.getContext('2d');
     ctx.clearRect(0, 0, c.width, c.height);
-    Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, SEAL_R, { t: time, slots: game.progress.slots, highlight: selSlot, empty: true, fusion: game.progress.fusion, filtres: game.progress.filtres.length > 0, cibles: game.progress.cibles.length > 1 });
+    const g = glisse && glisse.actif ? glisse : null;
+    Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, SEAL_R, { t: time, slots: game.progress.slots, highlight: selSlot, empty: true, fusion: game.progress.fusion, filtres: game.progress.filtres.length > 0, cibles: game.progress.cibles.length > 1,
+      accepte: g ? g.accepte : survolPal ? casesPour(survolPal) : null, survol: g ? g.survol : null, cache: g ? g.from : null });
     const combo = Seal.comboName(game.editSeal);
     const cleH = DATA.comboCle(Seal.effets(game.editSeal)), infoH = cleH && DATA.comboInfo(cleH);
-    const hint = combo ? 'Fusion : ' + combo + '.' : infoH ? 'Fusion inconnue — ' + infoH.indice : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot === 'core3' ? 'Un troisième effet : certaines fusions à trois existent.' : selSlot === 'filtre' ? 'Choisis un filtre de matière.' : selSlot === 'cible' ? 'Choisis une cible.' : selSlot === 'trigger2' ? 'Choisis un second déclencheur.' : selSlot ? 'Choisis un glyphe dans la palette, ou clique à nouveau pour vider.' : game.progress.fusion ? 'Centre, formes, modificateurs, pointes. En bas : un second effet à fusionner.' : 'Clique un emplacement, puis un glyphe. Clic droit : vider.';
+    const hint = combo ? 'Fusion : ' + combo + '.' : infoH ? 'Fusion inconnue — ' + infoH.indice : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot === 'core3' ? 'Un troisième effet : certaines fusions à trois existent.' : selSlot === 'filtre' ? 'Choisis un filtre de matière.' : selSlot === 'cible' ? 'Choisis une cible.' : selSlot === 'trigger2' ? 'Choisis un second déclencheur.' : selSlot && lireSlot(game.editSeal, selSlot) != null ? 'Encore un clic, Suppr, ou glisse-le hors du cercle : il s\'en va.' : selSlot ? 'Choisis un glyphe : les palettes qui n\'y vont pas s\'estompent.' : g ? (g.from ? 'Dépose-le sur une case dorée, ou hors du cercle pour le retirer.' : 'Dépose-le sur une case dorée.') : game.progress.fusion ? 'Glisse un glyphe sur le cercle. Sous le centre : un effet à fusionner.' : 'Glisse un glyphe sur le cercle, ou clique une case puis un glyphe.';
     U.txt(ctx, hint, c.width / 2, 16, 13, 'center', '#6b4f2a', 'IM Fell English', 'italic');
   }
 
@@ -927,5 +1056,6 @@ const UI = (() => {
   }
 
   function setGrimTab(t) { grimTab = t; refreshGrimoire(); const pn = $('#panel-grimoire'); if (pn) pn.scrollTop = 0; }
-  return { grimTab: setGrimTab, init, openPanel, close, isOpen, refreshSeal, refreshCauldron, refreshGrimoire, refreshHotbar, refreshHud, toast, zoneTitle, tick, setMode };
+  const _table = { annuler, refaire, changerTaille, deplacer, retirer, poserEn, casesPour, get passe() { return passe.length; }, get avenir() { return avenir.length; } };
+  return { _table, grimTab: setGrimTab, init, openPanel, close, isOpen, refreshSeal, refreshCauldron, refreshGrimoire, refreshHotbar, refreshHud, toast, zoneTitle, tick, setMode };
 })();

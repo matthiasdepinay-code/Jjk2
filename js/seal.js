@@ -259,7 +259,8 @@ const Seal = (() => {
     return out;
   }
 
-  // Dessin complet du sceau. opts: {t (temps), slots (nb mods moyen), highlight (id slot), empty, glow, fusion}
+  // Dessin complet du sceau. opts: {t (temps), slots (nb mods moyen), highlight (id slot), empty, glow, fusion,
+  //   accepte (cases où l'on peut déposer le glyphe tenu), survol (case visée), cache (case d'où part le glyphe tenu)}
   function draw(ctx, s, cx, cy, R0, opts = {}) {
     const t = opts.t || 0;
     const tid = s.taille || 'moyen';
@@ -298,8 +299,19 @@ const Seal = (() => {
       const tx = cx + Math.cos(a) * R * 1.12, ty = cy + Math.sin(a) * R * 1.12, a1 = a + 0.14, a2 = a - 0.14;
       U.inkPoly(ctx, [[cx + Math.cos(a1) * R * 0.98, cy + Math.sin(a1) * R * 0.98], [tx, ty], [cx + Math.cos(a2) * R * 0.98, cy + Math.sin(a2) * R * 0.98]], 30 + deg, R * 0.01, false);
     }
-    const slot = (sl, id, kind, enabled, hl, label) => {
+    // halo doré des cases où le glyphe tenu peut aller ; plus franc sur la case visée
+    const halo = (sl, sid) => {
+      if (!opts.accepte || !opts.accepte.includes(sid)) return;
+      const sur = opts.survol === sid;
+      ctx.save(); ctx.shadowColor = 'rgba(224,176,80,0.9)'; ctx.shadowBlur = sur ? R * 0.12 : R * 0.06;
+      ctx.fillStyle = sur ? 'rgba(224,176,80,0.28)' : 'rgba(224,176,80,0.12)'; ctx.beginPath(); ctx.arc(sl.x, sl.y, sl.r * (sur ? 1.3 : 1.2), 0, TAU); ctx.fill();
+      ctx.strokeStyle = '#c08a2a'; ctx.globalAlpha = sur ? 1 : 0.75 + 0.25 * Math.sin(t * 6);
+      ctx.lineWidth = Math.max(2.5, R * (sur ? 0.045 : 0.03)); if (!sur) ctx.setLineDash([R * 0.04, R * 0.025]);
+      ctx.beginPath(); ctx.arc(sl.x, sl.y, sl.r * (sur ? 1.3 : 1.2), 0, TAU); ctx.stroke(); ctx.restore();
+    };
+    const slot = (sl, id, kind, enabled, hl, label, sid) => {
       if (!sl) return;
+      if (sid && opts.cache === sid) id = null;
       ctx.save();
       ctx.fillStyle = U.hexA('#efe3c4', 0.9); ctx.beginPath(); ctx.arc(sl.x, sl.y, sl.r, 0, TAU); ctx.fill();
       ctx.strokeStyle = enabled ? INK : 'rgba(60,45,30,0.3)'; ctx.lineWidth = Math.max(1, R * 0.014);
@@ -316,24 +328,26 @@ const Seal = (() => {
         U.inkLine(ctx, sl.x - sl.r * 0.4, sl.y + sl.r * 0.4, sl.x + sl.r * 0.4, sl.y - sl.r * 0.4, 1, 0.3);
       }
       ctx.restore();
+      if (sid) halo(sl, sid);
     };
     const lbl = (tr) => (tr === 'retarde' ? s.delai + 's' : tr === 'repetition' ? '/' + s.periode + 's' : null);
-    slot(lay.core, s.core, 'core', true, opts.highlight === 'core');
-    slot(lay.shape, s.shape, 'shape', true, opts.highlight === 'shape');
-    if (lay.core2 && (opts.fusion || s.core2)) slot(lay.core2, s.core2, 'core2', !!opts.fusion, opts.highlight === 'core2');
-    if (lay.core3 && (opts.fusion || s.core3)) slot(lay.core3, s.core3, 'core3', !!opts.fusion, opts.highlight === 'core3');
+    slot(lay.core, s.core, 'core', true, opts.highlight === 'core', null, 'core');
+    slot(lay.shape, s.shape, 'shape', true, opts.highlight === 'shape', null, 'shape');
+    if (lay.core2 && (opts.fusion || s.core2)) slot(lay.core2, s.core2, 'core2', !!opts.fusion, opts.highlight === 'core2', null, 'core2');
+    if (lay.core3 && (opts.fusion || s.core3)) slot(lay.core3, s.core3, 'core3', !!opts.fusion, opts.highlight === 'core3', null, 'core3');
     lay.mods.forEach((sl, i) => {
       const m = s.mods[i];
-      if (isSub(m)) {
+      if (isSub(m) && opts.cache !== 'mod' + i) {
         ctx.save(); ctx.fillStyle = U.hexA('#efe3c4', 0.9); ctx.beginPath(); ctx.arc(sl.x, sl.y, sl.r, 0, TAU); ctx.fill(); ctx.restore();
         drawMini(ctx, m.sub, sl.x, sl.y, sl.r * 0.95, t);
         if (opts.highlight === 'mod' + i) { ctx.save(); ctx.strokeStyle = coul; ctx.lineWidth = Math.max(2, R * 0.03); U.inkCircle(ctx, sl.x, sl.y, sl.r, 50 + sl.x, R * 0.01); ctx.restore(); }
-      } else slot(sl, m, 'mod', i < nb, opts.highlight === 'mod' + i);
+        halo(sl, 'mod' + i);
+      } else slot(sl, isSub(m) ? null : m, 'mod', i < nb, opts.highlight === 'mod' + i, null, 'mod' + i);
     });
-    slot(lay.trigger, s.trigger, 'trigger', true, opts.highlight === 'trigger', lbl(s.trigger));
-    if (lay.trigger2) slot(lay.trigger2, s.trigger2, 'trigger', true, opts.highlight === 'trigger2', lbl(s.trigger2));
-    if (lay.filtre && (opts.filtres || s.filtre)) slot(lay.filtre, s.filtre, 'filtre', !!opts.filtres, opts.highlight === 'filtre');
-    if (lay.cible && (opts.cibles || s.cible)) slot(lay.cible, s.cible, 'cible', !!opts.cibles, opts.highlight === 'cible');
+    slot(lay.trigger, s.trigger, 'trigger', true, opts.highlight === 'trigger', lbl(s.trigger), 'trigger');
+    if (lay.trigger2) slot(lay.trigger2, s.trigger2, 'trigger', true, opts.highlight === 'trigger2', lbl(s.trigger2), 'trigger2');
+    if (lay.filtre && (opts.filtres || s.filtre)) slot(lay.filtre, s.filtre, 'filtre', !!opts.filtres, opts.highlight === 'filtre', null, 'filtre');
+    if (lay.cible && (opts.cibles || s.cible)) slot(lay.cible, s.cible, 'cible', !!opts.cibles, opts.highlight === 'cible', null, 'cible');
     ctx.restore();
   }
 
