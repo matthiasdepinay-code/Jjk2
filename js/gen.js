@@ -360,7 +360,7 @@ const Gen = (() => {
           break;
         }
         case 'cendres':
-          crsN.push({ t: 'gardien', g: 'magma', x: px(mid - 10), y: py(sAt(mid - 10)) - 110 });
+          crsN.push({ t: 'gardien', g: 'magma', x: px(mid - 3) - 37, y: py(sAt(mid - 3)) - 110 });
           for (let x = a; x < b; x++) { const y = sAt(x); for (let k = 0; k < 2; k++) Sim.set(x, y + k, M.CENDRE); }
           for (const x of [a + 12, a + 30, b - 14]) { const y = sAt(x); blob(x, y - 1, 3, 2, M.OBSIDIENNE, 0.4); }
           for (const x of [a + 20, a + 44]) { const y = sAt(x); for (let k = 1; k <= 7; k++) Sim.set(x, y - k, M.BOIS); Sim.set(x + 1, y - 5, M.BOIS); Sim.set(x - 1, y - 6, M.BOIS); }

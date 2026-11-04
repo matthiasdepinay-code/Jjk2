@@ -20,7 +20,7 @@
       ok('Le Grand Cerf charge, s\'assomme contre un mur et y perd gros', etour && perdu >= 5, (etour ? 'assommé' : 'jamais assommé') + ', −' + perdu.toFixed(1));
       ok('Le Grand Cerf encaisse les sorts quand il n\'est pas assommé', dFeu < 1.5, 'feu −' + dFeu.toFixed(1)); }
     // le Golem de magma : l'eau fige sa croûte, la lave le soigne
-    { banc(); ecarte(); niv(6); const c = gd('magma'); place(c, X0 - 20); zone('eau', c); run(60); const croute = c.croute > 0; banc(); ecarte(); place(c, X0 - 20); c.hp = c.hpMax - 12; const h0 = c.hp; for (let x = Math.floor(c.x / CS); x <= Math.floor((c.x + c.w) / CS); x++) S.set(x, Y, M.LAVE); run(60); const soin = c.hp - h0;
+    { banc(); ecarte(); niv(6); const c = gd('magma'); place(c, X0 - 20); zone('eau', c); run(60); const croute = c.croute > 0; banc(); ecarte(); place(c, X0 - 20); c.hp = c.hpMax - 12; const h0 = c.hp; for (let x = Math.floor(c.x / CS) - 1; x <= Math.floor((c.x + c.w) / CS) + 1; x++) for (let y = Y + 1; y <= Y + 3; y++) S.set(x, y, M.LAVE); run(90); const soin = c.hp - h0;
       ok('L\'eau fige la croûte du Golem de magma', croute, croute ? 'croûte' : 'rien');
       ok('La lave soigne le Golem de magma', soin > 1.5, '+' + soin.toFixed(1)); }
     // l'Automate : la foudre glisse sur lui, sauf s'il est trempé
