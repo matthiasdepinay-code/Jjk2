@@ -1366,6 +1366,7 @@ const World = (() => {
     if (encre) { game.inv.encres[encre]--; if (game.inv.encres[encre] === 0) msg('C\'était la dernière goutte d\'' + DATA.ENCRES[encre].nom.toLowerCase() + '.'); }
     p.gestes[hand] = { seal, aim: { x: aim.x, y: aim.y }, t: gt, max: gt, color: encre ? DATA.ENCRES[encre].couleur : colorOf(seal.core), charge, hand, encre, cost };
     if (charge > 0.6) msg('Sort chargé : ' + Math.round(100 + charge * 80) + ' % de puissance.');
+    evt('sort', seal);
     return true;
   }
   // Lance un sceau depuis un point (joueur ou sous-sceau)

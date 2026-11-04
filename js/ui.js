@@ -383,7 +383,7 @@ const UI = (() => {
       case 'totem': ctx.strokeStyle = U.INK; ctx.lineWidth = 2; U.inkLine(ctx, tx, G, tx, G - 30, 2, 0.4); ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(tx - 6, G - 30); ctx.lineTo(tx + 6, G - 30); ctx.lineTo(tx, G - 40); ctx.closePath(); ctx.fill(); ctx.stroke(); for (let k = 0; k < 3; k++) burst(tx, G - 24, 22, ((t * 3) % 1)); iy = G - 24; break;
       case 'pluie': for (let k = 0; k < 7; k++) { const yy = 8 + ((t * 90 + k * 13) % (G - 10)); ctx.fillStyle = col; ctx.fillRect(tx - 30 + k * 10, yy, 2, 6); } ctx.strokeStyle = U.INK; ctx.globalAlpha = 0.5; for (let k = 0; k < 4; k++) U.inkCircle(ctx, tx - 22 + k * 15, 8, 8, k, 0.6); ctx.globalAlpha = 1; break;
       case 'objet': ctx.fillStyle = 'rgba(170,130,70,0.5)'; ctx.fillRect(tx - 10, G - 20, 20, 20); ctx.strokeStyle = U.INK; ctx.strokeRect(tx - 10, G - 20, 20, 20); ctx.strokeStyle = col; ctx.globalAlpha = 0.5 + Math.sin(time * 6) * 0.3; ctx.strokeRect(tx - 13, G - 23, 26, 26); ctx.globalAlpha = 1; iy = G - 10; break;
-      case 'invocation': { const a = time * 3; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(px + Math.cos(a) * 22, py - 30 + Math.sin(a) * 10, 5, 0, U.TAU); ctx.fill(); ctx.stroke(); break; }
+      case 'invocation': apercuFamilier(ctx, s, px, G, tx, t); break;
       case 'bouclier': ctx.strokeStyle = col; ctx.lineWidth = 6; ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.arc(px, py - 16, 26, -1, 1); ctx.stroke(); ctx.globalAlpha = 1; break;
       case 'vague': { const x = U.lerp(px + 14, W - 20, Math.min(1, t * 1.4)); ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.moveTo(x - 16, G); ctx.quadraticCurveTo(x - 2, G - 24, x + 10, G - 12); ctx.quadraticCurveTo(x + 5, G - 7, x + 8, G - 3); ctx.stroke(); ctx.globalAlpha = 1; break; }
       case 'colonne': { const k = Math.min(1, t * 3); ctx.fillStyle = col; ctx.globalAlpha = 0.35; ctx.fillRect(tx - 6, G - 60 * k, 12, 60 * k); ctx.globalAlpha = 0.9; ctx.strokeStyle = col; ctx.lineWidth = 1.5; for (let j = 0; j < 3; j++) { const yy = G - ((t * 2 + j / 3) % 1) * 60 * k; ctx.beginPath(); ctx.moveTo(tx - 4, yy); ctx.lineTo(tx + 4, yy - 6); ctx.stroke(); } ctx.globalAlpha = 1; break; }
@@ -394,13 +394,52 @@ const UI = (() => {
     let tBurst = tImpact;
     if (prim === 'retarde') { tBurst = tImpact + 0.3; if (t > tImpact && t < tBurst) { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ix, iy, 9, -Math.PI / 2, -Math.PI / 2 + U.TAU * (t - tImpact) / 0.3); ctx.stroke(); U.txt(ctx, s.delai + 's', ix + 14, iy - 12, 10, 'left', '#6b4f2a'); } }
     if (prim === 'commande') { tBurst = tImpact + 0.35; if (t > tImpact && t < tBurst) { ctx.strokeStyle = col; ctx.globalAlpha = 0.5 + Math.sin(time * 10) * 0.4; U.inkCircle(ctx, ix, iy, 9, 3, 0.6); ctx.globalAlpha = 1; ctx.fillStyle = '#f6eed8'; ctx.fillRect(ix + 8, iy - 24, 14, 14); ctx.strokeStyle = U.INK; ctx.strokeRect(ix + 8, iy - 24, 14, 14); U.txt(ctx, 'F', ix + 15, iy - 17, 11, 'center', U.INK); } }
-    if (!['chaine', 'mur', 'totem', 'pluie', 'invocation', 'bouclier', 'objet', 'vague', 'colonne'].includes(s.shape)) burst(ix, iy, 30 * Math.min(1.8, prm.size), (t - tBurst) / 0.22);
+    const cleP = !prm.inverse && s.shape !== 'invocation' ? DATA.comboCle(Seal.effets(s)) : null;
+    if (cleP && t > tBurst) apercuPhenomene(ctx, cleP, s, ix, iy, G, sx, sy, (t - tBurst) * P, col, col2);
+    else if (!['chaine', 'mur', 'totem', 'pluie', 'invocation', 'bouclier', 'objet', 'vague', 'colonne'].includes(s.shape)) burst(ix, iy, 30 * Math.min(1.8, prm.size), (t - tBurst) / 0.22);
     if (trs.includes('repetition')) for (let k = 1; k <= 3; k++) burst(ix, iy, 22, (t - tBurst - k * 0.13) / 0.12);
     if (trs.includes('expiration')) { const te = 0.84; if (t < te && t > tBurst) Seal.glyph(ctx, 'expiration', ix, iy - 22, 5, col, 2); burst(ix, iy, 40, (t - te) / 0.15); }
     // sous-sceau
     const sb = Seal.subs(s)[0];
     if (sb && sb.core) { const k = (t - tBurst - 0.1) / 0.3; if (k > 0 && k < 1) { const c2 = DATA.CORES[sb.core].couleur; ctx.fillStyle = c2; ctx.beginPath(); ctx.arc(ix + k * 40, iy - Math.sin(k * Math.PI) * 30, 4, 0, U.TAU); ctx.fill(); } burst(ix + 40, iy, 18, (t - tBurst - 0.4) / 0.2, DATA.CORES[sb.core].couleur); }
   }
+  // la créature qu'on invoque, qui trotte ou vole vers la cible
+  function apercuFamilier(ctx, s, px, G, tx, t) {
+    const e = DATA.FAMILIERS[s.core] ? s.core : 'feu', F = DATA.FAMILIERS[e];
+    const k = Math.min(1, t * 2.2), x = U.lerp(px + 26, tx - 30, k), vole = F.mode === 'vol' || F.mode === 'orbite';
+    const c = { espece: e, w: F.w, h: F.h, x: x - F.w / 2, y: (vole ? G - 38 + Math.sin(time * 4) * 4 : G) - F.h, dir: 1, vx: k < 1 ? 60 : 0, vy: 0, phase: time, seed: 3, life: 10, hurt: 0, vole, roule: time * 4, coup: k >= 1 ? Math.max(0, Math.sin(time * 5)) : 0, souffle: k >= 1 ? 0.6 + 0.4 * Math.sin(time * 9) : 0, echelle: 1, age: 0 };
+    if (e === 'metamorphose') { const m = (time % 6) / 6; c.stade = m < 0.45 ? 'chenille' : m < 0.6 ? 'cocon' : 'papillon'; c.stadeT = 2; if (c.stade === 'papillon') { c.vole = true; c.y = G - 50; c.w = 26; c.h = 16; } }
+    try { Familiers.dessiner(ctx, c, time); } catch (err) { /* aperçu seulement */ }
+    U.txt(ctx, F.nom, (px + tx) / 2, 14, 12, 'center', '#6b4f2a', 'IM Fell English', 'italic');
+  }
+  // le phénomène d'une fusion, en petit : connu, il se montre ; inconnu, c'est un mystère
+  function apercuPhenomene(ctx, cle, s, ix, iy, G, sx, sy, dt, col, col2) {
+    const connu = !!(game.progress.combos && game.progress.combos[cle]);
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, ctx.canvas.width, ctx.canvas.height); ctx.clip();
+    if (!connu) {
+      ctx.translate(ix, iy); ctx.rotate(time * 1.5); ctx.lineWidth = 2;
+      for (let k = 0; k < 2; k++) { ctx.strokeStyle = k ? (col2 || col) : col; ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.arc(0, 0, 14 + k * 5, k * 2, k * 2 + 4.2); ctx.stroke(); }
+      ctx.rotate(-time * 1.5); ctx.globalAlpha = 1; U.txt(ctx, '?', 0, 6, 18, 'center', '#6b4f2a', 'IM Fell English', '');
+      ctx.restore(); U.txt(ctx, 'Fusion inconnue', ix, 14, 12, 'center', '#6b4f2a', 'IM Fell English', 'italic'); return;
+    }
+    const PHN = World.phen, D = PHN && PHN.defDe(cle);
+    if (D && D.draw) {
+      const r = D.r * 0.45, pts = [];
+      for (let k = 0; k <= 12; k++) { const u = k / 12; pts.push([U.lerp(sx, ix + 20, u), U.lerp(G - 2, G - 2, u) - Math.sin(u * Math.PI) * 40]); }
+      const ph = { id: cle, D, x: ix, y: iy, r, r0: r, t: dt, life: 4, max: 5, sz: 0.45, pw: 1, g: 'point', acc: {}, dir: { x: 1, y: 0 }, vx: 120, vy: 300, R: r * 5, H: 60, spot: { x: ix, y: G - 2 },
+        ligne: { x1: sx, y1: sy, x2: ix, y2: G - 2, w: 6 }, rect: { x0: ix - 9, x1: ix + 9, y0: G - 70, y1: G }, objs: [{ x: ix - 28, y: iy, w: 56, h: 6 }], arc: pts,
+        motes: [0, 1, 2, 3, 4, 5].map((k) => ({ x: ix + Math.cos(time * 1.3 + k) * 22, y: iy + Math.sin(time * 1.7 + k * 2) * 14, ph: k })),
+        data: { pts: FX.eclairPts(ix, G - 70, ix, G, 0.15), statues: [], vert: true, eau: 60, hits: new Set(), c: [], orb: [], top: G - 70, q: [], chemin: [] } };
+      if (D.bouge === 'tombe') { const u = (dt % 1.2) / 1.2; ph.x = ix - 40 + u * 40; ph.y = 10 + u * (G - 14); }
+      if (['eau|feu', 'feu|terre', 'feu|temps', 'eau|vie', 'feu|vent', 'feu|vie', 'eau|terre'].includes(cle)) { ph.y = G - 1; ph.x = ix; }
+      try { D.draw(ctx, ph, time); } catch (err) { /* aperçu seulement */ }
+    }
+    ctx.restore();
+    U.txt(ctx, DATA.comboInfo(cle).nom, ix, 14, 12, 'center', '#6b4f2a', 'IM Fell English', 'italic');
+  }
+  // recopier une fusion ou un familier sur la table des sceaux
+  function versLaTable(seal) { game.editSeal = Seal.clone(Object.assign({ taille: 'moyen', shape: 'zone', trigger: 'immediat', mods: [] }, seal)); selSlot = null; openPanel('seal'); toast('Le sceau est posé sur la table : change la forme ou les réglages à ton idée.'); }
+  function possedeRecette(R) { const p = game.progress; const manque = []; for (const c of [R.core, R.core2].filter(Boolean)) if (!p.cores.includes(c)) manque.push(DATA.CORES[c].nom); for (const m of R.mods) if (!p.mods.includes(m)) manque.push(DATA.MODS[m].nom); if (R.core2 && !p.fusion) manque.push('la fusion'); return manque; }
   function drawSealCanvas() {
     const c = $('#seal-canvas'); if (!c || open !== 'seal') return;
     const ctx = c.getContext('2d');
@@ -582,7 +621,7 @@ const UI = (() => {
       const tri = cles.slice().sort((a, b) => (pc[b] ? 1 : 0) - (pc[a] ? 1 : 0));
       for (const k of tri) {
         const I = DATA.COMBOS[k];
-        if (pc[k]) c.appendChild(el('div', 'recette', '<b>' + I.nom + '</b> <span class="muted">(' + recetteCombo(k) + ', lancé ' + pc[k] + ' fois)</span><br>' + I.desc));
+        if (pc[k]) { const d = el('div', 'recette', '<b>' + I.nom + '</b> <span class="muted">(' + recetteCombo(k) + ', lancé ' + pc[k] + ' fois)</span><br>' + I.desc + ' '); const R = DATA.recetteCombo(k); if (R) { const manque = possedeRecette(R); const b = el('button', 'choice mini', manque.length ? 'Il te manque : ' + manque.join(', ') : 'Copier sur la table'); if (manque.length) b.disabled = true; else b.addEventListener('click', () => versLaTable(R)); d.appendChild(b); } c.appendChild(d); }
         else { const pret = k.split('|').every(possede); c.appendChild(el('div', 'recette verrou', '<b>???</b> — <i>' + I.indice + '</i>' + (pret ? ' <span class="muted">Tu as de quoi le tenter.</span>' : ''))); }
       }
       c.appendChild(el('h3', '', 'Familles'));
@@ -640,7 +679,7 @@ const UI = (() => {
       const pf = p.familiers || {};
       c.appendChild(el('h3', '', 'Familiers (' + Object.keys(pf).filter((e) => DATA.FAMILIERS[e]).length + ' / ' + Object.keys(DATA.FAMILIERS).length + ')'));
       c.appendChild(el('p', 'intro', 'La forme Invocation fait naître le familier de l\'essence au centre du sceau. Il te suit, te défend, et chacun a son don.'));
-      for (const e of DATA.ESSENCES) { const F = DATA.FAMILIERS[e]; if (!F) continue; const vu = !!pf[e]; c.appendChild(el('div', 'decouverte' + (vu ? ' ok' : ''), '<span class="check"><i class="dot" style="background:' + (vu ? DATA.CORES[e].couleur : '#aaa') + '"></i></span><div><b>' + (vu ? F.nom : '???') + '</b> <small>' + DATA.CORES[e].nom + '</small><br>' + (vu ? F.desc : '<span class="muted">Invoque un familier ' + (DATA.DE[e] || ({ contre: 'du Contre-sort', metamorphose: 'de la Métamorphose' })[e] || '') + ' pour le rencontrer.</span>') + '</div>')); }
+      for (const e of DATA.ESSENCES) { const F = DATA.FAMILIERS[e]; if (!F) continue; const vu = !!pf[e]; const ligne = c.appendChild(el('div', 'decouverte' + (vu ? ' ok' : ''), '<span class="check"><i class="dot" style="background:' + (vu ? DATA.CORES[e].couleur : '#aaa') + '"></i></span><div><b>' + (vu ? F.nom : '???') + '</b> <small>' + DATA.CORES[e].nom + '</small><br>' + (vu ? F.desc : '<span class="muted">Invoque un familier ' + (DATA.DE[e] || ({ contre: 'du Contre-sort', metamorphose: 'de la Métamorphose' })[e] || '') + ' pour le rencontrer.</span>') + '</div>')); if (vu && p.shapes.includes('invocation') && p.cores.includes(e)) { const b = el('button', 'choice mini', 'Copier sur la table'); b.addEventListener('click', () => versLaTable({ core: e, shape: 'invocation' })); ligne.lastChild.appendChild(b); } }
     } else if (grimTab === 'pages') {
       c.appendChild(el('p', 'intro', 'Le maître a semé des pages de son grimoire aux quatre coins du monde : en hauteur, au fond, dans le noir. Chacune apprend quelque chose.'));
       for (const P of DATA.PAGES) {
@@ -648,6 +687,11 @@ const UI = (() => {
         c.appendChild(el('div', 'decouverte' + (lu ? ' ok' : ''), '<span class="check">' + (lu ? '📜' : '○') + '</span><div><b>' + (lu ? P.titre : '???') + '</b><br><em>' + (lu ? '« ' + P.texte + ' »' : 'Page non retrouvée.') + '</em></div>'));
       }
     } else if (grimTab === 'defis') {
+      c.appendChild(el('h3', '', 'Leçons du maître'));
+      const vues = p.leconsVues || [], faites = p.leconsFaites || [];
+      for (const L of DATA.LECONS) { if (!vues.includes(L.id)) continue; const ok = faites.includes(L.id); c.appendChild(el('div', 'decouverte' + (ok ? ' ok' : ''), '<span class="check">' + (ok ? '✓' : '✉') + '</span><div><b>' + L.titre + '</b> <small>(+' + L.xp + ' exp.)</small><br><em>' + L.essai + '</em></div>')); }
+      const reste = DATA.LECONS.length - vues.length; if (reste > 0) c.appendChild(el('p', 'muted', reste + ' leçon' + (reste > 1 ? 's' : '') + ' viendr' + (reste > 1 ? 'ont' : 'a') + ' avec les nouveautés.'));
+      c.appendChild(el('h3', '', 'Épreuves'));
       c.appendChild(el('p', 'intro', 'Les épreuves du maître. Facultatives, mais chacune rapporte de l\'expérience, donc de l\'encre.'));
       for (const D of DATA.DEFIS) {
         const ok = p.defisFaits.includes(D.id);

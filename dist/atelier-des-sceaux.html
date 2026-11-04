@@ -151,6 +151,8 @@
   .potion-item > div { flex: 1; min-width: 200px; }
   .recette { padding: 3px 0; }
   .recette.verrou { opacity: 0.72; }
+  .choice.mini { font-size: 0.8em; padding: 1px 8px; margin: 3px 0 0; }
+  .choice.mini:disabled { opacity: 0.55; cursor: default; }
 
   /* grimoire */
   #grim-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; position: sticky; top: -18px; z-index: 3; background: var(--paper); padding: 8px 0 6px; border-bottom: 1px solid rgba(31,26,22,0.2); }
@@ -1014,6 +1016,36 @@ const DATA = (() => {
     familier: { id: 'familier', nom: 'Familier',            mode: 'fly',   w: 20, h: 20, hp: 4, dmg: 0, hostile: false, aime: null, craint: null, drop: null, desc: 'Un petit élémentaire invoqué.' },
   };
 
+  // Leçons du maître : une par nouveauté, avec un petit essai à faire. quand : la leçon paraît ; sceau / evt / obs : ce qui la valide
+  const aspectDe = (s) => (s.mods || []).some((m) => typeof m === 'string' && ASPECTS[m] && ASPECTS[m].aspect && (ASPECTS[m].aspect === s.core || ASPECTS[m].aspect === s.core2));
+  const LECONS = [
+    { id: 'l_premier',  titre: 'Le premier sceau',      quand: () => true, essai: 'Pose un glyphe d\'effet au centre, une forme au premier anneau, et lance le sceau.', sceau: () => true, xp: 10 },
+    { id: 'l_forme',    titre: 'Changer de forme',      quand: (p) => p.shapes.length >= 3, essai: 'Garde le même effet et change la forme : lance un Mur ou une Zone.', sceau: (s) => s.shape === 'mur' || s.shape === 'zone', xp: 15 },
+    { id: 'l_modif',    titre: 'Le second anneau',      quand: (p) => p.mods.length >= 3, essai: 'Pose un modificateur sur le second anneau : Puissance, Taille, Durée...', sceau: (s) => (s.mods || []).some((m) => typeof m === 'string' && MODS[m] && !ASPECTS[m]), xp: 15 },
+    { id: 'l_contact',  titre: 'Attendre le contact',   quand: (p) => p.triggers.includes('contact'), essai: 'Sur la pointe haute, Au contact : le sort attend de toucher quelque chose pour éclater.', sceau: (s) => s.trigger === 'contact' || s.trigger2 === 'contact', xp: 15 },
+    { id: 'l_aspect',   titre: 'Les aspects',           quand: (p) => p.mods.some((m) => ASPECTS[m]), essai: 'Pose un aspect avec son essence : l\'Eau avec Gel devient le froid, la Terre avec Minerai le métal.', sceau: (s) => aspectDe(s), xp: 20 },
+    { id: 'l_fusion',   titre: 'Deux essences',         quand: (p) => p.fusion, essai: 'Sur un sceau moyen, pose un second effet sous le cercle : les deux fusionnent.', sceau: (s) => !!s.core2 && s.taille !== 'petit', xp: 20 },
+    { id: 'l_phen',     titre: 'Faire naître un phénomène', quand: (p) => p.fusion, essai: 'Trouve une fusion qui fait naître un phénomène. Essaie le Feu tenu par la Gravité.', evt: 'combo_decouvert', xp: 30 },
+    { id: 'l_tenu',     titre: 'Tenir un sort',         quand: (p) => p.triggers.includes('tenu'), essai: 'Avec le déclencheur Maintenu, garde le clic enfoncé : le sort suit ta souris, puis lâche.', sceau: (s) => s.trigger === 'tenu' || s.trigger2 === 'tenu', xp: 20 },
+    { id: 'l_invoc',    titre: 'Un familier',           quand: (p) => p.shapes.includes('invocation'), essai: 'La forme Invocation fait naître la créature de l\'essence au centre. Invoque-en une.', sceau: (s) => s.shape === 'invocation', xp: 20 },
+    { id: 'l_ordres',   titre: 'Parler aux familiers',  quand: (p) => (p.leconsFaites || []).includes('l_invoc'), essai: 'Donne un ordre : V pour « reste ici » ou « suis-moi », B pour « attaque » (la créature sous la souris), N pour les congédier.', evt: 'ordre', xp: 15 },
+    { id: 'l_matiere',  titre: 'La matière',            quand: (p) => p.mods.includes('matiere'), essai: 'Avec Matière, l\'effet devient solide. Lance une lame de glace : Eau, Gel, Matière, en projectile.', sceau: (s) => (s.mods || []).includes('matiere'), xp: 20 },
+    { id: 'l_dims',     titre: 'Sculpter la forme',     quand: (p) => p.tailles.includes('moyen'), essai: 'Sous le cercle, règle la largeur et la hauteur : un Mur large et bas se couche en pont.', sceau: (s) => (s.dimL || 1) !== 1 || (s.dimH || 1) !== 1, xp: 15 },
+    { id: 'l_chaleur',  titre: 'La chaleur',            quand: (p) => (p.leconsFaites || []).includes('l_premier'), essai: 'La chaleur se propage : fais fondre de la glace ou de la neige, même sans la toucher.', obs: 'fonte', xp: 15 },
+    { id: 'l_chute',    titre: 'Ce qui ne tient plus',  quand: (p) => (p.leconsFaites || []).includes('l_forme'), essai: 'Creuse sous une dalle ou fais sauter un pilier : ce qui ne tient plus tombe, ou bascule.', evt: 'effondrement', xp: 20 },
+    { id: 'l_prise',    titre: 'Saisir',                quand: (p) => p.shapes.includes('prise'), essai: 'Avec la forme Prise, saisis l\'eau d\'un lac ou un tas de sable, promène-le, puis lance-le.', sceau: (s) => s.shape === 'prise', xp: 15 },
+    { id: 'l_vent',     titre: 'Le vent',               quand: (p) => p.cores.includes('vent'), essai: 'Le vent souffle et garde son élan : pousse la fumée, un nuage ou les flammes avec un sort de Vent.', sceau: (s) => s.core === 'vent' || s.core2 === 'vent', xp: 15 },
+    { id: 'l_trio',     titre: 'Trois effets',          quand: (p) => p.fusion && p.tailles.includes('grand'), essai: 'Sur un grand sceau, deux essences et un aspect : certaines fusions à trois existent. Le grimoire en garde la trace.', evt: 'combo_decouvert_trio', xp: 40 },
+  ];
+  // la recette d'une fusion en glyphes : essences et aspects
+  function recetteCombo(cle) {
+    const ess = (e) => { if (CORES[e] && !CORES[e].interne) return { core: e, mod: null }; for (const a in ASPECTS) if (ASPECTS[a].devient === e) return { core: ASPECTS[a].aspect, mod: a }; return null; };
+    const parts = cle.split('|').map(ess); if (parts.some((q) => !q) || parts.length > 2) return null;
+    // l'aspect se pose sur la dernière occurrence de son essence : on la met en second
+    parts.sort((a, b) => (a.mod ? 1 : 0) - (b.mod ? 1 : 0));
+    return { core: parts[0].core, core2: parts[1] ? parts[1].core : null, mods: parts.filter((q) => q.mod).map((q) => q.mod) };
+  }
+
   // Familiers : la forme Invocation fait naître la créature de l'essence du sceau
   // mode : sol (marche), vol (vole), orbite (tourne autour de toi), roue (roule), chenille (rampe, se nymphose, s'envole)
   const FAMILIERS = {
@@ -1341,7 +1373,7 @@ const DATA = (() => {
   // affinité : combien un geste aimé rapproche (sur 100)
   const AFFINITE = { golem: { gain: 4, parJour: 20 }, follet: { gain: 12 }, limace: { gain: 15 }, salamandre: { gain: 14 }, chauve: { gain: 15 } };
 
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle, FAMILIERS };
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle, FAMILIERS, LECONS, recetteCombo };
 })();
 
 </script>
@@ -2117,6 +2149,63 @@ const Son = (() => {
     o.connect(fl); fl.connect(g); g.connect(musicBus); o.start(t); o.stop(t + dur + 0.05);
     if (Math.random() < 0.3) { const o2 = ctx.createOscillator(), g2 = ctx.createGain(); o2.type = 'sine'; o2.frequency.value = f * 1.5; g2.gain.setValueAtTime(0, t + 0.25); g2.gain.linearRampToValueAtTime(0.025, t + 0.27); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.25 + dur * 0.7); o2.connect(g2); g2.connect(musicBus); o2.start(t + 0.25); o2.stop(t + 0.3 + dur); }
   }
+  // ---------- Nappes des phénomènes : chacun son bruit, qui suit sa position ----------
+  const actives = new Map(); let bruitBuf = null;
+  function bruitSource() { if (!bruitBuf) { const n = ctx.sampleRate * 2; bruitBuf = ctx.createBuffer(1, n, ctx.sampleRate); const d = bruitBuf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; } const s = ctx.createBufferSource(); s.buffer = bruitBuf; s.loop = true; return s; }
+  function creerNappe(type) {
+    const out = ctx.createGain(); out.gain.value = 0;
+    const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null; if (pan) { out.connect(pan); pan.connect(sfxBus); } else out.connect(sfxBus);
+    const nodes = [];
+    const osc = (f, ty, v) => { const o = ctx.createOscillator(); o.type = ty; o.frequency.value = f; const g = ctx.createGain(); g.gain.value = v; o.connect(g); g.connect(out); o.start(); nodes.push(o); return { o, g }; };
+    const nz = (ft, f, q, v) => { const s = bruitSource(); const fl = ctx.createBiquadFilter(); fl.type = ft; fl.frequency.value = f; fl.Q.value = q; const g = ctx.createGain(); g.gain.value = v; s.connect(fl); fl.connect(g); g.connect(out); s.start(); nodes.push(s); return { s, fl, g }; };
+    const lfo = (param, f, prof) => { const l = ctx.createOscillator(); l.frequency.value = f; const lg = ctx.createGain(); lg.gain.value = prof; l.connect(lg); lg.connect(param); l.start(); nodes.push(l); };
+    switch (type) {
+      case 'soleil': { const a = osc(82, 'sine', 0.5); osc(123, 'triangle', 0.16); lfo(a.g.gain, 3.1, 0.18); const n = nz('bandpass', 2400, 0.8, 0.12); lfo(n.g.gain, 7, 0.1); break; }
+      case 'orage': { const n = nz('lowpass', 140, 0.7, 1); lfo(n.g.gain, 0.23, 0.6); nz('highpass', 3000, 0.5, 0.05); break; }
+      case 'vent': { const n = nz('bandpass', 700, 1.2, 0.6); lfo(n.fl.frequency, 0.4, 350); lfo(n.g.gain, 0.7, 0.25); break; }
+      case 'eau': { const n = nz('bandpass', 900, 2.5, 0.55); lfo(n.fl.frequency, 5.3, 400); break; }
+      case 'feu': { const n = nz('highpass', 1800, 0.5, 0.25); lfo(n.g.gain, 13, 0.2); osc(110, 'sawtooth', 0.03); break; }
+      case 'trounoir': { osc(41, 'sine', 0.7); osc(41.7, 'sine', 0.5); const w = osc(320, 'sine', 0.05); lfo(w.o.frequency, 0.2, 120); break; }
+      case 'foudre': { const b = osc(110, 'sawtooth', 0.1); lfo(b.g.gain, 17, 0.08); nz('highpass', 4000, 0.5, 0.08); break; }
+      case 'terre': { const n = nz('lowpass', 90, 0.7, 0.8); lfo(n.g.gain, 2.2, 0.4); break; }
+      case 'magie': { [523.25, 659.25, 783.99].forEach((f, i) => { const a = osc(f, 'sine', 0.05); lfo(a.g.gain, 0.5 + i * 0.3, 0.04); }); break; }
+      case 'temps': { osc(220, 'sine', 0.02); break; }
+      default: osc(330, 'sine', 0.03);
+    }
+    return { out, pan, nodes, type, tic: 0 };
+  }
+  // liste : [{ id, type, vol (0..1), pan (-1..1) }] ; ce qui n'y est plus s'éteint en douceur
+  function nappes(liste) {
+    if (!ctx) return;
+    const t = ctx.currentTime, vus = new Set();
+    if (!muted) for (const q of liste.slice(0, 5)) {
+      vus.add(q.id); let b = actives.get(q.id);
+      if (!b) { b = creerNappe(q.type); actives.set(q.id, b); }
+      b.out.gain.setTargetAtTime(Math.max(0, Math.min(1, q.vol)) * 0.16, t, 0.15);
+      if (b.pan) b.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, q.pan || 0)), t, 0.1);
+      if (q.type === 'temps' && t > b.tic) { b.tic = t + 0.5; tone(1760, 0.04, 'square', 0.03 * q.vol); }
+    }
+    for (const [id, b] of actives) if (!vus.has(id)) { b.out.gain.setTargetAtTime(0, t, 0.2); const nb = b; setTimeout(() => { for (const n of nb.nodes) { try { n.stop(); } catch (e) { /* déjà arrêté */ } } try { nb.out.disconnect(); } catch (e) { /* déjà débranché */ } }, 1200); actives.delete(id); }
+  }
+  // la voix de chaque familier, à l'attaque ou à l'invocation
+  function voix(esp) {
+    switch (esp) {
+      case 'feu': noise(0.25, 0.07, 2500); tone(180, 0.15, 'sawtooth', 0.04); break;
+      case 'eau': tone(520, 0.08, 'sine', 0.08); setTimeout(() => tone(780, 0.1, 'sine', 0.06), 60); break;
+      case 'terre': tone(70, 0.25, 'sine', 0.16); noise(0.15, 0.08, 150); break;
+      case 'vent': noise(0.3, 0.06, 1200); tone(900, 0.2, 'sine', 0.03); break;
+      case 'vie': tone(1320, 0.06, 'sine', 0.05); setTimeout(() => tone(1760, 0.08, 'sine', 0.04), 70); break;
+      case 'lumiere': [1568, 2093, 2637].forEach((f, i) => setTimeout(() => tone(f, 0.15, 'sine', 0.035), i * 50)); break;
+      case 'foudre': tone(2200, 0.05, 'square', 0.04); noise(0.12, 0.1, 3000); break;
+      case 'gravite': tone(110, 0.3, 'sine', 0.1); tone(55, 0.4, 'sine', 0.08); break;
+      case 'temps': tone(392, 0.25, 'triangle', 0.06); setTimeout(() => tone(330, 0.35, 'triangle', 0.05), 220); break;
+      case 'portail': { if (!ctx) break; const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime; o.frequency.setValueAtTime(900, t); o.frequency.exponentialRampToValueAtTime(220, t + 0.25); g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3); o.connect(g); g.connect(sfxBus); o.start(t); o.stop(t + 0.35); break; }
+      case 'esprit': tone(660, 0.3, 'sine', 0.03, 0.1); tone(990, 0.4, 'sine', 0.02, 0.15); break;
+      case 'transmutation': tone(1046, 0.5, 'triangle', 0.04); tone(1568, 0.6, 'sine', 0.025); break;
+      case 'contre': tone(1200, 0.06, 'square', 0.04); setTimeout(() => tone(1000, 0.08, 'square', 0.035), 90); break;
+      case 'metamorphose': noise(0.2, 0.03, 4000); tone(1400, 0.1, 'sine', 0.03); break;
+    }
+  }
   function setVolumes(mu, fx) {
     volMusique = mu; volEffets = fx;
     if (musicBus) musicBus.gain.value = mu; if (sfxBus) sfxBus.gain.value = fx;
@@ -2128,7 +2217,7 @@ const Son = (() => {
   }
   function isMuted() { return muted; }
 
-  return { init, resume, sfx, toggleMute, isMuted, setMood, setVolumes };
+  return { init, resume, sfx, toggleMute, isMuted, setMood, setVolumes, nappes, voix };
 })();
 
 </script>
@@ -2301,15 +2390,18 @@ function createSim() {
       }
       for (let cy = Math.floor(y0 / CH); cy <= Math.floor(y1 / CH); cy++) for (let cx = Math.floor(x0 / CH); cx <= Math.floor(x1 / CH); cx++) { const c = cy * CW + cx; if (chunkActive[c] <= frame) chunkActive[c] = frame + 2; }
     }
-    if (frame % 3 === 0) stepChaleur();
+    if (frame % 3 === 0) stepChaleur(camCells);
     if (effondre) { traiterFissures(); majBlocs(); }
   }
   // ---------- Chaleur : conduction de l'écart à la température naturelle, retour au calme, changements d'état ----------
-  function stepChaleur() {
+  function stepChaleur(zone) {
     const N = W * H;
     for (let c = 0; c < CW * CHn; c++) {
       if (chunkHeat[c] <= frame) continue;
-      const cx = c % CW, cy = (c - cx) / CW, x0 = cx * CH, y0 = cy * CH, x1 = Math.min(W, x0 + CH), y1 = Math.min(H, y0 + CH);
+      const cx = c % CW, cy = (c - cx) / CW;
+      // loin de l'écran, la chaleur attend (elle reprend quand on revient)
+      if (zone && (cx < zone.x0 || cx > zone.x1 || cy < zone.y0 || cy > zone.y1)) { chunkHeat[c] = Math.max(chunkHeat[c], frame + 3); continue; }
+      const x0 = cx * CH, y0 = cy * CH, x1 = Math.min(W, x0 + CH), y1 = Math.min(H, y0 + CH);
       let vivant = false, redraw = false;
       for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
         const i = y * W + x, m = mat[i];
@@ -2411,17 +2503,55 @@ function createSim() {
     let leger = 0, glace = 0, x0 = W, x1 = 0, y0 = H, y1 = 0;
     for (const a of cells) { enBloc[a] = 1; const m = mat[a]; if (m === M.BOIS || PASSAGER[m]) leger++; else if (m === M.GLACE) glace++; const x = a % W, y = (a - x) / W; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
     const dens = leger > cells.length * 0.6 ? 1.4 : glace + leger > cells.length * 0.6 ? 1.8 : 6;
-    blocs.push({ cells, n: comp.length, vy: 0, acc: 0, dens, x0, x1, y0, y1, chute: 0, pose: false, impact: 0 });
+    const bloc = { cells, n: comp.length, vy: 0, acc: 0, dens, x0, x1, y0, y1, chute: 0, pose: false, impact: 0 };
+    // haut et étroit (un tronc, une colonne, une tour) : il bascule autour de son pied au lieu de tomber droit
+    { let cx0 = W, cx1 = 0, cy0 = H, cy1 = 0, sx = 0; for (const a of comp) { const x = a % W, y = (a - x) / W; if (x < cx0) cx0 = x; if (x > cx1) cx1 = x; if (y < cy0) cy0 = y; if (y > cy1) cy1 = y; sx += x; }
+      const hb = cy1 - cy0 + 1, wb = cx1 - cx0 + 1;
+      if (hb >= 6 && hb >= wb * 2.2 && cells.length <= 1500) {
+        const mx = sx / comp.length + 0.5, mid = (cx0 + cx1 + 1) / 2, sens = mx > mid + 0.1 ? 1 : mx < mid - 0.1 ? -1 : (rnd() < 0.5 ? -1 : 1);
+        const px = sens > 0 ? cx1 + 1 : cx0, py = cy1 + 1, src = new Map();
+        for (const a of cells) { const x = a % W, y = (a - x) / W; src.set(x + ',' + y, [mat[a], aux[a], temp[a]]); }
+        bloc.bascule = { sens, px, py, phi: 0, om: 0.004, src, hb };
+      }
+    }
+    blocs.push(bloc);
     if (onEvent) onEvent('effondrement', (x0 + x1 + 1) / 2 * CS, (y0 + y1 + 1) / 2 * CS);
   }
   function majBlocs() {
     for (let k = blocs.length - 1; k >= 0; k--) {
       const b = blocs[k];
       if (b.pose) { blocs.splice(k, 1); continue; }
+      if (b.bascule) { basculer(b); continue; }
       b.vy = Math.min(3, b.vy + 0.07); b.acc += b.vy;
       while (b.acc >= 1) { b.acc -= 1; if (!descendre(b)) { atterrir(b); break; } }
     }
   }
+  // un pas de bascule : on recalcule la forme tournée autour du pied (échantillonnage inverse, sans trous)
+  function basculer(b) {
+    const B = b.bascule;
+    B.om = Math.min(0.09, B.om + 0.0045 * Math.sin(B.phi + 0.12));
+    const phi = Math.min(Math.PI / 2, B.phi + B.om), f = B.sens * phi, co = Math.cos(f), si = Math.sin(f);
+    // la boîte de la forme tournée
+    let gx0 = 1e9, gx1 = -1e9, gy0 = 1e9, gy1 = -1e9;
+    for (const k of B.src.keys()) { const [ix, iy] = k.split(',').map(Number); for (const [ex, ey] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const dx = ix + ex - B.px, dy = iy + ey - B.py; const x = B.px + dx * co - dy * si, y = B.py + dx * si + dy * co; if (x < gx0) gx0 = x; if (x > gx1) gx1 = x; if (y < gy0) gy0 = y; if (y > gy1) gy1 = y; } }
+    const cibles = [];
+    for (let gy = Math.floor(gy0); gy <= Math.ceil(gy1); gy++) for (let gx = Math.floor(gx0); gx <= Math.ceil(gx1); gx++) {
+      if (!inB(gx, gy)) continue;
+      const ox = gx + 0.5 - B.px, oy = gy + 0.5 - B.py, sx = B.px + ox * co + oy * si, sy = B.py - ox * si + oy * co;
+      const q = B.src.get(Math.floor(sx) + ',' + Math.floor(sy)); if (!q) continue;
+      const j = gy * W + gx; if (!enBloc[j] && mat[j] !== M.AIR && !P[mat[j]].gas) { finBascule(b); return; }
+      cibles.push(j, q);
+    }
+    for (const a of b.cells) { enBloc[a] = 0; mat[a] = M.AIR; aux[a] = 0; temp[a] = AMB; touch(a); }
+    const nv = [];
+    for (let k = 0; k < cibles.length; k += 2) { const j = cibles[k], q = cibles[k + 1]; mat[j] = q[0]; aux[j] = q[1]; temp[j] = q[2]; enBloc[j] = 1; touch(j); nv.push(j); }
+    b.cells = nv.sort((a, c) => c - a); B.phi = phi;
+    let x0 = W, x1 = 0, y0 = H, y1 = 0; for (const a of nv) { const x = a % W, y = (a - x) / W; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    b.x0 = x0; b.x1 = x1; b.y0 = y0; b.y1 = y1; b.vy = B.om * B.hb * 0.8;
+    if (phi >= Math.PI / 2 - 0.01) finBascule(b);
+  }
+  // fin de bascule : ce qui reste en l'air tombe droit, puis s'écrase
+  function finBascule(b) { const v = b.bascule ? b.bascule.om * b.bascule.hb * 0.6 : 0; b.bascule = null; b.vy = Math.min(3, v); b.acc = 0; if (onEvent) onEvent('eboulement', (b.x0 + b.x1 + 1) / 2 * CS, (b.y1 + 1) * CS); }
   function descendre(b) {
     // les cases qui ont changé de nature (fondu, brûlé, rongé) quittent le bloc
     let n = 0; for (let k = 0; k < b.cells.length; k++) { const a = b.cells[k]; if (STRUCT[mat[a]] || PASSAGER[mat[a]]) b.cells[n++] = a; else enBloc[a] = 0; }
@@ -4082,6 +4212,33 @@ function creerPhenomenes(W) {
     return null;
   }
 
+  // le bruit de chaque phénomène
+  const SONS = { 'feu|gravite': 'soleil', 'eau|feu': 'eau', 'feu|terre': 'feu', 'feu|vent': 'vent', 'feu|vie': 'feu', 'feu|lumiere': 'feu', 'feu|foudre': 'foudre', 'feu|temps': 'feu', 'feu|transmutation': 'feu',
+    'eau|terre': 'eau', 'eau|vent': 'eau', 'eau|vie': 'eau', 'eau|lumiere': 'magie', 'eau|foudre': 'orage', 'eau|gravite': 'eau', 'eau|temps': 'eau', 'terre|vent': 'vent', 'gravite|vent': 'vent', 'foudre|vent': 'orage', 'temps|vent': 'vent', 'transmutation|vent': 'magie',
+    'lumiere|vent': 'magie', 'lumiere|vie': 'magie', 'foudre|vie': 'foudre', 'foudre|lumiere': 'foudre', 'gravite|lumiere': 'trounoir', 'lumiere|transmutation': 'magie', 'foudre|gravite': 'foudre', 'foudre|temps': 'foudre', 'foudre|transmutation': 'eau',
+    'gravite|temps': 'temps', 'gravite|transmutation': 'terre', 'froid|vent': 'vent', 'foudre|metal': 'foudre', 'feu|metal': 'feu', 'acide|feu': 'vent', 'acide|eau': 'eau', 'explosion|gravite': 'trounoir', 'fumee|vent': 'vent', 'foudre|lien': 'foudre', 'eau|seisme': 'eau', 'force|gravite': 'trounoir', 'terre|transmutation': 'terre' };
+  const GENRE_SON = { portail: 'magie', esprit: 'magie' };
+  function sonDe(ph) { if (SONS[ph.id]) return SONS[ph.id]; const I = DATA.comboInfo(ph.id); return I && GENRE_SON[I.genre] || null; }
+  let uid = 0;
+  function nappes(cx, cy, demiL) { const out = []; for (const ph of liste) { if (ph.mort) continue; const ty = sonDe(ph); if (!ty) continue; if (!ph.uid) ph.uid = ++uid; const d = dist(ph.x, ph.y, cx, cy); const vol = clamp(1 - d / (demiL * 1.6), 0, 1) * Math.min(1, 0.4 + 0.3 * ph.sz) * fade(ph); if (vol > 0.02) out.push({ id: ph.uid, type: ty, vol, pan: clamp((ph.x - cx) / demiL, -1, 1) }); } return out.sort((a, b) => b.vol - a.vol); }
+  // ce qui survit à une sauvegarde : les phénomènes qui durent ; l'îlot, lui, retombera au chargement
+  const GARDE = ['feu|gravite', 'feu|temps', 'eau|vent', 'eau|foudre', 'eau|gravite', 'eau|vie', 'lumiere|vent', 'foudre|lumiere', 'foudre|gravite', 'foudre|temps', 'gravite|temps', 'gravite|vent', 'froid|vent', 'acide|eau', 'acide|feu', 'fumee|vent', 'foudre|metal', 'feu|metal', 'terre|vent', 'vent|vie', 'feu|vent', 'feu|lumiere', 'foudre|lien'];
+  function sauver() {
+    const out = { phen: [], ilots: [] };
+    for (const ph of liste) {
+      if (ph.mort) continue;
+      if (ph.id === 'gravite|vie' && ph.data.c && ph.data.c.length) { out.ilots.push(ph.data.c.slice()); continue; }
+      const I = DATA.comboInfo(ph.id), famille = I && (I.genre === 'portail' || I.genre === 'esprit');
+      if (!(GARDE.includes(ph.id) || famille) || ph.tenu || ph.life < 2 || (ph.follow && ph.follow !== st().p) || !ph.spec.seal) continue;
+      out.phen.push({ id: ph.id, seal: ph.spec.seal, x: Math.round(ph.x), y: Math.round(ph.y), rect: ph.rect || null, ligne: ph.ligne || null, life: Math.round(ph.life * 10) / 10, joueur: ph.follow === st().p, eau: ph.data.eau });
+    }
+    return out;
+  }
+  function restaurer(d) {
+    if (!d) return;
+    for (const c of d.ilots || []) { for (const i of c) Sim.ancrerCase(i, 0); if (c.length) Sim.fissurer(c[0]); }
+    for (const q of d.phen || []) { try { const spec = W.makeSpec(Seal.clone(q.seal)); spec.combo = q.id; const ph = deployer(spec, q.x, q.y, 50, { rect: q.rect, ligne: q.ligne, follow: q.joueur ? st().p : null, silencieux: true }, null); if (ph) { ph.life = Math.min(q.life, ph.max * 1.6); if (q.eau != null) ph.data.eau = q.eau; } } catch (e) { console.warn('phénomène non restauré', q.id, e); } }
+  }
   // ---------- déploiement ----------
   function defDe(id) { if (DEFS[id]) return DEFS[id]; const f = famille(id); if (f) DEFS[id] = Object.assign({ r: 50, life: 6, couleur: '#c08a3a', bouge: 'fixe' }, f); return DEFS[id] || null; }
   function decouvrir(id) {
@@ -4112,8 +4269,7 @@ function creerPhenomenes(W) {
     if (liste.length >= 28) { const v = liste.shift(); finir(v); }
     liste.push(ph);
     if (D.init) D.init(ph, o);
-    st().sp.push({ k: 'label', x: ph.x, y: ph.y - 40, txt: DATA.comboInfo(id).nom, life: 1.6, max: 1.6 });
-    decouvrir(id);
+    if (!o.silencieux) { st().sp.push({ k: 'label', x: ph.x, y: ph.y - 40, txt: DATA.comboInfo(id).nom, life: 1.6, max: 1.6 }); decouvrir(id); }
     return ph;
   }
   function finir(ph, doux) { if (ph.fini) return; ph.fini = true; ph.mort = true; if (doux) { W.part(ph.x, ph.y, ph.D.couleur, 16, 70, 0.5, 3, 0, 'spark'); W.son('fizzle'); } if (ph.D.fin && !(doux && ph.D.explose)) { try { ph.D.fin(ph); } catch (e) { console.warn(e); } } if (ph.liens) for (const q of ph.liens) q.life = Math.min(q.life, 0.01); if (ph.objs) retirerPlateformes(ph); }
@@ -4179,7 +4335,7 @@ function creerPhenomenes(W) {
   function lumieres() { const out = []; for (const ph of liste) { if (ph.mort) continue; if (ph.D.lumieres) { for (const l of ph.D.lumieres(ph)) out.push(l); } else if (ph.D.lum) out.push({ x: ph.x, y: ph.y, r: ph.D.lum * Math.sqrt(ph.sz) * fade(ph) }); } return out; }
   function draw(ctx, t) { for (const ph of liste) { if (ph.mort) continue; if (ph.tenu && !ph.follow) { const o = W.origine(); ctx.save(); ctx.strokeStyle = ph.D.couleur; ctx.globalAlpha = 0.45; ctx.lineWidth = 1.5; ctx.setLineDash([4, 6]); ctx.lineDashOffset = -t * 30; ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(ph.x, ph.y); ctx.stroke(); ctx.restore(); } try { if (ph.D.draw) ph.D.draw(ctx, ph, t); else { FX.glow(ctx, ph.x, ph.y, ph.r * 1.5, ph.D.couleur, 0.35 * fade(ph)); } } catch (e) { console.warn(e); } } }
   function reset() { for (const ph of liste) if (ph.objs) retirerPlateformes(ph); liste = []; }
-  return { deployer, update, draw, reagir, dissiper, trainee, lumieres, reset, defDe, get liste() { return liste; }, DEFS };
+  return { deployer, update, draw, reagir, dissiper, trainee, lumieres, reset, defDe, nappes, sauver, restaurer, get liste() { return liste; }, DEFS };
 }
 
 </script>
@@ -4219,6 +4375,7 @@ const World = (() => {
     for (const c of L.crs) st.crs.push(makeCreature(c));
     if (saved) restore(saved);
     Sim.ancrer(); PH.reset();
+    if (aRestaurer) { const R = aRestaurer; aRestaurer = null; try { for (const q of R.familiers) { if (!DATA.FAMILIERS[q.espece]) continue; const spec = makeSpec(Seal.clone(q.seal)); const f = nouveauFamilier(spec, q.espece, q.x, q.y); f.life = q.life; f.hp = Math.min(f.hpMax, q.hp); f.age = q.age || 0; st.crs.push(f); } PH.restaurer(R.phen); } catch (e) { console.warn('restauration des familiers et phénomènes', e); } }
     st.cam.x = clamp(st.p.x - VW / 2, 0, L.w - VW); st.cam.y = clamp(st.p.y - VH / 2, 0, L.h - VH);
     if (!darkCv) { darkCv = document.createElement('canvas'); darkCv.width = VW / 2; darkCv.height = VH / 2; } // l'obscurité, toute en dégradés, se calcule à demi-résolution
     Sim.onEvent = onSimEvent;
@@ -4231,7 +4388,7 @@ const World = (() => {
     groundBelow: (...a) => groundBelow(...a), spawnLiquid: (...a) => spawnLiquid(...a), addGField: (...a) => addGField(...a), vieillir: (...a) => vieillir(...a),
     makeCreature: (c) => makeCreature(c), masse: (e) => masse(e), chaudOk: (c) => CHAUD_OK.includes(c.t), froidOk: (c) => FROID_OK.includes(c.t),
     flash: (v) => { st.flash = Math.max(st.flash, v); }, shake: (v) => { st.shake = Math.max(st.shake, v); }, son: (a, b) => Son.sfx(a, b), colorOf: (c) => colorOf(c),
-    daylight: () => daylight(), revenir: (c) => finMorph(c), tient: (h) => tientMain(h), boire: (n) => { if (st.p.ink < n) return false; st.p.ink -= n; return true; },
+    daylight: () => daylight(), revenir: (c) => finMorph(c), makeSpec: (s) => makeSpec(s), tient: (h) => tientMain(h), boire: (n) => { if (st.p.ink < n) return false; st.p.ink -= n; return true; },
     origine: () => ({ x: st.p.x + st.p.w / 2, y: st.p.y + st.p.h * 0.45 }), cible: (R) => { const p = st.p, o = { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, a = toWorld(game.inp.mouse.x, game.inp.mouse.y); const dx = a.x - o.x, dy = a.y - o.y, d = Math.hypot(dx, dy) || 1, k = Math.min(1, R / d); return { x: o.x + dx * k, y: o.y + dy * k }; }, addXp: (n) => { if (game && game.addXp) game.addXp(n); }, tempsDe: (x, y) => (bullesT.length ? tempsDe(x, y, 2) : 1),
   });
   function respawn() {
@@ -4375,9 +4532,12 @@ const World = (() => {
     return {
       mat: Sim.serialize(), tod: st.tod, jour: st.jour || 0, meteo: st.meteo, mecaV: 1,
       objs: st.objs.filter((o) => !o.mort && o.t !== 'magie').map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
+      familiers: st.crs.filter((c) => c.t === 'familier' && c.hp > 0 && c.spec && c.spec.seal && c.life > 1).map((c) => ({ espece: c.espece, seal: c.spec.seal, x: Math.round(c.x), y: Math.round(c.y), life: Math.round(c.life), hp: c.hp, age: Math.round(c.age || 0) })),
+      phen: PH.sauver(),
       crs: st.crs.filter((c) => c.t !== 'familier' && !c.temporaire).map((c) => ({ t: c.orig ? c.orig.t : c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.orig ? c.orig.hp : c.hp, tame: c.sta.tame, aff: c.aff ? Math.round(c.aff) : undefined, affJ: c.affJ, affDuJour: c.affDuJour })),
     };
   }
+  let aRestaurer = null, nappeT = 0;
   function restore(d) {
     try {
       if (d.mat) Sim.deserialize(d.mat);
@@ -4387,6 +4547,7 @@ const World = (() => {
       if (d.tod != null) st.tod = d.tod;
       if (d.jour != null) st.jour = d.jour;
       if (d.meteo) st.meteo = d.meteo;
+      aRestaurer = { familiers: d.familiers || [], phen: d.phen || null };
     } catch (e) { console.warn('monde illisible, régénéré', e); }
   }
   function reset() { st = null; }
@@ -5547,6 +5708,7 @@ const World = (() => {
     if (encre) { game.inv.encres[encre]--; if (game.inv.encres[encre] === 0) msg('C\'était la dernière goutte d\'' + DATA.ENCRES[encre].nom.toLowerCase() + '.'); }
     p.gestes[hand] = { seal, aim: { x: aim.x, y: aim.y }, t: gt, max: gt, color: encre ? DATA.ENCRES[encre].couleur : colorOf(seal.core), charge, hand, encre, cost };
     if (charge > 0.6) msg('Sort chargé : ' + Math.round(100 + charge * 80) + ' % de puissance.');
+    evt('sort', seal);
     return true;
   }
   // Lance un sceau depuis un point (joueur ou sous-sceau)
@@ -5675,12 +5837,10 @@ const World = (() => {
         // pas plus de six familiers à la fois : le plus ancien s'en va
         const vieux = st.crs.filter((c) => c.t === 'familier' && c.hp > 0); while (vieux.length + n > 6) { const v = vieux.shift(); v.life = 0; }
         for (let i = 0; i < n; i++) {
-          const f = makeCreature({ t: 'familier', x: ox - F.w / 2 + i * 14, y: oy - F.h - 6 });
-          const k = clamp(1 + 0.25 * ((prm.size || 1) - 1), 0.75, 1.6);
-          Object.assign(f, { spec, core: spec.core, espece: esp, life: 30 * prm.duration, max: 30 * prm.duration, hp: Math.round(F.pv * (1 + 0.3 * ((prm.power || 1) - 1))), dmg: 0, w: Math.round(F.w * k), h: Math.round(F.h * k), echelle: k, cd: 0.4 + i * 0.3, x0: ox, y0: oy - 40, vole: F.mode === 'vol' || F.mode === 'orbite', portable: false, generique: false, age: 0, orbite: Math.random() * TAU });
-          f.hpMax = f.hp; f.sta.tame = true; f.filDonne = true; f.porteur = !!spec.combo;
+          const f = nouveauFamilier(spec, esp, ox - F.w / 2 + i * 14, oy - F.h - 6, i);
           st.crs.push(f); if (spec.combo && i === 0) PH.deployer(spec, ox, oy - 30, 30 * prm.size, { follow: f }, { x: dx, y: dy });
         }
+        Son.voix(esp);
         if (o.player) { const pg = game.progress; if (!pg.familiers) pg.familiers = {}; const neuf = !pg.familiers[esp]; pg.familiers[esp] = (pg.familiers[esp] || 0) + 1; msg((neuf ? 'Nouveau familier : ' : '') + F.nom + (n > 1 ? ' (×' + n + ')' : '') + (neuf ? '. ' + F.desc : ' t\'accompagne.')); if (neuf) pg.nouveau = true; }
         break;
       }
@@ -5987,7 +6147,7 @@ const World = (() => {
     if (p.forme && !(p.sta.forme > 0)) finFormeSoi();
     updateGFields(dt);
     majMecanismes(dt);
-    Sim.step();
+    Sim.step({ x0: Math.floor((st.cam.x - VW) / (Sim.CS * Sim.CH)), x1: Math.floor((st.cam.x + VW * 2) / (Sim.CS * Sim.CH)), y0: Math.floor((st.cam.y - VH) / (Sim.CS * Sim.CH)), y1: Math.floor((st.cam.y + VH * 2) / (Sim.CS * Sim.CH)) });
     blocsTombants();
     updateMeteo(dt);
     for (const k in p.sta) if (p.sta[k] > 0) p.sta[k] = Math.max(0, p.sta[k] - dt);
@@ -6146,6 +6306,7 @@ const World = (() => {
     retenir();
     updateSpells(dt);
     PH.update(dt);
+    if ((nappeT = (nappeT || 0) + 1) % 3 === 0) Son.nappes(PH.nappes(st.cam.x + VW / 2, st.cam.y + VH / 2, VW / 2));
     updateParts(dt);
     updatePickups(dt);
     // caméra
@@ -6679,6 +6840,14 @@ const World = (() => {
     Son.sfx('burst', 'force'); return att.length;
   }
   // ---------- Familiers : chacun sa créature, son allure, son coup ----------
+  function nouveauFamilier(spec, esp, x, y, i = 0) {
+    const F = DATA.FAMILIERS[esp], prm = spec.prm || {};
+    const f = makeCreature({ t: 'familier', x, y });
+    const k = clamp(1 + 0.25 * ((prm.size || 1) - 1), 0.75, 1.6);
+    Object.assign(f, { spec, core: spec.core, espece: esp, life: 30 * (prm.duration || 1), max: 30 * (prm.duration || 1), hp: Math.round(F.pv * (1 + 0.3 * ((prm.power || 1) - 1))), dmg: 0, w: Math.round(F.w * k), h: Math.round(F.h * k), echelle: k, cd: 0.4 + i * 0.3, x0: x, y0: y, vole: F.mode === 'vol' || F.mode === 'orbite', portable: false, generique: false, age: 0, orbite: Math.random() * TAU });
+    f.hpMax = f.hp; f.sta.tame = true; f.filDonne = true; f.porteur = !!spec.combo;
+    return f;
+  }
   function updateFamilier(c, dt, p) {
     if (!c.spec) { c.hp = 0; c.respawn = 1e9; c.mort = true; return; }
     const esp = c.espece || 'feu', F = DATA.FAMILIERS[esp] || DATA.FAMILIERS.feu, prm = c.spec.prm || {}, pw = prm.power || 1;
@@ -6720,11 +6889,11 @@ const World = (() => {
     // perdu loin derrière : il te rejoint d'un saut de faille
     if (dist(cx, cy, pcx, pcy) > 900) { c.x = pcx - c.w / 2; c.y = p.y - c.h - 10; c.vx = c.vy = 0; }
     // le coup de chaque familier
-    const frappe = (q, r = 24, kk = 1, effets = c.spec.cores) => { for (const core of effets) applyEffect(core, q.x + q.w / 2, q.y + q.h / 2, r, { ...prm, power: pw * kk }, 'burst', { noPlayer: true, noField: true }); };
+    const frappe = (q, r = 24, kk = 1, effets = c.spec.cores, o2 = {}) => { for (const core of effets) applyEffect(core, q.x + q.w / 2, q.y + q.h / 2, r, { ...prm, power: pw * kk }, 'burst', Object.assign({ noPlayer: true, noField: true }, o2)); };
     if (cible && c.cd <= 0 && dcib < F.portee + Math.max(cible.w, cible.h) * 0.5) {
-      c.cd = F.cadence; const dirc = Math.sign(tcx - cx) || 1;
+      c.cd = F.cadence; const dirc = Math.sign(tcx - cx) || 1; if (inView(cx, cy)) Son.voix(esp);
       switch (esp) {
-        case 'feu': { c.souffle = 1; const n = 7; for (let s = 1; s <= n; s++) { const fx = cx + (tcx - cx) * s / n, fy = cy + (tcy - cy) * s / n; const gx = Math.floor(fx / CS), gy = Math.floor(fy / CS); if (Sim.get(gx, gy) === M.AIR) Sim.setFeu(gx, gy, 10 + s, 0); } frappe(cible, 22, 0.9); break; }
+        case 'feu': { c.souffle = 1; for (let s = 1; s <= 8; s++) { const fx = cx + (tcx - cx) * s / 8, fy = cy + (tcy - cy) * s / 8; part(fx, fy, s % 2 ? '#f0a040' : '#e0642a', 2, 30, 0.35, 3, -60, 'glow'); } frappe(cible, 22, 0.9, c.spec.cores, { noGrid: true }); cible.sta.burn = Math.max(cible.sta.burn || 0, 2); break; }
         case 'eau': { st.sp.push({ k: 'beam', core: 'eau', x1: cx, y1: cy, x2: tcx, y2: tcy, life: 0.25, max: 0.25, color: '#6aa0d8', w: 3 }); spawnLiquid(M.EAU, tcx, cible.y, 4, 16); frappe(cible, 24, 0.9); hurt(cible, 0.6 * pw); cible.vx += dirc * 260 / masse(cible); break; }
         case 'terre': { c.coup = 1; hurt(cible, 1.4 * pw); cible.sta.stun = Math.max(cible.sta.stun, 1); cible.vx += dirc * 520 / masse(cible); cible.vy -= 220; st.shake = Math.max(st.shake, 0.12); part(tcx, cible.y + cible.h, '#8a7a5a', 8, 80, 0.5, 2, 300); Son.sfx('burst', 'terre'); break; }
         case 'vent': { c.dash = 0.35; c.vx = dirc * 720; c.vy = (tcy - cy) * 2; c.touches = new Set(); break; }
@@ -8324,7 +8493,7 @@ const UI = (() => {
       case 'totem': ctx.strokeStyle = U.INK; ctx.lineWidth = 2; U.inkLine(ctx, tx, G, tx, G - 30, 2, 0.4); ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(tx - 6, G - 30); ctx.lineTo(tx + 6, G - 30); ctx.lineTo(tx, G - 40); ctx.closePath(); ctx.fill(); ctx.stroke(); for (let k = 0; k < 3; k++) burst(tx, G - 24, 22, ((t * 3) % 1)); iy = G - 24; break;
       case 'pluie': for (let k = 0; k < 7; k++) { const yy = 8 + ((t * 90 + k * 13) % (G - 10)); ctx.fillStyle = col; ctx.fillRect(tx - 30 + k * 10, yy, 2, 6); } ctx.strokeStyle = U.INK; ctx.globalAlpha = 0.5; for (let k = 0; k < 4; k++) U.inkCircle(ctx, tx - 22 + k * 15, 8, 8, k, 0.6); ctx.globalAlpha = 1; break;
       case 'objet': ctx.fillStyle = 'rgba(170,130,70,0.5)'; ctx.fillRect(tx - 10, G - 20, 20, 20); ctx.strokeStyle = U.INK; ctx.strokeRect(tx - 10, G - 20, 20, 20); ctx.strokeStyle = col; ctx.globalAlpha = 0.5 + Math.sin(time * 6) * 0.3; ctx.strokeRect(tx - 13, G - 23, 26, 26); ctx.globalAlpha = 1; iy = G - 10; break;
-      case 'invocation': { const a = time * 3; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(px + Math.cos(a) * 22, py - 30 + Math.sin(a) * 10, 5, 0, U.TAU); ctx.fill(); ctx.stroke(); break; }
+      case 'invocation': apercuFamilier(ctx, s, px, G, tx, t); break;
       case 'bouclier': ctx.strokeStyle = col; ctx.lineWidth = 6; ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.arc(px, py - 16, 26, -1, 1); ctx.stroke(); ctx.globalAlpha = 1; break;
       case 'vague': { const x = U.lerp(px + 14, W - 20, Math.min(1, t * 1.4)); ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.moveTo(x - 16, G); ctx.quadraticCurveTo(x - 2, G - 24, x + 10, G - 12); ctx.quadraticCurveTo(x + 5, G - 7, x + 8, G - 3); ctx.stroke(); ctx.globalAlpha = 1; break; }
       case 'colonne': { const k = Math.min(1, t * 3); ctx.fillStyle = col; ctx.globalAlpha = 0.35; ctx.fillRect(tx - 6, G - 60 * k, 12, 60 * k); ctx.globalAlpha = 0.9; ctx.strokeStyle = col; ctx.lineWidth = 1.5; for (let j = 0; j < 3; j++) { const yy = G - ((t * 2 + j / 3) % 1) * 60 * k; ctx.beginPath(); ctx.moveTo(tx - 4, yy); ctx.lineTo(tx + 4, yy - 6); ctx.stroke(); } ctx.globalAlpha = 1; break; }
@@ -8335,13 +8504,52 @@ const UI = (() => {
     let tBurst = tImpact;
     if (prim === 'retarde') { tBurst = tImpact + 0.3; if (t > tImpact && t < tBurst) { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ix, iy, 9, -Math.PI / 2, -Math.PI / 2 + U.TAU * (t - tImpact) / 0.3); ctx.stroke(); U.txt(ctx, s.delai + 's', ix + 14, iy - 12, 10, 'left', '#6b4f2a'); } }
     if (prim === 'commande') { tBurst = tImpact + 0.35; if (t > tImpact && t < tBurst) { ctx.strokeStyle = col; ctx.globalAlpha = 0.5 + Math.sin(time * 10) * 0.4; U.inkCircle(ctx, ix, iy, 9, 3, 0.6); ctx.globalAlpha = 1; ctx.fillStyle = '#f6eed8'; ctx.fillRect(ix + 8, iy - 24, 14, 14); ctx.strokeStyle = U.INK; ctx.strokeRect(ix + 8, iy - 24, 14, 14); U.txt(ctx, 'F', ix + 15, iy - 17, 11, 'center', U.INK); } }
-    if (!['chaine', 'mur', 'totem', 'pluie', 'invocation', 'bouclier', 'objet', 'vague', 'colonne'].includes(s.shape)) burst(ix, iy, 30 * Math.min(1.8, prm.size), (t - tBurst) / 0.22);
+    const cleP = !prm.inverse && s.shape !== 'invocation' ? DATA.comboCle(Seal.effets(s)) : null;
+    if (cleP && t > tBurst) apercuPhenomene(ctx, cleP, s, ix, iy, G, sx, sy, (t - tBurst) * P, col, col2);
+    else if (!['chaine', 'mur', 'totem', 'pluie', 'invocation', 'bouclier', 'objet', 'vague', 'colonne'].includes(s.shape)) burst(ix, iy, 30 * Math.min(1.8, prm.size), (t - tBurst) / 0.22);
     if (trs.includes('repetition')) for (let k = 1; k <= 3; k++) burst(ix, iy, 22, (t - tBurst - k * 0.13) / 0.12);
     if (trs.includes('expiration')) { const te = 0.84; if (t < te && t > tBurst) Seal.glyph(ctx, 'expiration', ix, iy - 22, 5, col, 2); burst(ix, iy, 40, (t - te) / 0.15); }
     // sous-sceau
     const sb = Seal.subs(s)[0];
     if (sb && sb.core) { const k = (t - tBurst - 0.1) / 0.3; if (k > 0 && k < 1) { const c2 = DATA.CORES[sb.core].couleur; ctx.fillStyle = c2; ctx.beginPath(); ctx.arc(ix + k * 40, iy - Math.sin(k * Math.PI) * 30, 4, 0, U.TAU); ctx.fill(); } burst(ix + 40, iy, 18, (t - tBurst - 0.4) / 0.2, DATA.CORES[sb.core].couleur); }
   }
+  // la créature qu'on invoque, qui trotte ou vole vers la cible
+  function apercuFamilier(ctx, s, px, G, tx, t) {
+    const e = DATA.FAMILIERS[s.core] ? s.core : 'feu', F = DATA.FAMILIERS[e];
+    const k = Math.min(1, t * 2.2), x = U.lerp(px + 26, tx - 30, k), vole = F.mode === 'vol' || F.mode === 'orbite';
+    const c = { espece: e, w: F.w, h: F.h, x: x - F.w / 2, y: (vole ? G - 38 + Math.sin(time * 4) * 4 : G) - F.h, dir: 1, vx: k < 1 ? 60 : 0, vy: 0, phase: time, seed: 3, life: 10, hurt: 0, vole, roule: time * 4, coup: k >= 1 ? Math.max(0, Math.sin(time * 5)) : 0, souffle: k >= 1 ? 0.6 + 0.4 * Math.sin(time * 9) : 0, echelle: 1, age: 0 };
+    if (e === 'metamorphose') { const m = (time % 6) / 6; c.stade = m < 0.45 ? 'chenille' : m < 0.6 ? 'cocon' : 'papillon'; c.stadeT = 2; if (c.stade === 'papillon') { c.vole = true; c.y = G - 50; c.w = 26; c.h = 16; } }
+    try { Familiers.dessiner(ctx, c, time); } catch (err) { /* aperçu seulement */ }
+    U.txt(ctx, F.nom, (px + tx) / 2, 14, 12, 'center', '#6b4f2a', 'IM Fell English', 'italic');
+  }
+  // le phénomène d'une fusion, en petit : connu, il se montre ; inconnu, c'est un mystère
+  function apercuPhenomene(ctx, cle, s, ix, iy, G, sx, sy, dt, col, col2) {
+    const connu = !!(game.progress.combos && game.progress.combos[cle]);
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, ctx.canvas.width, ctx.canvas.height); ctx.clip();
+    if (!connu) {
+      ctx.translate(ix, iy); ctx.rotate(time * 1.5); ctx.lineWidth = 2;
+      for (let k = 0; k < 2; k++) { ctx.strokeStyle = k ? (col2 || col) : col; ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.arc(0, 0, 14 + k * 5, k * 2, k * 2 + 4.2); ctx.stroke(); }
+      ctx.rotate(-time * 1.5); ctx.globalAlpha = 1; U.txt(ctx, '?', 0, 6, 18, 'center', '#6b4f2a', 'IM Fell English', '');
+      ctx.restore(); U.txt(ctx, 'Fusion inconnue', ix, 14, 12, 'center', '#6b4f2a', 'IM Fell English', 'italic'); return;
+    }
+    const PHN = World.phen, D = PHN && PHN.defDe(cle);
+    if (D && D.draw) {
+      const r = D.r * 0.45, pts = [];
+      for (let k = 0; k <= 12; k++) { const u = k / 12; pts.push([U.lerp(sx, ix + 20, u), U.lerp(G - 2, G - 2, u) - Math.sin(u * Math.PI) * 40]); }
+      const ph = { id: cle, D, x: ix, y: iy, r, r0: r, t: dt, life: 4, max: 5, sz: 0.45, pw: 1, g: 'point', acc: {}, dir: { x: 1, y: 0 }, vx: 120, vy: 300, R: r * 5, H: 60, spot: { x: ix, y: G - 2 },
+        ligne: { x1: sx, y1: sy, x2: ix, y2: G - 2, w: 6 }, rect: { x0: ix - 9, x1: ix + 9, y0: G - 70, y1: G }, objs: [{ x: ix - 28, y: iy, w: 56, h: 6 }], arc: pts,
+        motes: [0, 1, 2, 3, 4, 5].map((k) => ({ x: ix + Math.cos(time * 1.3 + k) * 22, y: iy + Math.sin(time * 1.7 + k * 2) * 14, ph: k })),
+        data: { pts: FX.eclairPts(ix, G - 70, ix, G, 0.15), statues: [], vert: true, eau: 60, hits: new Set(), c: [], orb: [], top: G - 70, q: [], chemin: [] } };
+      if (D.bouge === 'tombe') { const u = (dt % 1.2) / 1.2; ph.x = ix - 40 + u * 40; ph.y = 10 + u * (G - 14); }
+      if (['eau|feu', 'feu|terre', 'feu|temps', 'eau|vie', 'feu|vent', 'feu|vie', 'eau|terre'].includes(cle)) { ph.y = G - 1; ph.x = ix; }
+      try { D.draw(ctx, ph, time); } catch (err) { /* aperçu seulement */ }
+    }
+    ctx.restore();
+    U.txt(ctx, DATA.comboInfo(cle).nom, ix, 14, 12, 'center', '#6b4f2a', 'IM Fell English', 'italic');
+  }
+  // recopier une fusion ou un familier sur la table des sceaux
+  function versLaTable(seal) { game.editSeal = Seal.clone(Object.assign({ taille: 'moyen', shape: 'zone', trigger: 'immediat', mods: [] }, seal)); selSlot = null; openPanel('seal'); toast('Le sceau est posé sur la table : change la forme ou les réglages à ton idée.'); }
+  function possedeRecette(R) { const p = game.progress; const manque = []; for (const c of [R.core, R.core2].filter(Boolean)) if (!p.cores.includes(c)) manque.push(DATA.CORES[c].nom); for (const m of R.mods) if (!p.mods.includes(m)) manque.push(DATA.MODS[m].nom); if (R.core2 && !p.fusion) manque.push('la fusion'); return manque; }
   function drawSealCanvas() {
     const c = $('#seal-canvas'); if (!c || open !== 'seal') return;
     const ctx = c.getContext('2d');
@@ -8523,7 +8731,7 @@ const UI = (() => {
       const tri = cles.slice().sort((a, b) => (pc[b] ? 1 : 0) - (pc[a] ? 1 : 0));
       for (const k of tri) {
         const I = DATA.COMBOS[k];
-        if (pc[k]) c.appendChild(el('div', 'recette', '<b>' + I.nom + '</b> <span class="muted">(' + recetteCombo(k) + ', lancé ' + pc[k] + ' fois)</span><br>' + I.desc));
+        if (pc[k]) { const d = el('div', 'recette', '<b>' + I.nom + '</b> <span class="muted">(' + recetteCombo(k) + ', lancé ' + pc[k] + ' fois)</span><br>' + I.desc + ' '); const R = DATA.recetteCombo(k); if (R) { const manque = possedeRecette(R); const b = el('button', 'choice mini', manque.length ? 'Il te manque : ' + manque.join(', ') : 'Copier sur la table'); if (manque.length) b.disabled = true; else b.addEventListener('click', () => versLaTable(R)); d.appendChild(b); } c.appendChild(d); }
         else { const pret = k.split('|').every(possede); c.appendChild(el('div', 'recette verrou', '<b>???</b> — <i>' + I.indice + '</i>' + (pret ? ' <span class="muted">Tu as de quoi le tenter.</span>' : ''))); }
       }
       c.appendChild(el('h3', '', 'Familles'));
@@ -8581,7 +8789,7 @@ const UI = (() => {
       const pf = p.familiers || {};
       c.appendChild(el('h3', '', 'Familiers (' + Object.keys(pf).filter((e) => DATA.FAMILIERS[e]).length + ' / ' + Object.keys(DATA.FAMILIERS).length + ')'));
       c.appendChild(el('p', 'intro', 'La forme Invocation fait naître le familier de l\'essence au centre du sceau. Il te suit, te défend, et chacun a son don.'));
-      for (const e of DATA.ESSENCES) { const F = DATA.FAMILIERS[e]; if (!F) continue; const vu = !!pf[e]; c.appendChild(el('div', 'decouverte' + (vu ? ' ok' : ''), '<span class="check"><i class="dot" style="background:' + (vu ? DATA.CORES[e].couleur : '#aaa') + '"></i></span><div><b>' + (vu ? F.nom : '???') + '</b> <small>' + DATA.CORES[e].nom + '</small><br>' + (vu ? F.desc : '<span class="muted">Invoque un familier ' + (DATA.DE[e] || ({ contre: 'du Contre-sort', metamorphose: 'de la Métamorphose' })[e] || '') + ' pour le rencontrer.</span>') + '</div>')); }
+      for (const e of DATA.ESSENCES) { const F = DATA.FAMILIERS[e]; if (!F) continue; const vu = !!pf[e]; const ligne = c.appendChild(el('div', 'decouverte' + (vu ? ' ok' : ''), '<span class="check"><i class="dot" style="background:' + (vu ? DATA.CORES[e].couleur : '#aaa') + '"></i></span><div><b>' + (vu ? F.nom : '???') + '</b> <small>' + DATA.CORES[e].nom + '</small><br>' + (vu ? F.desc : '<span class="muted">Invoque un familier ' + (DATA.DE[e] || ({ contre: 'du Contre-sort', metamorphose: 'de la Métamorphose' })[e] || '') + ' pour le rencontrer.</span>') + '</div>')); if (vu && p.shapes.includes('invocation') && p.cores.includes(e)) { const b = el('button', 'choice mini', 'Copier sur la table'); b.addEventListener('click', () => versLaTable({ core: e, shape: 'invocation' })); ligne.lastChild.appendChild(b); } }
     } else if (grimTab === 'pages') {
       c.appendChild(el('p', 'intro', 'Le maître a semé des pages de son grimoire aux quatre coins du monde : en hauteur, au fond, dans le noir. Chacune apprend quelque chose.'));
       for (const P of DATA.PAGES) {
@@ -8589,6 +8797,11 @@ const UI = (() => {
         c.appendChild(el('div', 'decouverte' + (lu ? ' ok' : ''), '<span class="check">' + (lu ? '📜' : '○') + '</span><div><b>' + (lu ? P.titre : '???') + '</b><br><em>' + (lu ? '« ' + P.texte + ' »' : 'Page non retrouvée.') + '</em></div>'));
       }
     } else if (grimTab === 'defis') {
+      c.appendChild(el('h3', '', 'Leçons du maître'));
+      const vues = p.leconsVues || [], faites = p.leconsFaites || [];
+      for (const L of DATA.LECONS) { if (!vues.includes(L.id)) continue; const ok = faites.includes(L.id); c.appendChild(el('div', 'decouverte' + (ok ? ' ok' : ''), '<span class="check">' + (ok ? '✓' : '✉') + '</span><div><b>' + L.titre + '</b> <small>(+' + L.xp + ' exp.)</small><br><em>' + L.essai + '</em></div>')); }
+      const reste = DATA.LECONS.length - vues.length; if (reste > 0) c.appendChild(el('p', 'muted', reste + ' leçon' + (reste > 1 ? 's' : '') + ' viendr' + (reste > 1 ? 'ont' : 'a') + ' avec les nouveautés.'));
+      c.appendChild(el('h3', '', 'Épreuves'));
       c.appendChild(el('p', 'intro', 'Les épreuves du maître. Facultatives, mais chacune rapporte de l\'expérience, donc de l\'encre.'));
       for (const D of DATA.DEFIS) {
         const ok = p.defisFaits.includes(D.id);
@@ -8832,14 +9045,17 @@ const UI = (() => {
   window.__inp = inp;
 
   // ---------- Progression ----------
+  // les événements qui valident les leçons du maître
+  const LECON_EVTS = new Set(['sort', 'combo_decouvert', 'combo_decouvert_trio', 'ordre', 'effondrement']);
   function makeProgress() {
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
       tailles: DATA.DEBUT.tailles.slice(), filtres: DATA.DEBUT.filtres.slice(), cibles: DATA.DEBUT.cibles.slice(), deuxMains: false, enchainements: [],
-      recettes: [], ingredientsVus: [], done: [], maitrise: {}, combos: {}, familiers: {}, nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
+      recettes: [], ingredientsVus: [], done: [], maitrise: {}, combos: {}, familiers: {}, leconsVues: [], leconsFaites: [], _evts: [], nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
       compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0, terre: 0, creaturesTouchees: 0, vols: 0, portes: 0, lancers: 0, niveau: 1, sceaux: 0 },
       event(name, data) {
         const k = this.compteurs;
+        if (this._evts && LECON_EVTS.has(name) && this._evts.length < 200) this._evts.push([name, data]);
         switch (name) {
           case 'hit': if (!k.kindsHit.includes(data)) k.kindsHit.push(data); break;
           case 'mannequin': k.mannequin++; break;
@@ -8941,6 +9157,7 @@ const UI = (() => {
       Son.sfx('pickup'); this.save();
     },
     observe(kind) {
+      if (this.progress._evts && this.progress._evts.length < 50) this.progress._evts.push(['obs', kind]);
       const O = DATA.OBSERVATIONS[kind]; if (!O) return;
       const n = (this.progress.obs[kind] || 0) + 1;
       this.progress.obs[kind] = n;
@@ -9045,8 +9262,22 @@ const UI = (() => {
       return { ok: true, merci: l.merci, recu };
     },
     bonusPermanent(k, n) { this.bonus[k] = (this.bonus[k] || 0) + n; this.applyNiveau(); this.save(); },
+    // les leçons du maître : elles paraissent avec les nouveautés et se valident par l'usage
+    checkLecons() {
+      const p = this.progress; if (!p.leconsVues) return;
+      const evts = p._evts || []; p._evts = [];
+      for (const L of DATA.LECONS) {
+        if (p.leconsFaites.includes(L.id)) continue;
+        let paru = p.leconsVues.includes(L.id);
+        if (!paru) { let q = false; try { q = L.quand(p); } catch (e) { q = false; } if (!q) continue; p.leconsVues.push(L.id); paru = true; this.toast('✉ Leçon du maître : ' + L.titre + '. ' + L.essai, 'unlock'); }
+        let fait = false;
+        for (const [n, d] of evts) { try { if (L.sceau && n === 'sort' && d && L.sceau(d)) fait = true; if (L.evt && n === L.evt) fait = true; if (L.obs && n === 'obs' && d === L.obs) fait = true; } catch (e) { /* une leçon mal écrite ne bloque rien */ } }
+        if (fait) { p.leconsFaites.push(L.id); p.nouveau = true; this.toast('✦ Leçon apprise : ' + L.titre + ' (+' + L.xp + ' exp.)', 'unlock'); Son.sfx('unlock'); this.addXp(L.xp); this.save(); }
+      }
+    },
     checkDefis(w) {
       const p = this.progress;
+      this.checkLecons();
       { const l = this.lettreCourante(); if (l && l.cmd.type === 'exploit' && !this.courrier.exploitOk) { let ok = false; try { ok = l.cmd.cond(p, w); } catch (e) { ok = false; } if (ok) { this.courrier.exploitOk = true; this.toast('✉ Exploit accompli : « ' + l.cmd.texte + ' ». Le corbeau attend ta réponse au labo.', 'unlock'); Son.sfx('unlock'); this.save(); } } }
       for (const d of DATA.DEFIS) {
         if (p.defisFaits.includes(d.id)) continue;
@@ -9225,11 +9456,11 @@ const UI = (() => {
       const e = this.itemMain(hand);
       if (!e) { this.toast('Emplacement vide. Prépare un sceau ou une potion au labo.', 'warn'); return; }
       const aim = World.toWorld(inp.mouse.x, inp.mouse.y);
-      if (e.type === 'seal') { if (World.castSeal(e.seal, aim, false, charge, hand)) this.progress.event('sort', e.seal); }
+      if (e.type === 'seal') World.castSeal(e.seal, aim, false, charge, hand);
       else if (e.type === 'parchemin') {
         const q = this.inv.parchemins[e.nom];
         if (!q || q.n <= 0) { this.toast('Plus de parchemin « ' + e.nom + ' ». Retourne à la presse.', 'warn'); Son.sfx('fail'); return; }
-        if (World.castSeal(q.seal, aim, true, charge, hand)) { q.n--; this.progress.event('sort', q.seal); UI.refreshHotbar(); this.save(); }
+        if (World.castSeal(q.seal, aim, true, charge, hand)) { q.n--; UI.refreshHotbar(); this.save(); }
       }
       else if (e.type === 'potion') {
         const store = e.forte ? this.inv.fortes : this.inv.potions;
@@ -9259,7 +9490,7 @@ const UI = (() => {
         if (d.carte) this.carte = d.carte;
         if (d.courrier) this.courrier = Object.assign(this.courrier, d.courrier); if (d.bonus) this.bonus = Object.assign(this.bonus, d.bonus); if (d.trophees) this.trophees = d.trophees;
         if (d.progress) Object.assign(this.progress, d.progress);
-        if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {}; if (!this.progress.combos) this.progress.combos = {}; if (!this.progress.familiers) this.progress.familiers = {};
+        if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {}; if (!this.progress.combos) this.progress.combos = {}; if (!this.progress.familiers) this.progress.familiers = {}; if (!this.progress.leconsVues) this.progress.leconsVues = []; if (!this.progress.leconsFaites) this.progress.leconsFaites = []; this.progress._evts = [];
         { // refonte : les anciennes essences deviennent des aspects
           const p = this.progress; if (!p.mods.includes('reduire')) p.mods.push('reduire');
           for (const c of p.cores.slice()) { const M2 = DATA.MIGRATION[c]; if (!M2) continue; p.cores = p.cores.filter((q) => q !== c); if (!p.mods.includes(M2[1])) p.mods.push(M2[1]); if (p.maitrise[c]) { p.maitrise[M2[0]] = (p.maitrise[M2[0]] || 0) + p.maitrise[c]; delete p.maitrise[c]; } }

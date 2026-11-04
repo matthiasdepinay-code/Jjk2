@@ -438,6 +438,36 @@ const DATA = (() => {
     familier: { id: 'familier', nom: 'Familier',            mode: 'fly',   w: 20, h: 20, hp: 4, dmg: 0, hostile: false, aime: null, craint: null, drop: null, desc: 'Un petit élémentaire invoqué.' },
   };
 
+  // Leçons du maître : une par nouveauté, avec un petit essai à faire. quand : la leçon paraît ; sceau / evt / obs : ce qui la valide
+  const aspectDe = (s) => (s.mods || []).some((m) => typeof m === 'string' && ASPECTS[m] && ASPECTS[m].aspect && (ASPECTS[m].aspect === s.core || ASPECTS[m].aspect === s.core2));
+  const LECONS = [
+    { id: 'l_premier',  titre: 'Le premier sceau',      quand: () => true, essai: 'Pose un glyphe d\'effet au centre, une forme au premier anneau, et lance le sceau.', sceau: () => true, xp: 10 },
+    { id: 'l_forme',    titre: 'Changer de forme',      quand: (p) => p.shapes.length >= 3, essai: 'Garde le même effet et change la forme : lance un Mur ou une Zone.', sceau: (s) => s.shape === 'mur' || s.shape === 'zone', xp: 15 },
+    { id: 'l_modif',    titre: 'Le second anneau',      quand: (p) => p.mods.length >= 3, essai: 'Pose un modificateur sur le second anneau : Puissance, Taille, Durée...', sceau: (s) => (s.mods || []).some((m) => typeof m === 'string' && MODS[m] && !ASPECTS[m]), xp: 15 },
+    { id: 'l_contact',  titre: 'Attendre le contact',   quand: (p) => p.triggers.includes('contact'), essai: 'Sur la pointe haute, Au contact : le sort attend de toucher quelque chose pour éclater.', sceau: (s) => s.trigger === 'contact' || s.trigger2 === 'contact', xp: 15 },
+    { id: 'l_aspect',   titre: 'Les aspects',           quand: (p) => p.mods.some((m) => ASPECTS[m]), essai: 'Pose un aspect avec son essence : l\'Eau avec Gel devient le froid, la Terre avec Minerai le métal.', sceau: (s) => aspectDe(s), xp: 20 },
+    { id: 'l_fusion',   titre: 'Deux essences',         quand: (p) => p.fusion, essai: 'Sur un sceau moyen, pose un second effet sous le cercle : les deux fusionnent.', sceau: (s) => !!s.core2 && s.taille !== 'petit', xp: 20 },
+    { id: 'l_phen',     titre: 'Faire naître un phénomène', quand: (p) => p.fusion, essai: 'Trouve une fusion qui fait naître un phénomène. Essaie le Feu tenu par la Gravité.', evt: 'combo_decouvert', xp: 30 },
+    { id: 'l_tenu',     titre: 'Tenir un sort',         quand: (p) => p.triggers.includes('tenu'), essai: 'Avec le déclencheur Maintenu, garde le clic enfoncé : le sort suit ta souris, puis lâche.', sceau: (s) => s.trigger === 'tenu' || s.trigger2 === 'tenu', xp: 20 },
+    { id: 'l_invoc',    titre: 'Un familier',           quand: (p) => p.shapes.includes('invocation'), essai: 'La forme Invocation fait naître la créature de l\'essence au centre. Invoque-en une.', sceau: (s) => s.shape === 'invocation', xp: 20 },
+    { id: 'l_ordres',   titre: 'Parler aux familiers',  quand: (p) => (p.leconsFaites || []).includes('l_invoc'), essai: 'Donne un ordre : V pour « reste ici » ou « suis-moi », B pour « attaque » (la créature sous la souris), N pour les congédier.', evt: 'ordre', xp: 15 },
+    { id: 'l_matiere',  titre: 'La matière',            quand: (p) => p.mods.includes('matiere'), essai: 'Avec Matière, l\'effet devient solide. Lance une lame de glace : Eau, Gel, Matière, en projectile.', sceau: (s) => (s.mods || []).includes('matiere'), xp: 20 },
+    { id: 'l_dims',     titre: 'Sculpter la forme',     quand: (p) => p.tailles.includes('moyen'), essai: 'Sous le cercle, règle la largeur et la hauteur : un Mur large et bas se couche en pont.', sceau: (s) => (s.dimL || 1) !== 1 || (s.dimH || 1) !== 1, xp: 15 },
+    { id: 'l_chaleur',  titre: 'La chaleur',            quand: (p) => (p.leconsFaites || []).includes('l_premier'), essai: 'La chaleur se propage : fais fondre de la glace ou de la neige, même sans la toucher.', obs: 'fonte', xp: 15 },
+    { id: 'l_chute',    titre: 'Ce qui ne tient plus',  quand: (p) => (p.leconsFaites || []).includes('l_forme'), essai: 'Creuse sous une dalle ou fais sauter un pilier : ce qui ne tient plus tombe, ou bascule.', evt: 'effondrement', xp: 20 },
+    { id: 'l_prise',    titre: 'Saisir',                quand: (p) => p.shapes.includes('prise'), essai: 'Avec la forme Prise, saisis l\'eau d\'un lac ou un tas de sable, promène-le, puis lance-le.', sceau: (s) => s.shape === 'prise', xp: 15 },
+    { id: 'l_vent',     titre: 'Le vent',               quand: (p) => p.cores.includes('vent'), essai: 'Le vent souffle et garde son élan : pousse la fumée, un nuage ou les flammes avec un sort de Vent.', sceau: (s) => s.core === 'vent' || s.core2 === 'vent', xp: 15 },
+    { id: 'l_trio',     titre: 'Trois effets',          quand: (p) => p.fusion && p.tailles.includes('grand'), essai: 'Sur un grand sceau, deux essences et un aspect : certaines fusions à trois existent. Le grimoire en garde la trace.', evt: 'combo_decouvert_trio', xp: 40 },
+  ];
+  // la recette d'une fusion en glyphes : essences et aspects
+  function recetteCombo(cle) {
+    const ess = (e) => { if (CORES[e] && !CORES[e].interne) return { core: e, mod: null }; for (const a in ASPECTS) if (ASPECTS[a].devient === e) return { core: ASPECTS[a].aspect, mod: a }; return null; };
+    const parts = cle.split('|').map(ess); if (parts.some((q) => !q) || parts.length > 2) return null;
+    // l'aspect se pose sur la dernière occurrence de son essence : on la met en second
+    parts.sort((a, b) => (a.mod ? 1 : 0) - (b.mod ? 1 : 0));
+    return { core: parts[0].core, core2: parts[1] ? parts[1].core : null, mods: parts.filter((q) => q.mod).map((q) => q.mod) };
+  }
+
   // Familiers : la forme Invocation fait naître la créature de l'essence du sceau
   // mode : sol (marche), vol (vole), orbite (tourne autour de toi), roue (roule), chenille (rampe, se nymphose, s'envole)
   const FAMILIERS = {
@@ -765,5 +795,5 @@ const DATA = (() => {
   // affinité : combien un geste aimé rapproche (sur 100)
   const AFFINITE = { golem: { gain: 4, parJour: 20 }, follet: { gain: 12 }, limace: { gain: 15 }, salamandre: { gain: 14 }, chauve: { gain: 15 } };
 
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle, FAMILIERS };
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle, FAMILIERS, LECONS, recetteCombo };
 })();

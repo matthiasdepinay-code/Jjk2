@@ -15,14 +15,17 @@
   window.__inp = inp;
 
   // ---------- Progression ----------
+  // les événements qui valident les leçons du maître
+  const LECON_EVTS = new Set(['sort', 'combo_decouvert', 'combo_decouvert_trio', 'ordre', 'effondrement']);
   function makeProgress() {
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
       tailles: DATA.DEBUT.tailles.slice(), filtres: DATA.DEBUT.filtres.slice(), cibles: DATA.DEBUT.cibles.slice(), deuxMains: false, enchainements: [],
-      recettes: [], ingredientsVus: [], done: [], maitrise: {}, combos: {}, familiers: {}, nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
+      recettes: [], ingredientsVus: [], done: [], maitrise: {}, combos: {}, familiers: {}, leconsVues: [], leconsFaites: [], _evts: [], nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
       compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0, terre: 0, creaturesTouchees: 0, vols: 0, portes: 0, lancers: 0, niveau: 1, sceaux: 0 },
       event(name, data) {
         const k = this.compteurs;
+        if (this._evts && LECON_EVTS.has(name) && this._evts.length < 200) this._evts.push([name, data]);
         switch (name) {
           case 'hit': if (!k.kindsHit.includes(data)) k.kindsHit.push(data); break;
           case 'mannequin': k.mannequin++; break;
@@ -124,6 +127,7 @@
       Son.sfx('pickup'); this.save();
     },
     observe(kind) {
+      if (this.progress._evts && this.progress._evts.length < 50) this.progress._evts.push(['obs', kind]);
       const O = DATA.OBSERVATIONS[kind]; if (!O) return;
       const n = (this.progress.obs[kind] || 0) + 1;
       this.progress.obs[kind] = n;
@@ -228,8 +232,22 @@
       return { ok: true, merci: l.merci, recu };
     },
     bonusPermanent(k, n) { this.bonus[k] = (this.bonus[k] || 0) + n; this.applyNiveau(); this.save(); },
+    // les leçons du maître : elles paraissent avec les nouveautés et se valident par l'usage
+    checkLecons() {
+      const p = this.progress; if (!p.leconsVues) return;
+      const evts = p._evts || []; p._evts = [];
+      for (const L of DATA.LECONS) {
+        if (p.leconsFaites.includes(L.id)) continue;
+        let paru = p.leconsVues.includes(L.id);
+        if (!paru) { let q = false; try { q = L.quand(p); } catch (e) { q = false; } if (!q) continue; p.leconsVues.push(L.id); paru = true; this.toast('✉ Leçon du maître : ' + L.titre + '. ' + L.essai, 'unlock'); }
+        let fait = false;
+        for (const [n, d] of evts) { try { if (L.sceau && n === 'sort' && d && L.sceau(d)) fait = true; if (L.evt && n === L.evt) fait = true; if (L.obs && n === 'obs' && d === L.obs) fait = true; } catch (e) { /* une leçon mal écrite ne bloque rien */ } }
+        if (fait) { p.leconsFaites.push(L.id); p.nouveau = true; this.toast('✦ Leçon apprise : ' + L.titre + ' (+' + L.xp + ' exp.)', 'unlock'); Son.sfx('unlock'); this.addXp(L.xp); this.save(); }
+      }
+    },
     checkDefis(w) {
       const p = this.progress;
+      this.checkLecons();
       { const l = this.lettreCourante(); if (l && l.cmd.type === 'exploit' && !this.courrier.exploitOk) { let ok = false; try { ok = l.cmd.cond(p, w); } catch (e) { ok = false; } if (ok) { this.courrier.exploitOk = true; this.toast('✉ Exploit accompli : « ' + l.cmd.texte + ' ». Le corbeau attend ta réponse au labo.', 'unlock'); Son.sfx('unlock'); this.save(); } } }
       for (const d of DATA.DEFIS) {
         if (p.defisFaits.includes(d.id)) continue;
@@ -408,11 +426,11 @@
       const e = this.itemMain(hand);
       if (!e) { this.toast('Emplacement vide. Prépare un sceau ou une potion au labo.', 'warn'); return; }
       const aim = World.toWorld(inp.mouse.x, inp.mouse.y);
-      if (e.type === 'seal') { if (World.castSeal(e.seal, aim, false, charge, hand)) this.progress.event('sort', e.seal); }
+      if (e.type === 'seal') World.castSeal(e.seal, aim, false, charge, hand);
       else if (e.type === 'parchemin') {
         const q = this.inv.parchemins[e.nom];
         if (!q || q.n <= 0) { this.toast('Plus de parchemin « ' + e.nom + ' ». Retourne à la presse.', 'warn'); Son.sfx('fail'); return; }
-        if (World.castSeal(q.seal, aim, true, charge, hand)) { q.n--; this.progress.event('sort', q.seal); UI.refreshHotbar(); this.save(); }
+        if (World.castSeal(q.seal, aim, true, charge, hand)) { q.n--; UI.refreshHotbar(); this.save(); }
       }
       else if (e.type === 'potion') {
         const store = e.forte ? this.inv.fortes : this.inv.potions;
@@ -442,7 +460,7 @@
         if (d.carte) this.carte = d.carte;
         if (d.courrier) this.courrier = Object.assign(this.courrier, d.courrier); if (d.bonus) this.bonus = Object.assign(this.bonus, d.bonus); if (d.trophees) this.trophees = d.trophees;
         if (d.progress) Object.assign(this.progress, d.progress);
-        if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {}; if (!this.progress.combos) this.progress.combos = {}; if (!this.progress.familiers) this.progress.familiers = {};
+        if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {}; if (!this.progress.combos) this.progress.combos = {}; if (!this.progress.familiers) this.progress.familiers = {}; if (!this.progress.leconsVues) this.progress.leconsVues = []; if (!this.progress.leconsFaites) this.progress.leconsFaites = []; this.progress._evts = [];
         { // refonte : les anciennes essences deviennent des aspects
           const p = this.progress; if (!p.mods.includes('reduire')) p.mods.push('reduire');
           for (const c of p.cores.slice()) { const M2 = DATA.MIGRATION[c]; if (!M2) continue; p.cores = p.cores.filter((q) => q !== c); if (!p.mods.includes(M2[1])) p.mods.push(M2[1]); if (p.maitrise[c]) { p.maitrise[M2[0]] = (p.maitrise[M2[0]] || 0) + p.maitrise[c]; delete p.maitrise[c]; } }
