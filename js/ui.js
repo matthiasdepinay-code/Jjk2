@@ -554,7 +554,12 @@ const UI = (() => {
       if (ls.length) L.push('Place : ' + ls.join(' ; ') + '.');
       if (Seal.enDeuxTemps(s)) { const partie = (X) => { const sp = World.makeSpec(Seal.clone(X)), cI = sp.combo && DATA.comboInfo(sp.combo); return sp.cores.map(nomG).join(' et ') + (cI ? ' (fusion : ' + (comboConnu(sp.combo) ? cI.nom.toLowerCase() : 'inconnue') + ')' : ''); }; const [A, B] = Seal.scinder(s);
         L.push('En deux temps : ' + partie(A) + ' avec le premier déclencheur ; ' + partie(B) + ' à part, avec le second (' + DATA.TRIGGERS[s.trigger2].nom.toLowerCase() + ').'); } }
-    if (s.shape) L.push('Forme : ' + DATA.SHAPES[s.shape].nom.toLowerCase() + (prm.extra ? ', en double' : '') + (prm.orbite ? ', en orbite autour de toi' : '') + (prm.teleguide ? ', guidé par la souris' : '') + (prm.canalise ? ', canalisé tant que tu maintiens' : '') + '.');
+    if (s.shape) L.push('Forme : ' + DATA.SHAPES[s.shape].nom.toLowerCase() + (prm.extra && s.shape !== 'soi' ? ', en double' : '') + (prm.orbite ? ', en orbite autour de toi' : '') + (prm.teleguide ? ', guidé par la souris' : '') + (prm.canalise ? ', canalisé tant que tu maintiens' : '') + '.');
+    // sur soi : l'élan de l'essence du centre, teinté des autres
+    if (s.shape === 'soi') { const E = DATA.ELANS[cores[0]], tenuS = trs.includes('tenu'), txt = E && (tenuS ? E.tenu : E.imm);
+      if (txt) { const t2 = [s.taille !== 'petit' ? s.core2 : null, s.taille === 'grand' ? s.core3 : null].filter((c) => c && c !== s.core && DATA.TEINTES[c]).map((c) => DATA.CORES[c].nom.toLowerCase() + ' : ' + DATA.TEINTES[c]);
+        const nAv = (prm.rafale ? (prm.rafale > 1 ? 4 : 2) : 0) + (prm.extra || 0);
+        L.push('<b>Élan' + (tenuS ? ' maintenu' : '') + '</b> : ' + txt + (t2.length && !tenuS ? ' Teinté — ' + t2.join(' ; ') + '.' : '') + (nAv && !tenuS ? ' <span class="muted">' + nAv + ' élans d\'avance : reclique dans les 4 s, il repart aussitôt, sans encre.</span>' : '')); } }
     if (s.shape === 'invocation') { const F = DATA.FAMILIERS[s.core] || DATA.FAMILIERS.feu; L.push('Familier : <b>' + F.nom + '</b> — ' + F.desc + (prm.extra ? ' <span class="muted">Double : deux à la fois.</span>' : '')); }
     if (s.cible && s.taille !== 'petit') L.push('Cible : ' + (s.cible === 'creature' ? 'la créature hostile la plus proche, qu\'il suit' : 'ta marque la plus récente, même hors de vue') + '.');
     const tx = [];
@@ -571,7 +576,7 @@ const UI = (() => {
     if (trs.includes('expiration')) tx.push('et éclate une dernière fois quand il s\'éteint');
     L.push('Déclenchement : ' + tx.join(', ') + '.');
     const mv = [];
-    if (prm.traj) mv.push({ boomerang: 'revient comme un boomerang', spirale: 'vole en spirale', zigzag: 'file en zigzag', rasesol: 'court au ras du sol', cloche: 'retombe en cloche sur le point visé' }[prm.traj]); if (prm.percant) mv.push('traverse les créatures'); if (prm.gerbe) mv.push('éclate en gerbe'); if (prm.rafale) mv.push('part ' + (prm.rafale > 1 ? 5 : 3) + ' fois de suite'); if (prm.matiere) { const mt = cores.map((c) => DATA.MATIERE[c]).find(Boolean); mv.push(mt ? 'devient matière : ' + (mt === 'AIR' ? 'creuse' : Sim.P[Sim.M[mt]].nom) : 'Matière reste muette avec cet effet'); }
+    if (prm.traj) mv.push({ boomerang: 'revient comme un boomerang', spirale: 'vole en spirale', zigzag: 'file en zigzag', rasesol: 'court au ras du sol', cloche: 'retombe en cloche sur le point visé' }[prm.traj]); if (prm.percant) mv.push('traverse les créatures'); if (prm.gerbe) mv.push('éclate en gerbe'); if (prm.rafale && s.shape !== 'soi') mv.push('part ' + (prm.rafale > 1 ? 5 : 3) + ' fois de suite'); if (prm.matiere) { const mt = cores.map((c) => DATA.MATIERE[c]).find(Boolean); mv.push(mt ? 'devient matière : ' + (mt === 'AIR' ? 'creuse' : Sim.P[Sim.M[mt]].nom) : 'Matière reste muette avec cet effet'); }
     { const Dm = DATA.DIMS[s.shape]; if (Dm && s.taille !== 'petit' && ((s.dimL || 1) !== 1 || (s.dimH || 1) !== 1)) mv.push(Object.keys(Dm).map((ax) => Dm[ax].toLowerCase() + ' ×' + (ax === 'l' ? s.dimL || 1 : s.dimH || 1)).join(', ')); } if (prm.power > 1) mv.push('puissance ×' + prm.power.toFixed(1)); if (prm.range > 1) mv.push('portée ×' + prm.range.toFixed(1)); if (prm.size > 1) mv.push('taille ×' + prm.size.toFixed(1)); if (prm.duration > 1) mv.push('durée ×' + prm.duration.toFixed(1)); if (prm.speed > 1) mv.push('vitesse ×' + prm.speed.toFixed(1)); if (prm.bounces) mv.push(prm.bounces + ' rebonds'); if (prm.persist) mv.push('laisse une trace'); if (prm.echo) mv.push('écho ×' + prm.echo);
     if (mv.length) L.push('Réglages : ' + mv.join(', ') + '.');
     for (const e in prm.asp) { if (![s.core, s.core2, s.core3].includes(e)) continue; const Ls = prm.asp[e]; L.push((Ls.length > 1 ? 'Aspects : ' : 'Aspect : ') + Ls.map((A) => DATA.MODS[A.id].nom + (A.n > 1 ? ' ×2' : '')).join(' et ') + ' — ' + DATA.CORES[e].nom.toLowerCase() + ' devient ' + Ls.map((A) => nomG(A.devient)).join(' et ') + '.'); }
@@ -1141,8 +1146,10 @@ const UI = (() => {
     $('#hp-fill').style.width = (100 * Math.max(0, p.hp) / p.hpMax) + '%';
     if (g) { const need = DATA.XP.parNiveau(g.niveau); $('#xp-fill').style.width = (100 * g.xp / need) + '%'; $('#xp-txt').textContent = 'Niveau ' + g.niveau; }
     const sts = [];
-    const names = { forme: 'Métamorphose', wet: 'Trempé(e)', stone: 'Peau de pierre', invisible: 'Invisible', lowgrav: 'Léger(ère)', jump: 'Bonds', small: 'Minuscule', vision: 'Vision', burning: 'En feu !', glide: 'Planeur', lumiere: 'Lumineux(se)', patins: 'Patins de givre', vitesse: 'Foudroyé(e)', dissous: 'Mains d\'acide', vol: 'En vol', branchies: 'Branchies', geant: 'Géant(e)', glisse: 'Savonné(e)', hate: 'Hâte', lent: 'Englué(e)', armure: 'Armure', hoquet: 'Hoquet', glouglou: 'Glouglou', boussole: 'Boussole folle' };
-    for (const k in p.sta) if (p.sta[k] > 0) sts.push('<span class="st ' + k + '">' + (names[k] || k) + ' ' + Math.ceil(p.sta[k]) + 's</span>');
+    const names = { forme: 'Métamorphose', wet: 'Trempé(e)', stone: 'Peau de pierre', invisible: 'Invisible', lowgrav: 'Léger(ère)', jump: 'Bonds', small: 'Minuscule', vision: 'Vision', burning: 'En feu !', glide: 'Planeur', lumiere: 'Lumineux(se)', patins: 'Patins de givre', vitesse: 'Foudroyé(e)', dissous: 'Mains d\'acide', vol: 'En vol', branchies: 'Branchies', geant: 'Géant(e)', glisse: 'Savonné(e)', hate: 'Hâte', lent: 'Englué(e)', armure: 'Armure', hoquet: 'Hoquet', glouglou: 'Glouglou', boussole: 'Boussole folle', fantome: 'Sable fin', miroir: 'Miroir', regen: 'Régénération' };
+    // les statuts de mécanique (amorti d'un élan, suspension d'un instant...) ne s'affichent pas
+    const CACHES = ['amorti', 'suspendu'];
+    for (const k in p.sta) if (p.sta[k] > 0 && !CACHES.includes(k)) sts.push('<span class="st ' + k + '">' + (names[k] || k) + ' ' + Math.ceil(p.sta[k]) + 's</span>');
     $('#statuts').innerHTML = sts.join('');
   }
   function setMode(state) {

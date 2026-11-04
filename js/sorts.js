@@ -128,7 +128,9 @@ function creerSorts(W) {
     if (p.gestes[hand]) return false;
     let encre = null;
     if (seal.encre && DATA.ENCRES[seal.encre]) { if (((W.game.inv.encres || {})[seal.encre] || 0) > 0) encre = seal.encre; else if (!gratuit) W.msg('Plus d\'' + DATA.ENCRES[seal.encre].nom.toLowerCase() + ' : le sceau s\'écrit à l\'encre ordinaire.', 'warn'); }
-    const cost = gratuit ? 0 : Math.max(1, Math.round(Seal.cost(seal) * (W.game.opt ? W.game.opt.cout : 1) * (1 + charge) * maitreMul(seal) * (encre === 'encre_or' ? 0.6 : 1)));
+    // un élan d'avance (Rafale sur soi) : le sceau repart aussitôt, sans encre
+    const avance = !gratuit && W.EL.avance(seal);
+    const cost = gratuit || avance ? 0 : Math.max(1, Math.round(Seal.cost(seal) * (W.game.opt ? W.game.opt.cout : 1) * (1 + charge) * maitreMul(seal) * (encre === 'encre_or' ? 0.6 : 1)));
     if (p.ink < cost) { W.msg('Plus assez d\'encre (' + Math.floor(p.ink) + '/' + cost + ').', 'warn'); Son.sfx('fail'); return false; }
     p.ink -= cost;
     if (gratuit) W.part(p.x + p.w / 2, p.y + p.h * 0.4, '#efe3c4', 8, 40, 0.6, 3, 60);
@@ -138,9 +140,9 @@ function creerSorts(W) {
     if (seal.core === 'terre' || seal.core2 === 'terre') W.evt('terre');
     if (Seal.triggers(seal).includes('retarde')) W.evt('retarde');
     // tracé déjà fait en tenant le clic (o.sansGeste) : le sort part aussitôt
-    const gt = o.sansGeste ? 0.001 : Seal.geste(seal) * (1 + charge * 0.5);
+    const gt = o.sansGeste || avance ? 0.001 : Seal.geste(seal) * (1 + charge * 0.5);
     if (encre) { W.game.inv.encres[encre]--; if (W.game.inv.encres[encre] === 0) W.msg('C\'était la dernière goutte d\'' + DATA.ENCRES[encre].nom.toLowerCase() + '.'); }
-    p.gestes[hand] = { seal, aim: { x: aim.x, y: aim.y }, t: gt, max: gt, color: encre ? DATA.ENCRES[encre].couleur : W.colorOf(seal.core), charge, hand, encre, cost };
+    p.gestes[hand] = { seal, aim: { x: aim.x, y: aim.y }, t: gt, max: gt, color: encre ? DATA.ENCRES[encre].couleur : W.colorOf(seal.core), charge, hand, encre, cost, avance };
     if (charge > 0.6) W.msg('Sort chargé : ' + Math.round(100 + charge * 80) + ' % de puissance.');
     W.evt('sort', seal);
     return true;
@@ -153,7 +155,7 @@ function creerSorts(W) {
     if (!o.scinde && Seal.enDeuxTemps(seal)) { const [A, B] = Seal.scinder(seal), fratrie = ++fratries; launch(A, origin, aim, { ...o, scinde: true, fratrie }); launch(B, origin, aim, { ...o, scinde: true, fratrie }); return; }
     const p = W.st.p;
     const spec = makeSpec(seal, o.depth || 0, o.charge || 0);
-    spec.player = !!o.player; if (o.fratrie) spec.fratrie = o.fratrie;
+    spec.player = !!o.player; if (o.fratrie) spec.fratrie = o.fratrie; spec.avance = !!o.avance;
     if (o.encre) appliquerEncre(spec, o.encre);
     const prm = spec.prm, trig = spec.trig, C = spec.color;
     const ox = origin.x, oy = origin.y;
@@ -308,12 +310,16 @@ function creerSorts(W) {
       for (let k = n0; k < W.st.sp.length; k++) if (W.st.sp[k].k === 'proj') { const q = W.st.sp[k]; q.tenu = tenu; q.guide = false; q.grav = 0; q.traj = null; }
       return;
     }
+    // sur soi : l'élan maintenu de l'essence (voler, creuser, sortir de son corps...)
+    if (seal.shape === 'soi' && W.EL.tenir(spec, hand, tenu.drain)) return;
     // le reste : l'effet est canalisé là où pointe la souris (ou sur toi), tant qu'on tient
     const soi = seal.shape === 'soi' || seal.shape === 'aura';
     W.st.sp.push({ k: 'canal', spec, t: 0, tick: 0, range: tenu.portee, r: (soi ? 70 : 50) * sz * (seal.shape === 'zone' || seal.shape === 'aura' ? prm.dimL || 1 : 1), cost: tenu.drain, tenu, soi, trait: seal.shape === 'trait' });
   }
   function selfCast(spec, aim, noRepeat) {
-    if (!spec.combo) for (const core of spec.cores) W.applySelf(core, spec.prm, aim, spec);
+    // l'élan de l'essence du centre, teinté des autres (même dans une fusion : le phénomène suit, en plus)
+    const elan = W.EL.lancer(spec, aim);
+    if (!spec.combo && !elan) for (const core of spec.cores) W.applySelf(core, spec.prm, aim, spec);
     if (spec.repeat && !noRepeat) capRepetitions();
     if (spec.repeat && !noRepeat) W.st.sp.push({ k: 'repeat', self: true, spec, aim, t: spec.repeat, max: spec.repeat, left: clamp(Math.round(8 * spec.prm.duration / spec.repeat), 2, 8) });
     if (noRepeat) return;

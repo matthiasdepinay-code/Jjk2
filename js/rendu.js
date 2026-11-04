@@ -63,7 +63,9 @@ function creerRendu(W) {
     for (const c of W.st.crs) if (c.hp > 0) drawCreature(ctx, c);
     W.GD.dessinerTirs(ctx, W.time);
     W.CP.dessiner(ctx, W.time);
+    W.EL.dessiner(ctx, W.time, 'avant');
     drawPlayer(ctx, p);
+    W.EL.dessiner(ctx, W.time, 'apres');
     for (const q of W.st.portails) { ctx.save(); ctx.strokeStyle = '#4fb0a0'; ctx.lineWidth = 3; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.ellipse(q.x, q.y, q.r * 0.55, q.r, 0, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.2; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.ellipse(q.x, q.y, q.r * 0.3, q.r * 0.7, W.time * 2, 0, TAU); ctx.stroke(); ctx.restore(); if (Math.random() < 0.3) W.part(q.x + (Math.random() - 0.5) * 20, q.y + (Math.random() - 0.5) * 40, '#4fb0a0', 1, 10, 0.5, 2, 0, 'spark'); }
     if (W.st.lien) { ctx.save(); ctx.strokeStyle = '#c9a63a'; ctx.lineWidth = 2.5; U.inkLine(ctx, p.x + p.w / 2, p.y + p.h * 0.4, W.st.lien.x, W.st.lien.y, Math.floor(W.time * 3), 2); ctx.fillStyle = '#c9a63a'; ctx.beginPath(); ctx.arc(W.st.lien.x, W.st.lien.y, 4, 0, TAU); ctx.fill(); ctx.restore(); }
     if (W.st.control) { const c = W.st.control.c; ctx.save(); ctx.strokeStyle = '#b08ad8'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); U.inkCircle(ctx, c.x + c.w / 2, c.y + c.h / 2, Math.max(c.w, c.h) * 0.8, 2, 1.5); ctx.setLineDash([]); ctx.globalAlpha = 0.5; U.inkLine(ctx, p.x + p.w / 2, p.y + 10, c.x + c.w / 2, c.y, 3, 3); ctx.restore(); }

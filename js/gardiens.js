@@ -269,7 +269,10 @@ function creerGardiens(W) {
       if (t.type === 'orbe' && Math.random() < 0.3) W.part(t.x, t.y, '#fff2a0', 1, 40, 0.2, 1.4, 0, 'etincelle');
       // un bouclier de sceau arrête les projectiles
       if (st().sp.some((q) => q.k === 'bouclier' && dist(q.x, q.y, t.x, t.y) < q.r + t.r)) { t.mort = true; W.part(t.x, t.y, '#e0b050', 6, 70, 0.3, 2, 0, 'spark'); continue; }
-      if (U.circleRect(t.x, t.y, t.r, p)) {
+      // renvoyé par le miroir du Contre-sort : il frappe les bêtes et les gardiens
+      if (t.renvoi) { const c = st().crs.find((q) => q.hp > 0 && q.t !== 'familier' && !q.sta.tame && U.circleRect(t.x, t.y, t.r + 4, q)); if (c) { W.hurt(c, 2, 'contre'); W.part(t.x, t.y, '#a8a29a', 8, 80, 0.3, 2, 0, 'spark'); t.mort = true; continue; } }
+      else if (p.sta.miroir > 0 && U.circleRect(t.x, t.y, t.r + 14, p)) { t.vx = -t.vx * 1.15; t.vy = -t.vy * 0.9; t.renvoi = true; t.life = Math.max(t.life, 1.5); W.part(t.x, t.y, '#a8a29a', 10, 90, 0.3, 2, 0, 'spark'); W.son('click'); continue; }
+      if (!t.renvoi && U.circleRect(t.x, t.y, t.r, p)) {
         const dir = Math.sign(t.vx) || 1;
         if (t.type === 'epine' && frapper(1, dir, 200, -160)) W.msg('Une graine épineuse te pique !', 'warn');
         if (t.type === 'lave' && frapper(1.5, dir, 220, -200)) { if (!(p.sta.wet > 0)) p.sta.burning = 2; W.msg('Un boulet de lave t\'éclabousse !', 'warn'); }

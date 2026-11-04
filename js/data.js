@@ -836,5 +836,25 @@ const DATA = (() => {
   // affinité : combien un geste aimé rapproche (sur 100)
   const AFFINITE = { golem: { gain: 4, parJour: 20 }, follet: { gain: 12 }, limace: { gain: 15 }, salamandre: { gain: 14 }, chauve: { gain: 15 } };
 
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle, FAMILIERS, LECONS, recetteCombo, TRIOS, GARDIENS, TENUES_MASCOTTES };
+  // ---------- les élans : ce que chaque essence fait de toi, sur soi (js/elans.js) ----------
+  const ELANS = {
+    feu: { imm: 'une gerbe de flammes te propulse vers la souris (le sol s\'embrase un peu derrière toi), et tu retombes sans mal.', tenu: 'tu voles sur tes flammes.' },
+    eau: { imm: 'un jet d\'eau te pousse (très vite dans l\'eau), et tu respires l\'eau un moment.', tenu: 'le jet te porte où tu vises.' },
+    terre: { imm: 'un pilier te soulève (de pierre avec Persistance : il reste) ; en l\'air, vise en bas pour t\'abattre en onde de choc. Peau de pierre.', tenu: 'tu creuses comme une taupe (la pierre cède plus lentement, sauf avec Puissance).' },
+    vent: { imm: 'une bourrasque te jette vers la souris, puis tu planes.', tenu: 'tu voles où pointe la souris.' },
+    vie: { imm: 'elle te soigne, et une liane t\'emporte vers le mur visé (grimpe-y avec ↑).', tenu: 'la liane te tient en corde, et tu te régénères.' },
+    lumiere: { imm: 'tu files en un rayon jusqu\'au mur, aveuglant ce que tu traverses, et tu luis.', tenu: 'tu deviens lumière : rien ne te touche, tu files où tu vises.' },
+    foudre: { imm: 'un éclair : tu fonces d\'un coup, ce que tu traverses est foudroyé, puis tes jambes crépitent.', tenu: 'une tempête d\'éclairs, de bond en bond vers la souris.' },
+    gravite: { tenu: 'tu lévites vers la souris.' },
+    temps: { tenu: 'le monde ralentit autour de toi ; toi, non.' },
+    portail: { imm: 'tu te téléportes là où tu vises, même derrière un mur ; sur une bête, vous échangez vos places ; vers un portail, tu ressors par l\'autre.', tenu: 'vise où paraître, lâche : tu y es (plus loin).' },
+    esprit: { imm: 'sur une bête, tu entres dans sa tête ; sinon ton esprit s\'élance et prend la première qu\'il touche.', tenu: 'ton esprit sort de ton corps : promène-le à travers les murs, il lit les bêtes et entre dans celle qu\'il touche.' },
+    transmutation: { imm: 'ton corps devient sable fin : tu traverses la roche (↓ pour t\'enfoncer dans le sol).', tenu: 'sable fin tant que tu tiens.' },
+    contre: { imm: 'tout s\'arrête : tu restes suspendu(e) un instant, un miroir renvoie les tirs, la magie alentour se dissipe.', tenu: 'suspendu(e) dans l\'air, et les tirs te reviennent dessus... renvoyés.' },
+    metamorphose: { tenu: 'tu gardes ta forme tant que tu tiens.' },
+  };
+  // une seconde (ou troisième) essence teinte l'élan : sa trace, son arrivée
+  const TEINTES = { feu: 'brûle ce que tu traverses', eau: 'éclabousse et mouille', terre: 'une onde de choc à l\'arrivée', vent: 'tu planes ensuite', vie: 'soigne, enlace les bêtes', lumiere: 'aveugle ce que tu traverses', foudre: 'plus vite, intouchable, foudroie', gravite: 'tu deviens léger(ère)', temps: 'le monde ralentit un instant', portail: 'tu y es d\'un clin d\'œil', esprit: 'effraie ce que tu traverses', transmutation: 'traverse les murs', contre: 'dissipe la magie, puis arrêt net', metamorphose: 'change les bêtes traversées' };
+  for (const e in ELANS) { const C = CORES[e], E = ELANS[e]; if (E.imm) C.desc = C.desc.replace(/ Sur soi : [^.]*\./, '') + ' Sur soi : ' + E.imm; C.desc += ' Maintenu sur soi : ' + E.tenu; }
+  return { ELANS, TEINTES, FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle, FAMILIERS, LECONS, recetteCombo, TRIOS, GARDIENS, TENUES_MASCOTTES };
 })();

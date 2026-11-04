@@ -32,7 +32,7 @@ const World = (() => {
     for (const o of L.objs) st.objs.push(makeObj(o));
     for (const c of L.crs) st.crs.push(makeCreature(c));
     if (saved) restore(saved);
-    Sim.ancrer(); PH.reset(); GD.reset(); CP.reset();
+    Sim.ancrer(); PH.reset(); GD.reset(); CP.reset(); EL.reset();
     if (aRestaurer) { const R = aRestaurer; aRestaurer = null; try { for (const q of R.familiers) { if (!DATA.FAMILIERS[q.espece]) continue; const spec = makeSpec(Seal.clone(q.seal)); const f = nouveauFamilier(spec, q.espece, q.x, q.y); f.life = q.life; f.hp = Math.min(f.hpMax, q.hp); f.age = q.age || 0; st.crs.push(f); } PH.restaurer(R.phen); } catch (e) { console.warn('restauration des familiers et phénomènes', e); } }
     st.cam.x = clamp(st.p.x - VW / 2, 0, L.w - VW); st.cam.y = clamp(st.p.y - VH / 2, 0, L.h - VH);
     if (!darkCv) { darkCv = document.createElement('canvas'); darkCv.width = VW / 2; darkCv.height = VH / 2; } // l'obscurité, toute en dégradés, se calcule à demi-résolution
@@ -61,10 +61,19 @@ const World = (() => {
   const GD = creerGardiens({
     get st() { return st; }, get L() { return L; }, game: () => game, part: (...a) => part(...a), msg: (...a) => msg(...a), evt: (...a) => evt(...a),
     son: (a, b) => Son.sfx(a, b), shake: (v) => { st.shake = Math.max(st.shake, v); }, flash: (v) => { st.flash = Math.max(st.flash, v); },
-    moveBody: (b, dt) => moveBody(b, dt), applyGrav: (b, dt, k) => applyGrav(b, dt, k), dropPickup: (i, x, y) => dropPickup(i, x, y),
+    moveBody: (b, dt) => moveBody(b, dt), applyGrav: (b, dt, k) => applyGrav(b, dt, k), dropPickup: (i, x, y) => dropPickup(i, x, y), hurt: (...a) => hurt(...a),
+  });
+  // ---------- Les élans : ce que chaque essence fait de toi, sur soi (js/elans.js) ----------
+  const EL = creerElans({
+    get st() { return st; }, get L() { return L; }, get game() { return game; }, get time() { return time; }, get FORMES() { return FORMES; },
+    part: (...a) => part(...a), msg: (...a) => msg(...a), evt: (...a) => evt(...a), shake: (v) => { st.shake = Math.max(st.shake, v); },
+    applyEffect: (...a) => applyEffect(...a), applySelf: (...a) => applySelf(...a), gridEffect: (...a) => gridEffect(...a), dissiper: (...a) => EF.dissiper(...a),
+    hurt: (...a) => hurt(...a), colorOf: (c) => colorOf(c), controlCreature: (c, t) => controlCreature(c, t), attachLien: (...a) => attachLien(...a), posMarque: (m) => posMarque(m),
+    blockedBy: (b, s) => blockedBy(b, s), dynSolids: (e) => dynSolids(e), unstick: (b) => unstick(b), moveBody: (b, dt) => moveBody(b, dt), toWorld: (x, y) => toWorld(x, y),
+    tient: (h) => tientMain(h), respawn: () => respawn(),
   });
   // ---------- Rendu du monde : ciel, nuit, objets, créatures, joueur, sorts (js/rendu.js) ----------
-  const RD = creerRendu({ get CP() { return CP; }, get VW() { return VW; }, get VH() { return VH; }, get GD() { return GD; }, get PH() { return PH; }, get colorOf() { return colorOf; }, get darkCv() { return darkCv; }, get daylight() { return daylight; }, get emetActif() { return emetActif; }, get findInteraction() { return findInteraction; }, get game() { return game; }, get groundBelow() { return groundBelow; }, get labelInteraction() { return labelInteraction; }, get part() { return part; }, get posMarque() { return posMarque; }, get rayonPrise() { return rayonPrise; }, get saison() { return saison; }, get st() { return st; }, get time() { return time; }, get toWorld() { return toWorld; } });
+  const RD = creerRendu({ get EL() { return EL; }, get CP() { return CP; }, get VW() { return VW; }, get VH() { return VH; }, get GD() { return GD; }, get PH() { return PH; }, get colorOf() { return colorOf; }, get darkCv() { return darkCv; }, get daylight() { return daylight; }, get emetActif() { return emetActif; }, get findInteraction() { return findInteraction; }, get game() { return game; }, get groundBelow() { return groundBelow; }, get labelInteraction() { return labelInteraction; }, get part() { return part; }, get posMarque() { return posMarque; }, get rayonPrise() { return rayonPrise; }, get saison() { return saison; }, get st() { return st; }, get time() { return time; }, get toWorld() { return toWorld; } });
   function draw(...a) { return RD.draw(...a); }
   function drawApprenti(...a) { return RD.drawApprenti(...a); }
   // ---------- Créatures : bêtes du monde et familiers (js/creatures.js) ----------
@@ -76,7 +85,7 @@ const World = (() => {
   function tame(...a) { return CR.tame(...a); }
   function updateCreatures(...a) { return CR.updateCreatures(...a); }
   // ---------- Sorts : lancer, voler, éclater, saisir, boucliers (js/sorts.js) ----------
-  const SO = creerSorts({ get FLAM() { return FLAM; }, get L() { return L; }, get PH() { return PH; }, get applyEffect() { return applyEffect; }, get applySelf() { return applySelf; }, get bullesT() { return bullesT; }, get champForme() { return champForme; }, get colorOf() { return colorOf; }, get dropPickup() { return dropPickup; }, get dynSolids() { return dynSolids; }, get evt() { return evt; }, get game() { return game; }, get gravOf() { return gravOf; }, get gridEffect() { return gridEffect; }, get groundBelow() { return groundBelow; }, get hurt() { return hurt; }, get liquidOf() { return liquidOf; }, get makeObj() { return makeObj; }, get matiereCercle() { return matiereCercle; }, get matiereDe() { return matiereDe; }, get matiereLigne() { return matiereLigne; }, get matiereRect() { return matiereRect; }, get msg() { return msg; }, get murPoints() { return murPoints; }, get nouveauFamilier() { return nouveauFamilier; }, get part() { return part; }, get poserMatiere() { return poserMatiere; }, get potionBurst() { return potionBurst; }, get spawnLiquid() { return spawnLiquid; }, get spec0() { return spec0; }, set spec0(v) { spec0 = v; }, get st() { return st; }, get tempsDe() { return tempsDe; }, get time() { return time; }, get toWorld() { return toWorld; }, get unstick() { return unstick; }, get vieillir() { return vieillir; } });
+  const SO = creerSorts({ get EL() { return EL; }, get FLAM() { return FLAM; }, get L() { return L; }, get PH() { return PH; }, get applyEffect() { return applyEffect; }, get applySelf() { return applySelf; }, get bullesT() { return bullesT; }, get champForme() { return champForme; }, get colorOf() { return colorOf; }, get dropPickup() { return dropPickup; }, get dynSolids() { return dynSolids; }, get evt() { return evt; }, get game() { return game; }, get gravOf() { return gravOf; }, get gridEffect() { return gridEffect; }, get groundBelow() { return groundBelow; }, get hurt() { return hurt; }, get liquidOf() { return liquidOf; }, get makeObj() { return makeObj; }, get matiereCercle() { return matiereCercle; }, get matiereDe() { return matiereDe; }, get matiereLigne() { return matiereLigne; }, get matiereRect() { return matiereRect; }, get msg() { return msg; }, get murPoints() { return murPoints; }, get nouveauFamilier() { return nouveauFamilier; }, get part() { return part; }, get poserMatiere() { return poserMatiere; }, get potionBurst() { return potionBurst; }, get spawnLiquid() { return spawnLiquid; }, get spec0() { return spec0; }, set spec0(v) { spec0 = v; }, get st() { return st; }, get tempsDe() { return tempsDe; }, get time() { return time; }, get toWorld() { return toWorld; }, get unstick() { return unstick; }, get vieillir() { return vieillir; } });
   function castSeal(...a) { return SO.castSeal(...a); }
   function detoner(...a) { return SO.detoner(...a); }
   function doBurst(...a) { return SO.doBurst(...a); }
@@ -837,18 +846,21 @@ const World = (() => {
     }
     if (st.control) { p.vx = 0; }
     p.canStep = Gstd && !Gvol;
+    // les élans des essences prennent la main sur le corps (dash, vol, passe-muraille...)
+    const pilote = EL.piloter(p, dt, inp);
     const vyAvant = p.vy;
-    moveBody(p, dt);
+    if (pilote !== 2) moveBody(p, dt);
+    EL.apres(p, dt);
     if (!Gstd && !Gvol) p.onGround = blockedBy({ x: p.x + G.gx * 2, y: p.y + G.gy * 2, w: p.w, h: p.h }, dynSolids());
     if (enclume && p.onGround && vyAvant > 420) crush(p);
-    else if (Gstd && p.onGround && vyAvant > 1000 && !inWater && !(p.sta.glide > 0) && !(p.sta.vol > 0) && !(p.sta.lowgrav > 0) && !(p.sta.stone > 0)) { p.hp -= (vyAvant - 950) / 120; st.shake = 0.25; part(p.x + p.w / 2, p.y + p.h, '#8a7a5a', 10, 90, 0.5, 2, 300); msg('Aïe ! La chute fait mal.', 'warn'); }
+    else if (Gstd && p.onGround && vyAvant > 1000 && !inWater && !(p.sta.glide > 0) && !(p.sta.vol > 0) && !(p.sta.lowgrav > 0) && !(p.sta.stone > 0) && !(p.sta.amorti > 0) && pilote !== 2) { p.hp -= (vyAvant - 950) / 120; st.shake = 0.25; part(p.x + p.w / 2, p.y + p.h, '#8a7a5a', 10, 90, 0.5, 2, 300); msg('Aïe ! La chute fait mal.', 'warn'); }
     updateLien(dt, inp);
     updatePortails(dt);
     // pousser une caisse
     if (dirX !== 0) for (const o of st.objs) if (o.t === 'caisse' && !o.mort && !o.carried) { const probe = { x: p.x + dirX * 2, y: p.y, w: p.w, h: p.h }; if (U.rectsOverlap(probe, o)) o.vx = dirX * (p.sta.geant > 0 ? 160 : 70); }
     if (p.y > L.h + 50) { msg('Tu tombes dans l\'encre noire... et te réveilles devant ta porte.'); respawn(); }
     if (p.onGround && Math.abs(p.vx) > 30 && Math.random() < dt * 6) Son.sfx('step', 'terre');
-    if (p.gestes) for (const h of ['R', 'L']) { const g = p.gestes[h]; if (!g) continue; g.t -= dt; if (g.t <= 0) { p.gestes[h] = null; const tient = Seal.triggers(g.seal).includes('tenu'); if (tient && !tientMain(h)) { p.ink = Math.min(p.inkMax, p.ink + (g.cost || 0) * 0.8); msg('Tu as lâché trop tôt : le sceau se défait. Garde le clic enfoncé.'); part(p.x + p.w / 2, p.y + p.h * 0.4, g.color, 8, 40, 0.5, 2, 0, 'spark'); continue; } const aimL = tient ? toWorld(game.inp.mouse.x, game.inp.mouse.y) : g.aim; p.lastCast = { t: time, a: Math.atan2(aimL.y - (p.y + p.h * 0.4), aimL.x - (p.x + p.w / 2)), c: g.color }; launch(g.seal, { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, aimL, { depth: 0, player: true, charge: g.charge, encre: g.encre, tenu: tient ? h : null }); } }
+    if (p.gestes) for (const h of ['R', 'L']) { const g = p.gestes[h]; if (!g) continue; g.t -= dt; if (g.t <= 0) { p.gestes[h] = null; const tient = Seal.triggers(g.seal).includes('tenu'); if (tient && !tientMain(h)) { p.ink = Math.min(p.inkMax, p.ink + (g.cost || 0) * 0.8); msg('Tu as lâché trop tôt : le sceau se défait. Garde le clic enfoncé.'); part(p.x + p.w / 2, p.y + p.h * 0.4, g.color, 8, 40, 0.5, 2, 0, 'spark'); continue; } const aimL = tient ? toWorld(game.inp.mouse.x, game.inp.mouse.y) : g.aim; p.lastCast = { t: time, a: Math.atan2(aimL.y - (p.y + p.h * 0.4), aimL.x - (p.x + p.w / 2)), c: g.color }; launch(g.seal, { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, aimL, { depth: 0, player: true, charge: g.charge, encre: g.encre, tenu: tient ? h : null, avance: g.avance }); } }
     if (p.selfTimer) { p.selfTimer.t -= dt; if (p.selfTimer.t <= 0) { const q = p.selfTimer; p.selfTimer = null; selfCast(q.spec, q.aim); } }
     if (p.hp <= 0 && p.sta.phenix > 0) { p.sta.phenix = 0; p.hp = p.hpMax; p.inv = 2; p.sta.burning = 0; part(p.x + p.w / 2, p.y + p.h / 2, '#e8842a', 30, 140, 1, 4, -120); Son.sfx('unlock'); msg('Tu te relèves dans un battement d\'ailes de feu.'); }
     if (p.hp <= 0) { msg('Tu t\'évanouis... et te réveilles devant ta porte, un peu honteux(se).', 'warn'); Son.sfx('hurt'); respawn(); }
@@ -905,7 +917,7 @@ const World = (() => {
     updateParts(dt);
     updatePickups(dt);
     // caméra
-    const foc = st.control ? st.control.c : p;
+    const foc = st.control ? st.control.c : EL.focus() || p;
     const tx = clamp(foc.x + foc.w / 2 - VW / 2, 0, L.w - VW), ty = clamp(foc.y + foc.h / 2 - VH * 0.66, 0, L.h - VH);
     st.cam.x = lerp(st.cam.x, tx, Math.min(1, dt * 6)); st.cam.y = lerp(st.cam.y, ty, Math.min(1, dt * 5));
     if (st.shake > 0) st.shake -= dt;
@@ -1158,5 +1170,5 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, makeSpec, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a), get phen() { return PH; }, get gardiens() { return GD; }, get compagnons() { return CP; }, ordonner };
+  return { build, ensure, reset, update, draw, castSeal, makeSpec, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a), get phen() { return PH; }, get gardiens() { return GD; }, get compagnons() { return CP; }, get elans() { return EL; }, ordonner };
 })();

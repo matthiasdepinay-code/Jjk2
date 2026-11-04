@@ -778,7 +778,7 @@ function creerEffets(W) {
       case 'rouille': p.sta.armure = 0; around(); break;
     }
   }
-  function dissiper(x, y, rad) {
+  function dissiper(x, y, rad, silencieux) {
     const R = rad * 1.5; let n = 0; const p = W.st.p; const pin = dist(x, y, p.x + p.w / 2, p.y + p.h / 2) < R;
     for (const q of W.st.sp) if (q.k === 'prise' && !q.mort && dist(x, y, q.x, q.y) < R + 60) { q.tenue = false; W.ecraserPrise(q); n++; }
     const KINDS = ['field', 'trap', 'totem', 'timer', 'attente', 'repeat', 'expire', 'rain', 'orbit', 'canal', 'bouclier', 'beamtimer', 'echo', 'singularite', 'bulle', 'tornade', 'vague', 'colonne'];
@@ -792,7 +792,7 @@ function creerEffets(W) {
     Sim.forRadius(x, y, R, (cx, cy, i, m) => { if (Sim.elec[i] > 0) { Sim.elec[i] = 0; Sim.touch(i); } });
     n += W.PH.dissiper(x, y, R);
     W.st.sp.push({ k: 'ring', core: 'contre', x, y, r: R, life: 0.6, max: 0.6, color: '#a8a29a' });
-    W.msg(n ? 'La magie se dissipe (' + n + ').' : 'Rien à dissiper ici.');
+    if (!silencieux) W.msg(n ? 'La magie se dissipe (' + n + ').' : 'Rien à dissiper ici.');
   }
-  return { applyEffect, applyEffet0, gridEffect, gridEffectOn, effetDerive, applySelf, effetLangage, tornade, arcsTension, champForme, matiereDe, occupe, poserMatiere, matiereCercle, matiereRect, matiereLigne, murPoints, vieillir, metamorphoser, finMorph, morphSoi, finFormeSoi, formeDe, memoriser, passe, rembobiner, rembobinerSoi, dissiper, poserBulle };
+  return { dissiper, applyEffect, applyEffet0, gridEffect, gridEffectOn, effetDerive, applySelf, effetLangage, tornade, arcsTension, champForme, matiereDe, occupe, poserMatiere, matiereCercle, matiereRect, matiereLigne, murPoints, vieillir, metamorphoser, finMorph, morphSoi, finFormeSoi, formeDe, memoriser, passe, rembobiner, rembobinerSoi, dissiper, poserBulle };
 }

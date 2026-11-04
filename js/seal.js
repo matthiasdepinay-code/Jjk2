@@ -172,8 +172,12 @@ const Seal = (() => {
   }
   const PROJ = ['projectile', 'chaine'];
   // un modificateur n'agit que sur certaines formes
-  const SEULEMENT = { rebond: PROJ, teleguide: PROJ, orbite: PROJ, percant: PROJ, boomerang: PROJ, spirale: PROJ, zigzag: PROJ, rasesol: PROJ, cloche: ['projectile'], vitesse: PROJ.concat(['vague']), rafale: PROJ.concat(['trait']), double: PROJ.concat(['zone', 'mur', 'trait', 'invocation']) };
-  const JAMAIS = { canalise: ['projectile', 'soi', 'chaine', 'prise'], portee: ['soi', 'aura'] };
+  const SEULEMENT = { rebond: PROJ, teleguide: PROJ.concat(['soi']), orbite: PROJ, percant: PROJ, boomerang: PROJ, spirale: PROJ, zigzag: PROJ, rasesol: PROJ, cloche: ['projectile'], vitesse: PROJ.concat(['vague']), rafale: PROJ.concat(['trait', 'soi']), double: PROJ.concat(['zone', 'mur', 'trait', 'invocation', 'soi']) };
+  const JAMAIS = { canalise: ['projectile', 'soi', 'chaine', 'prise'], portee: ['aura'] };
+  // sur soi : ce que chaque essence du centre sait faire de la Portée, d'une cible, d'un élan
+  const SOI_PORTEE = ['foudre', 'lumiere', 'portail', 'vie', 'esprit', 'gravite'], SOI_CIBLE = ['feu', 'eau', 'vent', 'terre', 'vie', 'lumiere', 'foudre', 'portail', 'esprit', 'gravite'];
+  const SOI_ELAN = ['feu', 'eau', 'vent', 'terre', 'vie', 'foudre'];
+  const DE_CORE = (c) => { const n = DATA.CORES[c] ? DATA.CORES[c].nom : c; return (/^[AEÉIOU]/.test(n) ? 'de l\'' : ['feu', 'vent', 'temps', 'contre', 'portail', 'esprit'].includes(c) ? 'du ' : 'de la ') + n; };
   function inutiles(s) {
     const out = [], sh = s.shape, nb = nbSlots(s, NMODS);
     const nomF = (id) => (DATA.SHAPES[id] ? DATA.SHAPES[id].nom : id);
@@ -182,6 +186,8 @@ const Seal = (() => {
       if (!q || isSub(q) || i >= nb) return; const D = DATA.MODS[q]; if (!D) return; const sid = 'mod' + i;
       if (sh && SEULEMENT[q] && !SEULEMENT[q].includes(sh)) out.push({ sid, raison: D.nom + ' ne sert qu\'aux formes ' + SEULEMENT[q].map(nomF).join(', ') + '.' });
       else if (sh && JAMAIS[q] && JAMAIS[q].includes(sh)) out.push({ sid, raison: D.nom + ' ne fait rien sous la forme ' + nomF(sh) + '.' });
+      else if (sh === 'soi' && q === 'portee' && !SOI_PORTEE.includes(s.core)) out.push({ sid, raison: 'Sur soi, la Portée ne change rien à l\'élan ' + DE_CORE(s.core) + '.' });
+      else if (sh === 'soi' && q === 'teleguide' && !['foudre', 'vie', 'terre'].includes(s.core)) out.push({ sid, raison: 'Sur soi, Téléguidé ne courbe qu\'un élan en course (Foudre, Vie, Terre qui s\'abat).' });
       else if (D.aspect && !cores.includes(D.aspect)) out.push({ sid, raison: D.nom + ' est un aspect de l\'essence ' + DATA.CORES[D.aspect].nom + ', absente de ce sceau.' });
       else if (D.langue && !ef.includes(D.langue)) out.push({ sid, raison: D.nom + ' est un mot ' + ((DATA.LANGAGES[D.langue] || {}).de || D.langue) + ', absent de ce sceau.' });
       else if (q === 'matiere' && ef.length && !ef.some((e) => DATA.MATIERE[e])) out.push({ sid, raison: 'Matière : aucun effet de ce sceau n\'a de matière à rendre solide.' });
@@ -190,7 +196,7 @@ const Seal = (() => {
     if (s.taille === 'grand' && s.core3 && (s.core3 === s.core || s.core3 === s.core2)) out.push({ sid: 'core3', raison: 'Cette essence est déjà dans le sceau.' });
     if (s.taille === 'grand' && s.trigger2 && s.trigger2 === s.trigger) out.push({ sid: 'trigger2', raison: 'Le même déclencheur, deux fois.' });
     if (s.taille !== 'petit' && s.filtre && sh && !(PROJ.includes(sh) || (sh === 'zone' && triggers(s).some((t) => t === 'contact' || t === 'proximite')))) out.push({ sid: 'filtre', raison: 'Un filtre ne sert qu\'aux projectiles, ou à une zone posée en piège (Au contact, À proximité).' });
-    if (s.taille !== 'petit' && s.cible && (sh === 'soi' || sh === 'aura')) out.push({ sid: 'cible', raison: 'Sur soi ou en aura, le sort ne vise rien : la cible ne sert pas.' });
+    if (s.taille !== 'petit' && s.cible && (sh === 'aura' || (sh === 'soi' && !SOI_CIBLE.includes(s.core)))) out.push({ sid: 'cible', raison: sh === 'aura' ? 'En aura, le sort ne vise rien : la cible ne sert pas.' : 'Sur soi, cette essence ne vise rien : la cible ne sert pas.' });
     return out;
   }
   function count(s, mod) {
