@@ -61,5 +61,6 @@ const N = +(process.argv[2] || 600), SEED = +(process.argv[3] || 1);
   } catch (e) { res.probs.push('labo/reload ' + e.message); }
   console.log(JSON.stringify(res, null, 1));
   console.log('ERRORS (' + errors.length + '):\n' + ([...new Set(errors)].slice(0, 40).join('\n') || 'none'));
+  if (errors.length || (res.probs && res.probs.length)) process.exitCode = 1;
   await browser.close();
 })();

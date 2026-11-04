@@ -219,15 +219,30 @@ js/combos.js    phénomènes : les fusions d'essences, leur physique et leur des
 js/gardiens.js  gardiens des régions : comportement, projectiles, dessin, barre de vie
 js/rendu.js     rendu du monde : ciel, nuit, objets, créatures, joueur, sorts
 js/creatures.js bêtes du monde et familiers : mise à jour, ordres, affinité
-js/world.js     monde extérieur : état, sorts et effets, joueur, mécanismes, météo
+js/sorts.js     sorts : lancer, voler, éclater, saisir (Prise), boucliers, marques, enchaînements
+js/effets.js    effets des essences sur la matière, les créatures et soi ; Temps, Métamorphose, Rembobinage
+js/world.js     monde extérieur : état, joueur, mouvements, mécanismes, météo, sauvegarde du monde
 js/lab.js       scène du labo
 js/ui.js        éditeur de sceaux, chaudron, grimoire, HUD
 js/main.js      boucle, états, progression, expérience, sauvegarde
 docs/DESIGN.md  décisions de design et étapes à venir
 build.sh        fabrique dist/atelier-des-sceaux.html
 tests/          bancs d'essai (node tests/lancer.js) et outils : hasard, perf, endurance, traversée, tactile
+outils/         extraire.js : sort un lot de fonctions de world.js vers un module
+.github/        les tests tournent sur GitHub à chaque envoi
 ```
 
-Les modules extraits de `world.js` (phénomènes, gardiens, rendu, créatures) sont des fabriques `creerX(W)` : le monde leur passe un contexte de getters vers son état et ses fonctions, et garde quelques relais pour les appels qui restent chez lui.
+Les modules extraits de `world.js` (phénomènes, gardiens, rendu, créatures, sorts, effets) sont des fabriques `creerX(W)` : le monde leur passe un contexte de getters vers son état et ses fonctions (et de setters pour les rares variables qu'ils réaffectent), et garde des relais pour les appels qui restent chez lui. `outils/extraire.js` fait ce découpage par analyse du code (acorn) :
+
+- `node outils/extraire.js --essai f1 f2 ...` dit ce qu'un lot emprunte au monde, ce qu'il réaffecte et quels relais il faudrait, sans rien écrire ;
+- `node outils/extraire.js --module js/x.js --fabrique creerX --alias XX --titre "..." f1 f2 ... -- var1` écrit le module et met world.js à jour. Les variables après `--` partent avec le lot. Il reste à ajouter la balise `<script>` avant `world.js` et à lancer les tests.
 
 Tests : `node tests/lancer.js` lance tous les bancs dans un Chromium sans écran (Playwright) : glyphes, physique, fusions (les 69 fusions lancées dans plusieurs formes), fusions à trois, Maintenu, familiers, vent, énigmes, gardiens, sauvegarde, sons, lisibilité. `node tests/lancer.js gardiens enigmes` n'en lance que certains. `node tests/outils/tactile.js` vérifie les commandes tactiles sur un téléphone simulé.
+
+Le jeu lui-même n'a aucune dépendance ; `package.json` ne sert qu'aux tests et aux outils (`npm ci`, puis `npm test`). Sur GitHub, le workflow `.github/workflows/tests.yml` lance à chaque envoi et à chaque pull request :
+- les bancs d'essai ;
+- les commandes tactiles ;
+- 300 sceaux au hasard ;
+- une vérification que `dist/atelier-des-sceaux.html` correspond bien au code (sinon : `./build.sh` et commiter).
+
+En cas d'échec, il garde les captures des tests.
