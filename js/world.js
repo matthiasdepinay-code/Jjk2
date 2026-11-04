@@ -46,7 +46,7 @@ const World = (() => {
     groundBelow: (...a) => groundBelow(...a), spawnLiquid: (...a) => spawnLiquid(...a), addGField: (...a) => addGField(...a), vieillir: (...a) => vieillir(...a),
     makeCreature: (c) => makeCreature(c), masse: (e) => masse(e), chaudOk: (c) => CHAUD_OK.includes(c.t), froidOk: (c) => FROID_OK.includes(c.t),
     flash: (v) => { st.flash = Math.max(st.flash, v); }, shake: (v) => { st.shake = Math.max(st.shake, v); }, son: (a, b) => Son.sfx(a, b), colorOf: (c) => colorOf(c),
-    daylight: () => daylight(), revenir: (c) => finMorph(c), makeSpec: (s) => makeSpec(s), tient: (h) => tientMain(h), boire: (n) => { if (st.p.ink < n) return false; st.p.ink -= n; return true; },
+    daylight: () => daylight(), revenir: (c) => finMorph(c), makeSpec: (s) => makeSpec(s), ventAt: (x, y) => Sim.ventAt(x, y), tient: (h) => tientMain(h), boire: (n) => { if (st.p.ink < n) return false; st.p.ink -= n; return true; },
     origine: () => ({ x: st.p.x + st.p.w / 2, y: st.p.y + st.p.h * 0.45 }), cible: (R) => { const p = st.p, o = { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, a = toWorld(game.inp.mouse.x, game.inp.mouse.y); const dx = a.x - o.x, dy = a.y - o.y, d = Math.hypot(dx, dy) || 1, k = Math.min(1, R / d); return { x: o.x + dx * k, y: o.y + dy * k }; }, addXp: (n) => { if (game && game.addXp) game.addXp(n); }, tempsDe: (x, y) => (bullesT.length ? tempsDe(x, y, 2) : 1),
   });
   function respawn() {
@@ -946,6 +946,8 @@ const World = (() => {
     const lgN = prm.lg ? prm.lg[core] || 0 : 0;
     if (lgN) prm = { ...prm, power: (prm.power || 1) * (1 + 0.3 * lgN), duration: (prm.duration || 1) * (core === 'ombre' ? 2 : 1) };
     const power = prm.power || 1, dur = prm.duration || 1;
+    // le vent qui reste : un souffle depuis le point, ou vers lui
+    { const kk = burst ? 1 : Math.min(1, mode * 3); if (core === 'vent' || core === 'son') Sim.souffler(cx, cy, rad * 1.6, 0, 0, 1.6 * power * kk); else if (core === 'repulsion' || core === 'explosion') Sim.souffler(cx, cy, rad * 1.4, 0, 0, 1.1 * power * kk); else if (core === 'force') Sim.souffler(cx, cy, rad * 1.4, 0, 0, -1.0 * power * kk); }
     // la chaleur : le feu chauffe, le gel refroidit, l'explosion et la foudre échauffent
     { const kk = burst ? 1 : Math.min(1, mode * 3); const T = core === 'feu' ? 175 + 30 * lgN : core === 'explosion' ? 195 : core === 'froid' ? 18 - 8 * lgN : core === 'foudre' ? 150 : core === 'lumiere' && lgN ? 140 : core === 'secheresse' ? 120 : core === 'neutraliser' ? 48 : 0;
       if (T) Sim.chauffer(cx, cy, rad * (core === 'foudre' ? 0.4 : 0.9), T, clamp((core === 'froid' || core === 'feu' ? 0.55 : 0.35) * power * kk, 0, 1)); }
@@ -1962,6 +1964,15 @@ const World = (() => {
     updateObjs(dt);
     updateCreatures(dt);
     retenir();
+    if (Sim.ventVif) {
+      const pousse = (e, k) => { const [vx, vy] = Sim.ventAt(e.x + e.w / 2, e.y + e.h / 2); if (Math.abs(vx) + Math.abs(vy) < 0.25) return; e.vx += vx * k * dt / masse(e); e.vy += vy * k * 0.7 * dt / masse(e); };
+      for (const c of st.crs) if (c.hp > 0 && !c.carried && masse(c) < 2) pousse(c, 900);
+      for (const o of st.objs) if (o.dyn && !o.mort && !o.carried) pousse(o, 700);
+      pousse(p, p.sta.glide > 0 ? 700 : 260);
+      for (const s of st.sp) if (s.k === 'proj' && !s.tenu) { const [vx, vy] = Sim.ventAt(s.x, s.y); s.vx += vx * 150 * dt; s.vy += vy * 150 * dt; }
+    }
+    // la brise du temps qu'il fait
+    { const m = st.meteo && st.meteo.type; if (!st.briseDir || Math.random() < dt / 90) st.briseDir = Math.random() < 0.5 ? -1 : 1; const cible = m === 'orage' ? 0.55 : m === 'pluie' || m === 'neige' ? 0.22 : 0; Sim.brise += ((cible * st.briseDir) - Sim.brise) * Math.min(1, dt * 0.3); if (Math.abs(Sim.brise) < 0.02 && !cible) Sim.brise = 0; }
     updateSpells(dt);
     PH.update(dt);
     if ((nappeT = (nappeT || 0) + 1) % 3 === 0) Son.nappes(PH.nappes(st.cam.x + VW / 2, st.cam.y + VH / 2, VW / 2));
@@ -2515,16 +2526,18 @@ const World = (() => {
     for (const q of st.crs) if (q.hp > 0 && !q.sta.tame && q.t !== 'familier' && (q.dmg || 0) > 0 && q.sta.stun <= 0 && q.sta.sleep <= 0 && U.rectsOverlap(c, q) && time - (c.coupT || -9) > 1) { c.coupT = time; hurt(c, q.dmg * (esp === 'terre' ? 0.35 : 0.6), 'coup'); part(c.x + c.w / 2, c.y + c.h / 2, colorOf(esp), 6, 50, 0.4, 2); }
     // chacun sa place près de toi ; un porteur de phénomène se tient plus loin
     const fam = st.crs.filter((f) => f.t === 'familier' && f.hp > 0), k = Math.max(0, fam.indexOf(c));
-    const pcx = p.x + p.w / 2, pcy = p.y + p.h * 0.45, loin = c.porteur ? 130 : 0;
+    const garde = st.ordreFam === 'garder' && st.gardePt, pcx = garde ? st.gardePt.x : p.x + p.w / 2, pcy = garde ? st.gardePt.y : p.y + p.h * 0.45, loin = c.porteur ? 130 : 0;
+    const jx = p.x + p.w / 2, jy = p.y + p.h * 0.45;
     // la cible : une créature hostile proche de toi ou de lui
     let cible = null, bd = 1e9;
     for (const q of st.crs) { if (q === c || q.hp <= 0 || q.sta.tame || q.t === 'familier' || q.carried) continue; if (esp === 'esprit' && (q.sta.sleep > 0 || q.dort)) continue; const dq = dist(c.x, c.y, q.x, q.y), dp = dist(pcx, pcy, q.x + q.w / 2, q.y + q.h / 2); if ((dq < 260 || dp < 320) && dq < bd) { bd = dq; cible = q; } }
+    if (c.cibleForcee) { c.cibleT -= dt; if (c.cibleT <= 0 || c.cibleForcee.hp <= 0) c.cibleForcee = null; else cible = c.cibleForcee; }
     if (esp === 'metamorphose') { const T = c.age; c.stade = T < 8 ? 'chenille' : T < 10.5 ? 'cocon' : 'papillon'; c.stadeT = T - 8; c.vole = c.stade === 'papillon'; if (c.stade !== 'papillon') cible = null; if (c.stade === 'papillon' && !c.eclos) { c.eclos = true; c.w = Math.round(26 * (c.echelle || 1)); c.h = Math.round(16 * (c.echelle || 1)); part(c.x + c.w / 2, c.y, '#c06aa0', 16, 70, 0.8, 2, 0, 'spark'); msg('La chenille devient papillon !'); } }
     const cx = c.x + c.w / 2, cy = c.y + c.h / 2;
     const tcx = cible ? cible.x + cible.w / 2 : 0, tcy = cible ? cible.y + cible.h / 2 : 0, dcib = cible ? dist(cx, cy, tcx, tcy) : 1e9;
     // où aller
     let tx, ty;
-    const place = () => { const cote = -(p.face || 1); tx = pcx + cote * (36 + 26 * k + loin); ty = pcy - 34 - (k % 2) * 16 - loin * 0.4 + Math.sin(c.phase * 2.2 + k) * 6; };
+    const place = () => { const cote = garde ? (k % 2 ? 1 : -1) : -(p.face || 1); tx = pcx + cote * (36 + 26 * k + loin); ty = pcy - 34 - (k % 2) * 16 - loin * 0.4 + Math.sin(c.phase * 2.2 + k) * 6; };
     if (esp === 'gravite') { c.orbite += dt * (cible ? 1.2 : 2.2); const R = 56 + 14 * k + loin; tx = pcx + Math.cos(c.orbite) * R; ty = pcy - 10 + Math.sin(c.orbite) * R * 0.55; if (cible && dcib < F.portee) { tx = tcx; ty = cible.y - 40; } }
     else if (esp === 'terre') { place(); const menace = cible && dist(pcx, pcy, tcx, tcy) < 260; if (menace) { tx = dcib < 80 ? tcx - Math.sign(tcx - pcx) * (cible.w / 2 + c.w / 2 - 4) : pcx + Math.sign(tcx - pcx) * 46; } }
     else if (cible && !(esp === 'metamorphose' && c.stade !== 'papillon')) { const garde = esp === 'eau' || esp === 'lumiere' || esp === 'temps' || esp === 'gravite' || esp === 'vie' || esp === 'foudre' || esp === 'metamorphose' ? F.portee * 0.6 : 0; const ang = Math.atan2(cy - tcy, cx - tcx); tx = tcx + Math.cos(ang) * garde; ty = (F.mode === 'vol' ? cible.y - 20 : tcy) + Math.sin(ang) * garde * 0.4; }
@@ -2545,7 +2558,7 @@ const World = (() => {
       if (esp === 'transmutation') c.roule = (c.roule || 0) + c.vx * dt / (c.w * 0.4);
     }
     // perdu loin derrière : il te rejoint d'un saut de faille
-    if (dist(cx, cy, pcx, pcy) > 900) { c.x = pcx - c.w / 2; c.y = p.y - c.h - 10; c.vx = c.vy = 0; }
+    if (dist(cx, cy, pcx, pcy) > 900) { c.x = pcx - c.w / 2; c.y = pcy - c.h - 30; c.vx = c.vy = 0; }
     // le coup de chaque familier
     const frappe = (q, r = 24, kk = 1, effets = c.spec.cores, o2 = {}) => { for (const core of effets) applyEffect(core, q.x + q.w / 2, q.y + q.h / 2, r, { ...prm, power: pw * kk }, 'burst', Object.assign({ noPlayer: true, noField: true }, o2)); };
     if (cible && c.cd <= 0 && dcib < F.portee + Math.max(cible.w, cible.h) * 0.5) {
@@ -2570,10 +2583,10 @@ const World = (() => {
     // effets qui durent
     if (c.dash > 0) { c.dash -= dt; for (const q of st.crs) if (q.hp > 0 && !q.sta.tame && q.t !== 'familier' && !c.touches.has(q) && U.rectsOverlap({ x: c.x - 6, y: c.y - 6, w: c.w + 12, h: c.h + 12 }, q)) { c.touches.add(q); q.vx += Math.sign(c.vx || 1) * 380 / Math.sqrt(masse(q)); q.vy -= 200 / Math.sqrt(masse(q)); frappe(q, 20, 0.7); } if (Math.random() < 0.6) part(cx, cy, '#a0d8d4', 1, 20, 0.4, 2, 0); }
     if (c.leve) { c.leve.t -= dt; if (c.leve.t <= 0) { const q = c.leve.q; c.leve = null; if (q.hp > 0) { q.vy = 1150; hurt(q, 0.8 * pw); } } }
-    if (c.butin && dist(cx, cy, pcx, pcy) < 50) { dropPickup(c.butin, pcx, p.y - 6); c.butin = null; }
+    if (c.butin && dist(cx, cy, jx, jy) < 50) { dropPickup(c.butin, jx, p.y - 6); c.butin = null; }
     // les dons de chacun
     if (ev2(c, 'don', 0.4)) {
-      const pres = dist(cx, cy, pcx, pcy) < 150;
+      const pres = dist(cx, cy, jx, jy) < 150;
       if (esp === 'feu' && pres && Sim.tempAt(pcx, pcy) < 50) Sim.chauffer(pcx, pcy, 40, 90, 0.4);
       if (esp === 'eau' && pres) { Sim.forRadius(pcx, pcy, 70, (x, y, i, m) => { if (m === M.FEU) Sim.set(x, y, M.VAPEUR, 30); }); p.sta.burning = 0; p.hp = Math.min(p.hpMax, p.hp + 0.05); }
       if (esp === 'vent' && pres) Sim.forRadius(pcx, pcy, 60, (x, y, i, m) => { if (m === M.FUMEE || m === M.GAZ) Sim.set(x, y, M.AIR); });
@@ -2584,6 +2597,28 @@ const World = (() => {
     if (Math.random() < 0.25) part(cx, cy, colorOf(esp), 1, 15, 0.5, 1.6, -20, 'spark');
   }
   function retenir() { for (const g of st.crs) { if (g.t !== 'familier' || g.espece !== 'terre' || g.hp <= 0) continue; for (const q of st.crs) if (q.hp > 0 && !q.sta.tame && q.t !== 'familier' && U.rectsOverlap(g, q)) { const s2 = Math.sign(q.x + q.w / 2 - g.x - g.w / 2) || 1; q.x += s2 * 2; if (Math.sign(q.vx) === -s2) q.vx *= 0.2; } } }
+  // le vent se voit : de longs traits d'encre qui filent dans son sens
+  function dessinerVent(ctx) {
+    ctx.save(); ctx.strokeStyle = '#7aa8a8'; ctx.lineWidth = 1; ctx.lineCap = 'round';
+    const pas = 48;
+    for (let y = Math.floor(st.cam.y / pas) * pas; y < st.cam.y + VH; y += pas) for (let x = Math.floor(st.cam.x / pas) * pas; x < st.cam.x + VW; x += pas) {
+      const ox = x + U.hash2(x, y) * pas, oy = y + U.hash2(y, x) * pas; if (Sim.solidAt(ox, oy)) continue;
+      const [vx, vy] = Sim.ventAt(ox, oy), sp = Math.hypot(vx, vy); if (sp < 0.35) continue;
+      const ph = (time * 1.2 + U.hash2(x + 7, y)) % 1, L = 14 + sp * 10, ux = vx / sp, uy = vy / sp, bx = ox + ux * (ph - 0.5) * 40, by = oy + uy * (ph - 0.5) * 40;
+      ctx.globalAlpha = Math.min(0.5, (sp - 0.3) * 0.5) * Math.sin(ph * Math.PI);
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.quadraticCurveTo(bx + ux * L * 0.5 - uy * 3, by + uy * L * 0.5 + ux * 3, bx + ux * L, by + uy * L); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // ---------- Ordres aux familiers ----------
+  function ordonner(o) {
+    const fam = st.crs.filter((c) => c.t === 'familier' && c.hp > 0), p = st.p;
+    if (!fam.length) { msg('Aucun familier pour t\'écouter.'); return; }
+    if (o === 'garder') { if (st.ordreFam === 'garder') { st.ordreFam = 'suivre'; st.gardePt = null; msg('Tes familiers te suivent.'); } else { st.ordreFam = 'garder'; st.gardePt = { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }; msg('Tes familiers gardent cet endroit (V pour qu\'ils te suivent).'); } }
+    else if (o === 'attaquer') { const a = toWorld(game.inp.mouse.x, game.inp.mouse.y); let best = null, bd = 170; for (const q of st.crs) { if (q.hp <= 0 || q.sta.tame || q.t === 'familier') continue; const d = dist(a.x, a.y, q.x + q.w / 2, q.y + q.h / 2); if (d < bd) { bd = d; best = q; } } if (!best) { msg('Aucune créature sous la souris.'); return; } for (const f of fam) { f.cibleForcee = best; f.cibleT = 8; } msg('À l\'attaque !'); part(best.x + best.w / 2, best.y - 10, '#c45a8a', 10, 50, 0.5, 2, 0, 'spark'); }
+    else if (o === 'congedier') { let enc = 0; for (const f of fam) { enc += 2.5 * Math.max(0, f.life) / (f.max || 30); f.life = 0; } p.ink = Math.min(p.inkMax, p.ink + enc); st.ordreFam = 'suivre'; st.gardePt = null; msg('Tes familiers s\'en retournent dans l\'encre (+' + Math.round(enc) + ' encre).'); }
+    Son.voix(fam[0].espece); evt('ordre', o);
+  }
   function ev2(o, cle, per) { o.acc = o.acc || {}; o.acc[cle] = (o.acc[cle] || 0) + 1 / 60; if (o.acc[cle] >= per) { o.acc[cle] = 0; return true; } return false; }
   function updateSpells(dtG) {
     let dt = dtG;
@@ -2870,6 +2905,8 @@ const World = (() => {
     for (const z of st.gz) drawGField(ctx, z);
     st.marques.forEach((mq, i) => { const q = posMarque(mq); if (!q) return; const last = i === st.marques.length - 1; ctx.save(); ctx.globalAlpha = last ? 0.95 : 0.5; const g = ctx.createRadialGradient(q.x, q.y, 2, q.x, q.y, 26); g.addColorStop(0, 'rgba(224,176,80,0.45)'); g.addColorStop(1, 'rgba(224,176,80,0)'); ctx.fillStyle = g; ctx.fillRect(q.x - 26, q.y - 26, 52, 52); ctx.translate(q.x, q.y - (mq.ent ? mq.ent.h / 2 + 12 : 0)); ctx.rotate(time * 0.8); Seal.glyph(ctx, 'marque', 0, 0, last ? 9 : 7, '#c08a2a', 3); ctx.restore(); });
     PH.draw(ctx, time);
+    if (Sim.ventVif) dessinerVent(ctx);
+    if (st.ordreFam === 'garder' && st.gardePt) { const g = st.gardePt, gy = groundBelow(g.x, g.y) || g.y; ctx.save(); ctx.strokeStyle = INK; ctx.lineWidth = 1.6; U.inkLine(ctx, g.x, gy, g.x, gy - 30, 5, 0.4); ctx.fillStyle = '#c45a8a'; ctx.beginPath(); ctx.moveTo(g.x, gy - 30); ctx.lineTo(g.x + 14 + Math.sin(time * 4) * 2, gy - 25); ctx.lineTo(g.x, gy - 20); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); }
     for (const s of st.sp) drawSpell(ctx, s);
     for (const q of st.parts) drawPart(ctx, q);
     // halos : feu, lave, torches, cristaux
@@ -3458,5 +3495,5 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a), get phen() { return PH; } };
+  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a), get phen() { return PH; }, ordonner };
 })();

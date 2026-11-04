@@ -504,6 +504,7 @@
     if (e.code === 'KeyX') inp.dig = true;
     if (/^Digit[1-5]$/.test(e.code)) { if (e.shiftKey) { if (game.progress.deuxMains) game.selectedL = +e.code[5] - 1; else game.toast('La main gauche n\'est pas encore maîtrisée (voir le grimoire).', 'warn'); } else game.selected = +e.code[5] - 1; UI.refreshHotbar(); }
     if (e.code === 'KeyF' && game.state === 'world' && !UI.isOpen()) World.detoner();
+    if (game.state === 'world' && !UI.isOpen() && !e.repeat) { if (e.code === 'KeyV') World.ordonner('garder'); else if (e.code === 'KeyB') World.ordonner('attaquer'); else if (e.code === 'KeyN') World.ordonner('congedier'); }
     if (e.code === 'KeyM') { const m = Son.toggleMute(); document.getElementById('btn-mute').textContent = m ? '🔇' : '🔊'; }
     if (e.code === 'KeyH') { if (UI.isOpen() === 'help') UI.close(); else UI.openPanel('help'); }
     if (e.code === 'KeyG' || e.code === 'Tab') { e.preventDefault(); if (UI.isOpen() === 'grimoire') UI.close(); else if (game.state !== 'create') UI.openPanel('grimoire'); }

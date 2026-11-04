@@ -8,6 +8,8 @@ function createSim() {
   let W = 0, H = 0, CW = 0, CHn = 0;
   let mat, aux, elec, upd, chaud, temp, ancre, enBloc, vis, sure, chunkVide, chunkRendu, chunkHeat, nDraw = 0;
   let visGen = 1, fiss = [], fissStamp = null, blocs = [], effondre = true;
+  // le vent : une case de vent pour 4 × 4 cases de matière ; il s'essouffle peu à peu
+  let VBW = 0, VBH = 0, wx = null, wy = null, ventJusque = 0, brise = 0;
   let tzones = []; // bulles de temps : { x, y, r, f } en pixels ; f = 0 figé, < 1 ralenti, > 1 accéléré
   let chunkActive, chunkDirty, chunkCv, chunkLights, chunkHasLiquid;
   let frame = 0;
@@ -64,6 +66,22 @@ function createSim() {
   // température d'une source (0 : pas une source)
   function emitT(i, m) { if (m === M.FEU) return 165 + 35 * chaud[i]; if (m === M.LAVE) return temp[i] >= 170 ? T_LAVE : 0; if (BRULE[m] && aux[i] > 0) return 160; return 0; }
   const visT = (t, m) => (t > 124 ? 1 + ((t - 124) >> 5) : t < 46 && m !== M.GLACE && m !== M.NEIGE ? -1 - ((46 - t) >> 4) : 0);
+  // souffler : vers (fx, fy), ou depuis le centre si radial (> 0 : vers l'extérieur, < 0 : vers l'intérieur) ; vitesses en cases par pas
+  function souffler(px, py, r, fx, fy, radial = 0) {
+    if (!wx) return; const s = CS * 4, cx = px / s, cy = py / s, rr = Math.max(1, r / s);
+    for (let by = Math.max(0, Math.floor(cy - rr)); by <= Math.min(VBH - 1, Math.floor(cy + rr)); by++) for (let bx = Math.max(0, Math.floor(cx - rr)); bx <= Math.min(VBW - 1, Math.floor(cx + rr)); bx++) {
+      const dx = bx + 0.5 - cx, dy = by + 0.5 - cy, d = Math.hypot(dx, dy); if (d > rr) continue; const k = 1 - d / rr, i = by * VBW + bx;
+      if (radial) { wx[i] += dx / (d || 1) * radial * k; wy[i] += dy / (d || 1) * radial * k; } else { wx[i] += fx * k; wy[i] += fy * k; }
+      wx[i] = Math.max(-3, Math.min(3, wx[i])); wy[i] = Math.max(-3, Math.min(3, wy[i]));
+    }
+    ventJusque = frame + 400;
+    // réveiller la matière sous le vent
+    const c0x = Math.max(0, Math.floor((px - r) / CPX)), c1x = Math.min(CW - 1, Math.floor((px + r) / CPX)), c0y = Math.max(0, Math.floor((py - r) / CPX)), c1y = Math.min(CHn - 1, Math.floor((py + r) / CPX));
+    for (let cy2 = c0y; cy2 <= c1y; cy2++) for (let cx2 = c0x; cx2 <= c1x; cx2++) { const c = cy2 * CW + cx2; chunkActive[c] = Math.max(chunkActive[c], frame + 150); }
+  }
+  // le vent en un point (pixels) : [vx, vy] en cases par pas, brise du temps comprise au-dessus du sol
+  function ventAt(px, py) { if (!wx) return [0, 0]; const x = Math.floor(px / CS), y = Math.floor(py / CS); if (!inB(x, y)) return [0, 0]; const i = (y >> 2) * VBW + (x >> 2); return [wx[i] + (brise && (!surf || y < surf[x]) ? brise : 0), wy[i]]; }
+  function ventCase(x, y) { const i = (y >> 2) * VBW + (x >> 2); return i >= 0 && i < wx.length ? i : -1; }
   function chauffeChunk(i) { const x = i % W, y = (i - x) / W, c = (y >> 5) * CW + (x >> 5); chunkHeat[c] = frame + 60; }
   // ---------- Effondrement : la pierre qui ne tient plus sur rien tombe ----------
   const STRUCT = new Uint8Array(64); for (const m of [M.PIERRE, M.TERRE, M.BOIS, M.METAL, M.GLACE, M.CRISTAL, M.OBSIDIENNE, M.VERRE]) STRUCT[m] = 1;
@@ -90,6 +108,7 @@ function createSim() {
     mat = new Uint8Array(W * H); aux = new Uint8Array(W * H); elec = new Uint8Array(W * H); upd = new Uint8Array(W * H); chaud = new Uint8Array(W * H); temp = new Uint8Array(W * H).fill(AMB);
     ancre = new Uint8Array(W * H); enBloc = new Uint8Array(W * H); vis = new Uint32Array(W * H); sure = new Uint32Array(W * H); fissStamp = new Uint32Array(Math.ceil(W / 4) * Math.ceil(H / 4)); fiss = []; blocs = [];
     chunkHeat = new Int32Array(Math.ceil(W / CH) * Math.ceil(H / CH)).fill(30);
+    VBW = Math.ceil(W / 4); VBH = Math.ceil(H / 4); wx = new Float32Array(VBW * VBH); wy = new Float32Array(VBW * VBH); ventJusque = 0;
     chunkActive = new Int32Array(CW * CHn); chunkDirty = new Uint8Array(CW * CHn).fill(1); chunkHasLiquid = new Uint8Array(CW * CHn);
     chunkCv = new Array(CW * CHn).fill(null); chunkLights = new Array(CW * CHn).fill(null); chunkVide = new Uint8Array(CW * CHn); chunkRendu = new Uint32Array(CW * CHn);
     frame = 0;
@@ -167,6 +186,7 @@ function createSim() {
       for (let cy = Math.floor(y0 / CH); cy <= Math.floor(y1 / CH); cy++) for (let cx = Math.floor(x0 / CH); cx <= Math.floor(x1 / CH); cx++) { const c = cy * CW + cx; if (chunkActive[c] <= frame) chunkActive[c] = frame + 2; }
     }
     if (frame % 3 === 0) stepChaleur(camCells);
+    if (wx && ventJusque > frame) for (let i = 0; i < wx.length; i++) { if (wx[i] !== 0 || wy[i] !== 0) { wx[i] *= 0.975; wy[i] *= 0.975; if (Math.abs(wx[i]) < 0.01) wx[i] = 0; if (Math.abs(wy[i]) < 0.01) wy[i] = 0; } }
     if (effondre) { traiterFissures(); majBlocs(); }
   }
   // ---------- Chaleur : conduction de l'écart à la température naturelle, retour au calme, changements d'état ----------
@@ -391,6 +411,9 @@ function createSim() {
     if (m === M.NEIGE && hotNear(i)) { setI(i, M.EAU); evt('fonte', x, y); return; }
     if (m === M.POUDRE && (hotNear(i) || elec[i] > 0)) { explode(x, y, 5); return; }
     if (m === M.SEL) { const d = [1, -1, W, -W][(rnd() * 4) | 0]; const j = i + d; if (j >= 0 && j < W * H && mat[j] === M.EAU && rnd() < 0.08) { setI(j, M.SAUMURE); setI(i, rnd() < 0.5 ? M.SAUMURE : M.AIR); evt('sel', x, y); return; } if (j >= 0 && j < W * H && (mat[j] === M.GLACE || mat[j] === M.NEIGE) && rnd() < 0.1) { setI(j, M.SAUMURE); evt('fonte', x, y); if (rnd() < 0.3) { setI(i, M.SAUMURE); return; } } }
+    if (wx && (ventJusque > frame || brise) && (m === M.NEIGE || m === M.CENDRE || m === M.SABLE || m === M.SEL)) { const k = (y >> 2) * VBW + (x >> 2); const vx = wx[k] + (brise && (!surf || y < surf[x]) ? brise : 0), sp = Math.abs(vx);
+      const leger = m === M.SABLE || m === M.SEL ? 0.35 : 1, libre = y > 0 && mat[i - W] === M.AIR, enVol = y < H - 1 && mat[i + W] === M.AIR;
+      if (sp > 0.35 && (libre || enVol) && rnd() < (sp - 0.3) * leger * (enVol ? 0.6 : 0.25)) { const nx = x + Math.sign(vx); if (cellIn(nx, y) && mat[y * W + nx] === M.AIR) { swap(i, y * W + nx); return; } if (libre && cellIn(nx, y - 1) && mat[(y - 1) * W + nx] === M.AIR) { swap(i, (y - 1) * W + nx); return; } } }
     const [gx, gy, mag] = gzones.length ? gravAt(x, y) : [0, 1, 1];
     if (mag === 0) { if (rnd() < 0.15) { const d = [[1, 0], [-1, 0], [0, 1], [0, -1]][(rnd() * 4) | 0]; const nx = x + d[0], ny = y + d[1]; if (cellIn(nx, ny) && canEnter(ny * W + nx, 9)) swap(i, ny * W + nx); } return; }
     const bx = x + gx, by = y + gy; if (!cellIn(bx, by)) return;
@@ -507,6 +530,8 @@ function createSim() {
       }
       if (rnd() < 0.45) return; // le feu reste près de son combustible
     }
+    if (wx && (ventJusque > frame || brise)) { const k = (y >> 2) * VBW + (x >> 2); const vx = wx[k] + (brise && (!surf || y < surf[x]) ? brise : 0), vy = wy[k], sp = Math.abs(vx) + Math.abs(vy);
+      if (sp > 0.12 && rnd() < Math.min(0.9, sp * 0.7)) { const hx = Math.abs(vx) >= Math.abs(vy) * rnd() * 2, ddx = hx ? Math.sign(vx) : 0, ddy = hx ? 0 : Math.sign(vy); const nx = x + ddx, ny = y + ddy; if (cellIn(nx, ny) && mat[ny * W + nx] === M.AIR) { swap(i, ny * W + nx); return; } } }
     const [gx, gy, mag] = gzones.length ? gravAt(x, y) : [0, 1, 1];
     const ux = x - gx * (mag ? 1 : 0), uy = y - gy * (mag ? 1 : 0);
     if (uy < 0 && mag) { setI(i, M.AIR); return; }
@@ -713,7 +738,7 @@ function createSim() {
   }
 
   return { CS, CH, M, P, init, get, set, swap, wake, touch, idx, step, matAt, solidAt, rectBlocked, rectHas, forRadius, raycast, countAround, countRect, draw, lights, dirtyAll, serialize, deserialize,
-    get W() { return W; }, get H() { return H; }, get mat() { return mat; }, get aux() { return aux; }, get elec() { return elec; }, get chaud() { return chaud; }, setFeu, chauffer, tempAt, tempMax, tempMin, ancrer, get temp() { return temp; }, get blocs() { return blocs; }, get AMB() { return AMB; }, set effondre(v) { effondre = v; }, get effondre() { return effondre; }, get nFiss() { return fiss.length; }, ancrerCase(i, v) { ancre[i] = v ? 1 : 0; }, fissurer(i) { fissure(i); },
+    get W() { return W; }, get H() { return H; }, get mat() { return mat; }, get aux() { return aux; }, get elec() { return elec; }, get chaud() { return chaud; }, setFeu, chauffer, tempAt, tempMax, tempMin, ancrer, get temp() { return temp; }, get blocs() { return blocs; }, get AMB() { return AMB; }, set effondre(v) { effondre = v; }, get effondre() { return effondre; }, get nFiss() { return fiss.length; }, ancrerCase(i, v) { ancre[i] = v ? 1 : 0; }, fissurer(i) { fissure(i); }, souffler, ventAt, set brise(v) { brise = v; }, get brise() { return brise; }, get ventVif() { return ventJusque > frame || !!brise; }, get vent() { return { wx, wy, VBW, VBH }; },
     set onEvent(f) { onEvent = f; }, set sunny(v) { sunny = v; }, get gzones() { return gzones; }, set gzones(v) { gzones = v; }, set tzones(v) { tzones = v; }, get tzones() { return tzones; }, tempsAt, gravAt, set feuMul(v) { feuMul = v; }, set surf(v) { surf = v; }, get surf() { return surf; }, get frame() { return frame; } };
 })();
 }

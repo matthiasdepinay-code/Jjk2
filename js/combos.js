@@ -702,6 +702,7 @@ function creerPhenomenes(W) {
   function bouger(ph, dt) {
     const b = ph.D.bouge;
     if (b === 'fixe') return;
+    if ((b === 'flotte' || b === 'derive' || b === 'erre') && !ph.tenu && W.ventAt) { const [vx, vy] = W.ventAt(ph.x, ph.y); if (Math.abs(vx) + Math.abs(vy) > 0.2) { ph.vx += vx * 140 * dt; if (b !== 'derive') ph.vy += vy * 100 * dt; } }
     if (b === 'flotte') { ph.vx *= 1 - 1.2 * dt; ph.vy *= 1 - 1.2 * dt; const nx = ph.x + ph.vx * dt, ny = ph.y + ph.vy * dt; if (Sim.solidAt(nx, ny)) { ph.vx = -ph.vx * 0.5; ph.vy = -ph.vy * 0.5; } else deplacer(ph, nx - ph.x, ny - ph.y); return; }
     if (b === 'derive') { const nx = ph.x + ph.vx * dt; if (Sim.solidAt(nx + Math.sign(ph.vx) * ph.r, ph.y)) ph.vx = -ph.vx; else deplacer(ph, nx - ph.x, 0); ph.vx = clamp(ph.vx, -220, 220); return; }
     if (b === 'roule') { const nx = ph.x + ph.vx * dt; const h = ph.rect ? (ph.rect.y1 - ph.y) : ph.D.hSol != null ? ph.D.hSol : ph.r * 0.6; if (ph.vx && Sim.solidAt(nx + Math.sign(ph.vx) * 10, ph.y - Math.max(h, 14))) { ph.vx = ph.tenu ? 0 : -ph.vx * 0.6; return; } const g = W.groundBelow(nx, ph.y - 40); deplacer(ph, nx - ph.x, g != null && Math.abs(g - h - ph.y) < 80 ? (g - h - ph.y) * Math.min(1, dt * 6) : 0); return; }
