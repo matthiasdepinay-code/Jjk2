@@ -176,4 +176,5 @@ js/ui.js        éditeur de sceaux, chaudron, grimoire, HUD
 js/main.js      boucle, états, progression, expérience, sauvegarde
 docs/DESIGN.md  décisions de design et étapes à venir
 build.sh        fabrique dist/atelier-des-sceaux.html
+tests/          bancs d'essai (node tests/lancer.js) et outils : hasard, perf, endurance, traversée
 ```
