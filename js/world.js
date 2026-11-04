@@ -3,6 +3,11 @@
 const World = (() => {
   const { TAU, INK, clamp, lerp, dist } = U;
   const GRAV = 1500;
+  const CHAUD_OK = ['follet', 'salamandre', 'golem', 'familier'], FROID_OK = ['lapin', 'golem', 'familier', 'poisson'];
+  // ---------- Masse et flottaison ----------
+  const MASSE = { caisse: 0.8, rocher: 4, golem: 6, tortue: 1.6, lapin: 0.4, limace: 0.5, grenouille: 0.3, poisson: 0.2, corbeau: 0.2, follet: 0.1, salamandre: 0.5, chauve: 0.2, escargot: 0.4, familier: 0.2 };
+  const DENS = { caisse: 0.5, rocher: 2.6, golem: 2.4, tortue: 1.05, escargot: 1.2, salamandre: 0.95, limace: 0.9, lapin: 0.8, grenouille: 0.85 };
+  function masse(e) { return e === (st && st.p) ? 1 : (e && MASSE[e.t]) || 1; }
   const VW = 1280, VH = 720;
   const CS = Sim.CS, M = Sim.M, P = Sim.P;
   let L = null, st = null, game = null, darkCv = null, time = 0;
@@ -27,6 +32,7 @@ const World = (() => {
     for (const o of L.objs) st.objs.push(makeObj(o));
     for (const c of L.crs) st.crs.push(makeCreature(c));
     if (saved) restore(saved);
+    Sim.ancrer();
     st.cam.x = clamp(st.p.x - VW / 2, 0, L.w - VW); st.cam.y = clamp(st.p.y - VH / 2, 0, L.h - VH);
     if (!darkCv) { darkCv = document.createElement('canvas'); darkCv.width = VW / 2; darkCv.height = VH / 2; } // l'obscurité, toute en dégradés, se calcule à demi-résolution
     Sim.onEvent = onSimEvent;
@@ -195,25 +201,28 @@ const World = (() => {
   function blockedBy(r, sols) { if (Sim.rectBlocked(r)) return true; for (const s of sols) if (U.rectsOverlap(r, s)) return true; return false; }
   function moveBody(b, dt, exclude) {
     const sols = dynSolids(exclude);
-    let dx = b.vx * dt; b.hitX = false;
+    let dx = b.vx * dt; b.hitX = false; b.choc = 0;
     while (Math.abs(dx) > 0.01) {
       const s = Math.abs(dx) < 3 ? dx : Math.sign(dx) * 3;
       if (!blockedBy({ x: b.x + s, y: b.y, w: b.w, h: b.h }, sols)) { b.x += s; dx -= s; continue; }
       let ok = false;
       if (b.canStep) for (let up = 1; up <= CS * 1.6; up += 1) { if (!blockedBy({ x: b.x + s, y: b.y - up, w: b.w, h: b.h }, sols) && !blockedBy({ x: b.x, y: b.y - up, w: b.w, h: b.h }, sols)) { b.y -= up; b.x += s; dx -= s; ok = true; break; } }
-      if (!ok) { b.hitX = true; b.vx = b.bounce ? -b.vx * 0.4 : 0; break; }
+      if (!ok) { b.hitX = true; b.choc = Math.abs(b.vx); b.vx = b.bounce ? -b.vx * 0.4 : 0; break; }
     }
     let dy = b.vy * dt; b.onGround = false;
     while (Math.abs(dy) > 0.01) {
       const s = Math.abs(dy) < 3 ? dy : Math.sign(dy) * 3;
       if (!blockedBy({ x: b.x, y: b.y + s, w: b.w, h: b.h }, sols)) { b.y += s; dy -= s; }
-      else { if (s > 0) b.onGround = true; b.vy = b.bounce && s > 0 && Math.abs(b.vy) > 200 ? -b.vy * 0.3 : 0; break; }
+      else { if (s > 0) b.onGround = true; b.choc = Math.max(b.choc, Math.abs(b.vy)); b.vy = b.bounce && s > 0 && Math.abs(b.vy) > 200 ? -b.vy * 0.3 : 0; break; }
     }
     if (!b.onGround && b.vy >= 0 && blockedBy({ x: b.x, y: b.y + 1, w: b.w, h: b.h }, sols)) b.onGround = true;
     // décoincement (une cellule est apparue sur nous)
     if (blockedBy(b, sols)) { for (let up = 1; up <= CS * 6; up++) { if (!blockedBy({ x: b.x, y: b.y - up, w: b.w, h: b.h }, sols)) { b.y -= up; break; } } }
     b.x = clamp(b.x, 0, L.w - b.w);
     if (b.y > L.h + 100) b.y = L.h + 100;
+    // une créature projetée contre un mur ou qui tombe de haut se fait mal
+    if (b.choc > 720 && b !== st.p && b.hp > 0 && DATA.ESPECES[b.t] && b.t !== 'familier') { hurt(b, Math.min(4, (b.choc - 720) / 240) / Math.sqrt(masse(b))); b.sta.stun = Math.max(b.sta.stun || 0, 0.6); part(b.x + b.w / 2, b.y + b.h, '#8a7a5a', 6, 60, 0.4, 2, 200); }
+    if (b.choc > 820 && b.t === 'caisse') { b.hp -= 1; part(b.x + b.w / 2, b.y + b.h / 2, '#8d6a3c', 6, 90, 0.5, 2, 400, 'eclat'); if (b.hp <= 0) { b.mort = true; Son.sfx('burst', 'terre'); } }
   }
   function unstick(b) {
     const sols = dynSolids(b);
@@ -234,7 +243,35 @@ const World = (() => {
     st.shake = 0.4; part(cx, cy, '#8a7a5a', 16, 130, 0.6, 3, 500); Son.sfx('burst', 'terre');
     if (n > 6) msg('Boum. Le sol cède sous ton poids.');
   }
+  // les blocs qui s'effondrent écrasent ce qui se trouve dessous
+  function blocsTombants() {
+    for (const b of Sim.blocs) {
+      if (b.pose || b.vy < 0.35) continue;
+      const r = { x: b.x0 * CS, y: b.y0 * CS, w: (b.x1 - b.x0 + 1) * CS, h: (b.y1 - b.y0 + 1) * CS + b.vy * CS };
+      b.touche = b.touche || new Set();
+      const ents = st.crs.filter((c) => c.hp > 0 && c.t !== 'familier'); ents.push(st.p);
+      for (const e of ents) {
+        if (b.touche.has(e) || !U.rectsOverlap(r, e) || e.y + e.h * 0.5 < r.y) continue;
+        b.touche.add(e); const dmg = Math.min(8, 1 + b.n / 40 * b.vy);
+        const cote = e.x + e.w / 2 < r.x + r.w / 2 ? -1 : 1;
+        if (e === st.p) { if (!(e.sta.stone > 0)) { e.hp -= dmg * 0.6; msg('Un bloc te tombe dessus !', 'warn'); } }
+        else { hurt(e, dmg / Math.sqrt(masse(e))); e.sta.stun = Math.max(e.sta.stun || 0, 1.5); }
+        e.vx = cote * 320; e.vy = -120; part(e.x + e.w / 2, e.y, '#8a7a5a', 8, 90, 0.5, 2, 300);
+      }
+    }
+  }
   function liquidOf(b) { const m = Sim.matAt(b.x + b.w / 2, b.y + b.h * 0.55); return P[m].liquid ? m : 0; }
+  const DENS_LIQ = []; DENS_LIQ[M.EAU] = 1; DENS_LIQ[M.SAUMURE] = 1.2; DENS_LIQ[M.HUILE] = 0.85; DENS_LIQ[M.ACIDE] = 1.1; DENS_LIQ[M.BOUE] = 1.7; DENS_LIQ[M.MIEL] = 1.4; DENS_LIQ[M.SEVE] = 1; DENS_LIQ[M.LAVE] = 3;
+  // poussée d'Archimède : ce qui est plus léger que le liquide flotte, le reste coule plus lentement
+  function flotter(b, dt, dens) {
+    let n = 0, rho = 0;
+    for (const f of [0.2, 0.5, 0.8]) { const m = Sim.matAt(b.x + b.w / 2, b.y + b.h * f); if (P[m].liquid) { n++; rho = Math.max(rho, DENS_LIQ[m] || 1); } }
+    if (!n) return 0; const frac = n / 3;
+    b.vy -= GRAV * frac * (rho / dens) * dt;
+    const visc = rho > 1.3 ? 4.5 : 2.2;
+    b.vx *= Math.max(0, 1 - frac * visc * dt); b.vy *= Math.max(0, 1 - frac * visc * dt);
+    return frac;
+  }
 
   // ---------- Particules / messages / événements ----------
   function part(x, y, color, n = 6, spd = 80, life = 0.6, size = 3, grav = 0, type = 'dot') {
@@ -270,6 +307,8 @@ const World = (() => {
   function onSimEvent(kind, x, y) {
     if (!st) return;
     if (kind === 'brule') { evt('brule'); return; }
+    if (kind === 'effondrement') { if (inView(x, y)) { Son.sfx('burst', 'terre'); part(x, y, '#8a7a5a', 10, 50, 0.6, 2, 100); if (time - (st.effT || -9) > 5) { st.effT = time; msg('Ça s\'effondre !'); } } evt('effondrement'); }
+    if (kind === 'eboulement') { if (inView(x, y)) { st.shake = Math.max(st.shake, 0.35); Son.sfx('burst', 'terre'); part(x, y, '#8a7a5a', 18, 140, 0.7, 3, 400); } }
     if (kind === 'explosion') {
       const R = 90;
       const souffle = (b, dmg) => { const bx = b.x + b.w / 2, by = b.y + b.h / 2; const dx = bx - x, dy = by - y; const d = Math.hypot(dx, dy) || 1; if (d > R) return false; const f = 1 - d / R; b.vx += dx / d * 700 * f; b.vy += dy / d * 600 * f - 200 * f; return f; };
@@ -871,6 +910,13 @@ const World = (() => {
     if (violet) Sim.forRadius(cx, cy, rad * 1.5, (x, y, i, m) => { const q = P[m]; if (FLAM(m) && Sim.aux[i] === 0 && Math.random() < 0.25) { Sim.aux[i] = q.burn; Sim.touch(i); } else if ((m === M.HUILE || m === M.POUDRE || m === M.SEVE) && Math.random() < 0.4) Sim.set(x, y, M.FEU, 30); });
   }
   function applyEffect(core, cx, cy, rad, prm, mode, opts = {}) {
+    const R = rad + 60, snap = [];
+    for (const c of st.crs) if (c.hp > 0 && Math.abs(c.x + c.w / 2 - cx) < R + c.w && Math.abs(c.y + c.h / 2 - cy) < R + c.h) snap.push(c, c.vx, c.vy);
+    for (const o of st.objs) if (o.dyn && !o.mort && !o.carried && Math.abs(o.x + o.w / 2 - cx) < R + o.w && Math.abs(o.y + o.h / 2 - cy) < R + o.h) snap.push(o, o.vx, o.vy);
+    applyEffet0(core, cx, cy, rad, prm, mode, opts);
+    for (let k = 0; k < snap.length; k += 3) { const e = snap[k], m = masse(e); if (m === 1) continue; const f = clamp(Math.pow(m, -0.6), 0.25, 1.35); e.vx = snap[k + 1] + (e.vx - snap[k + 1]) * f; e.vy = snap[k + 2] + (e.vy - snap[k + 2]) * f; }
+  }
+  function applyEffet0(core, cx, cy, rad, prm, mode, opts = {}) {
     const burst = mode === 'burst';
     const k = burst ? 1 : mode * 2.2;
     if (core === 'marque') { if (burst) placeMarque(cx, cy, rad); return; }
@@ -882,6 +928,9 @@ const World = (() => {
     const lgN = prm.lg ? prm.lg[core] || 0 : 0;
     if (lgN) prm = { ...prm, power: (prm.power || 1) * (1 + 0.3 * lgN), duration: (prm.duration || 1) * (core === 'ombre' ? 2 : 1) };
     const power = prm.power || 1, dur = prm.duration || 1;
+    // la chaleur : le feu chauffe, le gel refroidit, l'explosion et la foudre échauffent
+    { const kk = burst ? 1 : Math.min(1, mode * 3); const T = core === 'feu' ? 175 + 30 * lgN : core === 'explosion' ? 195 : core === 'froid' ? 18 - 8 * lgN : core === 'foudre' ? 150 : core === 'lumiere' && lgN ? 140 : core === 'secheresse' ? 120 : core === 'neutraliser' ? 48 : 0;
+      if (T) Sim.chauffer(cx, cy, rad * (core === 'foudre' ? 0.4 : 0.9), T, clamp((core === 'froid' || core === 'feu' ? 0.55 : 0.35) * power * kk, 0, 1)); }
     const C = colorOf(core);
     if (burst) st.sp.push({ k: 'ring', core, x: cx, y: cy, r: rad, life: 0.4, max: 0.4, color: C });
     if (effetDerive(core, cx, cy, rad, prm, burst, k, mode, opts)) return;
@@ -1723,6 +1772,7 @@ const World = (() => {
     updateGFields(dt);
     majMecanismes(dt);
     Sim.step();
+    blocsTombants();
     updateMeteo(dt);
     for (const k in p.sta) if (p.sta[k] > 0) p.sta[k] = Math.max(0, p.sta[k] - dt);
     p.inv = Math.max(0, (p.inv || 0) - dt);
@@ -1757,6 +1807,9 @@ const World = (() => {
     if (p.sta.regen > 0) p.hp = Math.min(p.hpMax, p.hp + dt * 0.35);
     if (p.liq === M.EAU || p.liq === M.SAUMURE) { p.sta.wet = 8; p.sta.burning = 0; }
     if (p.sta.garde > 0) p.sta.burning = 0;
+    { const tp = Sim.tempAt(p.x + p.w / 2, p.y + p.h * 0.5);
+      if (tp > 140 && !p.sta.stone && !(p.sta.garde > 0)) { p.hp -= dt * (tp - 140) / 70; if (time - (p.chaudT || -99) > 6) { p.chaudT = time; msg('Il fait brûlant ici !', 'warn'); } }
+      else if (tp < 40 && !(p.sta.garde > 0) && p.forme !== 'lapin') { p.sta.lent = Math.max(p.sta.lent || 0, 0.3); if (time - (p.froidT || -99) > 8) { p.froidT = time; msg('Le froid t\'engourdit.', 'warn'); } } }
     if (p.liq === M.LAVE && !p.sta.stone) { p.hp -= dt * (p.sta.garde > 0 ? 0.4 : 3); p.sta.burning = 2; if (Math.random() < 0.5) part(p.x + p.w / 2, p.y + p.h, '#e0622b', 2, 60, 0.5, 3, -200); }
     if (p.liq === M.ACIDE && !p.sta.stone && !p.sta.dissous) { p.hp -= dt * 1.2; if (Math.random() < 0.3) part(p.x + p.w / 2, p.y + p.h * 0.6, '#8fbf2a', 1, 40, 0.5, 3, -100); }
     if (p.liq === M.EAU && p.sta.branchies <= 0 && Sim.matAt(p.x + p.w / 2, p.y + 4) === M.EAU) { p.air = (p.air || 8) - dt; if (p.air <= 0) { p.hp -= dt * 1.5; if (Math.random() < 0.05) msg('Tu manques d\'air !', 'warn'); } } else p.air = 8;
@@ -1828,6 +1881,7 @@ const World = (() => {
     moveBody(p, dt);
     if (!Gstd && !Gvol) p.onGround = blockedBy({ x: p.x + G.gx * 2, y: p.y + G.gy * 2, w: p.w, h: p.h }, dynSolids());
     if (enclume && p.onGround && vyAvant > 420) crush(p);
+    else if (Gstd && p.onGround && vyAvant > 1000 && !inWater && !(p.sta.glide > 0) && !(p.sta.vol > 0) && !(p.sta.lowgrav > 0) && !(p.sta.stone > 0)) { p.hp -= (vyAvant - 950) / 120; st.shake = 0.25; part(p.x + p.w / 2, p.y + p.h, '#8a7a5a', 10, 90, 0.5, 2, 300); msg('Aïe ! La chute fait mal.', 'warn'); }
     updateLien(dt, inp);
     updatePortails(dt);
     // pousser une caisse
@@ -2059,7 +2113,10 @@ const World = (() => {
           if (o.boulet > 0) { o.boulet -= dt; for (const c of st.crs) if (c.hp > 0 && !c.sta.tame && U.rectsOverlap(o, c) && Math.hypot(o.vx, o.vy) > 250) { hurt(c, 2.5); c.vx += o.vx * 0.6; c.vy -= 250; o.vx *= 0.6; } }
           o.vx *= Math.max(0, 1 - (o.onGround ? 6 : 1) * dt * (o.boulet > 0 ? 0.1 : 1));
           moveBody(o, dt, o);
-          { const lq = liquidOf(o); if (lq === M.EAU || lq === M.HUILE) { o.vy -= 1400 * dt; if (o.t === 'caisse') o.burning = 0; } if (lq === M.LAVE && o.t === 'caisse') o.burning = 3; }
+          { const lq = liquidOf(o); flotter(o, dt, DENS[o.t] || 1); if ((lq === M.EAU || lq === M.SAUMURE) && o.t === 'caisse') o.burning = 0; if (lq === M.LAVE && o.t === 'caisse') o.burning = 3; }
+          // ce qui tombe lourd blesse ce qu'il heurte
+          { const v = Math.hypot(o.vx, o.vy), ms = masse(o); if (v > (ms > 2 ? 330 : 480) && !(o.boulet > 0)) { o.chocT = o.chocT || new Map(); for (const c of st.crs) if (c.hp > 0 && !c.sta.tame && U.rectsOverlap(o, c) && time - (o.chocT.get(c) || -9) > 0.6) { o.chocT.set(c, time); hurt(c, Math.min(5, ms * v / 900) / Math.sqrt(masse(c))); c.vx += o.vx * 0.4 / masse(c); c.vy -= 120; part(c.x + c.w / 2, c.y, '#8a7a5a', 6, 80, 0.4, 2, 300); Son.sfx('burst', 'terre'); }
+            const p = st.p; if (o.vy > 380 && ms > 2 && U.rectsOverlap(o, p) && p.y > o.y && time - (o.chocT.get(p) || -9) > 0.8 && !(p.sta.stone > 0)) { o.chocT.set(p, time); p.hp -= Math.min(3, ms * o.vy / 1400); p.vx += (p.x + p.w / 2 < o.x + o.w / 2 ? -1 : 1) * 260; msg('Aïe ! Ça tombe lourd.', 'warn'); } } }
           if (o.t === 'caisse') {
             if (!o.burning && Sim.rectHas({ x: o.x - 4, y: o.y - 4, w: o.w + 8, h: o.h + 8 }, (m) => m === M.FEU || m === M.LAVE)) o.burning = 2.5;
             if (o.burning > 0) { o.burning -= dt; o.hp -= dt; if (Math.random() < 0.5) part(o.x + Math.random() * o.w, o.y + 4, '#d9622b', 1, 40, 0.6, 3, -200); if (Math.random() < 0.1) { const cx = Math.floor((o.x + Math.random() * o.w) / CS), cy = Math.floor(o.y / CS) - 1; if (Sim.get(cx, cy) === M.AIR) Sim.set(cx, cy, M.FEU, 20); } if (o.hp <= 0) { o.mort = true; part(o.x + 18, o.y + 18, '#555', 14, 60, 1, 4); msg('La caisse n\'est plus que cendres.'); if (st.p.carry === o) st.p.carry = null; } }
@@ -2107,6 +2164,10 @@ const World = (() => {
       if (c.t === 'familier') { updateFamilier(c, dt, p); continue; }
       // cadeaux des créatures apprivoisées
       if (c.sta.tame && DATA.ESPECES[c.t] && DATA.ESPECES[c.t].drop) { c.cadeauT += dt; if (c.cadeauT > 90) { c.cadeauT = 0; dropPickup(DATA.ESPECES[c.t].drop, c.x + c.w / 2, c.y - 8); evt('cadeau'); msg(nomCreature(c.t) + ' te fait un cadeau.'); } }
+      // chaleur et grand froid
+      { const tc = Sim.tempAt(c.x + c.w / 2, c.y + c.h * 0.6); const sp0 = DATA.ESPECES[c.t] || {};
+        if (tc > 125 && !CHAUD_OK.includes(c.t)) { hurt(c, dt * (tc - 125) / 50); if (tc > 170) c.sta.burn = Math.max(c.sta.burn, 1); if (c.hp <= 0) continue; }
+        else if (tc < 46 && !FROID_OK.includes(c.t)) { c.sta.lent = Math.max(c.sta.lent || 0, 0.4); if (tc < 28 && Math.random() < dt * 0.5) c.sta.gele = Math.max(c.sta.gele || 0, 1.5); } }
       if (c.generique) { updateGenerique(c, dt, p); continue; }
       if (!c.vu && inView(c.x, c.y)) { c.vu = true; evt('espece', c.t); }
       if (c.hurt > 0) c.hurt -= dt;
@@ -2137,8 +2198,8 @@ const World = (() => {
         c.canStep = false; moveBody(c, dt);
         if (Math.random() < 0.3) part(ccx, ccy, '#3f9c9b', 1, 20, 0.5, 2, -40, 'spark');
       } else {
-        applyGrav(c, dt, lq ? 0.2 : 1);
-        if (lq) c.vy *= Math.max(0, 1 - 1.5 * dt);
+        applyGrav(c, dt, 1);
+        if (lq) flotter(c, dt, DENS[c.t] || 0.9);
         if (c.controlled && c.ctl) {
           const sp = c.t === 'golem' ? 150 : 200; c.vx = c.ctl.dirX * sp; if (c.ctl.dirX) c.dir = c.ctl.dirX; if (c.ctl.jump && c.onGround) c.vy = -420; c.ctl.jump = false;
         } else if (actif) {
@@ -2222,8 +2283,8 @@ const World = (() => {
     } else {
       // hop / walk / crawl
       const sw = sp.lave && lq === M.LAVE;
-      applyGrav(c, dt, lq ? 0.2 : 1);
-      if (lq) c.vy *= Math.max(0, 1 - 1.5 * dt);
+      applyGrav(c, dt, 1);
+      if (lq) flotter(c, dt, DENS[c.t] || 0.9);
       if (sw && actif) { c.vy -= 900 * dt * (Math.sin(c.phase * 2) > 0 ? 1 : 0.3); }
       if (actif || c.controlled) {
         const dir = tx != null ? Math.sign(tx - ccx) || c.dir : (Math.random() < dt * 0.4 ? -c.dir : c.dir);
