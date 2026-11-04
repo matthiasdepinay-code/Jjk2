@@ -129,6 +129,9 @@
   #seal-cout-detail { font-size: calc(13px * var(--s)); margin: -2px 0 4px; }
   #seal-cout-detail b { color: var(--ink); font-weight: normal; }
   #seal-inutiles { font-size: calc(13px * var(--s)); color: var(--red); margin: 0 0 6px; padding: 4px 8px; border-left: 3px solid var(--red); background: rgba(154,74,58,0.06); }
+  #seal-fil { font-size: calc(13px * var(--s)); margin: 2px 0 -4px; color: var(--sepia); }
+  #seal-fil button { padding: 1px 8px; margin-left: 6px; font-size: calc(13px * var(--s)); }
+  .glyph-btn.trouve { outline: 2.5px solid var(--gold); outline-offset: 1px; background: #f8e8b8; }
   .fantome-glyphe { position: fixed; width: 64px; height: 64px; pointer-events: none; z-index: 1000; filter: drop-shadow(0 3px 4px rgba(31,26,22,0.35)); }
   .palette.horsjeu, h3.horsjeu { opacity: 0.32; transition: opacity 0.15s; }
   .palette, #panel-seal h3 { transition: opacity 0.15s; }
@@ -283,6 +286,7 @@
         <div>
           <div id="seal-tailles" class="choices"></div>
           <div id="seal-encres" class="choices"></div>
+          <div id="seal-fil" class="hidden"></div>
           <canvas id="seal-canvas" width="380" height="380"></canvas>
           <input id="seal-nom" type="text" maxlength="32" placeholder="Nom du sceau">
           <div class="seal-info"><span class="label">Coût en encre</span><span class="cost" id="seal-cost">0</span><span id="seal-etat"></span></div>
@@ -9721,7 +9725,7 @@ const UI = (() => {
     // saisir un glyphe posé : on le déplace sur une autre case, ou hors du cercle pour le retirer
     sc.addEventListener('pointermove', (e) => { if (glisse && glisse.actif) return; const sid = slotSous(e.clientX, e.clientY, null); const v = sid && lireSlot(game.editSeal, sid); survolCase = v != null && v !== false ? sid : null; if (survolCase) decrireCase(survolCase); });
     sc.addEventListener('pointerleave', () => { survolCase = null; });
-    sc.addEventListener('pointerdown', (e) => { const sid = slotSous(e.clientX, e.clientY, null); if (!sid || !slotDispo(sid)) return; const v = lireSlot(game.editSeal, sid); if (v == null) return; preparerGlisser(e, { kind: genreDe(sid), id: v, from: sid }); });
+    sc.addEventListener('pointerdown', (e) => { const sid = slotSous(e.clientX, e.clientY, null); if (!sid || !slotDispo(sid)) return; const v = lireSlot(game.editSeal, sid); if (v == null) return; preparerGlisser(e, { kind: genreDe(sid), id: v, from: sid, copie: e.shiftKey }); });
     document.addEventListener('pointermove', bougerGlisser);
     document.addEventListener('pointerup', lacherGlisser);
     document.addEventListener('pointercancel', () => annulerGlisser());
@@ -9734,8 +9738,14 @@ const UI = (() => {
       const mod = e.ctrlKey || e.metaKey;
       if (mod && e.code === 'KeyZ') { e.preventDefault(); e.stopImmediatePropagation(); if (e.shiftKey) refaire(); else annuler(); }
       else if (mod && e.code === 'KeyY') { e.preventDefault(); e.stopImmediatePropagation(); refaire(); }
+      else if (e.code === 'Backspace' && recherche) { e.preventDefault(); e.stopImmediatePropagation(); recherche = recherche.slice(0, -1); rechercheT = performance.now(); majRecherche(); }
       else if ((e.code === 'Delete' || e.code === 'Backspace') && selSlot) { e.preventDefault(); e.stopImmediatePropagation(); retirer(selSlot); refreshSeal(); }
+      else if (e.code === 'Escape' && recherche) { e.stopImmediatePropagation(); recherche = ''; majRecherche(); }
       else if (e.code === 'Escape' && (selSlot || glisse)) { e.stopImmediatePropagation(); annulerGlisser(); selSlot = null; refreshSeal(); }
+      else if (e.code === 'Escape' && pile.length) { e.stopImmediatePropagation(); remonter(); }
+      else if (/^Arrow/.test(e.code) && !mod) { e.preventDefault(); e.stopImmediatePropagation(); naviguer(e.code); }
+      else if (e.code === 'Enter' && trouve) { e.preventDefault(); e.stopImmediatePropagation(); const b = trouve; recherche = ''; majRecherche(); finGlisse = 0; b.click(); }
+      else if (!mod && !e.altKey && e.key && e.key.length === 1 && /[a-zA-Zàâçéèêëîïôûùüÿœ' -]/.test(e.key)) { e.preventDefault(); e.stopImmediatePropagation(); if (performance.now() - rechercheT > 1800) recherche = ''; recherche += e.key; rechercheT = performance.now(); majRecherche(); }
     }, true);
     $('#seal-nom').addEventListener('input', (e) => { game.editSeal.nom = e.target.value; });
     $('#seal-new').addEventListener('click', () => { game.editSeal = Seal.create(); selSlot = null; refreshSeal(); Son.sfx('click'); });
@@ -9878,6 +9888,7 @@ const UI = (() => {
     if (name === 'create') { if (!$('#create-peau').children.length) construireCreation(); construireCompagnons(); look = { ...Perso.norm(game.look) }; delete look._cape; $('#create-nom').value = look.nom || ''; majChoixCreation(); }
   }
   function close() {
+    if (open === 'seal') { while (pile.length) remonter(true); recherche = ''; }
     open = null; selSlot = null;
     $$('.panel').forEach((p) => p.classList.add('hidden'));
     $('#panels').classList.add('hidden');
@@ -9917,6 +9928,7 @@ const UI = (() => {
     const id = hitSl ? hitSl.id : null;
     if (!id) { selSlot = null; refreshSeal(); return; }
     if (!slotDispo(id)) { toast(id.startsWith('mod') ? 'Cet emplacement est encore scellé. Voir le grimoire.' : id === 'filtre' ? 'Pointe droite : les filtres de matière ne sont pas encore connus.' : id === 'cible' ? 'Pointe gauche : les cibles ne sont pas encore connues.' : 'Emplacement indisponible.', 'warn'); return; }
+    if (!right && selSlot === id && Seal.isSub(lireSlot(s, id))) { ouvrirSous(id); return; }
     if (right || selSlot === id) {
       if (id.startsWith('mod')) s.mods[+id.slice(3)] = null; else s[id] = null;
       selSlot = null; Son.sfx('click');
@@ -9991,10 +10003,58 @@ const UI = (() => {
     if (!g.actif) { annulerGlisser(); return; }
     const cible = slotSous(e.clientX, e.clientY, g.accepte), dedans = dansCercle(e.clientX, e.clientY);
     annulerGlisser();
-    if (cible && cible !== g.from) { if (g.from) deplacer(g.from, cible); else poserEn(cible, g.kind, g.id); }
+    const copie = g.from && (g.copie || e.shiftKey);
+    if (cible && cible !== g.from && copie) { if (Seal.isSub(g.id)) { ecrireSlot(game.editSeal, cible, { sub: Seal.clone(g.id.sub) }); Son.sfx('cast', game.editSeal.core || 'vent'); } else poserEn(cible, g.kind, g.id); }
+    else if (cible && cible !== g.from) { if (g.from) deplacer(g.from, cible); else poserEn(cible, g.kind, g.id); }
     else if (g.from && !cible && !dedans) retirer(g.from, true);
     else if (!g.from && dedans && !cible) toast(g.accepte.length ? 'Ce glyphe va ' + OU_VA[g.kind] + '.' : 'Ce sceau n\'a pas de case ouverte pour ce glyphe.', 'warn');
     refreshSeal();
+  }
+
+  // ---------- un sous-sceau s'ouvre sur place : on le retouche, puis on remonte dans son parent ----------
+  let pile = [];
+  function oublierHistorique() { passe = []; avenir = []; vu = null; }
+  function ouvrirSous(sid) {
+    const s = game.editSeal, v = lireSlot(s, sid); if (!Seal.isSub(v)) return;
+    pile.push({ parent: s, sid }); game.editSeal = Seal.clone(v.sub); selSlot = null; oublierHistorique(); Son.sfx('cast', game.editSeal.core || 'vent'); refreshSeal();
+  }
+  function remonter(sansRafraichir) {
+    const h = pile.pop(); if (!h) return;
+    ecrireSlot(h.parent, h.sid, { sub: Seal.clone(game.editSeal) }); game.editSeal = h.parent; selSlot = sansRafraichir ? null : h.sid; oublierHistorique();
+    if (!sansRafraichir) { Son.sfx('click'); refreshSeal(); }
+  }
+
+  // ---------- le clavier sur le cercle : flèches, lettres, Entrée ----------
+  const anneauDe = (sid) => (sid === 'core' ? 0 : sid === 'shape' || sid === 'core2' || sid === 'core3' ? 1 : sid.startsWith('mod') ? 2 : 3);
+  function casesNavigables() {
+    const c = $('#seal-canvas'), cx = c.width / 2, cy = c.height / 2 + 10, s = game.editSeal, p = game.progress;
+    return Seal.slotList(cx, cy, sealR(), s.taille || 'moyen').filter((q) => slotDispo(q.id) && (!/core2|core3/.test(q.id) || p.fusion) && (q.id !== 'filtre' || p.filtres.length) && (q.id !== 'cible' || p.cibles.length > 1))
+      .map((q) => ({ id: q.id, anneau: anneauDe(q.id), angle: (Math.atan2(q.y - cy, q.x - cx) + Math.PI * 2.5) % (Math.PI * 2) }));
+  }
+  function naviguer(touche) {
+    const L = casesNavigables(); if (!L.length) return;
+    const ici = L.find((q) => q.id === selSlot);
+    if (!ici) { selSlot = 'core'; refreshSeal(); return; }
+    let vers = null;
+    if (touche === 'ArrowLeft' || touche === 'ArrowRight') {
+      const meme = L.filter((q) => q.anneau === ici.anneau).sort((a, b) => a.angle - b.angle); const i = meme.indexOf(ici);
+      vers = meme[(i + (touche === 'ArrowRight' ? 1 : -1) + meme.length) % meme.length];
+    } else {
+      const cible = ici.anneau + (touche === 'ArrowUp' ? 1 : -1); const autre = L.filter((q) => q.anneau === cible);
+      const ecart = (a) => { const d = Math.abs(a - ici.angle) % (Math.PI * 2); return Math.min(d, Math.PI * 2 - d); };
+      vers = autre.sort((a, b) => ecart(a.angle) - ecart(b.angle))[0] || null;
+    }
+    if (vers) { selSlot = vers.id; const v = lireSlot(game.editSeal, vers.id); if (v != null) decrireCase(vers.id); Son.sfx('click'); refreshSeal(); }
+  }
+  let recherche = '', rechercheT = 0, trouve = null;
+  const sansAccent = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  function majRecherche() {
+    $$('.glyph-btn.trouve').forEach((b) => b.classList.remove('trouve')); trouve = null;
+    if (!recherche) return;
+    const k = selSlot ? genreDe(selSlot) : null;
+    for (const [sel, kind] of PALETTES) { if (k && kind !== k) continue; for (const b of $$(sel + ' .glyph-btn:not(.locked)')) { const n = b.querySelector('span'); if (n && sansAccent(n.textContent).startsWith(sansAccent(recherche))) { trouve = b; break; } } if (trouve) break; }
+    if (trouve) { trouve.classList.add('trouve'); trouve.scrollIntoView({ block: 'nearest' }); }
+    $('#pal-desc').innerHTML = 'Recherche : « <b>' + recherche + '</b> »' + (trouve ? ' → ' + trouve.querySelector('span').textContent + ' (Entrée pour le poser, Échap pour effacer)' : ' — rien ne commence ainsi' + (k ? ' pour cette case.' : '.'));
   }
 
   // annuler, refaire : chaque état de la table est noté (le nom tapé seul ne compte pas)
@@ -10056,7 +10116,7 @@ const UI = (() => {
       let i = selSlot && selSlot.startsWith('mod') ? +selSlot.slice(3) : s.mods.findIndex((m, k) => !m && k < nb);
       if (i < 0) i = 0;
       if (i >= nb) { toast('Aucun emplacement de modificateur libre.', 'warn'); return; }
-      if (id === 'sous') { subSlot = i; showSubList(); return; }
+      if (id === 'sous') { if (pile.length) { toast('Un sous-sceau ne peut pas en contenir un autre.', 'warn'); return; } subSlot = i; showSubList(); return; }
       const lgEl = DATA.MODS[id] && (DATA.MODS[id].langue || DATA.MODS[id].aspect);
       if (lgEl) {
         const niv = DATA.niveauMaitrise((game.progress.maitrise || {})[lgEl] || 0);
@@ -10088,6 +10148,7 @@ const UI = (() => {
     if (!('core2' in s)) s.core2 = null;
     noterHistorique();
     $('#seal-annuler').disabled = !passe.length; $('#seal-refaire').disabled = !avenir.length;
+    { const f = $('#seal-fil'); if (pile.length) { const h = pile[pile.length - 1]; f.innerHTML = 'Dans « ' + Seal.nom(h.parent) + ' » › <b>sous-sceau</b> <button id="seal-remonter">↩ Remonter au sceau parent</button>'; f.classList.remove('hidden'); $('#seal-remonter').addEventListener('click', () => remonter()); } else { f.innerHTML = ''; f.classList.add('hidden'); } }
     $('#seal-nom').value = s.nom || '';
     $('#seal-nom').placeholder = Seal.autoNom(s);
     $('#seal-cost').textContent = Seal.cost(s);
@@ -10328,7 +10389,7 @@ const UI = (() => {
     if (survolCase && !g) { const sl = Seal.slotList(c.width / 2, c.height / 2 + 10, sealR(), game.editSeal.taille || 'moyen').find((q) => q.id === survolCase); const v = Seal.coutCase(game.editSeal, survolCase); if (sl && v) { const lab = (Math.round(v * 10) / 10) + ' encre'; ctx.save(); ctx.font = '12px "IM Fell English", Georgia, serif'; const w = ctx.measureText(lab).width + 10, x = Math.min(c.width - w - 2, sl.x + sl.r + 4), y = sl.y - sl.r - 4; ctx.fillStyle = 'rgba(246,238,216,0.95)'; ctx.strokeStyle = U.INK; ctx.lineWidth = 1; ctx.fillRect(x, y - 13, w, 17); ctx.strokeRect(x, y - 13, w, 17); U.txt(ctx, lab, x + w / 2, y - 1, 12, 'center', '#6b4f2a'); ctx.restore(); } }
     const combo = Seal.comboName(game.editSeal);
     const cleH = DATA.comboCle(Seal.effets(game.editSeal)), infoH = cleH && DATA.comboInfo(cleH);
-    const hint = combo ? 'Fusion : ' + combo + '.' : infoH ? 'Fusion inconnue — ' + infoH.indice : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot === 'core3' ? 'Un troisième effet : certaines fusions à trois existent.' : selSlot === 'filtre' ? 'Choisis un filtre de matière.' : selSlot === 'cible' ? 'Choisis une cible.' : selSlot === 'trigger2' ? 'Choisis un second déclencheur.' : selSlot && lireSlot(game.editSeal, selSlot) != null ? 'Encore un clic, Suppr, ou glisse-le hors du cercle : il s\'en va.' : selSlot ? 'Choisis un glyphe : les palettes qui n\'y vont pas s\'estompent.' : g ? (g.from ? 'Dépose-le sur une case dorée, ou hors du cercle pour le retirer.' : 'Dépose-le sur une case dorée.') : game.progress.fusion ? 'Glisse un glyphe sur le cercle. Sous le centre : un effet à fusionner.' : 'Glisse un glyphe sur le cercle, ou clique une case puis un glyphe.';
+    const hint = combo ? 'Fusion : ' + combo + '.' : infoH ? 'Fusion inconnue — ' + infoH.indice : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot === 'core3' ? 'Un troisième effet : certaines fusions à trois existent.' : selSlot === 'filtre' ? 'Choisis un filtre de matière.' : selSlot === 'cible' ? 'Choisis une cible.' : selSlot === 'trigger2' ? 'Choisis un second déclencheur.' : selSlot && Seal.isSub(lireSlot(game.editSeal, selSlot)) ? 'Encore un clic : ouvrir ce sous-sceau sur place.' : selSlot && lireSlot(game.editSeal, selSlot) != null ? 'Encore un clic, Suppr, ou glisse-le hors du cercle : il s\'en va.' : selSlot ? 'Choisis un glyphe : les palettes qui n\'y vont pas s\'estompent.' : g ? (g.from ? (g.copie ? 'Dépose la copie sur une case dorée.' : 'Sur une case dorée (Maj : une copie), ou hors du cercle : retiré.') : 'Dépose-le sur une case dorée.') : game.progress.fusion ? 'Glisse un glyphe sur le cercle. Sous le centre : un effet à fusionner.' : 'Glisse un glyphe sur le cercle, ou clique une case puis un glyphe.';
     U.txt(ctx, hint, c.width / 2, 16, 13, 'center', '#6b4f2a', 'IM Fell English', 'italic');
   }
 
@@ -10805,7 +10866,7 @@ const UI = (() => {
   }
 
   function setGrimTab(t) { grimTab = t; refreshGrimoire(); const pn = $('#panel-grimoire'); if (pn) pn.scrollTop = 0; }
-  const _table = { annuler, refaire, changerTaille, deplacer, retirer, poserEn, casesPour, get passe() { return passe.length; }, get avenir() { return avenir.length; } };
+  const _table = { annuler, refaire, changerTaille, deplacer, retirer, poserEn, casesPour, ouvrirSous, remonter, naviguer, get sel() { return selSlot; }, set sel(v) { selSlot = v; }, get pile() { return pile.length; }, get passe() { return passe.length; }, get avenir() { return avenir.length; } };
   return { _table, grimTab: setGrimTab, init, openPanel, close, isOpen, refreshSeal, refreshCauldron, refreshGrimoire, refreshHotbar, refreshHud, toast, zoneTitle, tick, setMode };
 })();
 

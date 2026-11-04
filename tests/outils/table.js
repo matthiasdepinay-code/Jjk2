@@ -75,6 +75,26 @@ const { chromium } = require('playwright');
   ok('Au doigt : un glissé rapide dans la palette fait défiler, il ne pose rien', s.shape === null);
   const [ex, ey] = await caseXY('core'); await glisserDoigt([ex, ey], [ex + 650, ey], false); s = await sceau();
   ok('Au doigt : glisser un glyphe posé hors du cercle le retire', s.core === null);
+  // 8. un sous-sceau s'ouvre sur place, et remonte dans son parent
+  await page.evaluate(() => { game.editSeal = Seal.clone({ taille: 'moyen', core: 'feu', shape: 'projectile', mods: [{ sub: { taille: 'moyen', core: 'eau', shape: 'zone', mods: [], trigger: 'immediat' } }, null, null], trigger: 'contact' }); UI.refreshSeal(); });
+  await page.mouse.click(...(await caseXY('mod0'))); await page.waitForTimeout(80); await page.mouse.click(...(await caseXY('mod0'))); await page.waitForTimeout(200);
+  const dedans = await page.evaluate(() => ({ pile: UI._table.pile, core: game.editSeal.core, fil: !document.getElementById('seal-fil').classList.contains('hidden') }));
+  ok('Un second clic sur un sous-sceau l\'ouvre sur place, avec un fil d\'Ariane', dedans.pile === 1 && dedans.core === 'eau' && dedans.fil, JSON.stringify(dedans));
+  await glisserSouris(await boutonXY('mod:duree'), await caseXY('mod1'));
+  await page.click('#seal-remonter'); await page.waitForTimeout(150);
+  const remonte = await page.evaluate(() => ({ pile: UI._table.pile, core: game.editSeal.core, sub: game.editSeal.mods[0] && game.editSeal.mods[0].sub && game.editSeal.mods[0].sub.mods[1] }));
+  ok('Remonter remet le sous-sceau retouché dans son parent', remonte.pile === 0 && remonte.core === 'feu' && remonte.sub === 'duree', JSON.stringify(remonte));
+  // 9. au clavier : les flèches parcourent les cases, les lettres trouvent un glyphe, Entrée le pose
+  await page.evaluate(() => { game.editSeal = Seal.create('moyen'); UI._table.sel = 'core'; UI.refreshSeal(); document.activeElement && document.activeElement.blur(); });
+  await page.keyboard.press('ArrowUp'); const a1 = await page.evaluate(() => UI._table.sel); await page.keyboard.press('ArrowUp'); const a2 = await page.evaluate(() => UI._table.sel); await page.keyboard.press('ArrowRight'); const a3 = await page.evaluate(() => UI._table.sel);
+  ok('Les flèches passent d\'anneau en anneau et tournent autour', /shape|core2|core3/.test(a1) && /^mod/.test(a2) && /^mod/.test(a3) && a3 !== a2, a1 + ' → ' + a2 + ' → ' + a3);
+  await page.keyboard.type('pui'); await page.waitForTimeout(80); await page.keyboard.press('Enter'); await page.waitForTimeout(150);
+  const tape = await page.evaluate((sid) => game.editSeal.mods[+sid.slice(3)], a3);
+  ok('Taper « pui » puis Entrée pose Puissance sur la case choisie', tape === 'puissance', String(tape));
+  // 10. Maj + glisser : une copie
+  await page.keyboard.down('Shift'); await glisserSouris(await caseXY(a3), await caseXY(a2)); await page.keyboard.up('Shift');
+  const copie = await page.evaluate(([x, y]) => [game.editSeal.mods[+x.slice(3)], game.editSeal.mods[+y.slice(3)]], [a3, a2]);
+  ok('Maj + glisser recopie le glyphe au lieu de le déplacer', copie[0] === 'puissance' && copie[1] === 'puissance', JSON.stringify(copie));
   if (process.argv.includes('--capture')) {
     await page.evaluate(() => { const s = game.editSeal; Object.assign(s, { core: 'feu', core2: 'gravite', shape: 'zone', mods: ['puissance', null, null, null, null], trigger: 'immediat' }); UI.refreshSeal(); });
     const [bx, by] = await boutonXY('mod:taille'); await page.mouse.move(bx, by); await page.mouse.down(); const [tx, ty] = await caseXY('mod1'); for (let i = 1; i <= 10; i++) await page.mouse.move(bx + (tx - bx) * i / 10, by + (ty - by) * i / 10); await page.waitForTimeout(200);
