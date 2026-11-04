@@ -2,7 +2,7 @@
 // ---------- Rendu du monde : ciel, nuit, objets, créatures, joueur, sorts ----------
 // Extrait de world.js : le monde lui passe un contexte W (getters vers son état et ses fonctions).
 function creerRendu(W) {
-  const VW = 1280, VH = 720;
+  const { VW, VH } = W; // dimensions de la vue : déclarées une seule fois, dans world.js
   const { TAU, INK, clamp, lerp, dist } = U;
   const CS = Sim.CS, M = Sim.M, P = Sim.P;
   function liensCircuit(ctx, o) {

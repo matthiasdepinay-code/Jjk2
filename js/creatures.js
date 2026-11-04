@@ -3,7 +3,7 @@
 // Extrait de world.js : le monde lui passe un contexte W (getters vers son état et ses fonctions).
 function creerCreatures(W) {
   const CS = Sim.CS, M = Sim.M, P = Sim.P;
-  const GRAV = 1500;
+  const { GRAV } = W; // la pesanteur : déclarée une seule fois, dans world.js
   const { TAU, INK, clamp, lerp, dist } = U;
   function affinite(c, f) {
     if (c.sta.tame || c.t === 'familier' || c.t === 'gardien' || c.controlled) return;
