@@ -205,7 +205,7 @@ const Gen = (() => {
       o('pancarte', 830, 70, { texte: 'Le sable chauffé devient verre, dit-on.' }), o('rocher', 872, 56), o('rune', 892, 60),
     ];
     // ---- Mécanismes et énigmes : chaque coffre scellé s'ouvre quand tout son circuit est actif ----
-    const sol = (t, x, h, extra = {}) => { let y = 64; while (y < H - 1 && (Sim.get(x, y) === M.AIR || Sim.get(x, y) === M.HERBE || Sim.get(x, y) === M.PLANTE || Sim.P[Sim.get(x, y)].gas)) y++; return Object.assign({ t, x: px(x), y: py(y) - h }, extra); };
+    const sol = (t, x, h, extra = {}) => { const xi = Math.round(x); let y = 64; while (y < H - 1 && (Sim.get(xi, y) === M.AIR || Sim.get(xi, y) === M.HERBE || Sim.get(xi, y) === M.PLANTE || Sim.P[Sim.get(xi, y)].gas)) y++; return Object.assign({ t, x: px(x), y: py(y) - h }, extra); };
     objs.push(
       // jardin : le levier
       sol('levier', 32, 34, { canal: 'j1' }), sol('coffre', 40, 30, { canal: 'j1', nom: 'Le coffre du jardin', indice: 'Un levier, tout près.', recompense: { xp: 20, ing: { nacre: 1, ambre: 1 } } }),
@@ -222,6 +222,17 @@ const Gen = (() => {
       sol('lampe', 716, 36, { canal: 'r1' }), sol('plaque', 728, 8, { canal: 'r1' }), sol('coffre', 744, 30, { canal: 'r1', nom: 'Le coffre des ruines', indice: 'La lampe veut la foudre, la plaque un poids. Ensemble.', recompense: { xp: 60, ing: { sable_temps: 1, poudre_or: 2 } } }),
       // désert : le moulin à vent ouvre la trappe
       sol('moulin', 824, 76, { canal: 'd1' }), sol('pancarte', 834, 70, { texte: 'Le vent fait tourner le moulin. Le moulin ouvre la trappe.' }),
+      // énigmes de fusion : chaque stèle attend une fusion précise (ses essences y sont gravées)
+      sol('stele', 69, 66, { canal: 'e1', nom: 'La stèle de la source', indice: 'L\'eau qui soigne.', veut: ['eau|vie'] }),
+      sol('coffre', 73.5, 30, { canal: 'e1', nom: 'Le coffre de la source', indice: 'La stèle veut une fusion. Ses deux essences y sont gravées.', recompense: { xp: 40, ing: { larme_lune: 1, pollen: 1 } } }),
+      sol('pancarte', 393, 70, { texte: 'Le passeur ne bâtit pas de pont : il le fait naître de rien.' }),
+      sol('stele', 403, 66, { canal: 'e2', nom: 'La stèle du passeur', indice: 'Un pont qui ne tient à rien.', veut: ['eau|lumiere', 'transmutation|vent', 'terre|vie'] }),
+      sol('coffre', 407, 30, { canal: 'e2', nom: 'Le coffre du passeur', indice: 'Un pont de lumière, d\'air figé ou de racines, près de la stèle.', recompense: { xp: 60, ing: { plume_phenix: 1 }, encre: { encre_nacre: 6 } } }),
+      sol('stele', 552, 66, { canal: 'e3', nom: 'Le cœur du volcan', indice: 'Le feu, la pierre et la pesanteur, ensemble : une fusion à trois.', veut: ['feu|gravite|terre'] }),
+      sol('coffre', 555.7, 30, { canal: 'e3', nom: 'Le coffre du cœur', indice: 'Fais naître une montagne qui crache, au grand sceau.', recompense: { xp: 120, ing: { coeur_braise: 2, sable_temps: 1 }, encre: { encre_or: 6 } } }),
+      sol('pancarte', 754, 70, { texte: 'Le carillon chante depuis mille ans. Qui le brise trouvera.' }),
+      sol('stele', 760, 60, { canal: 'e4', style: 'cloche', nom: 'Le carillon de verre', indice: 'Un fracas d\'orage, ou un choc de chaud et de froid.', veut: ['foudre|son', 'feu|froid'] }),
+      sol('coffre', 767, 30, { canal: 'e4', nom: 'Le coffre du carillon', indice: 'Le carillon doit se briser, d\'une fusion.', recompense: { xp: 80, ing: { poudre_or: 2, eclat: 2 } } }),
     );
     objs.push({ t: 'grille', x: px(840), y: py(T_CAVE), horiz: true, canal: 'd1' }, { t: 'coffre', x: px(841), y: py(T_CAVE + 13) - 30, nom: 'Le coffre de la cave', recompense: { xp: 70, encre: { encre_or: 8 }, ing: { sable_chantant: 2 } } });
     // objets placés dans les grottes / îles (positions explicites)

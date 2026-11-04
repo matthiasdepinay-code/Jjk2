@@ -470,7 +470,8 @@ const DATA = (() => {
     { id: 'l_chute',    titre: 'Ce qui ne tient plus',  quand: (p) => (p.leconsFaites || []).includes('l_forme'), essai: 'Creuse sous une dalle ou fais sauter un pilier : ce qui ne tient plus tombe, ou bascule.', evt: 'effondrement', xp: 20 },
     { id: 'l_prise',    titre: 'Saisir',                quand: (p) => p.shapes.includes('prise'), essai: 'Avec la forme Prise, saisis l\'eau d\'un lac ou un tas de sable, promène-le, puis lance-le.', sceau: (s) => s.shape === 'prise', xp: 15 },
     { id: 'l_vent',     titre: 'Le vent',               quand: (p) => p.cores.includes('vent'), essai: 'Le vent souffle et garde son élan : pousse la fumée, un nuage ou les flammes avec un sort de Vent.', sceau: (s) => s.core === 'vent' || s.core2 === 'vent', xp: 15 },
-    { id: 'l_trio',     titre: 'Trois effets',          quand: (p) => p.fusion && p.tailles.includes('grand'), essai: 'Sur un grand sceau, deux essences et un aspect : certaines fusions à trois existent. Le grimoire en garde la trace.', evt: 'combo_decouvert_trio', xp: 40 },
+    { id: 'l_trio',     titre: 'Trois effets',          quand: (p) => p.fusion && p.tailles.includes('grand'), essai: 'Le grand sceau a une troisième case d\'effet : certaines fusions à trois existent. Le grimoire en garde la trace.', evt: 'combo_decouvert_trio', xp: 40 },
+    { id: 'l_stele',    titre: 'Les stèles',            quand: (p) => p.fusion, essai: 'Des stèles gravées d\'essences dorment dans le monde. Fais naître près de l\'une d\'elles la fusion qu\'elle porte.', evt: 'stele', xp: 25 },
   ];
   // la recette d'une fusion en glyphes : essences et aspects
   function recetteCombo(cle) {

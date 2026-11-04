@@ -61,8 +61,8 @@ const World = (() => {
       sta: { wet: 0, stone: 0, invisible: 0, lowgrav: 0, jump: 0, small: 0, vision: 0, burning: 0, glide: 0, lumiere: 0, patins: 0, vitesse: 0, dissous: 0, vol: 0, branchies: 0, geant: 0, glisse: 0, hate: 0, lent: 0, armure: 0, hoquet: 0, glouglou: 0, boussole: 0, phenix: 0, regen: 0, garde: 0 },
       trap: null, selfTimer: null, carry: null, digT: 0 };
   }
-  const MECA = ['levier', 'plaque', 'brasier', 'roue', 'moulin', 'lampe', 'grille', 'coffre'];
-  const EMETTEURS = ['levier', 'plaque', 'brasier', 'roue', 'moulin', 'lampe'];
+  const MECA = ['levier', 'plaque', 'brasier', 'roue', 'moulin', 'lampe', 'grille', 'coffre', 'stele'];
+  const EMETTEURS = ['levier', 'plaque', 'brasier', 'roue', 'moulin', 'lampe', 'stele'];
   function emetActif(o) {
     switch (o.t) {
       case 'levier': return o.voulu !== undefined ? o.etat === o.voulu : o.etat;
@@ -71,8 +71,23 @@ const World = (() => {
       case 'roue': return o.eau > 0.75;
       case 'moulin': return o.spin > 0;
       case 'lampe': return o.charge > 0;
+      case 'stele': return !!o.grave;
     }
     return false;
+  }
+  // ---------- Stèles de fusion : elles s'éveillent quand la fusion gravée naît près d'elles ----------
+  function distPh(q, x, y) {
+    if (q.ligne) { const L = q.ligne, vx = L.x2 - L.x1, vy = L.y2 - L.y1, l2 = vx * vx + vy * vy || 1, t = clamp(((x - L.x1) * vx + (y - L.y1) * vy) / l2, 0, 1); return dist(x, y, L.x1 + vx * t, L.y1 + vy * t); }
+    if (q.rect) { const R = q.rect; return Math.hypot(Math.max(R.x0 - x, 0, x - R.x1), Math.max(R.y0 - y, 0, y - R.y1)); }
+    return Math.max(0, dist(x, y, q.x, q.y) - q.r * 0.5);
+  }
+  const nomFusion = (k) => { const I = DATA.comboInfo(k), connu = game.progress.combos && game.progress.combos[k], parts = k.split('|').map((e) => (DATA.CORES[e] ? DATA.CORES[e].nom : e).toLowerCase()).join(' + '); return (connu && I ? I.nom + ' (' + parts + ')' : 'une fusion inconnue (' + parts + ')'); };
+  function eveillerStele(o, id) {
+    o.grave = true; o.par = id; const cx = o.x + o.w / 2;
+    if (o.style === 'cloche') { part(cx, o.y + 18, '#cfe3ea', 26, 170, 1, 3, 300, 'spark'); Son.sfx('burst', 'son'); st.shake = Math.max(st.shake, 0.2); }
+    else { part(cx, o.y + o.h / 2, '#e0b050', 18, 90, 1, 3, -40, 'etincelle'); part(cx, o.y + 10, '#fff0b0', 8, 40, 0.8, 6, -30, 'glow'); Son.sfx('unlock'); }
+    msg((o.nom || 'La stèle') + ' s\'éveille : ' + (DATA.comboInfo(id) ? DATA.comboInfo(id).nom : id) + '.', 'unlock');
+    evt('stele', id);
   }
   // ---------- Mécanismes : mise à jour des émetteurs et des circuits ----------
   function majMecanismes(dt) {
@@ -112,6 +127,15 @@ const World = (() => {
           break;
         }
         case 'grille': { const a = o.puissant ? 1 : 0; o.ouv += (a - o.ouv) * Math.min(1, dt * 3); o.solid = o.ouv < 0.6; break; }
+        case 'stele': {
+          o.eveil += ((o.grave ? 1 : 0) - o.eveil) * Math.min(1, dt * 1.5);
+          if (o.grave || !o.veut) break;
+          o.chk -= dt; if (o.chk > 0) break; o.chk = 0.15;
+          const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
+          const q = PH.liste.find((f) => !f.mort && o.veut.includes(f.id) && distPh(f, cx, cy) < 170);
+          if (q) eveillerStele(o, q.id);
+          break;
+        }
         case 'coffre': o.couv += ((o.ouvert ? 1 : 0) - o.couv) * Math.min(1, dt * 4); break;
       }
     }
@@ -164,10 +188,11 @@ const World = (() => {
       case 'roue': Object.assign(b, { w: 44, h: 44, ang: 0, eau: 0 }); break;
       case 'moulin': Object.assign(b, { w: 40, h: 76, ang: 0, spin: 0 }); break;
       case 'lampe': Object.assign(b, { w: 22, h: 36, charge: 0 }); break;
+      case 'stele': Object.assign(b, o.style === 'cloche' ? { w: 38, h: 60 } : { w: 30, h: 66 }, { grave: false, eveil: o.grave ? 1 : 0, chk: 0, veut: o.veut ? o.veut.slice() : null }); break;
       case 'grille': Object.assign(b, o.horiz ? { w: o.largeur || 54, h: 18, largeur: o.largeur } : { w: 18, h: 90 }, { solid: true, ouv: 0 }); break;
       case 'coffre': Object.assign(b, { w: 40, h: 30, ouvert: !!o.ouvert, couv: o.ouvert ? 1 : 0, sceau: 0 }); break;
     }
-    for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur']) if (o[k] !== undefined) b[k] = o[k];
+    for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur', 'veut', 'grave', 'style', 'par']) if (o[k] !== undefined) b[k] = o[k];
     return b;
   }
   function makeCreature(c) {
@@ -189,7 +214,7 @@ const World = (() => {
   function serialize() {
     return {
       mat: Sim.serialize(), tod: st.tod, jour: st.jour || 0, meteo: st.meteo, mecaV: 1,
-      objs: st.objs.filter((o) => !o.mort && o.t !== 'magie').map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
+      objs: st.objs.filter((o) => !o.mort && o.t !== 'magie').map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur', 'veut', 'grave', 'style', 'par']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
       familiers: st.crs.filter((c) => c.t === 'familier' && c.hp > 0 && c.spec && c.spec.seal && c.life > 1).map((c) => ({ espece: c.espece, seal: c.spec.seal, x: Math.round(c.x), y: Math.round(c.y), life: Math.round(c.life), hp: c.hp, age: Math.round(c.age || 0) })),
       phen: PH.sauver(),
       crs: st.crs.filter((c) => c.t !== 'familier' && !c.temporaire).map((c) => ({ t: c.orig ? c.orig.t : c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.orig ? c.orig.hp : c.hp, tame: c.sta.tame, aff: c.aff ? Math.round(c.aff) : undefined, affJ: c.affJ, affDuJour: c.affDuJour })),
@@ -1709,6 +1734,7 @@ const World = (() => {
     if (o.t === 'ruche') return true;
     if (o.t === 'levier') return true;
     if (o.t === 'coffre') return !o.ouvert;
+    if (o.t === 'stele') return true;
     return false;
   }
   function findInteraction() {
@@ -1731,6 +1757,7 @@ const World = (() => {
       case 'page': return 'Lire la page déchirée';
       case 'levier': return 'Basculer le levier';
       case 'coffre': return it.o.canal ? 'Examiner le coffre scellé' : 'Ouvrir le coffre';
+      case 'stele': return it.o.style === 'cloche' ? 'Examiner le carillon' : 'Examiner la stèle';
       case 'ruche': return it.o.enfume > 0 ? 'Prendre du miel (les abeilles dorment)' : 'Prendre du miel (attention aux abeilles)';
       case 'liquide': return 'Remplir une fiole (' + P[it.liq.m].nom + ')';
       case 'poser': return 'Poser (clic droit : lancer)';
@@ -1749,6 +1776,7 @@ const World = (() => {
       case 'ruche': if (it.o.enfume > 0) { game.gainIngredient('miel'); part(it.o.x + 11, it.o.y + 20, '#d8a03a', 8, 40); } else { if (p.sta.stone <= 0 && p.sta.armure <= 0) p.hp -= 1.5; p.vx = -p.face * 300; p.vy = -200; Son.sfx('hurt'); msg('Les abeilles n\'apprécient pas. Enfume-les d\'abord.', 'warn'); } break;
       case 'levier': it.o.etat = !it.o.etat; Son.sfx('click'); part(it.o.x + 10, it.o.y + 8, '#8d6a3c', 4, 30); break;
       case 'coffre': { const o = it.o; if (!o.canal) { ouvrirCoffre(o); break; } const C = st.circuits && st.circuits[o.canal]; const n = C ? C.em.filter(emetActif).length : 0, tot = C ? C.em.length : 0; msg((o.nom || 'Un coffre') + ', scellé par un sceau de verrou. ' + (o.indice || '') + ' (' + n + '/' + tot + ' actifs)'); Son.sfx('click'); break; }
+      case 'stele': { const o = it.o; Son.sfx('click'); if (o.grave) { msg((o.nom || 'La stèle') + ' est éveillée' + (o.par ? ' par ' + nomFusion(o.par) : '') + '.'); break; } msg((o.nom || 'Une stèle') + '. ' + (o.indice ? o.indice + ' ' : '') + 'Elle attend ' + (o.veut || []).map(nomFusion).join(', ou ') + '.'); evt('stele_lue'); break; }
       case 'page': it.o.lue = true; game.lirePage(it.o.page); part(it.o.x + 10, it.o.y, '#efe3c4', 10, 50, 0.8, 3, -40); break;
       case 'rune': { const o = it.o; o.cooldown = 30; if (!o.lu) { o.lu = true; evt('rune'); msg('Tu déchiffres la rune. Elle te confie une lueur captive.'); } game.gainIngredient('lueur'); part(o.x + 20, o.y + 30, '#d8a63a', 12, 60, 0.9, 2, 0, 'spark'); break; }
       case 'liquide': {
@@ -2918,7 +2946,7 @@ const World = (() => {
     drawDark(ctx, camI);
     if (st.revelation && st.revelation.t > 0) {
       const Rv = st.revelation; Rv.t -= 1 / 60; const kk = Math.min(1, Rv.t / 2);
-      const VIS = ['coffre', 'page', 'champignon', 'ruche', 'graine', 'rune', 'levier', 'plaque', 'brasier', 'lampe', 'roue', 'moulin', 'grille'];
+      const VIS = ['coffre', 'page', 'champignon', 'ruche', 'graine', 'rune', 'levier', 'plaque', 'brasier', 'lampe', 'roue', 'moulin', 'grille', 'stele'];
       ctx.save(); ctx.translate(-camI.x, -camI.y);
       for (const o of st.objs) { if (o.mort || !VIS.includes(o.t) || (o.t === 'coffre' && o.ouvert) || (o.t === 'page' && o.lue) || dist(Rv.x, Rv.y, o.x, o.y) > Rv.r) continue; const ox = o.x + o.w / 2, oy = o.y + o.h / 2; FX.glow(ctx, ox, oy, 26 + Math.sin(time * 4) * 4, '#f0d070', 0.55 * kk); ctx.strokeStyle = '#c08a2a'; ctx.globalAlpha = 0.8 * kk; ctx.lineWidth = 1.5; U.inkCircle(ctx, ox, oy, Math.max(o.w, o.h) * 0.7 + 6, 3, 1); ctx.globalAlpha = 1; }
       for (const q of st.pickups) if (dist(Rv.x, Rv.y, q.x, q.y) < Rv.r) FX.glow(ctx, q.x, q.y, 18, '#f0d070', 0.5 * kk);
@@ -3107,6 +3135,35 @@ const World = (() => {
         ctx.beginPath(); ctx.moveTo(cx, o.y + o.h); ctx.lineTo(cx, o.y + 24); ctx.stroke(); ctx.fillStyle = '#737e86'; ctx.fillRect(cx - 8, o.y + o.h - 4, 16, 4);
         ctx.fillStyle = on ? '#fff6c0' : 'rgba(207,227,234,0.6)'; ctx.beginPath(); ctx.moveTo(cx, o.y); ctx.lineTo(cx + 9, o.y + 12); ctx.lineTo(cx, o.y + 24); ctx.lineTo(cx - 9, o.y + 12); ctx.closePath(); ctx.fill(); ctx.stroke();
         if (on) { FX.glow(ctx, cx, o.y + 12, 34, '#e0c43a', 0.6); if (Math.random() < 0.15) st.sp.push({ k: 'zap', pts: FX.eclairPts(cx, o.y + 12, cx + (Math.random() - 0.5) * 40, o.y + 12 + (Math.random() - 0.5) * 40, 0.4), life: 0.1, max: 0.1 }); }
+        break;
+      }
+      case 'stele': {
+        const k = o.eveil, cle = (o.grave && o.par) || (o.veut ? o.veut[Math.floor(time / 2.5) % o.veut.length] : null), ess = cle ? cle.split('|') : [];
+        if (o.style === 'cloche') {
+          // le carillon de verre : un portique de bois, une cloche de verre qui chante... puis se brise
+          ctx.strokeStyle = '#6b4f2a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(o.x + 2, o.y + o.h); ctx.lineTo(o.x + 6, o.y + 2); ctx.lineTo(o.x + o.w - 6, o.y + 2); ctx.lineTo(o.x + o.w - 2, o.y + o.h); ctx.stroke(); ctx.lineWidth = 1.5; ctx.strokeStyle = INK;
+          if (k < 0.5) {
+            const sw = Math.sin(time * 1.7) * 0.06; ctx.save(); ctx.translate(cx, o.y + 4); ctx.rotate(sw);
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 6); ctx.stroke();
+            ctx.fillStyle = 'rgba(207,227,234,0.55)'; ctx.beginPath(); ctx.moveTo(-5, 8); ctx.quadraticCurveTo(-7, 20, -13, 32); ctx.lineTo(13, 32); ctx.quadraticCurveTo(7, 20, 5, 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.beginPath(); ctx.moveTo(-3, 12); ctx.quadraticCurveTo(-5, 22, -8, 29); ctx.stroke(); ctx.strokeStyle = INK;
+            ess.forEach((e, i) => Seal.glyph(ctx, e, (i - (ess.length - 1) / 2) * 8, 24, 3.4, 'rgba(31,26,22,0.6)', i + 1));
+            ctx.restore();
+          } else {
+            ctx.fillStyle = 'rgba(207,227,234,0.6)';
+            for (let i = 0; i < 7; i++) { const fx = o.x + 6 + ((o.seed * (i + 3)) % (o.w - 12)), fy = o.y + o.h - 2 - (i % 3) * 2; ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx + 4, fy - 3 - (i % 2) * 2); ctx.lineTo(fx + 6, fy); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+            ctx.beginPath(); ctx.moveTo(cx, o.y + 4); ctx.lineTo(cx, o.y + 10); ctx.stroke(); FX.glow(ctx, cx, o.y + o.h - 6, 26, '#cfe3ea', 0.3 * k);
+          }
+          break;
+        }
+        // la stèle : une dalle de pierre dressée, les essences de la fusion gravées dessus
+        ctx.fillStyle = '#9b958b'; ctx.beginPath(); ctx.moveTo(o.x, o.y + o.h); ctx.lineTo(o.x + 1, o.y + 12); ctx.quadraticCurveTo(o.x + 2, o.y, cx, o.y); ctx.quadraticCurveTo(o.x + o.w - 2, o.y, o.x + o.w - 1, o.y + 12); ctx.lineTo(o.x + o.w, o.y + o.h); ctx.closePath(); ctx.fill(); ctx.stroke();
+        U.hatch(ctx, o.x + 3, o.y + o.h - 16, o.w - 6, 14, 5, Math.PI / 4, o.seed, 0.25);
+        ctx.fillStyle = '#7d776d'; ctx.fillRect(o.x - 4, o.y + o.h - 5, o.w + 8, 5); ctx.strokeRect(o.x - 4, o.y + o.h - 5, o.w + 8, 5);
+        if (k > 0.02) FX.glow(ctx, cx, o.y + o.h * 0.4, 34 + Math.sin(time * 2) * 3, '#e0b050', 0.45 * k);
+        const col = k > 0.5 ? '#c08a2a' : 'rgba(31,26,22,0.62)';
+        ess.forEach((e, i) => { const gy = o.y + 14 + i * 15; Seal.glyph(ctx, e, cx, gy, 5, col, i + 1); if (i < ess.length - 1) { ctx.strokeStyle = col; ctx.beginPath(); ctx.moveTo(cx - 2, gy + 7.5); ctx.lineTo(cx + 2, gy + 7.5); ctx.moveTo(cx, gy + 5.5); ctx.lineTo(cx, gy + 9.5); ctx.stroke(); ctx.strokeStyle = INK; } });
+        if (!o.grave && o.veut && o.veut.length > 1) for (let i = 0; i < o.veut.length; i++) { ctx.fillStyle = o.veut[i] === cle ? col : 'rgba(31,26,22,0.25)'; ctx.beginPath(); ctx.arc(cx + (i - (o.veut.length - 1) / 2) * 5, o.y + o.h - 9, 1.4, 0, TAU); ctx.fill(); }
         break;
       }
       case 'grille': {

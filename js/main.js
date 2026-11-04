@@ -16,7 +16,7 @@
 
   // ---------- Progression ----------
   // les événements qui valident les leçons du maître
-  const LECON_EVTS = new Set(['sort', 'combo_decouvert', 'combo_decouvert_trio', 'ordre', 'effondrement']);
+  const LECON_EVTS = new Set(['sort', 'combo_decouvert', 'combo_decouvert_trio', 'ordre', 'effondrement', 'stele']);
   function makeProgress() {
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
