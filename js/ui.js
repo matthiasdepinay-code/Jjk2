@@ -21,6 +21,8 @@ const UI = (() => {
     sc.addEventListener('click', (e) => { if (performance.now() - finGlisse < 350) return; onSealCanvasClick(e, sc); });
     sc.addEventListener('contextmenu', (e) => { e.preventDefault(); if (glisse) return; onSealCanvasClick(e, sc, true); });
     // saisir un glyphe posé : on le déplace sur une autre case, ou hors du cercle pour le retirer
+    sc.addEventListener('pointermove', (e) => { if (glisse && glisse.actif) return; const sid = slotSous(e.clientX, e.clientY, null); const v = sid && lireSlot(game.editSeal, sid); survolCase = v != null && v !== false ? sid : null; if (survolCase) decrireCase(survolCase); });
+    sc.addEventListener('pointerleave', () => { survolCase = null; });
     sc.addEventListener('pointerdown', (e) => { const sid = slotSous(e.clientX, e.clientY, null); if (!sid || !slotDispo(sid)) return; const v = lireSlot(game.editSeal, sid); if (v == null) return; preparerGlisser(e, { kind: genreDe(sid), id: v, from: sid }); });
     document.addEventListener('pointermove', bougerGlisser);
     document.addEventListener('pointerup', lacherGlisser);
@@ -252,7 +254,15 @@ const UI = (() => {
   function retirer(sid, pouf) { const s = game.editSeal; if (lireSlot(s, sid) == null) return; ecrireSlot(s, sid, null); selSlot = null; Son.sfx(pouf ? 'fizzle' : 'click'); }
 
   // glisser : à la souris dès qu'on bouge un peu ; au doigt, depuis la palette, après un appui long (sinon on fait défiler)
-  let glisse = null, finGlisse = 0, survolPal = null;
+  let glisse = null, finGlisse = 0, survolPal = null, survolCase = null;
+  // ce que fait le glyphe d'une case, et ce qu'il coûte dans ce sceau
+  function decrireCase(sid) {
+    const s = game.editSeal, v = lireSlot(s, sid), k = genreDe(sid); if (v == null) return;
+    const dict = { core: DATA.CORES, shape: DATA.SHAPES, mod: DATA.MODS, trigger: DATA.TRIGGERS, filtre: DATA.FILTRES, cible: DATA.CIBLES }[k];
+    const D = Seal.isSub(v) ? { nom: 'Sous-sceau « ' + Seal.nom(v.sub) + ' »', desc: 'Lancé là où ce sceau éclate.' } : dict && dict[v]; if (!D) return;
+    const vain = Seal.inutiles(s).find((q) => q.sid === sid), c = Math.round(Seal.coutCase(s, sid) * 10) / 10;
+    $('#pal-desc').innerHTML = '<b>' + D.nom + '</b> — ' + (c ? c + ' encre dans ce sceau. ' : '') + (vain ? '<span class="warn">' + vain.raison + '</span> ' : '') + (D.desc || '');
+  }
   function preparerGlisser(e, q) {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     annulerGlisser();
@@ -383,6 +393,10 @@ const UI = (() => {
     $('#seal-nom').value = s.nom || '';
     $('#seal-nom').placeholder = Seal.autoNom(s);
     $('#seal-cost').textContent = Seal.cost(s);
+    // le détail du coût, anneau par anneau
+    { const D = Seal.coutDetail(s), r1 = (v) => Math.round(v * 10) / 10; $('#seal-cout-detail').innerHTML = D.parts.length ? D.parts.map((q) => q.nom + ' <b>' + (q.cle === 'taille' ? '+' : '') + r1(q.v) + '</b>').join(' · ') + (D.mul !== 1 ? ' <span class="muted">(moitié prix)</span>' : '') : ''; }
+    // les glyphes qui ne servent à rien ici
+    { const I = Seal.inutiles(s); const z = $('#seal-inutiles'); z.innerHTML = I.length ? '<b>Sans effet ici</b> (encre perdue) : ' + I.map((q) => q.raison).join(' ') : ''; z.classList.toggle('hidden', !I.length); }
     const st = Seal.etat(s);
     const e = $('#seal-etat'); e.textContent = st.ok ? (st.raison || 'Le sceau est complet et vibre doucement.') : st.raison; e.className = st.ok ? 'ok' : 'warn';
     // palette
@@ -611,7 +625,9 @@ const UI = (() => {
     ctx.clearRect(0, 0, c.width, c.height);
     const g = glisse && glisse.actif ? glisse : null;
     Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, SEAL_R, { t: time, slots: game.progress.slots, highlight: selSlot, empty: true, fusion: game.progress.fusion, filtres: game.progress.filtres.length > 0, cibles: game.progress.cibles.length > 1,
-      accepte: g ? g.accepte : survolPal ? casesPour(survolPal) : null, survol: g ? g.survol : null, cache: g ? g.from : null });
+      accepte: g ? g.accepte : survolPal ? casesPour(survolPal) : null, survol: g ? g.survol : null, cache: g ? g.from : null, inutiles: Seal.inutiles(game.editSeal).map((q) => q.sid) });
+    // survol d'une case : ce que ce glyphe coûte ici
+    if (survolCase && !g) { const sl = Seal.slotList(c.width / 2, c.height / 2 + 10, sealR(), game.editSeal.taille || 'moyen').find((q) => q.id === survolCase); const v = Seal.coutCase(game.editSeal, survolCase); if (sl && v) { const lab = (Math.round(v * 10) / 10) + ' encre'; ctx.save(); ctx.font = '12px "IM Fell English", Georgia, serif'; const w = ctx.measureText(lab).width + 10, x = Math.min(c.width - w - 2, sl.x + sl.r + 4), y = sl.y - sl.r - 4; ctx.fillStyle = 'rgba(246,238,216,0.95)'; ctx.strokeStyle = U.INK; ctx.lineWidth = 1; ctx.fillRect(x, y - 13, w, 17); ctx.strokeRect(x, y - 13, w, 17); U.txt(ctx, lab, x + w / 2, y - 1, 12, 'center', '#6b4f2a'); ctx.restore(); } }
     const combo = Seal.comboName(game.editSeal);
     const cleH = DATA.comboCle(Seal.effets(game.editSeal)), infoH = cleH && DATA.comboInfo(cleH);
     const hint = combo ? 'Fusion : ' + combo + '.' : infoH ? 'Fusion inconnue — ' + infoH.indice : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot === 'core3' ? 'Un troisième effet : certaines fusions à trois existent.' : selSlot === 'filtre' ? 'Choisis un filtre de matière.' : selSlot === 'cible' ? 'Choisis une cible.' : selSlot === 'trigger2' ? 'Choisis un second déclencheur.' : selSlot && lireSlot(game.editSeal, selSlot) != null ? 'Encore un clic, Suppr, ou glisse-le hors du cercle : il s\'en va.' : selSlot ? 'Choisis un glyphe : les palettes qui n\'y vont pas s\'estompent.' : g ? (g.from ? 'Dépose-le sur une case dorée, ou hors du cercle pour le retirer.' : 'Dépose-le sur une case dorée.') : game.progress.fusion ? 'Glisse un glyphe sur le cercle. Sous le centre : un effet à fusionner.' : 'Glisse un glyphe sur le cercle, ou clique une case puis un glyphe.';

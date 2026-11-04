@@ -40,6 +40,56 @@ const Seal = (() => {
     if (s.taille !== 'petit' && DATA.DIMS[s.shape]) { const A = (s.dimL || 1) * (DATA.DIMS[s.shape].h ? s.dimH || 1 : 1); c += Math.max(-2, Math.round((Math.sqrt(A) - 1) * 3)); }
     return Math.max(s.core ? 1 : 0, Math.round(c * T.coutMul + T.coutAdd));
   }
+  // ---------- relecture : ce que coûte chaque anneau, et les glyphes qui ne servent à rien ici ----------
+  function coutCase(s, sid) {
+    const T = taille(s), m = (v) => v * T.coutMul;
+    if (sid === 'core') return s.core ? m(DATA.CORES[s.core].cout) : 0;
+    if (sid === 'core2') return s.core2 && s.taille !== 'petit' ? m(DATA.CORES[s.core2].cout + 2) : 0;
+    if (sid === 'core3') return s.core3 && s.taille === 'grand' ? m(DATA.CORES[s.core3].cout + 3) : 0;
+    if (sid === 'shape') return s.shape ? m(DATA.SHAPES[s.shape].cout) : 0;
+    if (sid === 'trigger') return s.trigger ? m(DATA.TRIGGERS[s.trigger].cout) : 0;
+    if (sid === 'trigger2') return s.trigger2 && s.taille === 'grand' ? m(DATA.TRIGGERS[s.trigger2].cout) : 0;
+    if (sid === 'filtre') return s.filtre && s.taille !== 'petit' ? m(DATA.FILTRES[s.filtre].cout) : 0;
+    if (sid === 'cible') return s.cible && s.taille !== 'petit' ? m(DATA.CIBLES[s.cible].cout) : 0;
+    if (sid.startsWith('mod')) { const q = s.mods[+sid.slice(3)]; return !q ? 0 : m(isSub(q) ? cost(q.sub) : DATA.MODS[q].cout); }
+    return 0;
+  }
+  function coutDetail(s) {
+    const T = taille(s), m = T.coutMul, sur = s.taille !== 'petit' && DATA.DIMS[s.shape] ? Math.max(-2, Math.round((Math.sqrt((s.dimL || 1) * (DATA.DIMS[s.shape].h ? s.dimH || 1 : 1)) - 1) * 3)) : 0;
+    const somme = (ids) => ids.reduce((a, k) => a + coutCase(s, k), 0);
+    const parts = [
+      { cle: 'centre', nom: 'Centre', v: coutCase(s, 'core') },
+      { cle: 'fusion', nom: 'Fusion', v: somme(['core2', 'core3']) },
+      { cle: 'forme', nom: 'Forme', v: coutCase(s, 'shape') + sur * m },
+      { cle: 'mods', nom: 'Second anneau', v: somme(s.mods.map((q, i) => 'mod' + i)) },
+      { cle: 'pointes', nom: 'Pointes', v: somme(['trigger', 'trigger2', 'filtre', 'cible']) },
+    ].filter((q) => q.v);
+    if (T.coutAdd) parts.push({ cle: 'taille', nom: T.nom + ' sceau', v: T.coutAdd });
+    return { parts, total: cost(s), mul: m };
+  }
+  const PROJ = ['projectile', 'chaine'];
+  // un modificateur n'agit que sur certaines formes
+  const SEULEMENT = { rebond: PROJ, teleguide: PROJ, orbite: PROJ, percant: PROJ, boomerang: PROJ, spirale: PROJ, zigzag: PROJ, rasesol: PROJ, cloche: ['projectile'], vitesse: PROJ.concat(['vague']), rafale: PROJ.concat(['trait']), double: PROJ.concat(['zone', 'mur', 'trait', 'invocation']) };
+  const JAMAIS = { canalise: ['projectile', 'soi', 'chaine', 'prise'], portee: ['soi', 'aura'] };
+  function inutiles(s) {
+    const out = [], sh = s.shape, nb = nbSlots(s, NMODS);
+    const nomF = (id) => (DATA.SHAPES[id] ? DATA.SHAPES[id].nom : id);
+    const cores = [s.core, s.taille !== 'petit' ? s.core2 : null, s.taille === 'grand' ? s.core3 : null].filter(Boolean), ef = effets(s);
+    s.mods.forEach((q, i) => {
+      if (!q || isSub(q) || i >= nb) return; const D = DATA.MODS[q]; if (!D) return; const sid = 'mod' + i;
+      if (sh && SEULEMENT[q] && !SEULEMENT[q].includes(sh)) out.push({ sid, raison: D.nom + ' ne sert qu\'aux formes ' + SEULEMENT[q].map(nomF).join(', ') + '.' });
+      else if (sh && JAMAIS[q] && JAMAIS[q].includes(sh)) out.push({ sid, raison: D.nom + ' ne fait rien sous la forme ' + nomF(sh) + '.' });
+      else if (D.aspect && !cores.includes(D.aspect)) out.push({ sid, raison: D.nom + ' est un aspect de l\'essence ' + DATA.CORES[D.aspect].nom + ', absente de ce sceau.' });
+      else if (D.langue && !ef.includes(D.langue)) out.push({ sid, raison: D.nom + ' est un mot ' + ((DATA.LANGAGES[D.langue] || {}).de || D.langue) + ', absent de ce sceau.' });
+      else if (q === 'matiere' && ef.length && !ef.some((e) => DATA.MATIERE[e])) out.push({ sid, raison: 'Matière : aucun effet de ce sceau n\'a de matière à rendre solide.' });
+    });
+    if (s.taille !== 'petit' && s.core2 && s.core2 === s.core) out.push({ sid: 'core2', raison: 'Deux fois la même essence : elles ne fusionnent pas.' });
+    if (s.taille === 'grand' && s.core3 && (s.core3 === s.core || s.core3 === s.core2)) out.push({ sid: 'core3', raison: 'Cette essence est déjà dans le sceau.' });
+    if (s.taille === 'grand' && s.trigger2 && s.trigger2 === s.trigger) out.push({ sid: 'trigger2', raison: 'Le même déclencheur, deux fois.' });
+    if (s.taille !== 'petit' && s.filtre && sh && !(PROJ.includes(sh) || (sh === 'zone' && triggers(s).some((t) => t === 'contact' || t === 'proximite')))) out.push({ sid: 'filtre', raison: 'Un filtre ne sert qu\'aux projectiles, ou à une zone posée en piège (Au contact, À proximité).' });
+    if (s.taille !== 'petit' && s.cible && (sh === 'soi' || sh === 'aura')) out.push({ sid: 'cible', raison: 'Sur soi ou en aura, le sort ne vise rien : la cible ne sert pas.' });
+    return out;
+  }
   function count(s, mod) {
     return s.mods.filter((m) => m === mod).length;
   }
@@ -280,6 +330,8 @@ const Seal = (() => {
     // cercles (le grand a un anneau extérieur supplémentaire)
     ctx.strokeStyle = INK;
     ctx.lineWidth = Math.max(1.5, R * 0.025); U.inkCircle(ctx, cx, cy, R, 11, R * 0.012);
+    // l'encre spéciale teinte l'anneau extérieur
+    if (s.encre && DATA.ENCRES[s.encre]) { const ce = DATA.ENCRES[s.encre].couleur; ctx.save(); ctx.strokeStyle = U.hexA(ce, 0.85); ctx.lineWidth = Math.max(2, R * 0.035); ctx.shadowColor = ce; ctx.shadowBlur = R * 0.08; U.inkCircle(ctx, cx, cy, R * 1.015, 17, R * 0.008); ctx.restore(); ctx.strokeStyle = INK; }
     ctx.lineWidth = Math.max(1, R * 0.015);
     if (tid !== 'petit') U.inkCircle(ctx, cx, cy, R * 0.86, 12, R * 0.01);
     U.inkCircle(ctx, cx, cy, R * 0.62, 13, R * 0.01);
@@ -320,7 +372,11 @@ const Seal = (() => {
       U.inkCircle(ctx, sl.x, sl.y, sl.r, 50 + sl.x, R * 0.01); ctx.setLineDash([]);
       if (id) {
         const col = kind === 'core' ? coul : kind === 'core2' || kind === 'core3' ? DATA.CORES[id].couleur : kind === 'filtre' ? DATA.FILTRES[id].couleur : kind === 'mod' && DATA.MODS[id] && DATA.MODS[id].aspect ? DATA.CORES[DATA.MODS[id].aspect].couleur : INK;
+        const vain = sid && opts.inutiles && opts.inutiles.includes(sid);
+        if (vain) ctx.globalAlpha = 0.32;
         glyph(ctx, kind === 'filtre' ? 'f_' + id : kind === 'cible' ? 'c_' + id : id, sl.x, sl.y, sl.r * 0.68, col, 60 + sl.x);
+        // sans effet ici : un petit cercle barré
+        if (vain) { ctx.globalAlpha = 0.9; const bx = sl.x + sl.r * 0.72, by = sl.y - sl.r * 0.72, br = Math.max(3.5, sl.r * 0.3); ctx.fillStyle = '#efe3c4'; ctx.strokeStyle = '#9a4a3a'; ctx.lineWidth = Math.max(1.2, R * 0.012); ctx.beginPath(); ctx.arc(bx, by, br, 0, TAU); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(bx - br * 0.7, by + br * 0.7); ctx.lineTo(bx + br * 0.7, by - br * 0.7); ctx.stroke(); }
         if (label) U.txt(ctx, label, sl.x + sl.r * 0.9, sl.y - sl.r * 0.9, Math.max(9, sl.r * 0.55), 'center', '#6b4f2a');
       } else if (opts.empty && !enabled) {
         ctx.strokeStyle = 'rgba(60,45,30,0.3)';
@@ -359,6 +415,7 @@ const Seal = (() => {
     ctx.strokeStyle = INK;
     ctx.lineWidth = 1.5;
     U.inkCircle(ctx, cx, cy, R, 7, 0.6);
+    if (s.encre && DATA.ENCRES[s.encre]) { ctx.save(); ctx.strokeStyle = DATA.ENCRES[s.encre].couleur; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R + 1.5, 0, TAU); ctx.stroke(); ctx.restore(); }
     if (s.core) {
       ctx.save(); ctx.translate(cx, cy); ctx.rotate(t * 0.5);
       ctx.strokeStyle = U.hexA(coul, 0.9); ctx.lineWidth = 1.2;
@@ -373,5 +430,5 @@ const Seal = (() => {
   }
 
   const api = { comboConnu: () => true };
-  return Object.assign(api, { aspects, effets, create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, slotList, draw, drawMini, isSub, subs, depth, modId, comboName, taille, nbSlots, triggers, NMODS });
+  return Object.assign(api, { inutiles, coutDetail, coutCase, aspects, effets, create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, slotList, draw, drawMini, isSub, subs, depth, modId, comboName, taille, nbSlots, triggers, NMODS });
 })();

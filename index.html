@@ -126,6 +126,9 @@
   #panel-seal { height: calc(680px * var(--s)); overflow: hidden; display: flex; flex-direction: column; }
   #panel-seal .cols { flex: 1; min-height: 0; }
   #panel-seal .cols > div { overflow-y: auto; padding-right: calc(6px * var(--s)); overscroll-behavior: contain; }
+  #seal-cout-detail { font-size: calc(13px * var(--s)); margin: -2px 0 4px; }
+  #seal-cout-detail b { color: var(--ink); font-weight: normal; }
+  #seal-inutiles { font-size: calc(13px * var(--s)); color: var(--red); margin: 0 0 6px; padding: 4px 8px; border-left: 3px solid var(--red); background: rgba(154,74,58,0.06); }
   .fantome-glyphe { position: fixed; width: 64px; height: 64px; pointer-events: none; z-index: 1000; filter: drop-shadow(0 3px 4px rgba(31,26,22,0.35)); }
   .palette.horsjeu, h3.horsjeu { opacity: 0.32; transition: opacity 0.15s; }
   .palette, #panel-seal h3 { transition: opacity 0.15s; }
@@ -283,6 +286,8 @@
           <canvas id="seal-canvas" width="380" height="380"></canvas>
           <input id="seal-nom" type="text" maxlength="32" placeholder="Nom du sceau">
           <div class="seal-info"><span class="label">Coût en encre</span><span class="cost" id="seal-cost">0</span><span id="seal-etat"></span></div>
+          <div id="seal-cout-detail" class="muted"></div>
+          <div id="seal-inutiles" class="hidden"></div>
           <div class="actions">
             <button id="seal-save">Consigner</button>
             <button id="seal-new">Nouveau</button>
