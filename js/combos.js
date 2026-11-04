@@ -40,19 +40,22 @@ function creerPhenomenes(W) {
   const joueurDans = (ph, marge = 0, k = 1) => touche(ph, st().p, marge, k);
   function ev(ph, cle, periode) { ph.acc[cle] = (ph.acc[cle] || 0) + dtC; if (ph.acc[cle] >= periode) { ph.acc[cle] -= periode; return true; } return false; }
   const pr = (ph, k = 1) => ({ power: ph.pw * k, size: ph.sz, duration: 1, persist: 0, range: 1, speed: 1, lg: {}, asp: {} });
-  function effet(ph, core, x, y, r, k = 1, mode = 'burst', o = {}) { W.applyEffect(core, x, y, r, pr(ph, k), mode, Object.assign({ noPlayer: true, noField: true, noGrid: false, phen: true }, o)); }
+  const partDe = (ph, ...es) => { if (!ph.essK) return 1; for (const e of es) if (ph.essK[e]) return ph.essK[e]; return 1; };
+  function effet(ph, core, x, y, r, k = 1, mode = 'burst', o = {}) { W.applyEffect(core, x, y, r, pr(ph, k * partDe(ph, core)), mode, Object.assign({ noPlayer: true, noField: true, noGrid: false, phen: true }, o)); }
   const fade = (ph) => clamp(Math.min(ph.t / 0.3, ph.life / Math.min(1, ph.max * 0.25)), 0, 1);
   // le sol sous un point ; si le point est dans la roche, on remonte jusqu'à la surface
   const sol = (x, y) => { if (Sim.solidAt(x, y)) { let yy = y; for (let k = 0; k < 60 && Sim.solidAt(x, yy - CS); k++) yy -= CS; return yy - (yy % CS); } const g = W.groundBelow(x, y); return g == null ? y : g; };
   const air = (m) => m === M.AIR || P[m].gas;
   function zap(x1, y1, x2, y2, couleur) { st().eclairs.push({ x: x2, y1: y2, pts: FX.eclairPts(x1, y1, x2, y2, 0.2), branches: [], life: 0.22, couleur }); }
   function attirer(ph, R, force, dt, cx = ph.x, cy = ph.y, joueur = 0.35) {
+    force *= partDe(ph, 'gravite', 'force');
     const tire = (e, f) => { const ex = e.x + e.w / 2, ey = e.y + e.h / 2, d = Math.hypot(cx - ex, cy - ey) || 1; if (d > R) return; const k = force * (1 - d / R) * dt / W.masse(e) * f; e.vx += (cx - ex) / d * k; e.vy += (cy - ey) / d * k; };
     for (const c of st().crs) if (c.hp > 0 && c.t !== 'familier') tire(c, 1);
     for (const o of st().objs) if (o.dyn && !o.mort && !o.carried) tire(o, 1);
     if (joueur) tire(st().p, joueur);
   }
   function repousser(ph, R, force, cx = ph.x, cy = ph.y, joueur = 0.5) {
+    force *= partDe(ph, 'vent', 'force', 'explosion');
     const pousse = (e, f) => { const ex = e.x + e.w / 2, ey = e.y + e.h / 2, d = Math.hypot(ex - cx, ey - cy) || 1; if (d > R) return; const k = force * (1 - d / R) / W.masse(e) * f; e.vx += (ex - cx) / d * k; e.vy += (ey - cy) / d * k - k * 0.3; };
     for (const c of st().crs) if (c.hp > 0 && c.t !== 'familier') pousse(c, 1);
     for (const o of st().objs) if (o.dyn && !o.mort && !o.carried) pousse(o, 1);
@@ -87,11 +90,12 @@ function creerPhenomenes(W) {
     init(ph) { if (ph.g === 'point' && !ph.follow) { const g = sol(ph.x, ph.y - 10); if (g - ph.y < 50) ph.y = g - 60; } ph.R = (ph.rect ? Math.max(ph.rect.x1 - ph.rect.x0, ph.rect.y1 - ph.rect.y0) * 0.6 : ph.r * 6.5); },
     tick(ph, dt) {
       const R = ph.R * (0.6 + 0.4 * fade(ph));
-      if (ev(ph, 'h', 0.12)) { Sim.chauffer(ph.x, ph.y, R, 150 + 18 * ph.pw, 0.22); Sim.chauffer(ph.x, ph.y, ph.r * 1.5, 250, 0.7); }
+      const pf = ph.pw * partDe(ph, 'feu');
+      if (ev(ph, 'h', 0.12)) { Sim.chauffer(ph.x, ph.y, R, 150 + 18 * pf, 0.22); Sim.chauffer(ph.x, ph.y, ph.r * 1.5, 250, 0.7); }
       if (ev(ph, 'g', 0.06)) effet(ph, 'force', ph.x, ph.y, R * 0.75, 0.45, 0.06);
       attirer(ph, R, 1500 * ph.pw, dt, ph.x, ph.y, 0.25);
       if (ev(ph, 'n', 0.2)) { let n = 0; Sim.forRadius(ph.x, ph.y, ph.r * 1.4, (x, y, i, m) => { if (m === M.HUILE || m === M.BOIS || m === M.FEU || m === M.POUDRE || m === M.PLANTE || m === M.SEVE) { Sim.set(x, y, M.AIR); n++; } }); if (n) { ph.life = Math.min(ph.max * 1.6, ph.life + n * 0.06); ph.r = Math.min(ph.r0 * 1.6, ph.r + n * 0.05); } }
-      for (const c of creatures(ph, 6)) { blesser(c, dt * 2.4 * ph.pw); c.sta.burn = Math.max(c.sta.burn, 1); }
+      for (const c of creatures(ph, 6)) { blesser(c, dt * 2.4 * pf); c.sta.burn = Math.max(c.sta.burn, 1); }
       if (joueurDans(ph, 4)) blesserJoueur(dt * 1.5, 'Le petit soleil te brûle !');
       if (rnd() < 0.6) { const a = rnd() * TAU; W.part(ph.x + Math.cos(a) * ph.r * 1.6, ph.y + Math.sin(a) * ph.r * 1.6, rnd() < 0.5 ? '#f0d070' : '#e0642a', 1, 30, 0.6, 2, -20, 'spark'); }
     },
@@ -737,6 +741,7 @@ function creerPhenomenes(W) {
     const mini = shape === 'pluie';
     const ph = { id, D, spec, x, y, vx: 0, vy: 0, r: D.r * sz * (mini ? 0.55 : 1), life: D.life * du * (mini ? 0.45 : 1), max: 0, pw, sz: sz * (mini ? 0.6 : 1), t: 0, g: 'point', castId: spec.castId, dir: dir || o.dir || { x: 1, y: 0 }, data: {}, acc: {} };
     ph.r0 = ph.r; ph.max = ph.life;
+    ph.essK = {}; if (pr0.ess) for (const e in pr0.ess) ph.essK[e] = pr0.ess[e].pk;
     if (o.rect) { ph.rect = { ...o.rect }; ph.g = 'rect'; ph.x = (o.rect.x0 + o.rect.x1) / 2; ph.y = (o.rect.y0 + o.rect.y1) / 2; }
     else if (shape === 'mur' && o.mur) { const mw = 30 * sz * (pr0.dimL || 1), mh = 180 * sz * (pr0.dimH || 1); ph.rect = { x0: x - mw / 2, x1: x + mw / 2, y0: y - mh / 2, y1: y + mh / 2 }; ph.g = 'rect'; }
     if (o.ligne) { ph.ligne = { ...o.ligne }; ph.g = 'ligne'; ph.x = (o.ligne.x1 + o.ligne.x2) / 2; ph.y = (o.ligne.y1 + o.ligne.y2) / 2; }

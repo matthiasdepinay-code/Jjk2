@@ -513,6 +513,8 @@ function creerRendu(W) {
     if (p.sta.forme < 3 && Math.floor(W.time * 6) % 2 === 0) FX.glow(ctx, p.x + p.w / 2, p.y + p.h / 2, p.h, '#c06aa0', 0.35);
   }
   function drawPlayer(ctx, p) {
+    // le sceau se dessine dans l'air, anneau par anneau, pendant qu'on le trace
+    for (const h of ['R', 'L']) { const g = p.gestes && p.gestes[h]; const c = W.game.charging && W.game.charging[h]; const seal = g ? g.seal : c && c.seal; if (!seal || !seal.core) continue; const prog = g ? 1 - g.t / Math.max(0.01, g.max) : Math.min(1, (performance.now() - c.t0) / 1000 / Math.max(0.05, c.trace || 0.2)); if (prog >= 1 && !g) continue; const ox = p.x + p.w / 2 + (h === 'L' ? -26 : 26) * (p.face || 1), oy = p.y - 30; Seal.drawTrace(ctx, seal, ox, oy, 22, prog, W.time); }
     for (const h of ['R', 'L']) { const g = p.gestes && p.gestes[h]; const c = W.game.charging && W.game.charging[h]; if (g) FX.cercle(ctx, p.x + p.w / 2, p.y + p.h, 22 + (1 - g.t / Math.max(0.01, g.max)) * 8, W.time, g.color, 1); else if (c) { const k = Math.min(1, (performance.now() - c.t0) / 1500); if (k > 0.08) FX.cercle(ctx, p.x + p.w / 2, p.y + p.h, 18 + k * 20, W.time * (1 + k * 2), c.color || '#d8a63a', 0.5 + k * 0.5); } }
     const moving = (Math.abs(p.vx) > 20 && (p.onGround || p.climbing)) || p.sta.vol > 0;
     if (p.inv > 0 && Math.floor(W.time * 20) % 2 === 0) return;

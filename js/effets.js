@@ -529,6 +529,7 @@ function creerEffets(W) {
     if (violet) Sim.forRadius(cx, cy, rad * 1.5, (x, y, i, m) => { const q = P[m]; if (W.FLAM(m) && Sim.aux[i] === 0 && Math.random() < 0.25) { Sim.aux[i] = q.burn; Sim.touch(i); } else if ((m === M.HUILE || m === M.POUDRE || m === M.SEVE) && Math.random() < 0.4) Sim.set(x, y, M.FEU, 30); });
   }
   function applyEffect(core, cx, cy, rad, prm, mode, opts = {}) {
+    if (prm && prm.ess && prm.ess[core]) prm = Object.assign({}, prm, { power: (prm.power || 1) * prm.ess[core].pk });
     const R = rad + 60, snap = [];
     for (const c of W.st.crs) if (c.hp > 0 && Math.abs(c.x + c.w / 2 - cx) < R + c.w && Math.abs(c.y + c.h / 2 - cy) < R + c.h) snap.push(c, c.vx, c.vy);
     for (const o of W.st.objs) if (o.dyn && !o.mort && !o.carried && Math.abs(o.x + o.w / 2 - cx) < R + o.w && Math.abs(o.y + o.h / 2 - cy) < R + o.h) snap.push(o, o.vx, o.vy);

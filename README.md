@@ -37,10 +37,18 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
   - glisser un glyphe de la palette sur le cercle (à la souris, ou au doigt après un appui long) ; pendant le geste, les cases qui l'acceptent s'allument en doré ;
   - glisser un glyphe posé le déplace sur une autre case du même anneau (s'il y en a déjà un, ils s'échangent) ; le glisser hors du cercle le retire ;
   - on peut aussi cliquer une case puis un glyphe : les palettes qui n'y vont pas s'estompent ; survoler un glyphe de la palette allume les cases où il peut aller ;
+  - Maj + glisser un glyphe posé en pose une copie (un sous-sceau aussi) ;
   - Ctrl+Z et Ctrl+Y (ou ↶ ↷) annulent et refont, même « Nouveau » ou le chargement d'un sceau ; Suppr retire le glyphe de la case choisie, Échap la désélectionne ;
-  - réduire la taille met de côté ce qui ne rentre plus, l'agrandir le remet en place ;
+  - au clavier : les flèches passent d'une case à l'autre (gauche et droite tournent sur l'anneau, haut et bas changent d'anneau) ; taper les premières lettres d'un glyphe le trouve dans la palette, Entrée le pose ;
+  - un second clic sur un sous-sceau l'ouvre sur place : on le retouche, puis « Remonter » (ou Échap) le remet dans son parent ;
+  - relire : au survol, chaque case dit ce qu'elle coûte ; le coût se détaille sous le nom (centre, fusion, forme, anneaux, pointes, taille, équilibre) ; un glyphe qui ne sert à rien est grisé, barré, et la table dit pourquoi ; l'encre choisie teinte l'anneau extérieur ;
+  - la taille s'ajuste toute seule : la plus petite qui tient ce qui est posé. Les cases de la taille suivante attendent en pointillés ; y poser un glyphe agrandit le sceau, et rien de ce qui est posé ne bouge. Retirer ce qui demandait la grande taille le fait rapetisser ;
   - le cercle reste à l'écran : les palettes défilent à part.
-- **Tailles** : petit (centre, forme, un modificateur, un déclencheur ; moitié prix, presque instantané), moyen, grand (cinq modificateurs, deux déclencheurs, tracé en 0,5 s).
+- **Tailles** : petit (centre, forme, un modificateur, un déclencheur ; moitié prix, presque instantané), moyen (trois modificateurs, filtre, cible, une seconde essence), grand (cinq modificateurs, une troisième essence, deux déclencheurs). Le tracé dure selon le nombre de glyphes posés : 0,2 s pour un moyen de quatre glyphes, 0,5 s pour un grand de sept, entre ×0,6 et ×1,6 autour.
+- **La géométrie du sceau** :
+  - la place compte : Puissance ou Inverser posé juste sous la seconde essence (en bas, à 90°) ne sert qu'elle ; sur un grand sceau, la case à 165°, contre la troisième essence, ne sert qu'elle. Dans une fusion, chaque essence garde sa part (le petit soleil chauffe selon le Feu, attire selon la Gravité). Un trait relie la case à son essence ;
+  - l'équilibre : des modificateurs bien répartis autour du cercle (au moins deux) rendent le sceau équilibré, 10 % d'encre en moins et un tracé 15 % plus vif ; serrés d'un côté, il est bancal : il penche à la table, et sa puissance vacille de ±20 % d'un sort à l'autre ;
+  - le second déclencheur d'un grand sceau peut être relié par un trait à une seule essence (réglage « Second déclencheur pour ») : le sort part en deux temps, cette essence avec le second déclencheur, le reste avec le premier ; les deux moitiés ne se heurtent pas.
 - **Filtres de matière** (pointe droite) : avec Au contact, le sort ne réagit qu'à l'eau, au feu, à la pierre, à la terre, au bois, au métal, à la glace ou aux créatures, et traverse tout le reste.
 - **Cibles** (pointe gauche) : souris, créature hostile la plus proche (le sort la suit), ou marque la plus récente posée par le glyphe Marque, même hors de vue.
 - **Déclencheurs** : Immédiat, Au contact, Retardé (1, 2, 5 ou 10 s), Sur commande (la touche F libère tous les sorts en attente), Répétition (toutes les 1, 2 ou 5 s), À l'expiration (dernier éclat quand l'effet s'éteint).
@@ -50,7 +58,7 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
   - Une Singularité ou une Implosion tenues rassemblent tout, puis éclatent au relâchement.
   - Sans fusion, un projectile tenu se tient au bout de la main, une zone ou une aura est canalisée là où l'on pointe, un trait devient un rayon continu.
   - Le clic droit fait de même avec la main gauche. Lâché pendant le tracé, le sceau se défait et rend presque toute son encre.
-- **Lancer** : maintenir le clic charge le sort (plus puissant, plus loin, plus cher) ; la main gauche lance un second sceau au clic droit (Maj + 1-5) ; dix enchaînements nommés quand un second sort éclate près du premier dans la seconde ; deux projectiles qui se croisent fusionnent.
+- **Lancer** : maintenir le clic trace le sceau dans l'air, anneau par anneau, au-dessus de la main ; tenu jusqu'au bout, il part dès qu'on lâche, et tenu plus longtemps il se charge (plus puissant, plus loin, plus cher). Lâché en plein tracé, seuls les anneaux finis partent, plus faibles et moins chers (il faut au moins le centre et la forme) ; un clic bref trace le sceau en entier avant de lancer, comme avant ; la main gauche lance un second sceau au clic droit (Maj + 1-5) ; dix enchaînements nommés quand un second sort éclate près du premier dans la seconde ; deux projectiles qui se croisent fusionnent.
 - **Bouclier** : arc élémentaire tourné vers la souris, qui repousse créatures, eau et sable (bulle sèche sous l'eau). **Contre-sort** : dissipe champs, pièges, totems, sorts en attente, portails et marques.
 - **Éditeur** : fiche lisible du sceau et aperçu animé de son effet.
 - **Terre** : la terre surgit en tas et tombe, puis se tasse au repos (un Mur, lui, reste debout). **Réduction** (dès le début) rend n'importe quel effet plus petit ; avec Taille, on règle la grosseur dans les deux sens.
@@ -272,7 +280,7 @@ Les modules extraits de `world.js` (phénomènes, gardiens, rendu, créatures, s
 - `node outils/extraire.js --essai f1 f2 ...` dit ce qu'un lot emprunte au monde, ce qu'il réaffecte et quels relais il faudrait, sans rien écrire ;
 - `node outils/extraire.js --module js/x.js --fabrique creerX --alias XX --titre "..." f1 f2 ... -- var1` écrit le module et met world.js à jour. Les variables après `--` partent avec le lot. Il reste à ajouter la balise `<script>` avant `world.js` et à lancer les tests.
 
-Tests : `node tests/lancer.js` lance tous les bancs dans un Chromium sans écran (Playwright) : glyphes, physique, fusions (les 69 fusions lancées dans plusieurs formes), fusions à trois, Maintenu, familiers, compagnons, vent, énigmes, gardiens, sauvegarde, sons, lisibilité. `node tests/lancer.js gardiens enigmes` n'en lance que certains. `node tests/outils/tactile.js` vérifie les commandes tactiles sur un téléphone simulé, `node tests/outils/table.js` la table des sceaux avec de vrais gestes (souris, clavier, doigt).
+Tests : `node tests/lancer.js` lance tous les bancs dans un Chromium sans écran (Playwright) : glyphes, physique, fusions (les 69 fusions lancées dans plusieurs formes), fusions à trois, Maintenu, familiers, compagnons, cercles (position, équilibre, deux temps, taille qui s'ajuste, tracé), vent, énigmes, gardiens, sauvegarde, sons, lisibilité. `node tests/lancer.js gardiens enigmes` n'en lance que certains. `node tests/outils/tactile.js` vérifie les commandes tactiles sur un téléphone simulé, `node tests/outils/table.js` la table des sceaux avec de vrais gestes (souris, clavier, doigt).
 
 Le jeu lui-même n'a aucune dépendance ; `package.json` ne sert qu'aux tests et aux outils (`npm ci`, puis `npm test`). Sur GitHub, le workflow `.github/workflows/tests.yml` lance, à chaque pull request et à chaque envoi sur `main` :
 - les bancs d'essai ;

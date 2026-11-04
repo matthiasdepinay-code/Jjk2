@@ -17,9 +17,12 @@ function creerSorts(W) {
     for (const e in prm.asp) for (const A of prm.asp[e]) if (A.n > 1) { prm.lg[A.devient] = 2; prm.power *= 1.3; }
     const effets0 = cores.slice();
     if (prm.inverse) { prm.gInv = cores.includes('gravite'); cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c)); }
+    else if (prm.invEss && prm.invEss.length) { cores = cores.map((c) => (prm.invEss.includes(c) && c !== 'gravite' ? DATA.INVERSE[c] || c : c)); if (prm.invEss.includes('gravite')) prm.gInv = true; }
+    // un sceau bancal : la puissance vacille d'un sort à l'autre
+    if (Seal.equilibre(seal).etat === 'bancal') prm.power *= 0.8 + Math.random() * 0.4;
     const lg = prm.lg || {};
     if (lg.gravite && cores.includes('gravite')) { prm.size *= 1 + 0.3 * lg.gravite; prm.power *= 1 + 0.4 * lg.gravite; }
-    const combo = !prm.inverse ? DATA.comboCle(effets0) : null;
+    const combo = !prm.inverse && !(prm.invEss && prm.invEss.length) ? DATA.comboCle(effets0) : null;
     const trs = Seal.triggers(seal);
     const proj = seal.shape === 'projectile' || seal.shape === 'chaine';
     const trig = trs.find((t) => PRIM.includes(t)) || (trs.includes('repetition') && proj ? 'contact' : 'immediat');
@@ -119,7 +122,7 @@ function creerSorts(W) {
   function doContinuous(spec, x, y, r, dt, opts = {}) {
     for (const core of spec.cores) W.applyEffect(core, x, y, r, { ...spec.prm, power: spec.prm.power * 0.5 }, dt, opts);
   }
-  function castSeal(seal, aim, gratuit, charge = 0, hand = 'R') {
+  function castSeal(seal, aim, gratuit, charge = 0, hand = 'R', o = {}) {
     const p = W.st.p;
     if (!p.gestes) p.gestes = { R: null, L: null };
     if (p.gestes[hand]) return false;
@@ -134,18 +137,23 @@ function creerSorts(W) {
     if (!seal.shape) { W.applyEffect(seal.core, pcx, pcy, 45, { ...Seal.params(seal), power: 0.5 }, 'burst', { noPlayer: seal.core !== 'feu' }); W.msg('Sans forme, l\'effet se répand mollement autour de toi.'); return true; }
     if (seal.core === 'terre' || seal.core2 === 'terre') W.evt('terre');
     if (Seal.triggers(seal).includes('retarde')) W.evt('retarde');
-    const gt = Seal.taille(seal).geste * (1 + charge * 0.5);
+    // tracé déjà fait en tenant le clic (o.sansGeste) : le sort part aussitôt
+    const gt = o.sansGeste ? 0.001 : Seal.geste(seal) * (1 + charge * 0.5);
     if (encre) { W.game.inv.encres[encre]--; if (W.game.inv.encres[encre] === 0) W.msg('C\'était la dernière goutte d\'' + DATA.ENCRES[encre].nom.toLowerCase() + '.'); }
     p.gestes[hand] = { seal, aim: { x: aim.x, y: aim.y }, t: gt, max: gt, color: encre ? DATA.ENCRES[encre].couleur : W.colorOf(seal.core), charge, hand, encre, cost };
     if (charge > 0.6) W.msg('Sort chargé : ' + Math.round(100 + charge * 80) + ' % de puissance.');
     W.evt('sort', seal);
     return true;
   }
+  let fratries = 0;
   function launch(seal, origin, aim, o = {}) {
     if (!seal.core || !seal.shape) return;
+    // un trait relie le second déclencheur à une essence : deux sorts, chacun son déclencheur
+    // les deux moitiés partent ensemble sans se heurter (fratrie)
+    if (!o.scinde && Seal.enDeuxTemps(seal)) { const [A, B] = Seal.scinder(seal), fratrie = ++fratries; launch(A, origin, aim, { ...o, scinde: true, fratrie }); launch(B, origin, aim, { ...o, scinde: true, fratrie }); return; }
     const p = W.st.p;
     const spec = makeSpec(seal, o.depth || 0, o.charge || 0);
-    spec.player = !!o.player;
+    spec.player = !!o.player; if (o.fratrie) spec.fratrie = o.fratrie;
     if (o.encre) appliquerEncre(spec, o.encre);
     const prm = spec.prm, trig = spec.trig, C = spec.color;
     const ox = origin.x, oy = origin.y;
@@ -731,7 +739,7 @@ function creerSorts(W) {
     // collisions entre projectiles : fusion forcée au point de rencontre
     const pj = W.st.sp.filter((q) => q.k === 'proj' && !q.mort && q.spec && !q.potion && !q.liquide);
     for (let i = 0; i < pj.length; i++) for (let j = i + 1; j < pj.length; j++) {
-      const a = pj[i], b = pj[j]; if (a.mort || b.mort || a.spec.castId === b.spec.castId) continue;
+      const a = pj[i], b = pj[j]; if (a.mort || b.mort || a.spec.castId === b.spec.castId || (a.spec.fratrie && a.spec.fratrie === b.spec.fratrie)) continue;
       if (dist(a.x, a.y, b.x, b.y) < a.r + b.r + 6) collision(a, b);
     }
     for (const mq of W.st.marques) mq.t += dt;

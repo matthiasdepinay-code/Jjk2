@@ -208,21 +208,33 @@ const UI = (() => {
   // ---------- Éditeur de sceaux ----------
   const SEAL_R = 140;
   function sealR() { return SEAL_R * (game.editSeal.taille === 'petit' ? 0.82 : 1); }
-  function slotDispo(id) {
-    const s = game.editSeal, p = game.progress, t = s.taille || 'moyen';
+  function slotDispo(id, tForce) {
+    const s = game.editSeal, p = game.progress, t = tForce || s.taille || 'moyen';
+    if (!tForce && estCroissance(id)) return slotDispo(id, tailleSuivante());
     if (id === 'core2') return p.fusion && t !== 'petit';
     if (id === 'core3') return p.fusion && t === 'grand';
     if (id === 'filtre') return t !== 'petit' && p.filtres.length > 0;
     if (id === 'cible') return t !== 'petit' && p.cibles.length > 1;
     if (id === 'trigger2') return t === 'grand';
-    if (id.startsWith('mod')) return +id.slice(3) < Seal.nbSlots(s, p.slots);
+    if (id.startsWith('mod')) return +id.slice(3) < Seal.nbSlots({ taille: t }, p.slots);
     return true;
   }
+  // ---------- la taille s'ajuste : la suivante attend en pointillés ----------
+  const ORDRE_T = ['petit', 'moyen', 'grand'];
+  function tailleSuivante() { const p = game.progress, i = ORDRE_T.indexOf(game.editSeal.taille || 'moyen'); for (let k = i + 1; k < 3; k++) if (p.tailles.includes(ORDRE_T[k])) return ORDRE_T[k]; return null; }
+  function casesCroissance() {
+    const nx = tailleSuivante(); if (!nx) return [];
+    const c = $('#seal-canvas'), cx = c.width / 2, cy = c.height / 2 + 10, R = sealR();
+    const ici = new Set(Seal.slotList(cx, cy, R, game.editSeal.taille || 'moyen').filter((q) => slotDispo(q.id, game.editSeal.taille || 'moyen')).map((q) => q.id));
+    return Seal.slotList(cx, cy, R, nx).filter((q) => !ici.has(q.id) && slotDispo(q.id, nx) && (!/core2|core3/.test(q.id) || game.progress.fusion)).map((q) => ({ ...q, grow: true }));
+  }
+  function estCroissance(id) { return !!id && casesCroissance().some((q) => q.id === id); }
+  function toutesLesCases() { const c = $('#seal-canvas'); return Seal.slotList(c.width / 2, c.height / 2 + 10, sealR(), game.editSeal.taille || 'moyen').concat(casesCroissance()); }
   function onSealCanvasClick(e, canvas, right = false) {
     const r = canvas.getBoundingClientRect();
     const x = (e.clientX - r.left) * (canvas.width / r.width), y = (e.clientY - r.top) * (canvas.height / r.height);
     const s = game.editSeal;
-    const hitSl = Seal.slotList(canvas.width / 2, canvas.height / 2 + 10, sealR(), s.taille || 'moyen').find((sl) => U.dist(x, y, sl.x, sl.y) <= sl.r * 1.3);
+    const hitSl = toutesLesCases().find((sl) => U.dist(x, y, sl.x, sl.y) <= sl.r * 1.3);
     const id = hitSl ? hitSl.id : null;
     if (!id) { selSlot = null; refreshSeal(); return; }
     if (!slotDispo(id)) { toast(id.startsWith('mod') ? 'Cet emplacement est encore scellé. Voir le grimoire.' : id === 'filtre' ? 'Pointe droite : les filtres de matière ne sont pas encore connus.' : id === 'cible' ? 'Pointe gauche : les cibles ne sont pas encore connues.' : 'Emplacement indisponible.', 'warn'); return; }
@@ -242,18 +254,18 @@ const UI = (() => {
   const OU_VA = { core: 'au centre (ou, la fusion apprise, sous le centre)', shape: 'sur le premier anneau, en haut', mod: 'sur le second anneau', trigger: 'sur la pointe du haut', filtre: 'sur la pointe droite', cible: 'sur la pointe gauche' };
   const PALETTES = [['#pal-cores', 'core'], ['#pal-shapes', 'shape'], ['#pal-mods', 'mod'], ['#pal-triggers', 'trigger'], ['#pal-filtres', 'filtre'], ['#pal-cibles', 'cible']];
   // les cases ouvertes qui acceptent un glyphe de ce genre
-  function casesPour(kind) { return Seal.slotList(0, 0, 1, game.editSeal.taille || 'moyen').map((q) => q.id).filter((sid) => genreDe(sid) === kind && slotDispo(sid)); }
+  function casesPour(kind) { return toutesLesCases().map((q) => q.id).filter((sid, i, a) => a.indexOf(sid) === i && genreDe(sid) === kind && slotDispo(sid)); }
   function couleurGlyphe(kind, id) { return kind === 'core' ? DATA.CORES[id].couleur : kind === 'filtre' ? DATA.FILTRES[id].couleur : kind === 'mod' && DATA.MODS[id] && DATA.MODS[id].aspect ? DATA.CORES[DATA.MODS[id].aspect].couleur : U.INK; }
   // la case sous le pointeur (parmi « liste » si on en donne une, avec une marge généreuse pour le doigt)
   function slotSous(cx, cy, liste) {
     const c = $('#seal-canvas'), r = c.getBoundingClientRect(); if (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom) return null;
     const x = (cx - r.left) * (c.width / r.width), y = (cy - r.top) * (c.height / r.height);
     let best = null, bd = 1e9;
-    for (const sl of Seal.slotList(c.width / 2, c.height / 2 + 10, sealR(), game.editSeal.taille || 'moyen')) { if (liste && !liste.includes(sl.id)) continue; const d = U.dist(x, y, sl.x, sl.y); if (d <= sl.r * (liste ? 1.9 : 1.3) && d < bd) { bd = d; best = sl.id; } }
+    for (const sl of toutesLesCases()) { if (liste && !liste.includes(sl.id)) continue; const d = U.dist(x, y, sl.x, sl.y); if (d <= sl.r * (liste ? 1.9 : 1.3) && d < bd) { bd = d; best = sl.id; } }
     return best;
   }
   function dansCercle(cx, cy) { const c = $('#seal-canvas'), r = c.getBoundingClientRect(); if (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom) return false; const x = (cx - r.left) * (c.width / r.width), y = (cy - r.top) * (c.height / r.height); return U.dist(x, y, c.width / 2, c.height / 2 + 10) < sealR() * 1.3; }
-  function poserEn(sid, kind, id) { if (!slotDispo(sid)) return; selSlot = sid; placeInSeal(kind, id); if (selSlot === sid && kind !== 'mod') selSlot = null; }
+  function poserEn(sid, kind, id) { if (!slotDispo(sid)) return; if (estCroissance(sid)) { const nx = tailleSuivante(); if (nx) game.editSeal.taille = nx; } selSlot = sid; placeInSeal(kind, id); if (selSlot === sid && kind !== 'mod') selSlot = null; }
   function deplacer(from, to) {
     const s = game.editSeal; if (genreDe(from) !== genreDe(to) || !slotDispo(to)) return;
     const a = lireSlot(s, from), b = lireSlot(s, to); ecrireSlot(s, to, a); ecrireSlot(s, from, b == null ? null : b);
@@ -326,7 +338,8 @@ const UI = (() => {
   const anneauDe = (sid) => (sid === 'core' ? 0 : sid === 'shape' || sid === 'core2' || sid === 'core3' ? 1 : sid.startsWith('mod') ? 2 : 3);
   function casesNavigables() {
     const c = $('#seal-canvas'), cx = c.width / 2, cy = c.height / 2 + 10, s = game.editSeal, p = game.progress;
-    return Seal.slotList(cx, cy, sealR(), s.taille || 'moyen').filter((q) => slotDispo(q.id) && (!/core2|core3/.test(q.id) || p.fusion) && (q.id !== 'filtre' || p.filtres.length) && (q.id !== 'cible' || p.cibles.length > 1))
+    // les cases en pointillés aussi : au clavier, on fait grandir le sceau de la même façon
+    return toutesLesCases().filter((q) => slotDispo(q.id) && (!/core2|core3/.test(q.id) || p.fusion) && (q.id !== 'filtre' || p.filtres.length) && (q.id !== 'cible' || p.cibles.length > 1))
       .map((q) => ({ id: q.id, anneau: anneauDe(q.id), angle: (Math.atan2(q.y - cy, q.x - cx) + Math.PI * 2.5) % (Math.PI * 2) }));
   }
   function naviguer(touche) {
@@ -367,35 +380,9 @@ const UI = (() => {
   function restaurer(j) { game.editSeal = Seal.clone(JSON.parse(j)); selSlot = null; enRestauration = true; refreshSeal(); enRestauration = false; Son.sfx('click'); }
   function annuler() { if (!passe.length) return; avenir.push(instantane()); restaurer(passe.pop()); }
   function refaire() { if (!avenir.length) return; passe.push(instantane()); restaurer(avenir.pop()); }
-  // réduire le sceau met de côté ce qui ne rentre plus ; l'agrandir le remet en place
-  let reserve = [], reserveDe = null;
-  function changerTaille(t) {
-    const s = game.editSeal; if (reserveDe !== s) { reserve = []; reserveDe = s; }
-    const avant = { mods: s.mods.slice(), core2: s.core2, core3: s.core3, trigger2: s.trigger2, filtre: s.filtre, cible: s.cible };
-    s.taille = t;
-    const nb = Seal.nbSlots(s, game.progress.slots);
-    for (let i = nb; i < s.mods.length; i++) s.mods[i] = null;
-    if (t === 'petit') { s.core2 = null; s.filtre = null; s.cible = null; }
-    if (t !== 'grand') s.core3 = null;
-    if (t !== 'grand') s.trigger2 = null;
-    const mis = [];
-    avant.mods.forEach((m, i) => { if (m && !s.mods[i]) mis.push({ sid: 'mod', v: m }); });
-    for (const k of ['core2', 'core3', 'trigger2', 'filtre', 'cible']) if (avant[k] && !s[k]) mis.push({ sid: k, v: avant[k] });
-    if (mis.length) { reserve = reserve.concat(mis); toast((mis.length === 1 ? 'Un glyphe mis de côté' : mis.length + ' glyphes mis de côté') + ' : ils reviendront si tu agrandis le sceau.'); }
-    else if (reserve.length) {
-      const reste = [];
-      for (const q of reserve) {
-        if (q.sid === 'mod') { const i = s.mods.findIndex((m, k) => !m && k < nb); if (i >= 0) { s.mods[i] = q.v; continue; } }
-        else if (!s[q.sid] && slotDispo(q.sid)) { s[q.sid] = q.v; continue; }
-        reste.push(q);
-      }
-      const n = reserve.length - reste.length; reserve = reste;
-      if (n) toast(n === 1 ? 'Le glyphe mis de côté reprend sa place.' : 'Les ' + n + ' glyphes mis de côté reprennent leur place.');
-    }
-    selSlot = null; Son.sfx('click'); refreshSeal();
-  }
   function placeInSeal(kind, id) {
     const s = game.editSeal;
+    if (selSlot && estCroissance(selSlot)) { const nx = tailleSuivante(); if (nx) s.taille = nx; }
     if (kind === 'core') {
       if (selSlot === 'core3' && slotDispo('core3')) { s.core3 = id; selSlot = null; }
       else if ((selSlot === 'core2' || (game.progress.fusion && s.core && s.core !== id && !s.core2 && selSlot !== 'core')) && slotDispo('core2')) { s.core2 = id; selSlot = null; }
@@ -444,6 +431,9 @@ const UI = (() => {
   function refreshSeal() {
     const s = game.editSeal, p = game.progress;
     if (!('core2' in s)) s.core2 = null;
+    // le trait du second déclencheur tombe si son déclencheur ou son essence s'en va
+    if (s.lien2 && (!s.trigger2 || !s[s.lien2] || [s.core, s.core2, s.core3].filter(Boolean).length < 2)) s.lien2 = null;
+    { const tA = Seal.tailleMin(s, p.tailles, p.slots); if (s.taille !== tA) s.taille = tA; }
     noterHistorique();
     $('#seal-annuler').disabled = !passe.length; $('#seal-refaire').disabled = !avenir.length;
     { const f = $('#seal-fil'); if (pile.length) { const h = pile[pile.length - 1]; f.innerHTML = 'Dans « ' + Seal.nom(h.parent) + ' » › <b>sous-sceau</b> <button id="seal-remonter">↩ Remonter au sceau parent</button>'; f.classList.remove('hidden'); $('#seal-remonter').addEventListener('click', () => remonter()); } else { f.innerHTML = ''; f.classList.add('hidden'); } }
@@ -451,8 +441,9 @@ const UI = (() => {
     $('#seal-nom').placeholder = Seal.autoNom(s);
     $('#seal-cost').textContent = Seal.cost(s);
     // le détail du coût, anneau par anneau
-    { const D = Seal.coutDetail(s), r1 = (v) => Math.round(v * 10) / 10; $('#seal-cout-detail').innerHTML = D.parts.length ? D.parts.map((q) => q.nom + ' <b>' + (q.cle === 'taille' ? '+' : '') + r1(q.v) + '</b>').join(' · ') + (D.mul !== 1 ? ' <span class="muted">(moitié prix)</span>' : '') : ''; }
+    { const D = Seal.coutDetail(s), r1 = (v) => Math.round(v * 10) / 10; $('#seal-cout-detail').innerHTML = D.parts.length ? D.parts.map((q) => q.nom + ' <b>' + (q.pct ? q.v + ' %' : (q.cle === 'taille' ? '+' : '') + r1(q.v)) + '</b>').join(' · ') + (D.mul !== 1 ? ' <span class="muted">(moitié prix)</span>' : '') : ''; }
     // les glyphes qui ne servent à rien ici
+    { const E = Seal.equilibre(s), z = $('#seal-equilibre'); z.innerHTML = E.etat === 'equilibre' ? '⚖ <b>Équilibré</b> : un dixième d\'encre en moins, et il se trace plus vite.' : E.etat === 'bancal' ? '⚖ <b>Bancal</b> : les modificateurs penchent d\'un côté ; la puissance vacille d\'un sort à l\'autre.' : ''; z.className = E.etat; }
     { const I = Seal.inutiles(s); const z = $('#seal-inutiles'); z.innerHTML = I.length ? '<b>Sans effet ici</b> (encre perdue) : ' + I.map((q) => q.raison).join(' ') : ''; z.classList.toggle('hidden', !I.length); }
     const st = Seal.etat(s);
     const e = $('#seal-etat'); e.textContent = st.ok ? (st.raison || 'Le sceau est complet et vibre doucement.') : st.raison; e.className = st.ok ? 'ok' : 'warn';
@@ -498,9 +489,8 @@ const UI = (() => {
     }
     // une case choisie : les palettes qui n'y vont pas s'estompent
     { const k = selSlot ? genreDe(selSlot) : null; for (const [sel, kind] of PALETTES) { const c = $(sel), hors = !!k && kind !== k; c.classList.toggle('horsjeu', hors); if (c.previousElementSibling) c.previousElementSibling.classList.toggle('horsjeu', hors); } }
-    // tailles
-    const tz = $('#seal-tailles'); tz.innerHTML = '<span class="label">Taille</span>';
-    for (const t in DATA.TAILLES) { const T = DATA.TAILLES[t]; const ok = p.tailles.includes(t); const b = el('button', 'choice' + ((s.taille || 'moyen') === t ? ' on' : '') + (ok ? '' : ' locked'), T.nom); b.title = ok ? T.desc : 'Pas encore débloqué. ' + ((DATA.UNLOCKS.find((u) => u.item === t) || {}).indice || ''); if (ok) b.addEventListener('click', () => changerTaille(t)); else b.disabled = true; tz.appendChild(b); }
+    // la taille s'ajuste toute seule à ce que porte le sceau
+    { const tz = $('#seal-tailles'), T = DATA.TAILLES[s.taille || 'moyen'], nx = tailleSuivante(); tz.innerHTML = '<span class="label">Taille</span>'; const b = el('span', 'choice on taille-auto', T.nom); b.title = T.desc; tz.appendChild(b); tz.appendChild(el('small', 'muted', nx ? 'elle s\'ajuste à ce que tu poses ; pose un glyphe sur une case en pointillés pour passer au ' + DATA.TAILLES[nx].nom.toLowerCase() + '.' : 'elle s\'ajuste à ce que tu poses.')); }
     // encre
     const ez = $('#seal-encres'); ez.innerHTML = '';
     const connues = Object.keys(DATA.ENCRES).filter((id) => p.recettes.includes(id) || (game.inv.encres || {})[id] > 0);
@@ -518,6 +508,11 @@ const UI = (() => {
     const Dm = DATA.DIMS[s.shape];
     if (Dm && s.taille !== 'petit') for (const ax of ['l', 'h']) { if (!Dm[ax]) continue; const cle = ax === 'l' ? 'dimL' : 'dimH'; const g = el('div', 'choices'); g.appendChild(el('span', 'label', Dm[ax])); for (const v of DATA.DIM_VALS) { const nom = v === 0.25 ? '×¼' : v === 0.5 ? '×½' : '×' + v; const b = el('button', 'choice' + ((s[cle] || 1) === v ? ' on' : ''), nom); b.addEventListener('click', () => { s[cle] = v; refreshSeal(); Son.sfx('click'); }); g.appendChild(b); } pr.appendChild(g); }
     if (trs.includes('repetition')) reglage('Période', 'periode', [1, 2, 5]);
+    // le trait : le second déclencheur pour une seule essence (le sort part en deux temps)
+    { const ess = ['core', 'core2', 'core3'].filter((k) => s[k]); if (s.taille === 'grand' && s.trigger2 && ess.length >= 2) {
+      const g = el('div', 'choices'); g.appendChild(el('span', 'label', 'Second déclencheur pour'));
+      for (const [v, lab] of [[null, 'tout le sceau']].concat(ess.map((k) => [k, DATA.CORES[s[k]].nom]))) { const b = el('button', 'choice' + ((s.lien2 || null) === v ? ' on' : ''), lab); b.title = v ? 'Un trait relie le second déclencheur à cette essence : elle part à part, avec lui ; le reste part avec le premier.' : 'Les deux déclencheurs valent pour tout le sceau.'; b.addEventListener('click', () => { s.lien2 = v; refreshSeal(); Son.sfx('click'); }); g.appendChild(b); }
+      pr.appendChild(g); } }
     $('#seal-fiche').innerHTML = ficheSceau(s);
     // liste des sceaux enregistrés
     const list = $('#seal-list'); list.innerHTML = '';
@@ -541,15 +536,24 @@ const UI = (() => {
     const T = Seal.taille(s), prm = Seal.params(s), trs = Seal.triggers(s);
     const nomG = (c) => (DATA.CORES[c] || DATA.PSEUDO[c] || { nom: c }).nom.toLowerCase();
     let cores = Seal.effets(s);
+    const invUne = !prm.inverse && prm.invEss && prm.invEss.length;
     if (prm.inverse) cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c));
-    const cleC = cores.length > 1 && !prm.inverse ? DATA.comboCle(cores) : null; const infoC = cleC && DATA.comboInfo(cleC);
+    else if (invUne) cores = cores.map((c) => (prm.invEss.includes(c) && c !== 'gravite' ? DATA.INVERSE[c] || c : c));
+    const cleC = cores.length > 1 && !prm.inverse && !invUne ? DATA.comboCle(cores) : null; const infoC = cleC && DATA.comboInfo(cleC);
     const combo = infoC ? (comboConnu(cleC) ? infoC : { nom: 'fusion inconnue', inconnu: true }) : null;
     const L = [];
-    L.push('<b>' + T.nom + ' sceau</b> · ' + Seal.cost(s) + ' encre · tracé en ' + T.geste + ' s · ' + (trs.includes('tenu') ? 'pas de charge : tant que tu tiens le clic, il boit environ ' + Math.max(0.6, Seal.cost(s) * 0.3).toFixed(1).replace('.', ',') + ' encre par seconde.' : 'maintenir le clic charge jusqu\'à +80 %.'));
+    L.push('<b>' + T.nom + ' sceau</b> · ' + Seal.cost(s) + ' encre · tracé en ' + (Math.round(Seal.geste(s) * 100) / 100) + ' s · ' + (trs.includes('tenu') ? 'pas de charge : tant que tu tiens le clic, il boit environ ' + Math.max(0.6, Seal.cost(s) * 0.3).toFixed(1).replace('.', ',') + ' encre par seconde.' : 'maintenir le clic charge jusqu\'à +80 %.'));
     let eff = 'Effet : ' + cores.map(nomG).join(' et ') + (combo ? ' (fusion : ' + combo.nom.toLowerCase() + ')' : '') + (prm.inverse ? (cores.includes('gravite') ? ', apesanteur' : ', inversé') : '') + '.';
     L.push(eff);
     if (infoC) L.push(comboConnu(cleC) ? '<b>' + infoC.nom + '</b> : ' + infoC.desc + ' <span class="muted">La fusion remplace les deux effets de base.</span>' : '<b>Fusion inconnue</b> <span class="muted">— ' + infoC.indice + ' Lance-la pour la découvrir.</span>');
-    else if (cores.length > 1 && !prm.inverse) L.push('<span class="muted">Ces deux effets ne fusionnent pas : ils s\'appliquent ensemble.</span>');
+    else if (cores.length > 1 && !prm.inverse && !Seal.enDeuxTemps(s)) L.push('<span class="muted">Ces ' + (cores.length > 2 ? cores.length + ' effets' : 'deux effets') + ' ne fusionnent pas : ils s\'appliquent ensemble.</span>');
+    // la géométrie : un modificateur contre une essence ne sert qu'elle ; un trait pour le second déclencheur
+    { const MASC = ['feu', 'vent', 'temps', 'contre', 'espace', 'esprit'];
+      const art = (c) => { const n = DATA.CORES[c] ? DATA.CORES[c].nom : c; return (/^[AEÉIOU]/.test(n) ? 'l\'' : MASC.includes(c) ? 'le ' : 'la ') + n; };
+      const Li = prm.liaisons || {}, ls = Object.keys(Li).map((i) => DATA.MODS[s.mods[+i]].nom + ' contre ' + art(s[Li[i]]) + (MASC.includes(s[Li[i]]) ? ' : pour lui seul' : ' : pour elle seule'));
+      if (ls.length) L.push('Place : ' + ls.join(' ; ') + '.');
+      if (Seal.enDeuxTemps(s)) { const partie = (X) => { const sp = World.makeSpec(Seal.clone(X)), cI = sp.combo && DATA.comboInfo(sp.combo); return sp.cores.map(nomG).join(' et ') + (cI ? ' (fusion : ' + (comboConnu(sp.combo) ? cI.nom.toLowerCase() : 'inconnue') + ')' : ''); }; const [A, B] = Seal.scinder(s);
+        L.push('En deux temps : ' + partie(A) + ' avec le premier déclencheur ; ' + partie(B) + ' à part, avec le second (' + DATA.TRIGGERS[s.trigger2].nom.toLowerCase() + ').'); } }
     if (s.shape) L.push('Forme : ' + DATA.SHAPES[s.shape].nom.toLowerCase() + (prm.extra ? ', en double' : '') + (prm.orbite ? ', en orbite autour de toi' : '') + (prm.teleguide ? ', guidé par la souris' : '') + (prm.canalise ? ', canalisé tant que tu maintiens' : '') + '.');
     if (s.shape === 'invocation') { const F = DATA.FAMILIERS[s.core] || DATA.FAMILIERS.feu; L.push('Familier : <b>' + F.nom + '</b> — ' + F.desc + (prm.extra ? ' <span class="muted">Double : deux à la fois.</span>' : '')); }
     if (s.cible && s.taille !== 'petit') L.push('Cible : ' + (s.cible === 'creature' ? 'la créature hostile la plus proche, qu\'il suit' : 'ta marque la plus récente, même hors de vue') + '.');
@@ -681,8 +685,11 @@ const UI = (() => {
     const ctx = c.getContext('2d');
     ctx.clearRect(0, 0, c.width, c.height);
     const g = glisse && glisse.actif ? glisse : null;
-    Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, SEAL_R, { t: time, slots: game.progress.slots, highlight: selSlot, empty: true, fusion: game.progress.fusion, filtres: game.progress.filtres.length > 0, cibles: game.progress.cibles.length > 1,
+    const bancal = Seal.equilibre(game.editSeal).etat === 'bancal';
+    ctx.save(); if (bancal) { ctx.translate(c.width / 2, c.height / 2 + 10); ctx.rotate(Math.sin(time * 2.2) * 0.035); ctx.translate(-c.width / 2, -(c.height / 2 + 10)); }
+    Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, SEAL_R, { croissance: casesCroissance(), t: time, slots: game.progress.slots, highlight: selSlot, empty: true, fusion: game.progress.fusion, filtres: game.progress.filtres.length > 0, cibles: game.progress.cibles.length > 1,
       accepte: g ? g.accepte : survolPal ? casesPour(survolPal) : null, survol: g ? g.survol : null, cache: g ? g.from : null, inutiles: Seal.inutiles(game.editSeal).map((q) => q.sid) });
+    ctx.restore();
     // survol d'une case : ce que ce glyphe coûte ici
     if (survolCase && !g) { const sl = Seal.slotList(c.width / 2, c.height / 2 + 10, sealR(), game.editSeal.taille || 'moyen').find((q) => q.id === survolCase); const v = Seal.coutCase(game.editSeal, survolCase); if (sl && v) { const lab = (Math.round(v * 10) / 10) + ' encre'; ctx.save(); ctx.font = '12px "IM Fell English", Georgia, serif'; const w = ctx.measureText(lab).width + 10, x = Math.min(c.width - w - 2, sl.x + sl.r + 4), y = sl.y - sl.r - 4; ctx.fillStyle = 'rgba(246,238,216,0.95)'; ctx.strokeStyle = U.INK; ctx.lineWidth = 1; ctx.fillRect(x, y - 13, w, 17); ctx.strokeRect(x, y - 13, w, 17); U.txt(ctx, lab, x + w / 2, y - 1, 12, 'center', '#6b4f2a'); ctx.restore(); } }
     const combo = Seal.comboName(game.editSeal);
@@ -1164,6 +1171,6 @@ const UI = (() => {
   }
 
   function setGrimTab(t) { grimTab = t; refreshGrimoire(); const pn = $('#panel-grimoire'); if (pn) pn.scrollTop = 0; }
-  const _table = { annuler, refaire, changerTaille, deplacer, retirer, poserEn, casesPour, ouvrirSous, remonter, naviguer, get sel() { return selSlot; }, set sel(v) { selSlot = v; }, get pile() { return pile.length; }, get passe() { return passe.length; }, get avenir() { return avenir.length; } };
+  const _table = { cases: toutesLesCases, croissance: casesCroissance, annuler, refaire, deplacer, retirer, poserEn, casesPour, ouvrirSous, remonter, naviguer, get sel() { return selSlot; }, set sel(v) { selSlot = v; }, get pile() { return pile.length; }, get passe() { return passe.length; }, get avenir() { return avenir.length; } };
   return { _table, grimTab: setGrimTab, init, openPanel, close, isOpen, refreshSeal, refreshCauldron, refreshGrimoire, refreshHotbar, refreshHud, toast, zoneTitle, tick, setMode };
 })();

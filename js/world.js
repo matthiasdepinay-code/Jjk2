@@ -1158,5 +1158,5 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a), get phen() { return PH; }, get gardiens() { return GD; }, get compagnons() { return CP; }, ordonner };
+  return { build, ensure, reset, update, draw, castSeal, makeSpec, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a), get phen() { return PH; }, get gardiens() { return GD; }, get compagnons() { return CP; }, ordonner };
 })();

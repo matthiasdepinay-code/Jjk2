@@ -132,6 +132,10 @@
   #seal-fil { font-size: calc(13px * var(--s)); margin: 2px 0 -4px; color: var(--sepia); }
   #seal-fil button { padding: 1px 8px; margin-left: 6px; font-size: calc(13px * var(--s)); }
   .glyph-btn.trouve { outline: 2.5px solid var(--gold); outline-offset: 1px; background: #f8e8b8; }
+  #seal-equilibre { font-size: calc(13px * var(--s)); margin: 0 0 4px; }
+  #seal-equilibre.equilibre { color: var(--green); } #seal-equilibre.bancal { color: #a06a20; }
+  .taille-auto { cursor: default; }
+  #seal-tailles small { margin-left: 6px; font-size: calc(12px * var(--s)); }
   .fantome-glyphe { position: fixed; width: 64px; height: 64px; pointer-events: none; z-index: 1000; filter: drop-shadow(0 3px 4px rgba(31,26,22,0.35)); }
   .palette.horsjeu, h3.horsjeu { opacity: 0.32; transition: opacity 0.15s; }
   .palette, #panel-seal h3 { transition: opacity 0.15s; }
@@ -291,6 +295,7 @@
           <input id="seal-nom" type="text" maxlength="32" placeholder="Nom du sceau">
           <div class="seal-info"><span class="label">Coût en encre</span><span class="cost" id="seal-cost">0</span><span id="seal-etat"></span></div>
           <div id="seal-cout-detail" class="muted"></div>
+          <div id="seal-equilibre"></div>
           <div id="seal-inutiles" class="hidden"></div>
           <div class="actions">
             <button id="seal-save">Consigner</button>
@@ -417,9 +422,11 @@
       <p>Dehors, <b>tout réagit</b> : le feu brûle le bois et l'herbe, l'eau éteint et fait pousser, la glace fond, la lave fige l'eau en pierre noire, l'acide creuse, l'huile flotte et s'enflamme, la foudre court dans l'eau et le métal. Regarde bien : chaque phénomène observé trois fois fait germer un glyphe dans ta palette (onglet <b>Intuitions</b> du grimoire). Les orages sont de bons professeurs.</p>
       <p>Avec l'expérience, la table s'enrichit : un <b>second glyphe d'effet</b> en bas du premier anneau fusionne avec le premier (feu + vent = tornade de feu, eau + froid = banquise, feu + terre = lave...), et un emplacement de modificateur peut recevoir un <b>sous-sceau</b> : un sceau consigné entier, lancé là où le premier éclate.</p>
       <p>Le <b>chaudron</b> accepte jusqu'à trois ingrédients et trois étapes dans l'ordre. Commence par <b>cendre + eau de source</b>, <b>chauffer</b> puis <b>remuer</b> : tu auras de l'encre à boire. Les ingrédients rares se trouvent dehors ; on peut aussi puiser n'importe quel liquide dans une fiole (<kbd>E</kbd>) pour le lancer ou le brasser.</p>
-      <p>À la table, <b>glisse</b> les glyphes de la palette sur le cercle : les cases qui les acceptent s'allument. Glisse un glyphe posé pour le déplacer, ou hors du cercle pour l'effacer. <kbd>Ctrl</kbd>+<kbd>Z</kbd> défait ton dernier trait, <kbd>Ctrl</kbd>+<kbd>Y</kbd> le refait.</p>
-      <p>Les sceaux ont trois <b>tailles</b> : le petit coûte moitié moins et part presque aussitôt ; le grand a cinq modificateurs et deux déclencheurs, mais se trace plus lentement. Sur la pointe droite, un <b>filtre de matière</b> fait que le sort au contact ne réagit qu'à l'eau, au métal, au bois ou à une créature, et traverse le reste, murs compris. Sur la pointe gauche, une <b>cible</b> l'envoie seul vers la créature la plus proche ou vers ta dernière <b>marque</b>. Les déclencheurs <b>Sur commande</b> (touche F), <b>Répétition</b> et <b>À l'expiration</b> viendront avec l'expérience, et le Retardé se règle.</p>
-      <p>Maintiens le clic pour <b>charger</b> un sort. Plus tard, ta main gauche lancera un second sceau au clic droit. Deux sorts à la suite au même endroit peuvent former un <b>enchaînement</b> (l'eau puis le froid, le feu puis le vent...) ; deux projectiles qui se croisent fusionnent. Le <b>Bouclier</b> se dresse devant toi et repousse l'eau : on peut marcher au fond du lac. Le <b>Contre-sort</b> défait la magie posée.</p>
+      <p>À la table, <b>glisse</b> les glyphes de la palette sur le cercle : les cases qui les acceptent s'allument. Glisse un glyphe posé pour le déplacer (avec <kbd>Maj</kbd>, tu en poses une copie), ou hors du cercle pour l'effacer. <kbd>Ctrl</kbd>+<kbd>Z</kbd> défait ton dernier trait, <kbd>Ctrl</kbd>+<kbd>Y</kbd> le refait. Au clavier, les flèches passent de case en case ; tape les premières lettres d'un glyphe puis <kbd>Entrée</kbd> pour le poser. Un second clic sur un sous-sceau l'ouvre sur place. La table te dit ce que coûte chaque glyphe, et grise ceux qui ne servent à rien.</p>
+      <p>Le sceau prend de lui-même la <b>taille</b> qu'il lui faut : petit tant qu'il porte peu (moitié prix, presque aussitôt tracé), moyen, puis grand (cinq modificateurs, deux déclencheurs) quand tu poses un glyphe sur une case en pointillés. Plus il porte de glyphes, plus il est long à tracer.</p>
+      <p>La <b>place</b> d'un glyphe compte. Une Puissance ou un Inverser posé juste sous la seconde essence ne sert qu'elle. Des modificateurs bien répartis autour du cercle rendent le sceau <b>équilibré</b> : moins d'encre, un tracé plus vif ; serrés d'un côté, il est <b>bancal</b>, et sa puissance vacille. Sur un grand sceau, un trait peut relier le second déclencheur à une seule essence : elle part à part, avec lui.</p>
+      <p>Sur la pointe droite, un <b>filtre de matière</b> fait que le sort au contact ne réagit qu'à l'eau, au métal, au bois ou à une créature, et traverse le reste, murs compris. Sur la pointe gauche, une <b>cible</b> l'envoie seul vers la créature la plus proche ou vers ta dernière <b>marque</b>. Les déclencheurs <b>Sur commande</b> (touche F), <b>Répétition</b> et <b>À l'expiration</b> viendront avec l'expérience, et le Retardé se règle.</p>
+      <p>Maintiens le clic : le sceau se <b>trace</b> dans l'air, anneau par anneau. Tenu jusqu'au bout, il part dès que tu lâches ; plus longtemps, il se <b>charge</b>. Lâché en plein tracé, seuls les anneaux finis partent : plus faible, mais tout de suite. Plus tard, ta main gauche lancera un second sceau au clic droit. Deux sorts à la suite au même endroit peuvent former un <b>enchaînement</b> (l'eau puis le froid, le feu puis le vent...) ; deux projectiles qui se croisent fusionnent. Le <b>Bouclier</b> se dresse devant toi et repousse l'eau : on peut marcher au fond du lac. Le <b>Contre-sort</b> défait la magie posée.</p>
       <p>La <b>Gravité</b> ne sert pas qu'à voler : elle pose un champ de pesanteur dans le sens où tu la lances. Lancée vers la droite, tout y tombe à droite, même l'eau et le sable ; vers le haut, tout tombe vers le ciel. Avec Puissance, la pesanteur écrase ; avec Inverser, plus rien ne pèse. Sur toi, elle pointe vers la surface que tu vises : tu marches sur les murs et au plafond. Vise le vide pour voler, ajoute Puissance pour devenir une enclume.</p>
       <p>Un sceau moyen ou grand se <b>sculpte</b> : sous le cercle, règle la largeur et la hauteur de la forme. Un Mur très large et très bas se couche en pont ; une Colonne étroite et haute monte jusqu'au ciel. Le glyphe <b>Matière</b> rend l'effet solide : l'Eau gelée devient des lames de glace à jeter sur les monstres, un pont, ou la grêle. <b>Rafale</b> lance une volée. La Gravité et le Temps prennent la forme qu'on leur donne : une colonne qui écrase, un mur où tout ralentit.</p>
       <p>Deux essences dans un même sceau peuvent <b>fusionner</b> : le Feu tenu par la Gravité devient un <b>petit soleil</b> qui flotte, attire et chauffe tout autour ; l'Eau et la Lumière tendent un arc-en-ciel sur lequel on marche ; la Gravité et la Terre font tomber un météore. Le grimoire garde la trace des fusions que tu découvres, et donne un indice pour les autres. La forme du sceau compte : une colonne, un mur, un trait donnent au phénomène leur forme.</p>
@@ -1483,7 +1490,7 @@ const Seal = (() => {
 
   const NMODS = 5;
   function create(taille = 'moyen') {
-    return { nom: '', taille, core: null, core2: null, core3: null, shape: null, mods: [null, null, null, null, null], trigger: null, trigger2: null, filtre: null, cible: null, delai: 2, periode: 2, encre: null, dimL: 1, dimH: 1 };
+    return { nom: '', taille, core: null, core2: null, core3: null, shape: null, mods: [null, null, null, null, null], trigger: null, trigger2: null, lien2: null, filtre: null, cible: null, delai: 2, periode: 2, encre: null, dimL: 1, dimH: 1 };
   }
   function clone(s) {
     let mods = (s.mods || []).map((m) => (m && typeof m === 'object' && m.sub ? { sub: clone(m.sub) } : typeof m === 'string' ? (m in DATA.MIGR_MODS ? DATA.MIGR_MODS[m] : DATA.MODS[m] ? m : null) : null));
@@ -1494,7 +1501,7 @@ const Seal = (() => {
     const migrer = (c) => { const M2 = DATA.MIGRATION[c]; if (!M2) return c; if (!mods.includes(M2[1])) { let i = mods.findIndex((m, k) => !m && k < nbSlots({ taille: s.taille || 'moyen' }, 3)); if (i < 0) i = 0; mods[i] = M2[1]; } return M2[0]; };
     core = migrer(core); core2 = migrer(core2); const core3 = migrer(s.core3 || null);
     return { nom: s.nom || '', taille: s.taille || 'moyen', core, core2, core3: (s.taille === 'grand' && core3) || null, shape: s.shape || null, mods,
-      trigger: s.trigger || null, trigger2: s.trigger2 || null, filtre: s.filtre || null, cible: s.cible || null, delai: s.delai || 2, periode: s.periode || 2, encre: s.encre || null, dimL: s.dimL || 1, dimH: s.dimH || 1 };
+      trigger: s.trigger || null, trigger2: s.trigger2 || null, lien2: (s.taille === 'grand' && s.lien2) || null, filtre: s.filtre || null, cible: s.cible || null, delai: s.delai || 2, periode: s.periode || 2, encre: s.encre || null, dimL: s.dimL || 1, dimH: s.dimH || 1 };
   }
   const isSub = (m) => !!(m && typeof m === 'object' && m.sub);
   function subs(s) { return s.mods.filter(isSub).map((m) => m.sub); }
@@ -1516,7 +1523,109 @@ const Seal = (() => {
     const T = taille(s);
     // la surface de la forme se paie : un grand mur coûte plus qu'un petit
     if (s.taille !== 'petit' && DATA.DIMS[s.shape]) { const A = (s.dimL || 1) * (DATA.DIMS[s.shape].h ? s.dimH || 1 : 1); c += Math.max(-2, Math.round((Math.sqrt(A) - 1) * 3)); }
-    return Math.max(s.core ? 1 : 0, Math.round(c * T.coutMul + T.coutAdd));
+    const eq = (s.mods || []).filter(Boolean).length >= 2 && equilibre(s).etat === 'equilibre';
+    return Math.max(s.core ? 1 : 0, Math.round(c * T.coutMul * (eq ? 0.9 : 1) + T.coutAdd));
+  }
+  // ---------- la géométrie compte ----------
+  // un modificateur posé juste sous une essence fusionnée (au même angle) ne sert qu'elle
+  const LIABLES = ['puissance', 'inverser'];
+  const ANGLE_ESS = { core2: 90, core3: 180 };
+  const ecartAngle = (a, b) => Math.abs((((a - b) % 360) + 540) % 360 - 180);
+  function liaisons(s) {
+    const t = s.taille || 'moyen', out = {}; if (t === 'petit') return out;
+    const ang = MOD_ANGLES[t] || MOD_ANGLES.moyen, nb = nbSlots(s, NMODS);
+    ang.forEach((deg, i) => { const m = s.mods[i]; if (!m || isSub(m) || !LIABLES.includes(m) || i >= nb) return; for (const k of ['core2', 'core3']) { if (!s[k] || (k === 'core3' && t !== 'grand')) continue; if (ecartAngle(deg, ANGLE_ESS[k]) <= 25) out[i] = k; } });
+    return out;
+  }
+  // les effets que donne une case d'essence (avec ses aspects)
+  function effetsDe(s, k) { const c = s[k]; if (!c) return []; const a = aspects(s)[c]; return a ? a.map((q) => q.devient) : [c]; }
+  // l'équilibre des modificateurs autour du cercle : centre de gravité des cases occupées
+  function equilibre(s) {
+    const ang = MOD_ANGLES[s.taille || 'moyen'] || MOD_ANGLES.moyen, nb = nbSlots(s, NMODS);
+    let x = 0, y = 0, n = 0; s.mods.forEach((m, i) => { if (!m || i >= nb || i >= ang.length) return; const a = ang[i] * Math.PI / 180; x += Math.cos(a); y += Math.sin(a); n++; });
+    if (n < 2) return { etat: 'neutre', d: 0, n };
+    const d = Math.hypot(x, y) / n;
+    return { etat: d <= 0.15 ? 'equilibre' : d >= 0.75 ? 'bancal' : 'neutre', d, n };
+  }
+  // la taille s'ajuste à ce qu'on pose : la plus petite qui tient tout
+  const ORDRE_TAILLES = ['petit', 'moyen', 'grand'];
+  function tailleBesoin(s, slotsMoyen = 3) {
+    let b = 0; const nm = Math.min(3, slotsMoyen);
+    if (s.core2 || s.filtre || s.cible || (s.dimL || 1) !== 1 || (s.dimH || 1) !== 1 || s.mods.some((m, i) => m && i >= 1)) b = 1;
+    if (s.core3 || s.trigger2 || s.lien2 || s.mods.some((m, i) => m && i >= nm)) b = 2;
+    return b;
+  }
+  function tailleMin(s, tailles = ORDRE_TAILLES, slotsMoyen = 3) {
+    const b = tailleBesoin(s, slotsMoyen);
+    for (let k = b; k < 3; k++) if (tailles.includes(ORDRE_TAILLES[k])) return ORDRE_TAILLES[k];
+    for (let k = 2; k >= 0; k--) if (tailles.includes(ORDRE_TAILLES[k])) return ORDRE_TAILLES[k];
+    return 'moyen';
+  }
+  // le temps de tracé suit le nombre de glyphes posés ; un sceau équilibré se trace plus vite
+  const REF_GLYPHES = { petit: 3, moyen: 4, grand: 7 };
+  function nGlyphes(s) { let n = 0; for (const k of ['core', 'shape', 'trigger', 'core2', 'core3', 'filtre', 'cible', 'trigger2']) if (s[k]) n++; return n + s.mods.filter(Boolean).length; }
+  function geste(s) { const T = taille(s); return T.geste * U.clamp(nGlyphes(s) / (REF_GLYPHES[s.taille || 'moyen'] || 4), 0.6, 1.6) * (equilibre(s).etat === 'equilibre' ? 0.85 : 1); }
+  // un trait relie le second déclencheur à une essence : le sort part en deux temps
+  function enDeuxTemps(s) { return s.taille === 'grand' && !!s.trigger2 && !!s.lien2 && !!s[s.lien2] && [s.core, s.core2, s.core3].filter(Boolean).length >= 2; }
+  function scinder(s) {
+    const k = s.lien2, e = s[k], L = liaisons(s), estAspect = (m) => typeof m === 'string' && DATA.MODS[m] && DATA.MODS[m].aspect;
+    // A garde les autres essences, B part seule avec le second déclencheur
+    const reste = ['core', 'core2', 'core3'].filter((q) => q !== k && s[q]), cle = {}; reste.forEach((q, j) => { cle[q] = ['core', 'core2'][j]; });
+    const pourB = [], modsA = new Array(NMODS).fill(null), aPlacer = [];
+    s.mods.forEach((m, i) => {
+      if (!m) return;
+      const aspect = estAspect(m) ? DATA.MODS[m].aspect : null;
+      if (aspect === e || L[i] === k) { pourB.push(m); return; }
+      if (!aspect && !L[i] && !isSub(m)) pourB.push(m);
+      // lié à une autre essence : il la suit à sa nouvelle place (sous la seconde essence : 90°)
+      if (L[i]) { if (cle[L[i]] === 'core2' && modsA[0] == null) modsA[0] = m; else aPlacer.push([m, -1]); }
+      else aPlacer.push([m, i]);
+    });
+    aPlacer.sort((x, y) => (y[1] >= 0) - (x[1] >= 0));
+    for (const [m, i] of aPlacer) {
+      const libre = (q) => modsA[q] == null && !(q === 0 && reste.length > 1 && LIABLES.includes(m));
+      const j = i >= 0 && libre(i) ? i : [1, 2, 4, 3, 0].find(libre);
+      if (j != null) modsA[j] = m;
+    }
+    const B = clone(Object.assign({}, s, { nom: '', taille: 'moyen', core: e, core2: null, core3: null, trigger: s.trigger2, trigger2: null, lien2: null, mods: pourB.slice(0, 3) }));
+    const A = clone(Object.assign({}, s, { nom: '', core: s[reste[0]] || null, core2: s[reste[1]] || null, core3: null, trigger2: null, lien2: null, mods: modsA }));
+    return [A, B];
+  }
+  // le tracé : centre, premier anneau, second anneau, pointes ; chaque anneau dure selon ses glyphes
+  function anneaux(s) {
+    const r = [['core'].filter((k) => s[k]), ['shape', 'core2', 'core3'].filter((k) => s[k]), s.mods.map((m, i) => (m ? 'mod' + i : null)).filter(Boolean), ['trigger', 'trigger2', 'filtre', 'cible'].filter((k) => s[k])];
+    const n = r.reduce((a, q) => a + Math.max(1, q.length), 0); let acc = 0;
+    return r.map((q) => { const de = acc / n; acc += Math.max(1, q.length); return { cases: q, de, a: acc / n }; });
+  }
+  // lâché avant la fin : seuls les anneaux finis partent
+  function partiel(s, prog) {
+    if (prog >= 1) return s;
+    const fini = anneaux(s).filter((q) => prog >= q.a - 1e-6).length;
+    // sans sa forme, rien ne peut partir
+    if (fini < 2) return null;
+    const c = clone(s);
+    if (fini < 3) c.mods = c.mods.map(() => null);
+    if (fini < 4) { c.trigger = null; c.trigger2 = null; c.filtre = null; c.cible = null; c.lien2 = null; }
+    return c;
+  }
+  // le sceau qui se dessine dans l'air, anneau par anneau
+  function drawTrace(ctx, s, cx, cy, R, prog, t = 0) {
+    const A = anneaux(s), lay = layout(cx, cy, R, s.taille || 'moyen'), coul = s.core ? DATA.CORES[s.core].couleur : '#8a7a5a';
+    const rayons = [R * 0.36, R * 0.62, R * 0.86, R];
+    ctx.save(); ctx.lineCap = 'round';
+    if (typeof FX !== 'undefined') FX.glow(ctx, cx, cy, R * 1.3, coul, 0.25 * Math.min(1, prog * 2));
+    A.forEach((q, k) => {
+      const u = U.clamp((prog - q.de) / Math.max(0.001, q.a - q.de), 0, 1); if (u <= 0) return;
+      ctx.globalAlpha = 0.95; ctx.strokeStyle = k === 3 ? INK : coul; ctx.lineWidth = Math.max(1.1, R * (k === 3 ? 0.05 : 0.04));
+      ctx.beginPath(); ctx.arc(cx, cy, rayons[k], -Math.PI / 2 + t * 0.3, -Math.PI / 2 + t * 0.3 + u * TAU); ctx.stroke();
+      q.cases.forEach((sid, j) => {
+        if (u < (j + 1) / (q.cases.length + 0.4)) return;
+        const sl = sid.startsWith('mod') ? lay.mods[+sid.slice(3)] : lay[sid], id = sid.startsWith('mod') ? s.mods[+sid.slice(3)] : s[sid];
+        if (!sl || !id || typeof id !== 'string') return;
+        glyph(ctx, sid === 'filtre' ? 'f_' + id : sid === 'cible' ? 'c_' + id : id, sl.x, sl.y, Math.max(2.4, sl.r * 0.75), /^core/.test(sid) ? DATA.CORES[id].couleur : INK, 3);
+      });
+    });
+    ctx.restore();
   }
   // ---------- relecture : ce que coûte chaque anneau, et les glyphes qui ne servent à rien ici ----------
   function coutCase(s, sid) {
@@ -1543,6 +1652,7 @@ const Seal = (() => {
       { cle: 'pointes', nom: 'Pointes', v: somme(['trigger', 'trigger2', 'filtre', 'cible']) },
     ].filter((q) => q.v);
     if (T.coutAdd) parts.push({ cle: 'taille', nom: T.nom + ' sceau', v: T.coutAdd });
+    if (equilibre(s).etat === 'equilibre') parts.push({ cle: 'equilibre', nom: 'Équilibré', v: -10, pct: true });
     return { parts, total: cost(s), mul: m };
   }
   const PROJ = ['projectile', 'chaine'];
@@ -1603,8 +1713,14 @@ const Seal = (() => {
   function effets(s) { const a = aspects(s); const cores = [s.core]; if (s.core2 && s.taille !== 'petit') cores.push(s.core2); if (s.core3 && s.taille === 'grand') cores.push(s.core3); const out = []; cores.filter(Boolean).forEach((c, k, L) => { if (a[c] && k === L.lastIndexOf(c)) for (const A of a[c]) out.push(A.devient); else out.push(c); }); return out; }
   function langues(s) { const o = {}; for (const el in DATA.LANGAGES) { const k = count(s, DATA.LANGAGES[el].glyphe); if (k) o[el] = Math.min(2, k); } return o; }
   function params(s) {
-    const n = (m) => count(s, m);
+    const L = liaisons(s);
+    const n = (m) => s.mods.filter((q, i) => q === m && !L[i]).length;
+    // Puissance ou Inverser posés juste sous une essence fusionnée ne servent qu'elle
+    const ess = {}, invEss = [];
+    for (const i in L) { const m = s.mods[i]; for (const e of effetsDe(s, L[i])) { if (m === 'puissance') (ess[e] || (ess[e] = { n: 0 })).n++; if (m === 'inverser' && !invEss.includes(e)) invEss.push(e); } }
+    { const pg = 1 + 0.6 * n('puissance'); for (const e in ess) ess[e].pk = (pg + 0.6 * ess[e].n) / pg; }
     return {
+      ess, invEss, liaisons: L,
       power: 1 + 0.6 * n('puissance'),
       range: 1 + 0.5 * n('portee'),
       duration: 1 + 0.8 * n('duree'),
@@ -1759,7 +1875,8 @@ const Seal = (() => {
   }
 
   // Positions des emplacements pour un sceau de rayon R
-  const MOD_ANGLES = { petit: [30], moyen: [30, 150, 270], grand: [18, 90, 162, 234, 306] };
+  // chaque taille prolonge la précédente : en grandissant, rien ne bouge. 90° : sous la seconde essence ; 165° : face à la troisième
+  const MOD_ANGLES = { petit: [90], moyen: [90, 210, 330], grand: [90, 210, 330, 165, 15] };
   function layout(cx, cy, R, tailleId = 'moyen') {
     const slotAt = (rad, angDeg, r) => { const a = (angDeg * Math.PI) / 180; return { x: cx + Math.cos(a) * rad, y: cy + Math.sin(a) * rad, r }; };
     const ang = MOD_ANGLES[tailleId] || MOD_ANGLES.moyen;
@@ -1864,6 +1981,15 @@ const Seal = (() => {
       ctx.restore();
       if (sid) halo(sl, sid);
     };
+    // les traits : modificateur lié à son essence, second déclencheur relié à la sienne
+    if (opts.traits !== false) {
+      ctx.save(); ctx.strokeStyle = '#c08a2a'; ctx.lineWidth = Math.max(1.4, R * 0.018); ctx.setLineDash([R * 0.03, R * 0.022]);
+      const L = liaisons(s); for (const i in L) { const a = lay.mods[i], b = lay[L[i]]; if (a && b) { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); } }
+      ctx.setLineDash([]); if (enDeuxTemps(s) && lay.trigger2 && lay[s.lien2]) { const a = lay.trigger2, b = lay[s.lien2]; ctx.lineWidth = Math.max(2, R * 0.026); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo((a.x + b.x) / 2 + R * 0.25, (a.y + b.y) / 2, b.x, b.y); ctx.stroke(); }
+      ctx.restore();
+    }
+    // les cases d'agrandissement : la taille suivante, en pointillés
+    if (opts.croissance) for (const g of opts.croissance) { ctx.save(); ctx.strokeStyle = 'rgba(60,45,30,0.4)'; ctx.lineWidth = Math.max(1, R * 0.012); ctx.setLineDash([R * 0.02, R * 0.028]); ctx.fillStyle = 'rgba(239,227,196,0.5)'; ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, TAU); ctx.fill(); ctx.stroke(); ctx.setLineDash([]); U.txt(ctx, '+', g.x, g.y + g.r * 0.3, Math.max(9, g.r * 0.9), 'center', 'rgba(60,45,30,0.45)'); halo(g, g.id); ctx.restore(); }
     const lbl = (tr) => (tr === 'retarde' ? s.delai + 's' : tr === 'repetition' ? '/' + s.periode + 's' : null);
     slot(lay.core, s.core, 'core', true, opts.highlight === 'core', null, 'core');
     slot(lay.shape, s.shape, 'shape', true, opts.highlight === 'shape', null, 'shape');
@@ -1908,7 +2034,7 @@ const Seal = (() => {
   }
 
   const api = { comboConnu: () => true };
-  return Object.assign(api, { inutiles, coutDetail, coutCase, aspects, effets, create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, slotList, draw, drawMini, isSub, subs, depth, modId, comboName, taille, nbSlots, triggers, NMODS });
+  return Object.assign(api, { liaisons, effetsDe, equilibre, tailleMin, tailleBesoin, geste, nGlyphes, enDeuxTemps, scinder, anneaux, partiel, drawTrace, MOD_ANGLES, inutiles, coutDetail, coutCase, aspects, effets, create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, slotList, draw, drawMini, isSub, subs, depth, modId, comboName, taille, nbSlots, triggers, NMODS });
 })();
 
 </script>
@@ -4438,19 +4564,22 @@ function creerPhenomenes(W) {
   const joueurDans = (ph, marge = 0, k = 1) => touche(ph, st().p, marge, k);
   function ev(ph, cle, periode) { ph.acc[cle] = (ph.acc[cle] || 0) + dtC; if (ph.acc[cle] >= periode) { ph.acc[cle] -= periode; return true; } return false; }
   const pr = (ph, k = 1) => ({ power: ph.pw * k, size: ph.sz, duration: 1, persist: 0, range: 1, speed: 1, lg: {}, asp: {} });
-  function effet(ph, core, x, y, r, k = 1, mode = 'burst', o = {}) { W.applyEffect(core, x, y, r, pr(ph, k), mode, Object.assign({ noPlayer: true, noField: true, noGrid: false, phen: true }, o)); }
+  const partDe = (ph, ...es) => { if (!ph.essK) return 1; for (const e of es) if (ph.essK[e]) return ph.essK[e]; return 1; };
+  function effet(ph, core, x, y, r, k = 1, mode = 'burst', o = {}) { W.applyEffect(core, x, y, r, pr(ph, k * partDe(ph, core)), mode, Object.assign({ noPlayer: true, noField: true, noGrid: false, phen: true }, o)); }
   const fade = (ph) => clamp(Math.min(ph.t / 0.3, ph.life / Math.min(1, ph.max * 0.25)), 0, 1);
   // le sol sous un point ; si le point est dans la roche, on remonte jusqu'à la surface
   const sol = (x, y) => { if (Sim.solidAt(x, y)) { let yy = y; for (let k = 0; k < 60 && Sim.solidAt(x, yy - CS); k++) yy -= CS; return yy - (yy % CS); } const g = W.groundBelow(x, y); return g == null ? y : g; };
   const air = (m) => m === M.AIR || P[m].gas;
   function zap(x1, y1, x2, y2, couleur) { st().eclairs.push({ x: x2, y1: y2, pts: FX.eclairPts(x1, y1, x2, y2, 0.2), branches: [], life: 0.22, couleur }); }
   function attirer(ph, R, force, dt, cx = ph.x, cy = ph.y, joueur = 0.35) {
+    force *= partDe(ph, 'gravite', 'force');
     const tire = (e, f) => { const ex = e.x + e.w / 2, ey = e.y + e.h / 2, d = Math.hypot(cx - ex, cy - ey) || 1; if (d > R) return; const k = force * (1 - d / R) * dt / W.masse(e) * f; e.vx += (cx - ex) / d * k; e.vy += (cy - ey) / d * k; };
     for (const c of st().crs) if (c.hp > 0 && c.t !== 'familier') tire(c, 1);
     for (const o of st().objs) if (o.dyn && !o.mort && !o.carried) tire(o, 1);
     if (joueur) tire(st().p, joueur);
   }
   function repousser(ph, R, force, cx = ph.x, cy = ph.y, joueur = 0.5) {
+    force *= partDe(ph, 'vent', 'force', 'explosion');
     const pousse = (e, f) => { const ex = e.x + e.w / 2, ey = e.y + e.h / 2, d = Math.hypot(ex - cx, ey - cy) || 1; if (d > R) return; const k = force * (1 - d / R) / W.masse(e) * f; e.vx += (ex - cx) / d * k; e.vy += (ey - cy) / d * k - k * 0.3; };
     for (const c of st().crs) if (c.hp > 0 && c.t !== 'familier') pousse(c, 1);
     for (const o of st().objs) if (o.dyn && !o.mort && !o.carried) pousse(o, 1);
@@ -4485,11 +4614,12 @@ function creerPhenomenes(W) {
     init(ph) { if (ph.g === 'point' && !ph.follow) { const g = sol(ph.x, ph.y - 10); if (g - ph.y < 50) ph.y = g - 60; } ph.R = (ph.rect ? Math.max(ph.rect.x1 - ph.rect.x0, ph.rect.y1 - ph.rect.y0) * 0.6 : ph.r * 6.5); },
     tick(ph, dt) {
       const R = ph.R * (0.6 + 0.4 * fade(ph));
-      if (ev(ph, 'h', 0.12)) { Sim.chauffer(ph.x, ph.y, R, 150 + 18 * ph.pw, 0.22); Sim.chauffer(ph.x, ph.y, ph.r * 1.5, 250, 0.7); }
+      const pf = ph.pw * partDe(ph, 'feu');
+      if (ev(ph, 'h', 0.12)) { Sim.chauffer(ph.x, ph.y, R, 150 + 18 * pf, 0.22); Sim.chauffer(ph.x, ph.y, ph.r * 1.5, 250, 0.7); }
       if (ev(ph, 'g', 0.06)) effet(ph, 'force', ph.x, ph.y, R * 0.75, 0.45, 0.06);
       attirer(ph, R, 1500 * ph.pw, dt, ph.x, ph.y, 0.25);
       if (ev(ph, 'n', 0.2)) { let n = 0; Sim.forRadius(ph.x, ph.y, ph.r * 1.4, (x, y, i, m) => { if (m === M.HUILE || m === M.BOIS || m === M.FEU || m === M.POUDRE || m === M.PLANTE || m === M.SEVE) { Sim.set(x, y, M.AIR); n++; } }); if (n) { ph.life = Math.min(ph.max * 1.6, ph.life + n * 0.06); ph.r = Math.min(ph.r0 * 1.6, ph.r + n * 0.05); } }
-      for (const c of creatures(ph, 6)) { blesser(c, dt * 2.4 * ph.pw); c.sta.burn = Math.max(c.sta.burn, 1); }
+      for (const c of creatures(ph, 6)) { blesser(c, dt * 2.4 * pf); c.sta.burn = Math.max(c.sta.burn, 1); }
       if (joueurDans(ph, 4)) blesserJoueur(dt * 1.5, 'Le petit soleil te brûle !');
       if (rnd() < 0.6) { const a = rnd() * TAU; W.part(ph.x + Math.cos(a) * ph.r * 1.6, ph.y + Math.sin(a) * ph.r * 1.6, rnd() < 0.5 ? '#f0d070' : '#e0642a', 1, 30, 0.6, 2, -20, 'spark'); }
     },
@@ -5135,6 +5265,7 @@ function creerPhenomenes(W) {
     const mini = shape === 'pluie';
     const ph = { id, D, spec, x, y, vx: 0, vy: 0, r: D.r * sz * (mini ? 0.55 : 1), life: D.life * du * (mini ? 0.45 : 1), max: 0, pw, sz: sz * (mini ? 0.6 : 1), t: 0, g: 'point', castId: spec.castId, dir: dir || o.dir || { x: 1, y: 0 }, data: {}, acc: {} };
     ph.r0 = ph.r; ph.max = ph.life;
+    ph.essK = {}; if (pr0.ess) for (const e in pr0.ess) ph.essK[e] = pr0.ess[e].pk;
     if (o.rect) { ph.rect = { ...o.rect }; ph.g = 'rect'; ph.x = (o.rect.x0 + o.rect.x1) / 2; ph.y = (o.rect.y0 + o.rect.y1) / 2; }
     else if (shape === 'mur' && o.mur) { const mw = 30 * sz * (pr0.dimL || 1), mh = 180 * sz * (pr0.dimH || 1); ph.rect = { x0: x - mw / 2, x1: x + mw / 2, y0: y - mh / 2, y1: y + mh / 2 }; ph.g = 'rect'; }
     if (o.ligne) { ph.ligne = { ...o.ligne }; ph.g = 'ligne'; ph.x = (o.ligne.x1 + o.ligne.x2) / 2; ph.y = (o.ligne.y1 + o.ligne.y2) / 2; }
@@ -6227,6 +6358,8 @@ function creerRendu(W) {
     if (p.sta.forme < 3 && Math.floor(W.time * 6) % 2 === 0) FX.glow(ctx, p.x + p.w / 2, p.y + p.h / 2, p.h, '#c06aa0', 0.35);
   }
   function drawPlayer(ctx, p) {
+    // le sceau se dessine dans l'air, anneau par anneau, pendant qu'on le trace
+    for (const h of ['R', 'L']) { const g = p.gestes && p.gestes[h]; const c = W.game.charging && W.game.charging[h]; const seal = g ? g.seal : c && c.seal; if (!seal || !seal.core) continue; const prog = g ? 1 - g.t / Math.max(0.01, g.max) : Math.min(1, (performance.now() - c.t0) / 1000 / Math.max(0.05, c.trace || 0.2)); if (prog >= 1 && !g) continue; const ox = p.x + p.w / 2 + (h === 'L' ? -26 : 26) * (p.face || 1), oy = p.y - 30; Seal.drawTrace(ctx, seal, ox, oy, 22, prog, W.time); }
     for (const h of ['R', 'L']) { const g = p.gestes && p.gestes[h]; const c = W.game.charging && W.game.charging[h]; if (g) FX.cercle(ctx, p.x + p.w / 2, p.y + p.h, 22 + (1 - g.t / Math.max(0.01, g.max)) * 8, W.time, g.color, 1); else if (c) { const k = Math.min(1, (performance.now() - c.t0) / 1500); if (k > 0.08) FX.cercle(ctx, p.x + p.w / 2, p.y + p.h, 18 + k * 20, W.time * (1 + k * 2), c.color || '#d8a63a', 0.5 + k * 0.5); } }
     const moving = (Math.abs(p.vx) > 20 && (p.onGround || p.climbing)) || p.sta.vol > 0;
     if (p.inv > 0 && Math.floor(W.time * 20) % 2 === 0) return;
@@ -6706,9 +6839,12 @@ function creerSorts(W) {
     for (const e in prm.asp) for (const A of prm.asp[e]) if (A.n > 1) { prm.lg[A.devient] = 2; prm.power *= 1.3; }
     const effets0 = cores.slice();
     if (prm.inverse) { prm.gInv = cores.includes('gravite'); cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c)); }
+    else if (prm.invEss && prm.invEss.length) { cores = cores.map((c) => (prm.invEss.includes(c) && c !== 'gravite' ? DATA.INVERSE[c] || c : c)); if (prm.invEss.includes('gravite')) prm.gInv = true; }
+    // un sceau bancal : la puissance vacille d'un sort à l'autre
+    if (Seal.equilibre(seal).etat === 'bancal') prm.power *= 0.8 + Math.random() * 0.4;
     const lg = prm.lg || {};
     if (lg.gravite && cores.includes('gravite')) { prm.size *= 1 + 0.3 * lg.gravite; prm.power *= 1 + 0.4 * lg.gravite; }
-    const combo = !prm.inverse ? DATA.comboCle(effets0) : null;
+    const combo = !prm.inverse && !(prm.invEss && prm.invEss.length) ? DATA.comboCle(effets0) : null;
     const trs = Seal.triggers(seal);
     const proj = seal.shape === 'projectile' || seal.shape === 'chaine';
     const trig = trs.find((t) => PRIM.includes(t)) || (trs.includes('repetition') && proj ? 'contact' : 'immediat');
@@ -6808,7 +6944,7 @@ function creerSorts(W) {
   function doContinuous(spec, x, y, r, dt, opts = {}) {
     for (const core of spec.cores) W.applyEffect(core, x, y, r, { ...spec.prm, power: spec.prm.power * 0.5 }, dt, opts);
   }
-  function castSeal(seal, aim, gratuit, charge = 0, hand = 'R') {
+  function castSeal(seal, aim, gratuit, charge = 0, hand = 'R', o = {}) {
     const p = W.st.p;
     if (!p.gestes) p.gestes = { R: null, L: null };
     if (p.gestes[hand]) return false;
@@ -6823,18 +6959,23 @@ function creerSorts(W) {
     if (!seal.shape) { W.applyEffect(seal.core, pcx, pcy, 45, { ...Seal.params(seal), power: 0.5 }, 'burst', { noPlayer: seal.core !== 'feu' }); W.msg('Sans forme, l\'effet se répand mollement autour de toi.'); return true; }
     if (seal.core === 'terre' || seal.core2 === 'terre') W.evt('terre');
     if (Seal.triggers(seal).includes('retarde')) W.evt('retarde');
-    const gt = Seal.taille(seal).geste * (1 + charge * 0.5);
+    // tracé déjà fait en tenant le clic (o.sansGeste) : le sort part aussitôt
+    const gt = o.sansGeste ? 0.001 : Seal.geste(seal) * (1 + charge * 0.5);
     if (encre) { W.game.inv.encres[encre]--; if (W.game.inv.encres[encre] === 0) W.msg('C\'était la dernière goutte d\'' + DATA.ENCRES[encre].nom.toLowerCase() + '.'); }
     p.gestes[hand] = { seal, aim: { x: aim.x, y: aim.y }, t: gt, max: gt, color: encre ? DATA.ENCRES[encre].couleur : W.colorOf(seal.core), charge, hand, encre, cost };
     if (charge > 0.6) W.msg('Sort chargé : ' + Math.round(100 + charge * 80) + ' % de puissance.');
     W.evt('sort', seal);
     return true;
   }
+  let fratries = 0;
   function launch(seal, origin, aim, o = {}) {
     if (!seal.core || !seal.shape) return;
+    // un trait relie le second déclencheur à une essence : deux sorts, chacun son déclencheur
+    // les deux moitiés partent ensemble sans se heurter (fratrie)
+    if (!o.scinde && Seal.enDeuxTemps(seal)) { const [A, B] = Seal.scinder(seal), fratrie = ++fratries; launch(A, origin, aim, { ...o, scinde: true, fratrie }); launch(B, origin, aim, { ...o, scinde: true, fratrie }); return; }
     const p = W.st.p;
     const spec = makeSpec(seal, o.depth || 0, o.charge || 0);
-    spec.player = !!o.player;
+    spec.player = !!o.player; if (o.fratrie) spec.fratrie = o.fratrie;
     if (o.encre) appliquerEncre(spec, o.encre);
     const prm = spec.prm, trig = spec.trig, C = spec.color;
     const ox = origin.x, oy = origin.y;
@@ -7420,7 +7561,7 @@ function creerSorts(W) {
     // collisions entre projectiles : fusion forcée au point de rencontre
     const pj = W.st.sp.filter((q) => q.k === 'proj' && !q.mort && q.spec && !q.potion && !q.liquide);
     for (let i = 0; i < pj.length; i++) for (let j = i + 1; j < pj.length; j++) {
-      const a = pj[i], b = pj[j]; if (a.mort || b.mort || a.spec.castId === b.spec.castId) continue;
+      const a = pj[i], b = pj[j]; if (a.mort || b.mort || a.spec.castId === b.spec.castId || (a.spec.fratrie && a.spec.fratrie === b.spec.fratrie)) continue;
       if (dist(a.x, a.y, b.x, b.y) < a.r + b.r + 6) collision(a, b);
     }
     for (const mq of W.st.marques) mq.t += dt;
@@ -7963,6 +8104,7 @@ function creerEffets(W) {
     if (violet) Sim.forRadius(cx, cy, rad * 1.5, (x, y, i, m) => { const q = P[m]; if (W.FLAM(m) && Sim.aux[i] === 0 && Math.random() < 0.25) { Sim.aux[i] = q.burn; Sim.touch(i); } else if ((m === M.HUILE || m === M.POUDRE || m === M.SEVE) && Math.random() < 0.4) Sim.set(x, y, M.FEU, 30); });
   }
   function applyEffect(core, cx, cy, rad, prm, mode, opts = {}) {
+    if (prm && prm.ess && prm.ess[core]) prm = Object.assign({}, prm, { power: (prm.power || 1) * prm.ess[core].pk });
     const R = rad + 60, snap = [];
     for (const c of W.st.crs) if (c.hp > 0 && Math.abs(c.x + c.w / 2 - cx) < R + c.w && Math.abs(c.y + c.h / 2 - cy) < R + c.h) snap.push(c, c.vx, c.vy);
     for (const o of W.st.objs) if (o.dyn && !o.mort && !o.carried && Math.abs(o.x + o.w / 2 - cx) < R + o.w && Math.abs(o.y + o.h / 2 - cy) < R + o.h) snap.push(o, o.vx, o.vy);
@@ -9392,7 +9534,7 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a), get phen() { return PH; }, get gardiens() { return GD; }, get compagnons() { return CP; }, ordonner };
+  return { build, ensure, reset, update, draw, castSeal, makeSpec, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a), get phen() { return PH; }, get gardiens() { return GD; }, get compagnons() { return CP; }, ordonner };
 })();
 
 </script>
@@ -9910,21 +10052,33 @@ const UI = (() => {
   // ---------- Éditeur de sceaux ----------
   const SEAL_R = 140;
   function sealR() { return SEAL_R * (game.editSeal.taille === 'petit' ? 0.82 : 1); }
-  function slotDispo(id) {
-    const s = game.editSeal, p = game.progress, t = s.taille || 'moyen';
+  function slotDispo(id, tForce) {
+    const s = game.editSeal, p = game.progress, t = tForce || s.taille || 'moyen';
+    if (!tForce && estCroissance(id)) return slotDispo(id, tailleSuivante());
     if (id === 'core2') return p.fusion && t !== 'petit';
     if (id === 'core3') return p.fusion && t === 'grand';
     if (id === 'filtre') return t !== 'petit' && p.filtres.length > 0;
     if (id === 'cible') return t !== 'petit' && p.cibles.length > 1;
     if (id === 'trigger2') return t === 'grand';
-    if (id.startsWith('mod')) return +id.slice(3) < Seal.nbSlots(s, p.slots);
+    if (id.startsWith('mod')) return +id.slice(3) < Seal.nbSlots({ taille: t }, p.slots);
     return true;
   }
+  // ---------- la taille s'ajuste : la suivante attend en pointillés ----------
+  const ORDRE_T = ['petit', 'moyen', 'grand'];
+  function tailleSuivante() { const p = game.progress, i = ORDRE_T.indexOf(game.editSeal.taille || 'moyen'); for (let k = i + 1; k < 3; k++) if (p.tailles.includes(ORDRE_T[k])) return ORDRE_T[k]; return null; }
+  function casesCroissance() {
+    const nx = tailleSuivante(); if (!nx) return [];
+    const c = $('#seal-canvas'), cx = c.width / 2, cy = c.height / 2 + 10, R = sealR();
+    const ici = new Set(Seal.slotList(cx, cy, R, game.editSeal.taille || 'moyen').filter((q) => slotDispo(q.id, game.editSeal.taille || 'moyen')).map((q) => q.id));
+    return Seal.slotList(cx, cy, R, nx).filter((q) => !ici.has(q.id) && slotDispo(q.id, nx) && (!/core2|core3/.test(q.id) || game.progress.fusion)).map((q) => ({ ...q, grow: true }));
+  }
+  function estCroissance(id) { return !!id && casesCroissance().some((q) => q.id === id); }
+  function toutesLesCases() { const c = $('#seal-canvas'); return Seal.slotList(c.width / 2, c.height / 2 + 10, sealR(), game.editSeal.taille || 'moyen').concat(casesCroissance()); }
   function onSealCanvasClick(e, canvas, right = false) {
     const r = canvas.getBoundingClientRect();
     const x = (e.clientX - r.left) * (canvas.width / r.width), y = (e.clientY - r.top) * (canvas.height / r.height);
     const s = game.editSeal;
-    const hitSl = Seal.slotList(canvas.width / 2, canvas.height / 2 + 10, sealR(), s.taille || 'moyen').find((sl) => U.dist(x, y, sl.x, sl.y) <= sl.r * 1.3);
+    const hitSl = toutesLesCases().find((sl) => U.dist(x, y, sl.x, sl.y) <= sl.r * 1.3);
     const id = hitSl ? hitSl.id : null;
     if (!id) { selSlot = null; refreshSeal(); return; }
     if (!slotDispo(id)) { toast(id.startsWith('mod') ? 'Cet emplacement est encore scellé. Voir le grimoire.' : id === 'filtre' ? 'Pointe droite : les filtres de matière ne sont pas encore connus.' : id === 'cible' ? 'Pointe gauche : les cibles ne sont pas encore connues.' : 'Emplacement indisponible.', 'warn'); return; }
@@ -9944,18 +10098,18 @@ const UI = (() => {
   const OU_VA = { core: 'au centre (ou, la fusion apprise, sous le centre)', shape: 'sur le premier anneau, en haut', mod: 'sur le second anneau', trigger: 'sur la pointe du haut', filtre: 'sur la pointe droite', cible: 'sur la pointe gauche' };
   const PALETTES = [['#pal-cores', 'core'], ['#pal-shapes', 'shape'], ['#pal-mods', 'mod'], ['#pal-triggers', 'trigger'], ['#pal-filtres', 'filtre'], ['#pal-cibles', 'cible']];
   // les cases ouvertes qui acceptent un glyphe de ce genre
-  function casesPour(kind) { return Seal.slotList(0, 0, 1, game.editSeal.taille || 'moyen').map((q) => q.id).filter((sid) => genreDe(sid) === kind && slotDispo(sid)); }
+  function casesPour(kind) { return toutesLesCases().map((q) => q.id).filter((sid, i, a) => a.indexOf(sid) === i && genreDe(sid) === kind && slotDispo(sid)); }
   function couleurGlyphe(kind, id) { return kind === 'core' ? DATA.CORES[id].couleur : kind === 'filtre' ? DATA.FILTRES[id].couleur : kind === 'mod' && DATA.MODS[id] && DATA.MODS[id].aspect ? DATA.CORES[DATA.MODS[id].aspect].couleur : U.INK; }
   // la case sous le pointeur (parmi « liste » si on en donne une, avec une marge généreuse pour le doigt)
   function slotSous(cx, cy, liste) {
     const c = $('#seal-canvas'), r = c.getBoundingClientRect(); if (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom) return null;
     const x = (cx - r.left) * (c.width / r.width), y = (cy - r.top) * (c.height / r.height);
     let best = null, bd = 1e9;
-    for (const sl of Seal.slotList(c.width / 2, c.height / 2 + 10, sealR(), game.editSeal.taille || 'moyen')) { if (liste && !liste.includes(sl.id)) continue; const d = U.dist(x, y, sl.x, sl.y); if (d <= sl.r * (liste ? 1.9 : 1.3) && d < bd) { bd = d; best = sl.id; } }
+    for (const sl of toutesLesCases()) { if (liste && !liste.includes(sl.id)) continue; const d = U.dist(x, y, sl.x, sl.y); if (d <= sl.r * (liste ? 1.9 : 1.3) && d < bd) { bd = d; best = sl.id; } }
     return best;
   }
   function dansCercle(cx, cy) { const c = $('#seal-canvas'), r = c.getBoundingClientRect(); if (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom) return false; const x = (cx - r.left) * (c.width / r.width), y = (cy - r.top) * (c.height / r.height); return U.dist(x, y, c.width / 2, c.height / 2 + 10) < sealR() * 1.3; }
-  function poserEn(sid, kind, id) { if (!slotDispo(sid)) return; selSlot = sid; placeInSeal(kind, id); if (selSlot === sid && kind !== 'mod') selSlot = null; }
+  function poserEn(sid, kind, id) { if (!slotDispo(sid)) return; if (estCroissance(sid)) { const nx = tailleSuivante(); if (nx) game.editSeal.taille = nx; } selSlot = sid; placeInSeal(kind, id); if (selSlot === sid && kind !== 'mod') selSlot = null; }
   function deplacer(from, to) {
     const s = game.editSeal; if (genreDe(from) !== genreDe(to) || !slotDispo(to)) return;
     const a = lireSlot(s, from), b = lireSlot(s, to); ecrireSlot(s, to, a); ecrireSlot(s, from, b == null ? null : b);
@@ -10028,7 +10182,8 @@ const UI = (() => {
   const anneauDe = (sid) => (sid === 'core' ? 0 : sid === 'shape' || sid === 'core2' || sid === 'core3' ? 1 : sid.startsWith('mod') ? 2 : 3);
   function casesNavigables() {
     const c = $('#seal-canvas'), cx = c.width / 2, cy = c.height / 2 + 10, s = game.editSeal, p = game.progress;
-    return Seal.slotList(cx, cy, sealR(), s.taille || 'moyen').filter((q) => slotDispo(q.id) && (!/core2|core3/.test(q.id) || p.fusion) && (q.id !== 'filtre' || p.filtres.length) && (q.id !== 'cible' || p.cibles.length > 1))
+    // les cases en pointillés aussi : au clavier, on fait grandir le sceau de la même façon
+    return toutesLesCases().filter((q) => slotDispo(q.id) && (!/core2|core3/.test(q.id) || p.fusion) && (q.id !== 'filtre' || p.filtres.length) && (q.id !== 'cible' || p.cibles.length > 1))
       .map((q) => ({ id: q.id, anneau: anneauDe(q.id), angle: (Math.atan2(q.y - cy, q.x - cx) + Math.PI * 2.5) % (Math.PI * 2) }));
   }
   function naviguer(touche) {
@@ -10069,35 +10224,9 @@ const UI = (() => {
   function restaurer(j) { game.editSeal = Seal.clone(JSON.parse(j)); selSlot = null; enRestauration = true; refreshSeal(); enRestauration = false; Son.sfx('click'); }
   function annuler() { if (!passe.length) return; avenir.push(instantane()); restaurer(passe.pop()); }
   function refaire() { if (!avenir.length) return; passe.push(instantane()); restaurer(avenir.pop()); }
-  // réduire le sceau met de côté ce qui ne rentre plus ; l'agrandir le remet en place
-  let reserve = [], reserveDe = null;
-  function changerTaille(t) {
-    const s = game.editSeal; if (reserveDe !== s) { reserve = []; reserveDe = s; }
-    const avant = { mods: s.mods.slice(), core2: s.core2, core3: s.core3, trigger2: s.trigger2, filtre: s.filtre, cible: s.cible };
-    s.taille = t;
-    const nb = Seal.nbSlots(s, game.progress.slots);
-    for (let i = nb; i < s.mods.length; i++) s.mods[i] = null;
-    if (t === 'petit') { s.core2 = null; s.filtre = null; s.cible = null; }
-    if (t !== 'grand') s.core3 = null;
-    if (t !== 'grand') s.trigger2 = null;
-    const mis = [];
-    avant.mods.forEach((m, i) => { if (m && !s.mods[i]) mis.push({ sid: 'mod', v: m }); });
-    for (const k of ['core2', 'core3', 'trigger2', 'filtre', 'cible']) if (avant[k] && !s[k]) mis.push({ sid: k, v: avant[k] });
-    if (mis.length) { reserve = reserve.concat(mis); toast((mis.length === 1 ? 'Un glyphe mis de côté' : mis.length + ' glyphes mis de côté') + ' : ils reviendront si tu agrandis le sceau.'); }
-    else if (reserve.length) {
-      const reste = [];
-      for (const q of reserve) {
-        if (q.sid === 'mod') { const i = s.mods.findIndex((m, k) => !m && k < nb); if (i >= 0) { s.mods[i] = q.v; continue; } }
-        else if (!s[q.sid] && slotDispo(q.sid)) { s[q.sid] = q.v; continue; }
-        reste.push(q);
-      }
-      const n = reserve.length - reste.length; reserve = reste;
-      if (n) toast(n === 1 ? 'Le glyphe mis de côté reprend sa place.' : 'Les ' + n + ' glyphes mis de côté reprennent leur place.');
-    }
-    selSlot = null; Son.sfx('click'); refreshSeal();
-  }
   function placeInSeal(kind, id) {
     const s = game.editSeal;
+    if (selSlot && estCroissance(selSlot)) { const nx = tailleSuivante(); if (nx) s.taille = nx; }
     if (kind === 'core') {
       if (selSlot === 'core3' && slotDispo('core3')) { s.core3 = id; selSlot = null; }
       else if ((selSlot === 'core2' || (game.progress.fusion && s.core && s.core !== id && !s.core2 && selSlot !== 'core')) && slotDispo('core2')) { s.core2 = id; selSlot = null; }
@@ -10146,6 +10275,9 @@ const UI = (() => {
   function refreshSeal() {
     const s = game.editSeal, p = game.progress;
     if (!('core2' in s)) s.core2 = null;
+    // le trait du second déclencheur tombe si son déclencheur ou son essence s'en va
+    if (s.lien2 && (!s.trigger2 || !s[s.lien2] || [s.core, s.core2, s.core3].filter(Boolean).length < 2)) s.lien2 = null;
+    { const tA = Seal.tailleMin(s, p.tailles, p.slots); if (s.taille !== tA) s.taille = tA; }
     noterHistorique();
     $('#seal-annuler').disabled = !passe.length; $('#seal-refaire').disabled = !avenir.length;
     { const f = $('#seal-fil'); if (pile.length) { const h = pile[pile.length - 1]; f.innerHTML = 'Dans « ' + Seal.nom(h.parent) + ' » › <b>sous-sceau</b> <button id="seal-remonter">↩ Remonter au sceau parent</button>'; f.classList.remove('hidden'); $('#seal-remonter').addEventListener('click', () => remonter()); } else { f.innerHTML = ''; f.classList.add('hidden'); } }
@@ -10153,8 +10285,9 @@ const UI = (() => {
     $('#seal-nom').placeholder = Seal.autoNom(s);
     $('#seal-cost').textContent = Seal.cost(s);
     // le détail du coût, anneau par anneau
-    { const D = Seal.coutDetail(s), r1 = (v) => Math.round(v * 10) / 10; $('#seal-cout-detail').innerHTML = D.parts.length ? D.parts.map((q) => q.nom + ' <b>' + (q.cle === 'taille' ? '+' : '') + r1(q.v) + '</b>').join(' · ') + (D.mul !== 1 ? ' <span class="muted">(moitié prix)</span>' : '') : ''; }
+    { const D = Seal.coutDetail(s), r1 = (v) => Math.round(v * 10) / 10; $('#seal-cout-detail').innerHTML = D.parts.length ? D.parts.map((q) => q.nom + ' <b>' + (q.pct ? q.v + ' %' : (q.cle === 'taille' ? '+' : '') + r1(q.v)) + '</b>').join(' · ') + (D.mul !== 1 ? ' <span class="muted">(moitié prix)</span>' : '') : ''; }
     // les glyphes qui ne servent à rien ici
+    { const E = Seal.equilibre(s), z = $('#seal-equilibre'); z.innerHTML = E.etat === 'equilibre' ? '⚖ <b>Équilibré</b> : un dixième d\'encre en moins, et il se trace plus vite.' : E.etat === 'bancal' ? '⚖ <b>Bancal</b> : les modificateurs penchent d\'un côté ; la puissance vacille d\'un sort à l\'autre.' : ''; z.className = E.etat; }
     { const I = Seal.inutiles(s); const z = $('#seal-inutiles'); z.innerHTML = I.length ? '<b>Sans effet ici</b> (encre perdue) : ' + I.map((q) => q.raison).join(' ') : ''; z.classList.toggle('hidden', !I.length); }
     const st = Seal.etat(s);
     const e = $('#seal-etat'); e.textContent = st.ok ? (st.raison || 'Le sceau est complet et vibre doucement.') : st.raison; e.className = st.ok ? 'ok' : 'warn';
@@ -10200,9 +10333,8 @@ const UI = (() => {
     }
     // une case choisie : les palettes qui n'y vont pas s'estompent
     { const k = selSlot ? genreDe(selSlot) : null; for (const [sel, kind] of PALETTES) { const c = $(sel), hors = !!k && kind !== k; c.classList.toggle('horsjeu', hors); if (c.previousElementSibling) c.previousElementSibling.classList.toggle('horsjeu', hors); } }
-    // tailles
-    const tz = $('#seal-tailles'); tz.innerHTML = '<span class="label">Taille</span>';
-    for (const t in DATA.TAILLES) { const T = DATA.TAILLES[t]; const ok = p.tailles.includes(t); const b = el('button', 'choice' + ((s.taille || 'moyen') === t ? ' on' : '') + (ok ? '' : ' locked'), T.nom); b.title = ok ? T.desc : 'Pas encore débloqué. ' + ((DATA.UNLOCKS.find((u) => u.item === t) || {}).indice || ''); if (ok) b.addEventListener('click', () => changerTaille(t)); else b.disabled = true; tz.appendChild(b); }
+    // la taille s'ajuste toute seule à ce que porte le sceau
+    { const tz = $('#seal-tailles'), T = DATA.TAILLES[s.taille || 'moyen'], nx = tailleSuivante(); tz.innerHTML = '<span class="label">Taille</span>'; const b = el('span', 'choice on taille-auto', T.nom); b.title = T.desc; tz.appendChild(b); tz.appendChild(el('small', 'muted', nx ? 'elle s\'ajuste à ce que tu poses ; pose un glyphe sur une case en pointillés pour passer au ' + DATA.TAILLES[nx].nom.toLowerCase() + '.' : 'elle s\'ajuste à ce que tu poses.')); }
     // encre
     const ez = $('#seal-encres'); ez.innerHTML = '';
     const connues = Object.keys(DATA.ENCRES).filter((id) => p.recettes.includes(id) || (game.inv.encres || {})[id] > 0);
@@ -10220,6 +10352,11 @@ const UI = (() => {
     const Dm = DATA.DIMS[s.shape];
     if (Dm && s.taille !== 'petit') for (const ax of ['l', 'h']) { if (!Dm[ax]) continue; const cle = ax === 'l' ? 'dimL' : 'dimH'; const g = el('div', 'choices'); g.appendChild(el('span', 'label', Dm[ax])); for (const v of DATA.DIM_VALS) { const nom = v === 0.25 ? '×¼' : v === 0.5 ? '×½' : '×' + v; const b = el('button', 'choice' + ((s[cle] || 1) === v ? ' on' : ''), nom); b.addEventListener('click', () => { s[cle] = v; refreshSeal(); Son.sfx('click'); }); g.appendChild(b); } pr.appendChild(g); }
     if (trs.includes('repetition')) reglage('Période', 'periode', [1, 2, 5]);
+    // le trait : le second déclencheur pour une seule essence (le sort part en deux temps)
+    { const ess = ['core', 'core2', 'core3'].filter((k) => s[k]); if (s.taille === 'grand' && s.trigger2 && ess.length >= 2) {
+      const g = el('div', 'choices'); g.appendChild(el('span', 'label', 'Second déclencheur pour'));
+      for (const [v, lab] of [[null, 'tout le sceau']].concat(ess.map((k) => [k, DATA.CORES[s[k]].nom]))) { const b = el('button', 'choice' + ((s.lien2 || null) === v ? ' on' : ''), lab); b.title = v ? 'Un trait relie le second déclencheur à cette essence : elle part à part, avec lui ; le reste part avec le premier.' : 'Les deux déclencheurs valent pour tout le sceau.'; b.addEventListener('click', () => { s.lien2 = v; refreshSeal(); Son.sfx('click'); }); g.appendChild(b); }
+      pr.appendChild(g); } }
     $('#seal-fiche').innerHTML = ficheSceau(s);
     // liste des sceaux enregistrés
     const list = $('#seal-list'); list.innerHTML = '';
@@ -10243,15 +10380,24 @@ const UI = (() => {
     const T = Seal.taille(s), prm = Seal.params(s), trs = Seal.triggers(s);
     const nomG = (c) => (DATA.CORES[c] || DATA.PSEUDO[c] || { nom: c }).nom.toLowerCase();
     let cores = Seal.effets(s);
+    const invUne = !prm.inverse && prm.invEss && prm.invEss.length;
     if (prm.inverse) cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c));
-    const cleC = cores.length > 1 && !prm.inverse ? DATA.comboCle(cores) : null; const infoC = cleC && DATA.comboInfo(cleC);
+    else if (invUne) cores = cores.map((c) => (prm.invEss.includes(c) && c !== 'gravite' ? DATA.INVERSE[c] || c : c));
+    const cleC = cores.length > 1 && !prm.inverse && !invUne ? DATA.comboCle(cores) : null; const infoC = cleC && DATA.comboInfo(cleC);
     const combo = infoC ? (comboConnu(cleC) ? infoC : { nom: 'fusion inconnue', inconnu: true }) : null;
     const L = [];
-    L.push('<b>' + T.nom + ' sceau</b> · ' + Seal.cost(s) + ' encre · tracé en ' + T.geste + ' s · ' + (trs.includes('tenu') ? 'pas de charge : tant que tu tiens le clic, il boit environ ' + Math.max(0.6, Seal.cost(s) * 0.3).toFixed(1).replace('.', ',') + ' encre par seconde.' : 'maintenir le clic charge jusqu\'à +80 %.'));
+    L.push('<b>' + T.nom + ' sceau</b> · ' + Seal.cost(s) + ' encre · tracé en ' + (Math.round(Seal.geste(s) * 100) / 100) + ' s · ' + (trs.includes('tenu') ? 'pas de charge : tant que tu tiens le clic, il boit environ ' + Math.max(0.6, Seal.cost(s) * 0.3).toFixed(1).replace('.', ',') + ' encre par seconde.' : 'maintenir le clic charge jusqu\'à +80 %.'));
     let eff = 'Effet : ' + cores.map(nomG).join(' et ') + (combo ? ' (fusion : ' + combo.nom.toLowerCase() + ')' : '') + (prm.inverse ? (cores.includes('gravite') ? ', apesanteur' : ', inversé') : '') + '.';
     L.push(eff);
     if (infoC) L.push(comboConnu(cleC) ? '<b>' + infoC.nom + '</b> : ' + infoC.desc + ' <span class="muted">La fusion remplace les deux effets de base.</span>' : '<b>Fusion inconnue</b> <span class="muted">— ' + infoC.indice + ' Lance-la pour la découvrir.</span>');
-    else if (cores.length > 1 && !prm.inverse) L.push('<span class="muted">Ces deux effets ne fusionnent pas : ils s\'appliquent ensemble.</span>');
+    else if (cores.length > 1 && !prm.inverse && !Seal.enDeuxTemps(s)) L.push('<span class="muted">Ces ' + (cores.length > 2 ? cores.length + ' effets' : 'deux effets') + ' ne fusionnent pas : ils s\'appliquent ensemble.</span>');
+    // la géométrie : un modificateur contre une essence ne sert qu'elle ; un trait pour le second déclencheur
+    { const MASC = ['feu', 'vent', 'temps', 'contre', 'espace', 'esprit'];
+      const art = (c) => { const n = DATA.CORES[c] ? DATA.CORES[c].nom : c; return (/^[AEÉIOU]/.test(n) ? 'l\'' : MASC.includes(c) ? 'le ' : 'la ') + n; };
+      const Li = prm.liaisons || {}, ls = Object.keys(Li).map((i) => DATA.MODS[s.mods[+i]].nom + ' contre ' + art(s[Li[i]]) + (MASC.includes(s[Li[i]]) ? ' : pour lui seul' : ' : pour elle seule'));
+      if (ls.length) L.push('Place : ' + ls.join(' ; ') + '.');
+      if (Seal.enDeuxTemps(s)) { const partie = (X) => { const sp = World.makeSpec(Seal.clone(X)), cI = sp.combo && DATA.comboInfo(sp.combo); return sp.cores.map(nomG).join(' et ') + (cI ? ' (fusion : ' + (comboConnu(sp.combo) ? cI.nom.toLowerCase() : 'inconnue') + ')' : ''); }; const [A, B] = Seal.scinder(s);
+        L.push('En deux temps : ' + partie(A) + ' avec le premier déclencheur ; ' + partie(B) + ' à part, avec le second (' + DATA.TRIGGERS[s.trigger2].nom.toLowerCase() + ').'); } }
     if (s.shape) L.push('Forme : ' + DATA.SHAPES[s.shape].nom.toLowerCase() + (prm.extra ? ', en double' : '') + (prm.orbite ? ', en orbite autour de toi' : '') + (prm.teleguide ? ', guidé par la souris' : '') + (prm.canalise ? ', canalisé tant que tu maintiens' : '') + '.');
     if (s.shape === 'invocation') { const F = DATA.FAMILIERS[s.core] || DATA.FAMILIERS.feu; L.push('Familier : <b>' + F.nom + '</b> — ' + F.desc + (prm.extra ? ' <span class="muted">Double : deux à la fois.</span>' : '')); }
     if (s.cible && s.taille !== 'petit') L.push('Cible : ' + (s.cible === 'creature' ? 'la créature hostile la plus proche, qu\'il suit' : 'ta marque la plus récente, même hors de vue') + '.');
@@ -10383,8 +10529,11 @@ const UI = (() => {
     const ctx = c.getContext('2d');
     ctx.clearRect(0, 0, c.width, c.height);
     const g = glisse && glisse.actif ? glisse : null;
-    Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, SEAL_R, { t: time, slots: game.progress.slots, highlight: selSlot, empty: true, fusion: game.progress.fusion, filtres: game.progress.filtres.length > 0, cibles: game.progress.cibles.length > 1,
+    const bancal = Seal.equilibre(game.editSeal).etat === 'bancal';
+    ctx.save(); if (bancal) { ctx.translate(c.width / 2, c.height / 2 + 10); ctx.rotate(Math.sin(time * 2.2) * 0.035); ctx.translate(-c.width / 2, -(c.height / 2 + 10)); }
+    Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, SEAL_R, { croissance: casesCroissance(), t: time, slots: game.progress.slots, highlight: selSlot, empty: true, fusion: game.progress.fusion, filtres: game.progress.filtres.length > 0, cibles: game.progress.cibles.length > 1,
       accepte: g ? g.accepte : survolPal ? casesPour(survolPal) : null, survol: g ? g.survol : null, cache: g ? g.from : null, inutiles: Seal.inutiles(game.editSeal).map((q) => q.sid) });
+    ctx.restore();
     // survol d'une case : ce que ce glyphe coûte ici
     if (survolCase && !g) { const sl = Seal.slotList(c.width / 2, c.height / 2 + 10, sealR(), game.editSeal.taille || 'moyen').find((q) => q.id === survolCase); const v = Seal.coutCase(game.editSeal, survolCase); if (sl && v) { const lab = (Math.round(v * 10) / 10) + ' encre'; ctx.save(); ctx.font = '12px "IM Fell English", Georgia, serif'; const w = ctx.measureText(lab).width + 10, x = Math.min(c.width - w - 2, sl.x + sl.r + 4), y = sl.y - sl.r - 4; ctx.fillStyle = 'rgba(246,238,216,0.95)'; ctx.strokeStyle = U.INK; ctx.lineWidth = 1; ctx.fillRect(x, y - 13, w, 17); ctx.strokeRect(x, y - 13, w, 17); U.txt(ctx, lab, x + w / 2, y - 1, 12, 'center', '#6b4f2a'); ctx.restore(); } }
     const combo = Seal.comboName(game.editSeal);
@@ -10866,7 +11015,7 @@ const UI = (() => {
   }
 
   function setGrimTab(t) { grimTab = t; refreshGrimoire(); const pn = $('#panel-grimoire'); if (pn) pn.scrollTop = 0; }
-  const _table = { annuler, refaire, changerTaille, deplacer, retirer, poserEn, casesPour, ouvrirSous, remonter, naviguer, get sel() { return selSlot; }, set sel(v) { selSlot = v; }, get pile() { return pile.length; }, get passe() { return passe.length; }, get avenir() { return avenir.length; } };
+  const _table = { cases: toutesLesCases, croissance: casesCroissance, annuler, refaire, deplacer, retirer, poserEn, casesPour, ouvrirSous, remonter, naviguer, get sel() { return selSlot; }, set sel(v) { selSlot = v; }, get pile() { return pile.length; }, get passe() { return passe.length; }, get avenir() { return avenir.length; } };
   return { _table, grimTab: setGrimTab, init, openPanel, close, isOpen, refreshSeal, refreshCauldron, refreshGrimoire, refreshHotbar, refreshHud, toast, zoneTitle, tick, setMode };
 })();
 
@@ -11295,14 +11444,23 @@ const UI = (() => {
       if (hand === 'L' && !this.progress.deuxMains) { this.toast('La main gauche n\'est pas encore maîtrisée (voir le grimoire).', 'warn'); return; }
       const e = this.itemMain(hand);
       const seal = e && (e.type === 'seal' ? e.seal : e.type === 'parchemin' && this.inv.parchemins[e.nom] ? this.inv.parchemins[e.nom].seal : null);
-      if (seal && seal.core && !Seal.params(seal).canalise && !Seal.triggers(seal).includes('tenu')) { this.charging[hand] = { t0: performance.now(), color: (DATA.CORES[seal.core] || {}).couleur }; return; }
+      if (seal && seal.core && !Seal.params(seal).canalise && !Seal.triggers(seal).includes('tenu')) { this.charging[hand] = { t0: performance.now(), color: (DATA.CORES[seal.core] || {}).couleur, seal, trace: Seal.geste(seal), parchemin: e.type === 'parchemin' }; return; }
       this.useSelected(hand, 0);
     },
     relacherMain(hand) {
       const c = this.charging[hand]; if (!c) return;
       this.charging[hand] = null;
       const held = (performance.now() - c.t0) / 1000;
-      this.useSelected(hand, held < 0.18 ? 0 : Math.min(1, held / 1.5));
+      // un clic bref : le sceau se trace ensuite, en entier, comme toujours
+      if (held < 0.18 || !c.seal || c.parchemin || this.state !== 'world') { this.useSelected(hand, held < 0.18 ? 0 : Math.min(1, held / 1.5)); return; }
+      const aim = World.toWorld(inp.mouse.x, inp.mouse.y);
+      // tenu jusqu'au bout du tracé : il part aussitôt, chargé du temps tenu en plus
+      if (held >= c.trace) { World.castSeal(c.seal, aim, false, Math.min(1, (held - c.trace) / 1.5), hand, { sansGeste: true }); return; }
+      // lâché avant la fin : seuls les anneaux finis partent, plus faibles mais tout de suite
+      const part = Seal.partiel(c.seal, held / c.trace);
+      if (!part) { this.toast('Le sceau n\'était qu\'esquissé : rien ne part.'); Son.sfx('fizzle'); return; }
+      World.castSeal(part, aim, false, 0, hand, { sansGeste: true });
+      this.toast('Lâché en plein tracé : seuls les anneaux finis partent.');
     },
     useSelected(hand = 'R', charge = 0) {
       const e = this.itemMain(hand);
@@ -11338,6 +11496,7 @@ const UI = (() => {
         const raw = localStorage.getItem(SAVE_KEY); if (!raw) return false;
         const d = JSON.parse(raw);
         if (d.compagnons) this.compagnons = Object.assign({ actif: true, gribouille: 'classique', grum: 'classique' }, d.compagnons);
+        try { const T = (d.progress && d.progress.tailles) || ['petit', 'moyen', 'grand'], NS = (d.progress && d.progress.slots) || 3; for (const q of d.seals || []) q.taille = Seal.tailleMin(Seal.clone(q), T, NS); for (const h of d.hotbar || []) if (h && h.type === 'seal' && h.seal) h.seal.taille = Seal.tailleMin(Seal.clone(h.seal), T, NS); } catch (e) { /* ancienne sauvegarde */ }
         this.look = d.look || this.look; this.started = !!d.started; this.inv = d.inv || this.inv; this.seals = d.seals || []; this.hotbar = d.hotbar || this.hotbar; this.lastPotion = d.lastPotion || null;
         this.xp = d.xp || 0; this.niveau = d.niveau || 1;
         if (d.carte) this.carte = d.carte;

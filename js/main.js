@@ -421,14 +421,23 @@
       if (hand === 'L' && !this.progress.deuxMains) { this.toast('La main gauche n\'est pas encore maîtrisée (voir le grimoire).', 'warn'); return; }
       const e = this.itemMain(hand);
       const seal = e && (e.type === 'seal' ? e.seal : e.type === 'parchemin' && this.inv.parchemins[e.nom] ? this.inv.parchemins[e.nom].seal : null);
-      if (seal && seal.core && !Seal.params(seal).canalise && !Seal.triggers(seal).includes('tenu')) { this.charging[hand] = { t0: performance.now(), color: (DATA.CORES[seal.core] || {}).couleur }; return; }
+      if (seal && seal.core && !Seal.params(seal).canalise && !Seal.triggers(seal).includes('tenu')) { this.charging[hand] = { t0: performance.now(), color: (DATA.CORES[seal.core] || {}).couleur, seal, trace: Seal.geste(seal), parchemin: e.type === 'parchemin' }; return; }
       this.useSelected(hand, 0);
     },
     relacherMain(hand) {
       const c = this.charging[hand]; if (!c) return;
       this.charging[hand] = null;
       const held = (performance.now() - c.t0) / 1000;
-      this.useSelected(hand, held < 0.18 ? 0 : Math.min(1, held / 1.5));
+      // un clic bref : le sceau se trace ensuite, en entier, comme toujours
+      if (held < 0.18 || !c.seal || c.parchemin || this.state !== 'world') { this.useSelected(hand, held < 0.18 ? 0 : Math.min(1, held / 1.5)); return; }
+      const aim = World.toWorld(inp.mouse.x, inp.mouse.y);
+      // tenu jusqu'au bout du tracé : il part aussitôt, chargé du temps tenu en plus
+      if (held >= c.trace) { World.castSeal(c.seal, aim, false, Math.min(1, (held - c.trace) / 1.5), hand, { sansGeste: true }); return; }
+      // lâché avant la fin : seuls les anneaux finis partent, plus faibles mais tout de suite
+      const part = Seal.partiel(c.seal, held / c.trace);
+      if (!part) { this.toast('Le sceau n\'était qu\'esquissé : rien ne part.'); Son.sfx('fizzle'); return; }
+      World.castSeal(part, aim, false, 0, hand, { sansGeste: true });
+      this.toast('Lâché en plein tracé : seuls les anneaux finis partent.');
     },
     useSelected(hand = 'R', charge = 0) {
       const e = this.itemMain(hand);
@@ -464,6 +473,7 @@
         const raw = localStorage.getItem(SAVE_KEY); if (!raw) return false;
         const d = JSON.parse(raw);
         if (d.compagnons) this.compagnons = Object.assign({ actif: true, gribouille: 'classique', grum: 'classique' }, d.compagnons);
+        try { const T = (d.progress && d.progress.tailles) || ['petit', 'moyen', 'grand'], NS = (d.progress && d.progress.slots) || 3; for (const q of d.seals || []) q.taille = Seal.tailleMin(Seal.clone(q), T, NS); for (const h of d.hotbar || []) if (h && h.type === 'seal' && h.seal) h.seal.taille = Seal.tailleMin(Seal.clone(h.seal), T, NS); } catch (e) { /* ancienne sauvegarde */ }
         this.look = d.look || this.look; this.started = !!d.started; this.inv = d.inv || this.inv; this.seals = d.seals || []; this.hotbar = d.hotbar || this.hotbar; this.lastPotion = d.lastPotion || null;
         this.xp = d.xp || 0; this.niveau = d.niveau || 1;
         if (d.carte) this.carte = d.carte;

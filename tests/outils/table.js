@@ -1,6 +1,6 @@
 'use strict';
 // Vérifie la table des sceaux avec de vrais gestes : glisser-déposer à la souris et au doigt,
-// déplacer, échanger, retirer, annuler, refaire, changer de taille sans rien perdre.
+// déplacer, échanger, retirer, annuler, refaire, la taille qui s'ajuste.
 //   node tests/outils/table.js [--capture]
 const path = require('path');
 const { chromium } = require('playwright');
@@ -20,7 +20,7 @@ const { chromium } = require('playwright');
   const res = []; const ok = (nom, pass, detail) => { res.push(!!pass); console.log((pass ? '  ✓ ' : '  ✗ ') + nom + (detail ? '  — ' + detail : '')); };
   const sceau = () => page.evaluate(() => JSON.parse(JSON.stringify(game.editSeal)));
   // centre d'une case du cercle, en coordonnées de la page
-  const caseXY = (sid) => page.evaluate((sid) => { const c = document.getElementById('seal-canvas'), r = c.getBoundingClientRect(), t = game.editSeal.taille || 'moyen'; const sl = Seal.slotList(c.width / 2, c.height / 2 + 10, 140 * (t === 'petit' ? 0.82 : 1), t).find((q) => q.id === sid); return [r.left + sl.x * r.width / c.width, r.top + sl.y * r.height / c.height]; }, sid);
+  const caseXY = (sid) => page.evaluate((sid) => { const c = document.getElementById('seal-canvas'), r = c.getBoundingClientRect(); const sl = UI._table.cases().find((q) => q.id === sid); return [r.left + sl.x * r.width / c.width, r.top + sl.y * r.height / c.height]; }, sid);
   const boutonXY = (g) => page.evaluate((g) => { const b = document.querySelector('[data-glyphe="' + g + '"]'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, g);
   const glisserSouris = async ([x0, y0], [x1, y1]) => { await page.mouse.move(x0, y0); await page.mouse.down(); for (let i = 1; i <= 12; i++) await page.mouse.move(x0 + (x1 - x0) * i / 12, y0 + (y1 - y0) * i / 12); await page.waitForTimeout(60); await page.mouse.up(); await page.waitForTimeout(150); };
   const touche = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y]) => ({ x, y, id: 1, radiusX: 4, radiusY: 4, force: 1 })) });
@@ -62,11 +62,14 @@ const { chromium } = require('playwright');
   ok('Suppr retire le glyphe de la case choisie', s.mods[0] === null, JSON.stringify(s.mods));
   await page.mouse.click(...(await caseXY('shape'))); await page.keyboard.press('Escape'); await page.waitForTimeout(100);
   ok('Échap désélectionne sans fermer la table', await page.evaluate(() => UI.isOpen() === 'seal'));
-  // 6. changer de taille sans rien perdre
-  await page.evaluate(() => { const s = game.editSeal; s.taille = 'grand'; s.core2 = 'gravite'; s.core3 = 'temps'; s.mods = ['puissance', 'duree', 'taille', 'echo', 'portee']; s.trigger = 'immediat'; s.trigger2 = 'repetition'; UI.refreshSeal(); });
-  await page.evaluate(() => UI._table.changerTaille('moyen')); const moyen = await sceau();
-  await page.evaluate(() => UI._table.changerTaille('grand')); const grand = await sceau();
-  ok('Réduire met de côté, agrandir remet en place', moyen.mods[3] === null && moyen.core3 === null && grand.mods.join() === 'puissance,duree,taille,echo,portee' && grand.core3 === 'temps' && grand.trigger2 === 'repetition', 'moyen ' + moyen.mods.join() + ' / grand ' + grand.mods.join() + ', ' + grand.core3 + ', ' + grand.trigger2);
+  // 6. la taille s'ajuste : glisser sur une case en pointillés fait grandir le sceau, sans rien déplacer
+  await page.evaluate(() => { game.editSeal = Seal.clone({ taille: 'moyen', core: 'feu', shape: 'zone', mods: ['duree', null, null], trigger: 'immediat' }); UI.refreshSeal(); });
+  const avantT = await page.evaluate(() => game.editSeal.taille), xyDuree = await caseXY('mod0');
+  await glisserSouris(await boutonXY('mod:taille'), await caseXY('mod1')); const t2 = await page.evaluate(() => game.editSeal.taille);
+  await glisserSouris(await boutonXY('mod:portee'), await caseXY('mod3')); s = await sceau(); const xyApres = await caseXY('mod0');
+  ok('La taille s\'ajuste : poser sur une case en pointillés agrandit le sceau, rien ne bouge', avantT === 'petit' && t2 === 'moyen' && s.taille === 'grand' && s.mods[1] === 'taille' && s.mods[3] === 'portee' && Math.hypot(xyDuree[0] - xyApres[0], xyDuree[1] - xyApres[1]) < 30, avantT + ' → ' + t2 + ' → ' + s.taille + ' ' + JSON.stringify(s.mods));
+  await glisserSouris(await caseXY('mod3'), [xyApres[0] + 600, xyApres[1]]); s = await sceau();
+  ok('Retirer ce qui demandait le grand sceau le fait rapetisser', s.taille === 'moyen' && s.mods[1] === 'taille', s.taille);
   // 7. au doigt : appui long dans la palette puis glisser ; glisser un glyphe posé hors du cercle
   await page.evaluate(() => { game.editSeal = Seal.create('moyen'); UI.refreshSeal(); });
   await glisserDoigt(await boutonXY('core:eau'), await caseXY('core'), true); s = await sceau();

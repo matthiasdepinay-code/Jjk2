@@ -5,7 +5,7 @@ const Seal = (() => {
 
   const NMODS = 5;
   function create(taille = 'moyen') {
-    return { nom: '', taille, core: null, core2: null, core3: null, shape: null, mods: [null, null, null, null, null], trigger: null, trigger2: null, filtre: null, cible: null, delai: 2, periode: 2, encre: null, dimL: 1, dimH: 1 };
+    return { nom: '', taille, core: null, core2: null, core3: null, shape: null, mods: [null, null, null, null, null], trigger: null, trigger2: null, lien2: null, filtre: null, cible: null, delai: 2, periode: 2, encre: null, dimL: 1, dimH: 1 };
   }
   function clone(s) {
     let mods = (s.mods || []).map((m) => (m && typeof m === 'object' && m.sub ? { sub: clone(m.sub) } : typeof m === 'string' ? (m in DATA.MIGR_MODS ? DATA.MIGR_MODS[m] : DATA.MODS[m] ? m : null) : null));
@@ -16,7 +16,7 @@ const Seal = (() => {
     const migrer = (c) => { const M2 = DATA.MIGRATION[c]; if (!M2) return c; if (!mods.includes(M2[1])) { let i = mods.findIndex((m, k) => !m && k < nbSlots({ taille: s.taille || 'moyen' }, 3)); if (i < 0) i = 0; mods[i] = M2[1]; } return M2[0]; };
     core = migrer(core); core2 = migrer(core2); const core3 = migrer(s.core3 || null);
     return { nom: s.nom || '', taille: s.taille || 'moyen', core, core2, core3: (s.taille === 'grand' && core3) || null, shape: s.shape || null, mods,
-      trigger: s.trigger || null, trigger2: s.trigger2 || null, filtre: s.filtre || null, cible: s.cible || null, delai: s.delai || 2, periode: s.periode || 2, encre: s.encre || null, dimL: s.dimL || 1, dimH: s.dimH || 1 };
+      trigger: s.trigger || null, trigger2: s.trigger2 || null, lien2: (s.taille === 'grand' && s.lien2) || null, filtre: s.filtre || null, cible: s.cible || null, delai: s.delai || 2, periode: s.periode || 2, encre: s.encre || null, dimL: s.dimL || 1, dimH: s.dimH || 1 };
   }
   const isSub = (m) => !!(m && typeof m === 'object' && m.sub);
   function subs(s) { return s.mods.filter(isSub).map((m) => m.sub); }
@@ -38,7 +38,109 @@ const Seal = (() => {
     const T = taille(s);
     // la surface de la forme se paie : un grand mur coûte plus qu'un petit
     if (s.taille !== 'petit' && DATA.DIMS[s.shape]) { const A = (s.dimL || 1) * (DATA.DIMS[s.shape].h ? s.dimH || 1 : 1); c += Math.max(-2, Math.round((Math.sqrt(A) - 1) * 3)); }
-    return Math.max(s.core ? 1 : 0, Math.round(c * T.coutMul + T.coutAdd));
+    const eq = (s.mods || []).filter(Boolean).length >= 2 && equilibre(s).etat === 'equilibre';
+    return Math.max(s.core ? 1 : 0, Math.round(c * T.coutMul * (eq ? 0.9 : 1) + T.coutAdd));
+  }
+  // ---------- la géométrie compte ----------
+  // un modificateur posé juste sous une essence fusionnée (au même angle) ne sert qu'elle
+  const LIABLES = ['puissance', 'inverser'];
+  const ANGLE_ESS = { core2: 90, core3: 180 };
+  const ecartAngle = (a, b) => Math.abs((((a - b) % 360) + 540) % 360 - 180);
+  function liaisons(s) {
+    const t = s.taille || 'moyen', out = {}; if (t === 'petit') return out;
+    const ang = MOD_ANGLES[t] || MOD_ANGLES.moyen, nb = nbSlots(s, NMODS);
+    ang.forEach((deg, i) => { const m = s.mods[i]; if (!m || isSub(m) || !LIABLES.includes(m) || i >= nb) return; for (const k of ['core2', 'core3']) { if (!s[k] || (k === 'core3' && t !== 'grand')) continue; if (ecartAngle(deg, ANGLE_ESS[k]) <= 25) out[i] = k; } });
+    return out;
+  }
+  // les effets que donne une case d'essence (avec ses aspects)
+  function effetsDe(s, k) { const c = s[k]; if (!c) return []; const a = aspects(s)[c]; return a ? a.map((q) => q.devient) : [c]; }
+  // l'équilibre des modificateurs autour du cercle : centre de gravité des cases occupées
+  function equilibre(s) {
+    const ang = MOD_ANGLES[s.taille || 'moyen'] || MOD_ANGLES.moyen, nb = nbSlots(s, NMODS);
+    let x = 0, y = 0, n = 0; s.mods.forEach((m, i) => { if (!m || i >= nb || i >= ang.length) return; const a = ang[i] * Math.PI / 180; x += Math.cos(a); y += Math.sin(a); n++; });
+    if (n < 2) return { etat: 'neutre', d: 0, n };
+    const d = Math.hypot(x, y) / n;
+    return { etat: d <= 0.15 ? 'equilibre' : d >= 0.75 ? 'bancal' : 'neutre', d, n };
+  }
+  // la taille s'ajuste à ce qu'on pose : la plus petite qui tient tout
+  const ORDRE_TAILLES = ['petit', 'moyen', 'grand'];
+  function tailleBesoin(s, slotsMoyen = 3) {
+    let b = 0; const nm = Math.min(3, slotsMoyen);
+    if (s.core2 || s.filtre || s.cible || (s.dimL || 1) !== 1 || (s.dimH || 1) !== 1 || s.mods.some((m, i) => m && i >= 1)) b = 1;
+    if (s.core3 || s.trigger2 || s.lien2 || s.mods.some((m, i) => m && i >= nm)) b = 2;
+    return b;
+  }
+  function tailleMin(s, tailles = ORDRE_TAILLES, slotsMoyen = 3) {
+    const b = tailleBesoin(s, slotsMoyen);
+    for (let k = b; k < 3; k++) if (tailles.includes(ORDRE_TAILLES[k])) return ORDRE_TAILLES[k];
+    for (let k = 2; k >= 0; k--) if (tailles.includes(ORDRE_TAILLES[k])) return ORDRE_TAILLES[k];
+    return 'moyen';
+  }
+  // le temps de tracé suit le nombre de glyphes posés ; un sceau équilibré se trace plus vite
+  const REF_GLYPHES = { petit: 3, moyen: 4, grand: 7 };
+  function nGlyphes(s) { let n = 0; for (const k of ['core', 'shape', 'trigger', 'core2', 'core3', 'filtre', 'cible', 'trigger2']) if (s[k]) n++; return n + s.mods.filter(Boolean).length; }
+  function geste(s) { const T = taille(s); return T.geste * U.clamp(nGlyphes(s) / (REF_GLYPHES[s.taille || 'moyen'] || 4), 0.6, 1.6) * (equilibre(s).etat === 'equilibre' ? 0.85 : 1); }
+  // un trait relie le second déclencheur à une essence : le sort part en deux temps
+  function enDeuxTemps(s) { return s.taille === 'grand' && !!s.trigger2 && !!s.lien2 && !!s[s.lien2] && [s.core, s.core2, s.core3].filter(Boolean).length >= 2; }
+  function scinder(s) {
+    const k = s.lien2, e = s[k], L = liaisons(s), estAspect = (m) => typeof m === 'string' && DATA.MODS[m] && DATA.MODS[m].aspect;
+    // A garde les autres essences, B part seule avec le second déclencheur
+    const reste = ['core', 'core2', 'core3'].filter((q) => q !== k && s[q]), cle = {}; reste.forEach((q, j) => { cle[q] = ['core', 'core2'][j]; });
+    const pourB = [], modsA = new Array(NMODS).fill(null), aPlacer = [];
+    s.mods.forEach((m, i) => {
+      if (!m) return;
+      const aspect = estAspect(m) ? DATA.MODS[m].aspect : null;
+      if (aspect === e || L[i] === k) { pourB.push(m); return; }
+      if (!aspect && !L[i] && !isSub(m)) pourB.push(m);
+      // lié à une autre essence : il la suit à sa nouvelle place (sous la seconde essence : 90°)
+      if (L[i]) { if (cle[L[i]] === 'core2' && modsA[0] == null) modsA[0] = m; else aPlacer.push([m, -1]); }
+      else aPlacer.push([m, i]);
+    });
+    aPlacer.sort((x, y) => (y[1] >= 0) - (x[1] >= 0));
+    for (const [m, i] of aPlacer) {
+      const libre = (q) => modsA[q] == null && !(q === 0 && reste.length > 1 && LIABLES.includes(m));
+      const j = i >= 0 && libre(i) ? i : [1, 2, 4, 3, 0].find(libre);
+      if (j != null) modsA[j] = m;
+    }
+    const B = clone(Object.assign({}, s, { nom: '', taille: 'moyen', core: e, core2: null, core3: null, trigger: s.trigger2, trigger2: null, lien2: null, mods: pourB.slice(0, 3) }));
+    const A = clone(Object.assign({}, s, { nom: '', core: s[reste[0]] || null, core2: s[reste[1]] || null, core3: null, trigger2: null, lien2: null, mods: modsA }));
+    return [A, B];
+  }
+  // le tracé : centre, premier anneau, second anneau, pointes ; chaque anneau dure selon ses glyphes
+  function anneaux(s) {
+    const r = [['core'].filter((k) => s[k]), ['shape', 'core2', 'core3'].filter((k) => s[k]), s.mods.map((m, i) => (m ? 'mod' + i : null)).filter(Boolean), ['trigger', 'trigger2', 'filtre', 'cible'].filter((k) => s[k])];
+    const n = r.reduce((a, q) => a + Math.max(1, q.length), 0); let acc = 0;
+    return r.map((q) => { const de = acc / n; acc += Math.max(1, q.length); return { cases: q, de, a: acc / n }; });
+  }
+  // lâché avant la fin : seuls les anneaux finis partent
+  function partiel(s, prog) {
+    if (prog >= 1) return s;
+    const fini = anneaux(s).filter((q) => prog >= q.a - 1e-6).length;
+    // sans sa forme, rien ne peut partir
+    if (fini < 2) return null;
+    const c = clone(s);
+    if (fini < 3) c.mods = c.mods.map(() => null);
+    if (fini < 4) { c.trigger = null; c.trigger2 = null; c.filtre = null; c.cible = null; c.lien2 = null; }
+    return c;
+  }
+  // le sceau qui se dessine dans l'air, anneau par anneau
+  function drawTrace(ctx, s, cx, cy, R, prog, t = 0) {
+    const A = anneaux(s), lay = layout(cx, cy, R, s.taille || 'moyen'), coul = s.core ? DATA.CORES[s.core].couleur : '#8a7a5a';
+    const rayons = [R * 0.36, R * 0.62, R * 0.86, R];
+    ctx.save(); ctx.lineCap = 'round';
+    if (typeof FX !== 'undefined') FX.glow(ctx, cx, cy, R * 1.3, coul, 0.25 * Math.min(1, prog * 2));
+    A.forEach((q, k) => {
+      const u = U.clamp((prog - q.de) / Math.max(0.001, q.a - q.de), 0, 1); if (u <= 0) return;
+      ctx.globalAlpha = 0.95; ctx.strokeStyle = k === 3 ? INK : coul; ctx.lineWidth = Math.max(1.1, R * (k === 3 ? 0.05 : 0.04));
+      ctx.beginPath(); ctx.arc(cx, cy, rayons[k], -Math.PI / 2 + t * 0.3, -Math.PI / 2 + t * 0.3 + u * TAU); ctx.stroke();
+      q.cases.forEach((sid, j) => {
+        if (u < (j + 1) / (q.cases.length + 0.4)) return;
+        const sl = sid.startsWith('mod') ? lay.mods[+sid.slice(3)] : lay[sid], id = sid.startsWith('mod') ? s.mods[+sid.slice(3)] : s[sid];
+        if (!sl || !id || typeof id !== 'string') return;
+        glyph(ctx, sid === 'filtre' ? 'f_' + id : sid === 'cible' ? 'c_' + id : id, sl.x, sl.y, Math.max(2.4, sl.r * 0.75), /^core/.test(sid) ? DATA.CORES[id].couleur : INK, 3);
+      });
+    });
+    ctx.restore();
   }
   // ---------- relecture : ce que coûte chaque anneau, et les glyphes qui ne servent à rien ici ----------
   function coutCase(s, sid) {
@@ -65,6 +167,7 @@ const Seal = (() => {
       { cle: 'pointes', nom: 'Pointes', v: somme(['trigger', 'trigger2', 'filtre', 'cible']) },
     ].filter((q) => q.v);
     if (T.coutAdd) parts.push({ cle: 'taille', nom: T.nom + ' sceau', v: T.coutAdd });
+    if (equilibre(s).etat === 'equilibre') parts.push({ cle: 'equilibre', nom: 'Équilibré', v: -10, pct: true });
     return { parts, total: cost(s), mul: m };
   }
   const PROJ = ['projectile', 'chaine'];
@@ -125,8 +228,14 @@ const Seal = (() => {
   function effets(s) { const a = aspects(s); const cores = [s.core]; if (s.core2 && s.taille !== 'petit') cores.push(s.core2); if (s.core3 && s.taille === 'grand') cores.push(s.core3); const out = []; cores.filter(Boolean).forEach((c, k, L) => { if (a[c] && k === L.lastIndexOf(c)) for (const A of a[c]) out.push(A.devient); else out.push(c); }); return out; }
   function langues(s) { const o = {}; for (const el in DATA.LANGAGES) { const k = count(s, DATA.LANGAGES[el].glyphe); if (k) o[el] = Math.min(2, k); } return o; }
   function params(s) {
-    const n = (m) => count(s, m);
+    const L = liaisons(s);
+    const n = (m) => s.mods.filter((q, i) => q === m && !L[i]).length;
+    // Puissance ou Inverser posés juste sous une essence fusionnée ne servent qu'elle
+    const ess = {}, invEss = [];
+    for (const i in L) { const m = s.mods[i]; for (const e of effetsDe(s, L[i])) { if (m === 'puissance') (ess[e] || (ess[e] = { n: 0 })).n++; if (m === 'inverser' && !invEss.includes(e)) invEss.push(e); } }
+    { const pg = 1 + 0.6 * n('puissance'); for (const e in ess) ess[e].pk = (pg + 0.6 * ess[e].n) / pg; }
     return {
+      ess, invEss, liaisons: L,
       power: 1 + 0.6 * n('puissance'),
       range: 1 + 0.5 * n('portee'),
       duration: 1 + 0.8 * n('duree'),
@@ -281,7 +390,8 @@ const Seal = (() => {
   }
 
   // Positions des emplacements pour un sceau de rayon R
-  const MOD_ANGLES = { petit: [30], moyen: [30, 150, 270], grand: [18, 90, 162, 234, 306] };
+  // chaque taille prolonge la précédente : en grandissant, rien ne bouge. 90° : sous la seconde essence ; 165° : face à la troisième
+  const MOD_ANGLES = { petit: [90], moyen: [90, 210, 330], grand: [90, 210, 330, 165, 15] };
   function layout(cx, cy, R, tailleId = 'moyen') {
     const slotAt = (rad, angDeg, r) => { const a = (angDeg * Math.PI) / 180; return { x: cx + Math.cos(a) * rad, y: cy + Math.sin(a) * rad, r }; };
     const ang = MOD_ANGLES[tailleId] || MOD_ANGLES.moyen;
@@ -386,6 +496,15 @@ const Seal = (() => {
       ctx.restore();
       if (sid) halo(sl, sid);
     };
+    // les traits : modificateur lié à son essence, second déclencheur relié à la sienne
+    if (opts.traits !== false) {
+      ctx.save(); ctx.strokeStyle = '#c08a2a'; ctx.lineWidth = Math.max(1.4, R * 0.018); ctx.setLineDash([R * 0.03, R * 0.022]);
+      const L = liaisons(s); for (const i in L) { const a = lay.mods[i], b = lay[L[i]]; if (a && b) { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); } }
+      ctx.setLineDash([]); if (enDeuxTemps(s) && lay.trigger2 && lay[s.lien2]) { const a = lay.trigger2, b = lay[s.lien2]; ctx.lineWidth = Math.max(2, R * 0.026); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo((a.x + b.x) / 2 + R * 0.25, (a.y + b.y) / 2, b.x, b.y); ctx.stroke(); }
+      ctx.restore();
+    }
+    // les cases d'agrandissement : la taille suivante, en pointillés
+    if (opts.croissance) for (const g of opts.croissance) { ctx.save(); ctx.strokeStyle = 'rgba(60,45,30,0.4)'; ctx.lineWidth = Math.max(1, R * 0.012); ctx.setLineDash([R * 0.02, R * 0.028]); ctx.fillStyle = 'rgba(239,227,196,0.5)'; ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, TAU); ctx.fill(); ctx.stroke(); ctx.setLineDash([]); U.txt(ctx, '+', g.x, g.y + g.r * 0.3, Math.max(9, g.r * 0.9), 'center', 'rgba(60,45,30,0.45)'); halo(g, g.id); ctx.restore(); }
     const lbl = (tr) => (tr === 'retarde' ? s.delai + 's' : tr === 'repetition' ? '/' + s.periode + 's' : null);
     slot(lay.core, s.core, 'core', true, opts.highlight === 'core', null, 'core');
     slot(lay.shape, s.shape, 'shape', true, opts.highlight === 'shape', null, 'shape');
@@ -430,5 +549,5 @@ const Seal = (() => {
   }
 
   const api = { comboConnu: () => true };
-  return Object.assign(api, { inutiles, coutDetail, coutCase, aspects, effets, create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, slotList, draw, drawMini, isSub, subs, depth, modId, comboName, taille, nbSlots, triggers, NMODS });
+  return Object.assign(api, { liaisons, effetsDe, equilibre, tailleMin, tailleBesoin, geste, nGlyphes, enDeuxTemps, scinder, anneaux, partiel, drawTrace, MOD_ANGLES, inutiles, coutDetail, coutCase, aspects, effets, create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, slotList, draw, drawMini, isSub, subs, depth, modId, comboName, taille, nbSlots, triggers, NMODS });
 })();
