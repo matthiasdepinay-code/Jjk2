@@ -201,6 +201,7 @@ const DATA = (() => {
     commande: { id: 'commande', nom: 'Sur commande', cout: 1, desc: 'Le sort attend là où il arrive (collé à une créature s\'il la touche). La touche F fait éclater tous tes sorts en attente.' },
     repetition: { id: 'repetition', nom: 'Répétition', cout: 3, desc: 'Après avoir éclaté, l\'effet recommence à intervalle réglable (1, 2 ou 5 s), plusieurs fois.' },
     proximite:  { id: 'proximite',  nom: 'Proximité', cout: 1, desc: 'Éclate dès qu\'une créature approche, sans avoir à la toucher. Posé (zone), c\'est une mine.' },
+    tenu:       { id: 'tenu',       nom: 'Maintenu', cout: 1, desc: 'Le sort ne vit que tant que tu gardes le clic enfoncé : il naît dès que tu appuies, se dirige à la souris et disparaît dès que tu lâches. Il boit de l\'encre tant qu\'il dure. Un petit soleil, une tornade, un rayon, un nuage d\'orage... se promènent au bout de ta main. Une Singularité ou une Implosion qu\'on tient éclate quand on lâche.' },
     expiration: { id: 'expiration', nom: 'À l\'expiration', cout: 2, desc: 'Quand l\'effet s\'éteint, il éclate une dernière fois.' },
   };
   // Filtres de matière (pointe droite) : le sort au contact ne réagit qu'à cela et traverse le reste
@@ -589,6 +590,7 @@ const DATA = (() => {
     { id: 'cloche', type: 'mods', item: ['cloche'], titre: 'Trajectoire : Cloche', indice: 'Atteins le niveau 3.', cond: (p) => p.compteurs.niveau >= 3 },
     { id: 'percant', type: 'mods', item: ['percant'], titre: 'Modificateur : Perçant', indice: 'Touche 25 créatures avec des projectiles.', cond: (p) => p.compteurs.creaturesTouchees >= 25 },
     { id: 'gerbe', type: 'mods', item: ['gerbe'], titre: 'Modificateur : Gerbe', indice: 'Atteins le niveau 5.', cond: (p) => p.compteurs.niveau >= 5 },
+    { id: 'tenu', type: 'trigger', item: 'tenu', titre: 'Déclencheur : Maintenu', indice: 'Découvre ta première fusion, ou atteins le niveau 3.', cond: (p) => Object.keys(p.combos || {}).length >= 1 || p.compteurs.niveau >= 3 },
     { id: 'proximite', type: 'trigger', item: 'proximite', titre: 'Déclencheur : Proximité', indice: 'Lance 4 sceaux avec le déclencheur Retardé.', cond: (p) => (p.compteurs.retardes || 0) >= 4 },
     { id: 'vague', type: 'shape', item: 'vague', titre: 'Forme : Vague', indice: 'Lance 10 sceaux de Terre.', cond: (p) => p.compteurs.terre >= 10 },
     { id: 'colonne', type: 'shape', item: 'colonne', titre: 'Forme : Colonne', indice: 'Emploie souvent l\'Eau.', cond: (p) => ((p.maitrise || {}).eau || 0) >= 15 },

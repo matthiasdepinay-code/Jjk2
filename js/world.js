@@ -45,7 +45,8 @@ const World = (() => {
     groundBelow: (...a) => groundBelow(...a), spawnLiquid: (...a) => spawnLiquid(...a), addGField: (...a) => addGField(...a), vieillir: (...a) => vieillir(...a),
     makeCreature: (c) => makeCreature(c), masse: (e) => masse(e), chaudOk: (c) => CHAUD_OK.includes(c.t), froidOk: (c) => FROID_OK.includes(c.t),
     flash: (v) => { st.flash = Math.max(st.flash, v); }, shake: (v) => { st.shake = Math.max(st.shake, v); }, son: (a, b) => Son.sfx(a, b), colorOf: (c) => colorOf(c),
-    daylight: () => daylight(), revenir: (c) => finMorph(c), addXp: (n) => { if (game && game.addXp) game.addXp(n); }, tempsDe: (x, y) => (bullesT.length ? tempsDe(x, y, 2) : 1),
+    daylight: () => daylight(), revenir: (c) => finMorph(c), tient: (h) => tientMain(h), boire: (n) => { if (st.p.ink < n) return false; st.p.ink -= n; return true; },
+    origine: () => ({ x: st.p.x + st.p.w / 2, y: st.p.y + st.p.h * 0.45 }), cible: (R) => { const p = st.p, o = { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, a = toWorld(game.inp.mouse.x, game.inp.mouse.y); const dx = a.x - o.x, dy = a.y - o.y, d = Math.hypot(dx, dy) || 1, k = Math.min(1, R / d); return { x: o.x + dx * k, y: o.y + dy * k }; }, addXp: (n) => { if (game && game.addXp) game.addXp(n); }, tempsDe: (x, y) => (bullesT.length ? tempsDe(x, y, 2) : 1),
   });
   function respawn() {
     const p = st.p;
@@ -1199,7 +1200,7 @@ const World = (() => {
 
   // ---------- Spécification d'un sceau au lancer ----------
   let castSeq = 0;
-  const PRIM = ['immediat', 'contact', 'retarde', 'commande', 'proximite'];
+  const PRIM = ['tenu', 'immediat', 'contact', 'retarde', 'commande', 'proximite'];
   function couleurLg(core, lg) { if (core === 'feu' && lg.feu) return lg.feu >= 2 ? '#4a86e0' : '#f0d070'; if (core === 'foudre' && lg.foudre >= 2) return '#b070e0'; return colorOf(core); }
   // le Maître d'un élément paie moins cher ses sceaux
   function maitreMul(seal) { const M2 = (game && game.progress.maitrise) || {}; const els = [seal.core, seal.taille !== 'petit' ? seal.core2 : null].filter(Boolean); return els.length && els.every((e) => DATA.LANGAGES[e] && DATA.niveauMaitrise(M2[e] || 0) >= 3) ? 0.8 : 1; }
@@ -1356,7 +1357,7 @@ const World = (() => {
     if (Seal.triggers(seal).includes('retarde')) evt('retarde');
     const gt = Seal.taille(seal).geste * (1 + charge * 0.5);
     if (encre) { game.inv.encres[encre]--; if (game.inv.encres[encre] === 0) msg('C\'était la dernière goutte d\'' + DATA.ENCRES[encre].nom.toLowerCase() + '.'); }
-    p.gestes[hand] = { seal, aim: { x: aim.x, y: aim.y }, t: gt, max: gt, color: encre ? DATA.ENCRES[encre].couleur : colorOf(seal.core), charge, hand, encre };
+    p.gestes[hand] = { seal, aim: { x: aim.x, y: aim.y }, t: gt, max: gt, color: encre ? DATA.ENCRES[encre].couleur : colorOf(seal.core), charge, hand, encre, cost };
     if (charge > 0.6) msg('Sort chargé : ' + Math.round(100 + charge * 80) + ' % de puissance.');
     return true;
   }
@@ -1376,6 +1377,7 @@ const World = (() => {
     else if (spec.cible === 'marque' && seal.shape !== 'soi') { const m = marqueRecente(); if (m) { aim = m.pos; homing = m.mq.ent || { x: m.pos.x - 1, y: m.pos.y - 1, w: 2, h: 2, hp: 1, point: true }; horsPortee = true; } else if (o.player) msg('Aucune marque posée : le sort part vers la souris.'); }
     let dx = aim.x - ox, dy = aim.y - oy; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
     const portee = (base) => (horsPortee ? d : Math.min(d, base));
+    if (o.tenu && o.player) { lancerTenu(spec, seal, ox, oy, aim, dx, dy, d, o); return; }
     // sur commande : formes posées
     if (trig === 'commande' && !['projectile', 'chaine', 'soi', 'trait', 'zone', 'mur'].includes(seal.shape)) {
       const dd = portee(260 * prm.range); st.sp.push({ k: 'attente', spec, x: ox + dx * dd, y: oy + dy * dd, life: 40, relance: true });
@@ -1487,6 +1489,36 @@ const World = (() => {
         break;
       }
     }
+  }
+  // ---------- Déclencheur Maintenu : le sort vit tant qu'on tient le clic ----------
+  function tientMain(h) { const m = game && game.inp && game.inp.mouse; return !!(m && (h === 'L' ? m.rdown : m.down)); }
+  function lancerTenu(spec, seal, ox, oy, aim, dx, dy, d, o) {
+    const prm = spec.prm, sz = prm.size || 1, hand = o.tenu;
+    const tenu = { hand, drain: Math.max(0.6, Seal.cost(seal) * 0.3), portee: 300 * (prm.range || 1), t: -1 };
+    Son.sfx('cast', spec.core);
+    const dd = Math.min(d, tenu.portee), tx = ox + dx * dd, ty = oy + dy * dd, dir = { x: dx, y: dy };
+    if (spec.combo) {
+      let ph = null;
+      switch (seal.shape) {
+        case 'mur': { const mw = 30 * sz * (prm.dimL || 1), mh = 180 * sz * (prm.dimH || 1); ph = PH.deployer(spec, tx, ty, mw / 2, { rect: { x0: tx - mw / 2, x1: tx + mw / 2, y0: ty - mh / 2, y1: ty + mh / 2 }, tenu }, dir); break; }
+        case 'colonne': { const g = groundBelow(tx, ty - 20), cw = 22 * sz * (prm.dimL || 1), ch = 200 * sz * (prm.dimH || 1), gy0 = g != null ? g : ty; ph = PH.deployer(spec, tx, gy0 - ch / 2, cw, { rect: { x0: tx - cw, x1: tx + cw, y0: gy0 - ch, y1: gy0 }, tenu }, dir); break; }
+        case 'trait': ph = PH.deployer(spec, tx, ty, 30 * sz, { ligne: { x1: ox + dx * 20, y1: oy + dy * 20, x2: tx, y2: ty, w: 14 * sz * (prm.dimL || 1) }, tenu }, dir); break;
+        case 'soi': case 'aura': ph = PH.deployer(spec, ox, oy, 60 * sz, { follow: st.p, tenu }, dir); break;
+        case 'projectile': case 'chaine': ph = PH.deployer(spec, ox + dx * 40, oy + dy * 40, 50 * sz, { tenu }, dir); break;
+        default: ph = PH.deployer(spec, tx, ty, 70 * sz, { tenu }, dir);
+      }
+      if (ph && ph.tenu) msg('Tant que tu tiens le clic, ' + DATA.comboInfo(spec.combo).nom.toLowerCase() + ' suit ta souris.');
+      return;
+    }
+    if (seal.shape === 'projectile' || seal.shape === 'chaine') {
+      // un projectile tenu : guidé par la souris, il se défait quand on lâche
+      const n0 = st.sp.length; launch(seal, { x: ox, y: oy }, aim, Object.assign({}, o, { tenu: null }));
+      for (let k = n0; k < st.sp.length; k++) if (st.sp[k].k === 'proj') { const q = st.sp[k]; q.tenu = tenu; q.guide = false; q.grav = 0; q.traj = null; }
+      return;
+    }
+    // le reste : l'effet est canalisé là où pointe la souris (ou sur toi), tant qu'on tient
+    const soi = seal.shape === 'soi' || seal.shape === 'aura';
+    st.sp.push({ k: 'canal', spec, t: 0, tick: 0, range: tenu.portee, r: (soi ? 70 : 50) * sz * (seal.shape === 'zone' || seal.shape === 'aura' ? prm.dimL || 1 : 1), cost: tenu.drain, tenu, soi, trait: seal.shape === 'trait' });
   }
   function selfCast(spec, aim, noRepeat) {
     if (!spec.combo) for (const core of spec.cores) applySelf(core, spec.prm, aim, spec);
@@ -1876,7 +1908,7 @@ const World = (() => {
     if (dirX !== 0) for (const o of st.objs) if (o.t === 'caisse' && !o.mort && !o.carried) { const probe = { x: p.x + dirX * 2, y: p.y, w: p.w, h: p.h }; if (U.rectsOverlap(probe, o)) o.vx = dirX * (p.sta.geant > 0 ? 160 : 70); }
     if (p.y > L.h + 50) { msg('Tu tombes dans l\'encre noire... et te réveilles devant ta porte.'); respawn(); }
     if (p.onGround && Math.abs(p.vx) > 30 && Math.random() < dt * 6) Son.sfx('step', 'terre');
-    if (p.gestes) for (const h of ['R', 'L']) { const g = p.gestes[h]; if (!g) continue; g.t -= dt; if (g.t <= 0) { p.gestes[h] = null; p.lastCast = { t: time, a: Math.atan2(g.aim.y - (p.y + p.h * 0.4), g.aim.x - (p.x + p.w / 2)), c: g.color }; launch(g.seal, { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, g.aim, { depth: 0, player: true, charge: g.charge, encre: g.encre }); } }
+    if (p.gestes) for (const h of ['R', 'L']) { const g = p.gestes[h]; if (!g) continue; g.t -= dt; if (g.t <= 0) { p.gestes[h] = null; const tient = Seal.triggers(g.seal).includes('tenu'); if (tient && !tientMain(h)) { p.ink = Math.min(p.inkMax, p.ink + (g.cost || 0) * 0.8); msg('Tu as lâché trop tôt : le sceau se défait. Garde le clic enfoncé.'); part(p.x + p.w / 2, p.y + p.h * 0.4, g.color, 8, 40, 0.5, 2, 0, 'spark'); continue; } const aimL = tient ? toWorld(game.inp.mouse.x, game.inp.mouse.y) : g.aim; p.lastCast = { t: time, a: Math.atan2(aimL.y - (p.y + p.h * 0.4), aimL.x - (p.x + p.w / 2)), c: g.color }; launch(g.seal, { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, aimL, { depth: 0, player: true, charge: g.charge, encre: g.encre, tenu: tient ? h : null }); } }
     if (p.selfTimer) { p.selfTimer.t -= dt; if (p.selfTimer.t <= 0) { const q = p.selfTimer; p.selfTimer = null; selfCast(q.spec, q.aim); } }
     if (p.hp <= 0 && p.sta.phenix > 0) { p.sta.phenix = 0; p.hp = p.hpMax; p.inv = 2; p.sta.burning = 0; part(p.x + p.w / 2, p.y + p.h / 2, '#e8842a', 30, 140, 1, 4, -120); Son.sfx('unlock'); msg('Tu te relèves dans un battement d\'ailes de feu.'); }
     if (p.hp <= 0) { msg('Tu t\'évanouis... et te réveilles devant ta porte, un peu honteux(se).', 'warn'); Son.sfx('hurt'); respawn(); }
@@ -1936,8 +1968,10 @@ const World = (() => {
   // ---- Gravité : champs locaux (st.gz, partagés avec la simulation) ----
   function snapDir(dx, dy) { return Math.abs(dx) > Math.abs(dy) ? [Math.sign(dx) || 1, 0] : [0, Math.sign(dy) || 1]; }
   function addGField(x, y, r, gx, gy, mag, life, rect = null) {
-    st.gz.push({ x, y, r, gx, gy, mag, life, max: life, rect });
+    const z = { x, y, r, gx, gy, mag, life, max: life, rect };
+    st.gz.push(z);
     part(x, y, '#6c5ab8', 14, 60, 0.8, 2, 0, 'spark');
+    return z;
   }
   const dansZone = (z, x, y) => (z.rect ? x >= z.rect.x0 && x <= z.rect.x1 && y >= z.rect.y0 && y <= z.rect.y1 : (x - z.x) * (x - z.x) + (y - z.y) * (y - z.y) <= z.r * z.r);
   function gravOf(b) {
@@ -2469,6 +2503,9 @@ const World = (() => {
       dt = bullesT.length && s.k !== 'bulle' && s.x !== undefined ? dtG * tempsDe(s.x, s.y, 2) : dtG; if (dt <= 0) continue;
       switch (s.k) {
         case 'proj': {
+          if (s.tenu) { if (!tientMain(s.tenu.hand) || st.p.ink < s.tenu.drain * dt) { s.mort = true; part(s.x, s.y, s.color, 8, 50, 0.4, 2, 0, 'spark'); Son.sfx('fizzle'); break; } if (s.tenu.t !== time) { s.tenu.t = time; st.p.ink -= s.tenu.drain * dt; } s.life = Math.max(s.life, 0.3);
+            // il file vers la souris et s'y tient, au bout de la main
+            { const pp = st.p, o2 = { x: pp.x + pp.w / 2, y: pp.y + pp.h * 0.45 }, a2 = toWorld(game.inp.mouse.x, game.inp.mouse.y); let tx = a2.x - o2.x, ty = a2.y - o2.y; const td = Math.hypot(tx, ty) || 1, kk = Math.min(1, s.tenu.portee / td); tx = o2.x + tx * kk; ty = o2.y + ty * kk; const vmax = 560 * (s.prm.speed || 1); let wx = (tx - s.x) * 7, wy = (ty - s.y) * 7; const wv = Math.hypot(wx, wy); if (wv > vmax) { wx *= vmax / wv; wy *= vmax / wv; } const ka = Math.min(1, dt * 9); s.vx += (wx - s.vx) * ka; s.vy += (wy - s.vy) * ka; } }
           s.life -= dt; if (s.life <= 0) { if (s.spec && s.trig === 'commande' && !s.potion && !s.liquide) { impactProj(s, null); break; } s.mort = true; part(s.x, s.y, s.color, 5, 30, 0.4); break; }
           { const z = st.gz.length ? gravOf({ x: s.x - 1, y: s.y - 1, w: 2, h: 2 }) : null; if (z) { s.vx += 900 * z.mag * z.gx * dt; s.vy += 900 * z.mag * z.gy * dt; } else s.vy += s.grav * dt; }
           if (s.homing) { const h = s.homing; if ((h.hp !== undefined && h.hp <= 0) || h.mort) s.homing = null; else { const want = Math.atan2(h.y + h.h / 2 - s.y, h.x + h.w / 2 - s.x), cur = Math.atan2(s.vy, s.vx); let da = want - cur; while (da > Math.PI) da -= TAU; while (da < -Math.PI) da += TAU; const na = cur + clamp(da, -5 * dt, 5 * dt); const sp = Math.hypot(s.vx, s.vy); s.vx = Math.cos(na) * sp; s.vy = Math.sin(na) * sp; if (h.point && dist(s.x, s.y, h.x + 1, h.y + 1) < s.r + 14 && !s.potion && !s.liquide) { impactProj(s, null); break; } } }
@@ -2589,10 +2626,12 @@ const World = (() => {
         case 'prise': majPrise(s, dt); break;
         case 'canal': {
           s.t += dt; s.tick -= dt;
-          if (!game.inp.mouse.down || s.t > 6 || st.p.ink < s.cost) { s.mort = true; break; }
+          const tient = s.tenu ? tientMain(s.tenu.hand) : game.inp.mouse.down;
+          if (!tient || (!s.tenu && s.t > 6) || st.p.ink < s.cost * 0.2) { s.mort = true; if (s.tenu && s.x != null) { part(s.x, s.y, s.spec.color, 10, 60, 0.4, 2, 0, 'spark'); Son.sfx('fizzle'); } break; }
           const p = st.p; const pcx = p.x + p.w / 2, pcy = p.y + p.h * 0.45; const aim = toWorld(game.inp.mouse.x, game.inp.mouse.y);
-          let ddx = aim.x - pcx, ddy = aim.y - pcy; const dd = Math.hypot(ddx, ddy) || 1; const k = Math.min(dd, s.range) / dd; s.x = pcx + ddx * k; s.y = pcy + ddy * k;
-          if (s.tick <= 0) { s.tick = 0.2; p.ink -= s.cost * 0.2; doBurst(s.spec, s.x, s.y, s.r, { noEcho: true, noField: true }); }
+          let ddx = aim.x - pcx, ddy = aim.y - pcy; const dd = Math.hypot(ddx, ddy) || 1; const k = Math.min(dd, s.range) / dd;
+          if (s.soi) { s.x = pcx; s.y = pcy; } else { s.x = pcx + ddx * k; s.y = pcy + ddy * k; }
+          if (s.tick <= 0) { const per = s.trait ? 0.12 : 0.2; s.tick = per; p.ink -= s.cost * per; if (s.trait) fireBeam(s.spec, pcx, pcy, ddx / dd, ddy / dd, 'immediat'); else doBurst(s.spec, s.x, s.y, s.r, { noEcho: true, noField: true, noPlayer: s.soi }); }
           break;
         }
         case 'orbit': {

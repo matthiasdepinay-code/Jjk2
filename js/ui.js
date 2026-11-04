@@ -309,7 +309,7 @@ const UI = (() => {
     const cleC = cores.length > 1 && !prm.inverse ? DATA.comboCle(cores) : null; const infoC = cleC && DATA.comboInfo(cleC);
     const combo = infoC ? (comboConnu(cleC) ? infoC : { nom: 'fusion inconnue', inconnu: true }) : null;
     const L = [];
-    L.push('<b>' + T.nom + ' sceau</b> · ' + Seal.cost(s) + ' encre · tracé en ' + T.geste + ' s · maintenir le clic charge jusqu\'à +80 %.');
+    L.push('<b>' + T.nom + ' sceau</b> · ' + Seal.cost(s) + ' encre · tracé en ' + T.geste + ' s · ' + (trs.includes('tenu') ? 'pas de charge : tant que tu tiens le clic, il boit environ ' + Math.max(0.6, Seal.cost(s) * 0.3).toFixed(1).replace('.', ',') + ' encre par seconde.' : 'maintenir le clic charge jusqu\'à +80 %.'));
     let eff = 'Effet : ' + cores.map(nomG).join(' et ') + (combo ? ' (fusion : ' + combo.nom.toLowerCase() + ')' : '') + (prm.inverse ? (cores.includes('gravite') ? ', apesanteur' : ', inversé') : '') + '.';
     L.push(eff);
     if (infoC) L.push(comboConnu(cleC) ? '<b>' + infoC.nom + '</b> : ' + infoC.desc + ' <span class="muted">La fusion remplace les deux effets de base.</span>' : '<b>Fusion inconnue</b> <span class="muted">— ' + infoC.indice + ' Lance-la pour la découvrir.</span>');
@@ -317,7 +317,8 @@ const UI = (() => {
     if (s.shape) L.push('Forme : ' + DATA.SHAPES[s.shape].nom.toLowerCase() + (prm.extra ? ', en double' : '') + (prm.orbite ? ', en orbite autour de toi' : '') + (prm.teleguide ? ', guidé par la souris' : '') + (prm.canalise ? ', canalisé tant que tu maintiens' : '') + '.');
     if (s.cible && s.taille !== 'petit') L.push('Cible : ' + (s.cible === 'creature' ? 'la créature hostile la plus proche, qu\'il suit' : 'ta marque la plus récente, même hors de vue') + '.');
     const tx = [];
-    const prim = trs.find((t) => ['immediat', 'contact', 'retarde', 'commande', 'proximite'].includes(t));
+    const prim = trs.find((t) => ['tenu', 'immediat', 'contact', 'retarde', 'commande', 'proximite'].includes(t));
+    if (prim === 'tenu') tx.push('ne vit que tant que tu tiens le clic : il naît à l\'appui (sans charge), suit la souris, boit de l\'encre, et disparaît quand tu lâches');
     if (!trs.length || prim === 'immediat') tx.push('agit tout de suite');
     if (prim === 'contact') tx.push('éclate au premier contact');
     if (prim === 'retarde') tx.push('se fixe puis éclate après ' + s.delai + ' s');

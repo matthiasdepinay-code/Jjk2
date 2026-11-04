@@ -9,8 +9,10 @@ function creerPhenomenes(W) {
   const st = () => W.st;
 
   // ---------- géométrie ----------
+  function lier(ph, q) { (ph.liens = ph.liens || []).push(q); return q; }
   function deplacer(ph, dx, dy) {
     ph.x += dx; ph.y += dy;
+    if (ph.liens) for (const q of ph.liens) { q.x += dx; q.y += dy; if (q.rect) { q.rect.x0 += dx; q.rect.x1 += dx; q.rect.y0 += dy; q.rect.y1 += dy; } }
     if (ph.rect) { ph.rect.x0 += dx; ph.rect.x1 += dx; ph.rect.y0 += dy; ph.rect.y1 += dy; }
     if (ph.ligne) { ph.ligne.x1 += dx; ph.ligne.x2 += dx; ph.ligne.y1 += dy; ph.ligne.y2 += dy; }
   }
@@ -40,7 +42,8 @@ function creerPhenomenes(W) {
   const pr = (ph, k = 1) => ({ power: ph.pw * k, size: ph.sz, duration: 1, persist: 0, range: 1, speed: 1, lg: {}, asp: {} });
   function effet(ph, core, x, y, r, k = 1, mode = 'burst', o = {}) { W.applyEffect(core, x, y, r, pr(ph, k), mode, Object.assign({ noPlayer: true, noField: true, noGrid: false, phen: true }, o)); }
   const fade = (ph) => clamp(Math.min(ph.t / 0.3, ph.life / Math.min(1, ph.max * 0.25)), 0, 1);
-  const sol = (x, y) => { const g = W.groundBelow(x, y); return g == null ? y : g; };
+  // le sol sous un point ; si le point est dans la roche, on remonte jusqu'à la surface
+  const sol = (x, y) => { if (Sim.solidAt(x, y)) { let yy = y; for (let k = 0; k < 60 && Sim.solidAt(x, yy - CS); k++) yy -= CS; return yy - (yy % CS); } const g = W.groundBelow(x, y); return g == null ? y : g; };
   const air = (m) => m === M.AIR || P[m].gas;
   function zap(x1, y1, x2, y2, couleur) { st().eclairs.push({ x: x2, y1: y2, pts: FX.eclairPts(x1, y1, x2, y2, 0.2), branches: [], life: 0.22, couleur }); }
   function attirer(ph, R, force, dt, cx = ph.x, cy = ph.y, joueur = 0.35) {
@@ -79,7 +82,7 @@ function creerPhenomenes(W) {
   function nuee(ph, mat, taux, largeur = 1.3) { const R = ph.rect ? (ph.rect.x1 - ph.rect.x0) / 2 : ph.r * largeur; const y = ph.rect ? ph.rect.y1 : ph.y + ph.r * 0.25; for (let k = 0; k < taux; k++) { const x = ph.x + (rnd() * 2 - 1) * R; const cx = Math.floor(x / CS), cy = Math.floor(y / CS); if (Sim.get(cx, cy) === M.AIR) Sim.set(cx, cy, mat); } }
 
   // FEU + GRAVITÉ : le petit soleil
-  def('feu|gravite', { r: 20, life: 10, lum: 460, couleur: '#f0a040', bouge: 'flotte', eteint: 0.6, nourrit: true,
+  def('feu|gravite', { r: 20, explose: true, life: 10, lum: 460, couleur: '#f0a040', bouge: 'flotte', eteint: 0.6, nourrit: true,
     init(ph) { if (ph.g === 'point' && !ph.follow) { const g = sol(ph.x, ph.y - 10); if (g - ph.y < 50) ph.y = g - 60; } ph.R = (ph.rect ? Math.max(ph.rect.x1 - ph.rect.x0, ph.rect.y1 - ph.rect.y0) * 0.6 : ph.r * 6.5); },
     tick(ph, dt) {
       const R = ph.R * (0.6 + 0.4 * fade(ph));
@@ -95,7 +98,7 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { const a = fade(ph), r = ph.r * (1 + 0.06 * Math.sin(t * 9)); FX.glow(ctx, ph.x, ph.y, r * 7, '#f0a040', 0.35 * a); FX.glow(ctx, ph.x, ph.y, r * 3, '#fff0b0', 0.6 * a); ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = '#fff6d8'; ctx.beginPath(); ctx.arc(ph.x, ph.y, r, 0, TAU); ctx.fill(); ctx.strokeStyle = '#e0642a'; ctx.lineWidth = 2; for (let k = 0; k < 10; k++) { const an = k / 10 * TAU + t * 0.8, l = r * (1.4 + 0.35 * Math.sin(t * 6 + k * 2)); ctx.beginPath(); ctx.moveTo(ph.x + Math.cos(an) * r * 1.05, ph.y + Math.sin(an) * r * 1.05); ctx.lineTo(ph.x + Math.cos(an) * l, ph.y + Math.sin(an) * l); ctx.stroke(); } ctx.restore(); },
   });
   // EAU + FEU : geyser
-  def('eau|feu', { r: 24, life: 5, couleur: '#dcdcdc', init(ph) { auSol(ph); ph.H = ph.rect ? ph.rect.y1 - ph.rect.y0 : 220 * ph.sz; if (ph.rect) { ph.x = (ph.rect.x0 + ph.rect.x1) / 2; ph.y = ph.rect.y1; } },
+  def('eau|feu', { r: 24, sol: true, life: 5, couleur: '#dcdcdc', init(ph) { auSol(ph); ph.H = ph.rect ? ph.rect.y1 - ph.rect.y0 : 220 * ph.sz; if (ph.rect) { ph.x = (ph.rect.x0 + ph.rect.x1) / 2; ph.y = ph.rect.y1; } },
     tick(ph, dt) {
       const w = ph.rect ? (ph.rect.x1 - ph.rect.x0) / 2 : ph.r * 0.6, top = ph.y - ph.H * fade(ph);
       if (ev(ph, 'v', 0.03)) for (let k = 0; k < 3; k++) { const x = ph.x + (rnd() * 2 - 1) * w, y = ph.y - rnd() * (ph.y - top); const cx = Math.floor(x / CS), cy = Math.floor(y / CS); if (Sim.get(cx, cy) === M.AIR) { Sim.set(cx, cy, M.VAPEUR, 50 + (rnd() * 40) | 0); Sim.temp[cy * Sim.W + cx] = 150; } }
@@ -110,7 +113,7 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { const w = ph.rect ? (ph.rect.x1 - ph.rect.x0) / 2 : ph.r * 0.6, top = ph.y - ph.H * fade(ph); ctx.save(); ctx.globalAlpha = 0.35 * fade(ph); ctx.fillStyle = '#ffffff'; for (let y = ph.y; y > top; y -= 16) { const k = (ph.y - y) / (ph.H || 1); ctx.beginPath(); ctx.arc(ph.x + Math.sin(y * 0.05 + t * 6) * 4, y, w * (0.6 + k * 0.7), 0, TAU); ctx.fill(); } ctx.restore(); },
   });
   // FEU + TERRE : magma
-  def('feu|terre', { r: 26, life: 4, lum: 220, couleur: '#e0622b', init(ph) { auSol(ph); ph.data.n = Math.round(70 * ph.sz * ph.pw); },
+  def('feu|terre', { r: 26, sol: true, life: 4, lum: 220, couleur: '#e0622b', init(ph) { auSol(ph); ph.data.n = Math.round(70 * ph.sz * ph.pw); },
     tick(ph, dt) {
       if (ev(ph, 'l', 0.05) && ph.data.n > 0) for (let k = 0; k < 3; k++) { const q = auHasard(ph, ph.rect ? 1 : 0.4); const x = Math.floor(q.x / CS), y0 = Math.floor((ph.rect ? q.y : ph.y) / CS) - 1 - Math.floor(rnd() * 6); if (Sim.get(x, y0) === M.AIR) { Sim.set(x, y0, M.LAVE); ph.data.n--; } }
       if (ev(ph, 's', 0.3)) { W.shake(0.15); W.part(ph.x, ph.y, '#e0622b', 6, 160, 0.7, 3, 700); }
@@ -118,10 +121,10 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y, ph.r * 2.5, '#e0622b', 0.5 * fade(ph)); ctx.save(); ctx.strokeStyle = '#f0a040'; ctx.lineWidth = 2; ctx.globalAlpha = fade(ph); for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(ph.x + k * 8, ph.y); ctx.lineTo(ph.x + k * 11 + Math.sin(t * 4 + k) * 3, ph.y + 6); ctx.stroke(); } ctx.restore(); },
   });
   // FEU + VENT : tornade de feu
-  def('feu|vent', { r: 34, life: 6, lum: 260, couleur: '#e8842a', bouge: 'roule', vitesse: 80, eteint: 0.4,
+  def('feu|vent', { r: 34, life: 6, lum: 260, couleur: '#e8842a', bouge: 'roule', hSol: 1, vitesse: 80, eteint: 0.4,
     init(ph) { auSol(ph); ph.H = 150 * ph.sz; ph.vx = (ph.dir.x >= 0 ? 1 : -1) * 80; },
     tick(ph, dt) {
-      const cible = hostiles({ x: ph.x, y: ph.y - ph.H / 2, r: 260, g: 'point' }, 0)[0]; if (cible) ph.vx += (Math.sign(cible.x - ph.x) * 110 - ph.vx) * dt;
+      const cible = ph.tenu ? null : hostiles({ x: ph.x, y: ph.y - ph.H / 2, r: 260, g: 'point' }, 0)[0]; if (cible) ph.vx += (Math.sign(cible.x - ph.x) * 110 - ph.vx) * dt;
       const col = { x: ph.x - ph.r, y: ph.y - ph.H, w: ph.r * 2, h: ph.H };
       if (ev(ph, 'f', 0.04)) for (let k = 0; k < 3; k++) { const x = Math.floor((ph.x + (rnd() - 0.5) * ph.r * 1.6) / CS), y = Math.floor((ph.y - rnd() * ph.H) / CS); if (Sim.get(x, y) === M.AIR) Sim.setFeu(x, y, 25, 0); }
       if (ev(ph, 'e', 0.12)) effet(ph, 'feu', ph.x, ph.y - 20, ph.r * 1.2, 0.7, 0.12);
@@ -131,7 +134,7 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { ctx.save(); ctx.globalAlpha = 0.75 * fade(ph); for (let k = 0; k < 9; k++) { const y = ph.y - (k / 9) * ph.H, w = ph.r * (0.4 + k / 9), a = t * 9 + k; ctx.strokeStyle = k % 2 ? '#f0a040' : '#e0642a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(ph.x + Math.sin(a * 0.7) * 6, y, w, 5, 0, a, a + 4.2); ctx.stroke(); } ctx.restore(); FX.glow(ctx, ph.x, ph.y - ph.H / 2, ph.H * 0.6, '#e0642a', 0.3 * fade(ph)); },
   });
   // FEU + VIE : brûlis
-  def('feu|vie', { r: 70, life: 7, couleur: '#8aa040', init: auSol,
+  def('feu|vie', { r: 70, sol: true, life: 7, couleur: '#8aa040', init: auSol,
     tick(ph, dt) {
       if (ph.t < 2.4) { if (ev(ph, 'b', 0.08)) { const rr = ph.t / 2.4; cells(ph, (x, y, i, m) => { if ((m === M.HERBE || m === M.PLANTE || m === M.MOUSSE) && Sim.aux[i] === 0 && rnd() < 0.5) { Sim.aux[i] = 12; Sim.touch(i); } }, rr); } }
       else if (ph.t > 3) { if (ev(ph, 'p', 0.12)) cells(ph, (x, y, i, m) => { const up = Sim.get(x, y - 1); if (m === M.CENDRE && rnd() < 0.4) Sim.set(x, y, M.TERRE); else if (m === M.TERRE && up === M.AIR && rnd() < 0.35) Sim.set(x, y - 1, M.HERBE); else if (m === M.HERBE && up === M.AIR && rnd() < 0.08) Sim.set(x, y - 1, M.PLANTE); }); for (const c of creatures(ph, 10)) c.hp = Math.min(c.hpMax, c.hp + dt * 0.5); }
@@ -140,9 +143,10 @@ function creerPhenomenes(W) {
   });
   // FEU + LUMIÈRE : rayon ardent
   def('feu|lumiere', { r: 12, life: 4, lum: 240, couleur: '#fff0b0',
-    init(ph) { if (!ph.ligne) { const g = sol(ph.x, ph.y - 10); ph.ligne = { x1: ph.x + 60, y1: Math.max(0, g - 520), x2: ph.x, y2: g + 3, w: 8 * ph.sz }; ph.g = 'ligne'; } else { const L = ph.ligne; L.w = 7 * ph.sz; } ph.spot = { x: ph.ligne.x2, y: ph.ligne.y2 }; },
+    init(ph) { if (!ph.ligne) { const g = sol(ph.x, ph.y - 10); ph.ligne = { x1: ph.x + 60, y1: Math.max(0, g - 520), x2: ph.x, y2: g + 3, w: 8 * ph.sz }; ph.g = 'ligne'; ph.data.ciel = true; } else { const L = ph.ligne; L.w = 7 * ph.sz; } ph.spot = { x: ph.ligne.x2, y: ph.ligne.y2 }; },
+    viser(ph, tx, ty, dt) { const L = ph.ligne, k = Math.min(1, dt * 7); if (ph.data.ciel) { const g = sol(tx, ty - 10); L.x2 += (tx - L.x2) * k; L.y2 += (g + 3 - L.y2) * k; L.x1 = L.x2 + 60; L.y1 = Math.max(0, L.y2 - 520); } else visLigne(ph, tx, ty, k); },
     tick(ph, dt) {
-      const S = ph.spot;
+      ph.spot = { x: ph.ligne.x2, y: ph.ligne.y2 }; const S = ph.spot;
       if (ev(ph, 'h', 0.05)) { Sim.chauffer(S.x, S.y, 14 * ph.sz, 252, 0.55); cells(ph, (x, y, i, m) => { if (P[m].flam && Sim.aux[i] === 0 && rnd() < 0.2) { Sim.aux[i] = P[m].burn || 20; Sim.touch(i); } }); }
       for (const c of creatures(ph, 4)) { if (!W.chaudOk(c)) { blesser(c, dt * 3 * ph.pw); c.sta.burn = Math.max(c.sta.burn, 1); } }
       if (joueurDans(ph, 2) && ph.t > 0.3) blesserJoueur(dt * 2, 'Le rayon te brûle !');
@@ -151,7 +155,7 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { const L = ph.ligne, a = fade(ph) * (0.8 + 0.2 * Math.sin(t * 30)); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = '#f6d080'; ctx.globalAlpha = 0.35 * a; ctx.lineWidth = L.w * 2.5; ctx.beginPath(); ctx.moveTo(L.x1, L.y1); ctx.lineTo(L.x2, L.y2); ctx.stroke(); ctx.strokeStyle = '#fffbe8'; ctx.globalAlpha = 0.9 * a; ctx.lineWidth = L.w * 0.6; ctx.stroke(); ctx.restore(); FX.glow(ctx, ph.spot.x, ph.spot.y, 40, '#fff0b0', 0.7 * a); },
   });
   // FEU + FOUDRE : foudre en boule
-  def('feu|foudre', { r: 12, point: true, life: 8, lum: 170, couleur: '#e8d060', bouge: 'erre', eteint: 0.5,
+  def('feu|foudre', { r: 12, explose: true, point: true, life: 8, lum: 170, couleur: '#e8d060', bouge: 'erre', eteint: 0.5,
     tick(ph, dt) {
       if (ev(ph, 'z', 0.45)) { let best = null, bd = 130; for (const c of st().crs) if (c.hp > 0 && !c.sta.tame && c.t !== 'familier') { const d = dist(ph.x, ph.y, c.x + c.w / 2, c.y + c.h / 2); if (d < bd) { bd = d; best = c; } } if (best) { zap(ph.x, ph.y, best.x + best.w / 2, best.y + best.h / 2); blesser(best, 1 * ph.pw); best.sta.stun = Math.max(best.sta.stun, 0.6); W.son('burst', 'foudre'); } }
       const m = Sim.matAt(ph.x, ph.y); if (m === M.EAU || m === M.SAUMURE || m === M.METAL) { effet(ph, 'foudre', ph.x, ph.y, 90, 1.4); ph.life = 0; }
@@ -162,7 +166,7 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y, ph.r * 4, '#e8d060', 0.6 * fade(ph)); ctx.save(); ctx.fillStyle = '#fffbe8'; ctx.globalAlpha = fade(ph); ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.r * (0.8 + 0.2 * Math.sin(t * 25)), 0, TAU); ctx.fill(); ctx.restore(); if (rnd() < 0.5) FX.eclair(ctx, FX.eclairPts(ph.x, ph.y, ph.x + (rnd() - 0.5) * 50, ph.y + (rnd() - 0.5) * 50, 0.3), '#e8d060', 1.2, 0.8); },
   });
   // FEU + TEMPS : feu éternel
-  def('feu|temps', { r: 16, life: 60, lum: 280, couleur: '#f0a040', init: auSol,
+  def('feu|temps', { r: 16, sol: true, life: 60, lum: 280, couleur: '#f0a040', init: auSol,
     tick(ph, dt) {
       if (ev(ph, 'h', 0.2)) { Sim.chauffer(ph.x, ph.y - 10, 65 * ph.sz, 122, 0.18); Sim.chauffer(ph.x, ph.y - 8, 12, 160, 0.3); }
       const p = st().p; if (dist(ph.x, ph.y, p.x + p.w / 2, p.y + p.h / 2) < 90) { p.hp = Math.min(p.hpMax, p.hp + dt * 0.25); p.ink = Math.min(p.inkMax, p.ink + dt * 0.8); p.sta.wet = 0; }
@@ -179,7 +183,7 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#c08a3a'; ctx.globalAlpha = 0.6 * fade(ph); ctx.lineWidth = 2; U.inkCircle(ctx, ph.x, ph.y, ph.r, 2, 1); ctx.restore(); FX.glow(ctx, ph.x, ph.y, ph.r * 1.2, '#e0642a', 0.25 * fade(ph)); },
   });
   // EAU + TERRE : marécage
-  def('eau|terre', { r: 60, life: 12, couleur: '#6b5330',
+  def('eau|terre', { r: 60, statique: true, life: 12, couleur: '#6b5330',
     init(ph) { auSol(ph); cells(ph, (x, y, i, m) => { const s = Sim.surf ? 0 : 0; if ((m === M.TERRE || m === M.SABLE || m === M.MEUBLE) && y * CS >= ph.y - 6 && y * CS <= ph.y + ph.r * 0.5) Sim.set(x, y, M.BOUE, 250); else if ((m === M.HERBE || m === M.PLANTE) && y * CS >= ph.y - 12) Sim.set(x, y, M.AIR); }); },
     tick(ph, dt) {
       if (ev(ph, 'w', 0.8)) nuee({ x: ph.x, y: ph.y - 20, r: ph.r * 0.6, g: 'point' }, M.EAU, 3, 1);
@@ -193,7 +197,7 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { nuage(ctx, ph.x, ph.y, ph.r, '#7a8ea6', 0.55 * fade(ph), t); },
   });
   // EAU + VIE : source vive
-  def('eau|vie', { r: 30, life: 15, lum: 90, couleur: '#6ab8a0', init(ph) { auSol(ph); ph.data.n = Math.round(80 * ph.sz); },
+  def('eau|vie', { r: 30, sol: true, life: 15, lum: 90, couleur: '#6ab8a0', init(ph) { auSol(ph); ph.data.n = Math.round(80 * ph.sz); },
     tick(ph, dt) {
       if (ev(ph, 'e', 0.25) && ph.data.n > 0) { W.spawnLiquid(M.EAU, ph.x, ph.y - 4, 2, 30); ph.data.n -= 2; }
       const p = st().p; if (dist(ph.x, ph.y, p.x + p.w / 2, p.y + p.h / 2) < ph.r * 2.5) { p.hp = Math.min(p.hpMax, p.hp + dt * 0.6); p.sta.burning = 0; }
@@ -203,7 +207,7 @@ function creerPhenomenes(W) {
     },
   });
   // EAU + LUMIÈRE : arc-en-ciel praticable
-  def('eau|lumiere', { r: 20, life: 12, lum: 120, couleur: '#c8a0e0',
+  def('eau|lumiere', { r: 20, statique: true, life: 12, lum: 120, couleur: '#c8a0e0',
     init(ph) {
       const p = st().p; let L = ph.ligne;
       if (!L) { const px = p.x + p.w / 2, py = p.y + p.h; L = { x1: px + Math.sign(ph.x - px || 1) * 12, y1: py - 2, x2: ph.x, y2: ph.y, w: 8 }; }
@@ -243,7 +247,7 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#8a8f9a'; ctx.globalAlpha = 0.5 * fade(ph); ctx.setLineDash([2, 5]); U.inkCircle(ctx, ph.x, ph.y, ph.r, 4, 1); ctx.beginPath(); ctx.moveTo(ph.x, ph.y); ctx.lineTo(ph.x + Math.cos(t * 3) * ph.r * 0.6, ph.y + Math.sin(t * 3) * ph.r * 0.6); ctx.stroke(); ctx.restore(); },
   });
   // EAU + TRANSMUTATION : liquéfaction
-  def('eau|transmutation', { r: 50, life: 6, couleur: '#7a6040',
+  def('eau|transmutation', { r: 50, statique: true, life: 6, couleur: '#7a6040',
     init(ph) { ph.data.c = []; cells(ph, (x, y, i, m) => { if ((m === M.TERRE || m === M.SABLE || m === M.MEUBLE || (m === M.PIERRE && rnd() < 0.7) || m === M.CENDRE) && ph.data.c.length < 700) { Sim.set(x, y, M.BOUE, 250); ph.data.c.push(i); } else if (m === M.HERBE) Sim.set(x, y, M.AIR); }); },
     tick(ph, dt) { for (const c of creatures(ph, 0)) c.sta.lent = Math.max(c.sta.lent || 0, 0.4); },
     fin(ph) { let n = 0; for (const i of ph.data.c) if (Sim.mat[i] === M.BOUE) { const x = i % Sim.W; Sim.set(x, (i - x) / Sim.W, M.PIERRE); n++; } for (const c of st().crs) if (c.hp > 0 && Sim.rectHas(c, (m) => m === M.PIERRE) && touche(ph, c, 10)) { c.sta.stun = Math.max(c.sta.stun, 4); W.part(c.x + c.w / 2, c.y, '#a8977a', 8, 40, 0.6, 2); } if (n) W.msg('La boue se fige en pierre.'); },
@@ -261,7 +265,7 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { nuage(ctx, ph.x, ph.y, ph.r, '#c8a868', 0.4 * fade(ph), t * 3); },
   });
   // TERRE + VIE : racines
-  def('terre|vie', { r: 55, life: 3, couleur: '#6b4f2a',
+  def('terre|vie', { r: 55, statique: true, life: 3, couleur: '#6b4f2a',
     init(ph) {
       const q = []; ph.data.q = q; ph.data.remplace = true;
       if (ph.ligne) { const L = ph.ligne, n = Math.ceil(Math.hypot(L.x2 - L.x1, L.y2 - L.y1) / CS); for (let k = 0; k <= n; k++) { const x = Math.floor((L.x1 + (L.x2 - L.x1) * k / n) / CS), y = Math.floor((L.y1 + (L.y2 - L.y1) * k / n) / CS) + 1; q.push([x, y, M.BOIS], [x, y + 1, M.BOIS]); } }
@@ -271,13 +275,13 @@ function creerPhenomenes(W) {
     tick(ph) { pousserFile(ph, 6); },
   });
   // LUMIÈRE + TERRE : géode
-  def('lumiere|terre', { r: 50, life: 1, lum: 160, couleur: '#b58fd8',
+  def('lumiere|terre', { r: 50, statique: true, life: 1, lum: 160, couleur: '#b58fd8',
     init(ph) { const q = []; ph.data.q = q; const n = 4 + Math.round(ph.sz * 2); for (let s = 0; s < n; s++) { const x0 = ph.x + (s / (n - 1) - 0.5) * ph.r * 2, g = sol(x0, ph.y - 10), gx = Math.floor(x0 / CS), gy = Math.floor(g / CS) - 1, h = 5 + Math.floor(rnd() * 9 * ph.sz), pen = (rnd() - 0.5) * 0.5; for (let k = 0; k < h; k++) { const x = gx + Math.round(k * pen); q.push([x, gy - k, M.CRISTAL]); if (k < h * 0.5) q.push([x + 1, gy - k, M.CRISTAL]); } }
       for (const c of hostiles(ph, 10)) { blesser(c, 2 * ph.pw); c.vy = -520 / Math.sqrt(W.masse(c)); c.sta.stun = Math.max(c.sta.stun, 1); } W.son('burst', 'terre'); },
     tick(ph) { pousserFile(ph, 14); },
   });
   // FOUDRE + TERRE : fulgurite
-  def('foudre|terre', { r: 30, life: 0.9, lum: 200, couleur: '#e0c43a',
+  def('foudre|terre', { r: 30, statique: true, life: 0.9, lum: 200, couleur: '#e0c43a',
     init(ph) {
       const q = []; ph.data.chemin = q; let x = ph.x, y = ph.ligne ? ph.ligne.y1 : sol(ph.x, ph.y - 10); const L = ph.ligne; const n = Math.round(28 * ph.sz);
       for (let k = 0; k < n; k++) { if (L) { x = L.x1 + (L.x2 - L.x1) * k / n; y = L.y1 + (L.y2 - L.y1) * k / n; } else { y += CS; x += (rnd() - 0.5) * CS * 1.6; } q.push([x, y]); }
@@ -287,7 +291,7 @@ function creerPhenomenes(W) {
     tick(ph) { const q = ph.data.chemin; for (let k = 0; k < 4 && q.length; k++) { const [x, y] = q.shift(); Sim.forRadius(x, y, 9, (cx, cy, i, m) => { const d = dist(x, y, (cx + 0.5) * CS, (cy + 0.5) * CS); if (m === M.METAL || m === M.OBSIDIENNE) return; if (d < 5 && m !== M.AIR) Sim.set(cx, cy, M.AIR); else if (d >= 5 && (m === M.SABLE || m === M.TERRE || m === M.MEUBLE || m === M.PIERRE || m === M.NEIGE)) Sim.set(cx, cy, M.VERRE); if (P[Sim.mat[i]].cond) { Sim.elec[i] = 40; Sim.touch(i); } }); W.part(x, y, '#fff4a0', 3, 60, 0.3, 2, 0, 'spark'); } },
   });
   // GRAVITÉ + TERRE : météore (et COMÈTE DE GLACE avec le gel)
-  const chute = (matiere, froid) => ({ point: true, r: 14, life: 4, lum: froid ? 120 : 200, couleur: froid ? '#bfe0f2' : '#e0622b', bouge: 'tombe',
+  const chute = (matiere, froid) => ({ point: true, statique: true, r: 14, life: 4, lum: froid ? 120 : 200, couleur: froid ? '#bfe0f2' : '#e0622b', bouge: 'tombe',
     init(ph) { const tx = ph.x, ty = ph.y; ph.x = tx - (ph.dir.x >= 0 ? 1 : -1) * 160; ph.y = Math.max(-60, st().cam.y - 60); const T = Math.sqrt(2 * Math.max(60, ty - ph.y) / 1500); ph.vx = (tx - ph.x) / T; ph.vy = 0; ph.r = ph.r0 * Math.sqrt(ph.sz); },
     trace(ph) { if (rnd() < 0.8) W.part(ph.x, ph.y, froid ? '#e4f2fa' : rnd() < 0.5 ? '#f0a040' : '#e0642a', 2, 30, 0.5, 4, -80); if (!froid && rnd() < 0.3) Sim.chauffer(ph.x, ph.y, 14, 200, 0.4); },
     impact(ph) {
@@ -303,7 +307,7 @@ function creerPhenomenes(W) {
   def('gravite|terre', chute(M.PIERRE, false));
   def('froid|gravite', chute(M.GLACE, true));
   // TEMPS + TERRE : pétrification
-  def('temps|terre', { r: 60, life: 6, couleur: '#a8977a',
+  def('temps|terre', { r: 60, statique: true, life: 6, couleur: '#a8977a',
     init(ph) { ph.data.statues = hostiles(ph, 10, 1.2); for (const c of ph.data.statues) { c.sta.stun = Math.max(c.sta.stun, ph.max); c.vx = 0; } cells(ph, (x, y, i, m) => { if (m === M.BOIS && rnd() < 0.85) Sim.set(x, y, M.PIERRE); else if (m === M.PLANTE && rnd() < 0.6) Sim.set(x, y, M.PIERRE); else if (m === M.MIEL) Sim.set(x, y, M.CRISTAL); else if (m === M.HERBE || m === M.MOUSSE) Sim.set(x, y, M.SABLE); }); W.son('burst', 'terre'); },
     tick(ph) { for (const c of ph.data.statues) if (c.hp > 0) { c.sta.stun = Math.max(c.sta.stun, 0.1); c.vx = 0; } },
     draw(ctx, ph, t) { for (const c of ph.data.statues) if (c.hp > 0) { ctx.save(); ctx.globalAlpha = 0.6 * fade(ph); ctx.fillStyle = '#a8977a'; ctx.fillRect(c.x, c.y, c.w, c.h); ctx.strokeStyle = U.INK; ctx.globalAlpha = 0.5; ctx.strokeRect(c.x, c.y, c.w, c.h); ctx.restore(); } },
@@ -357,7 +361,7 @@ function creerPhenomenes(W) {
   });
   // GRAVITÉ + VENT : cyclone
   def('gravite|vent', { r: 40, life: 6, couleur: '#6c5ab8',
-    init(ph) { if (!ph.rect) { const g = sol(ph.x, ph.y - 10); ph.rect = { x0: ph.x - ph.r, x1: ph.x + ph.r, y0: g - 260 * ph.sz, y1: g }; ph.g = 'rect'; } W.addGField(ph.x, (ph.rect.y0 + ph.rect.y1) / 2, ph.r * 3, 0, -1, 1.05, ph.max, { ...ph.rect }); ph.data.top = ph.rect.y0; },
+    init(ph) { if (!ph.rect) { const g = sol(ph.x, ph.y - 10); ph.rect = { x0: ph.x - ph.r, x1: ph.x + ph.r, y0: g - 260 * ph.sz, y1: g }; ph.g = 'rect'; } { const z = W.addGField(ph.x, (ph.rect.y0 + ph.rect.y1) / 2, ph.r * 3, 0, -1, 1.05, ph.max, { ...ph.rect }); if (z) lier(ph, z); } ph.data.top = ph.rect.y0; },
     tick(ph, dt) { const R = ph.rect, cx = (R.x0 + R.x1) / 2; for (const e of creatures(ph, 60).concat(objets(ph, 60))) { e.vx += (cx - e.x - e.w / 2) * 3 * dt; if (e.y < R.y0 + 30) { e.vx += (e.x > cx ? 1 : -1) * 900 * dt; } } if (rnd() < 0.8) { const q = auHasard(ph); W.part(q.x, q.y, '#9a8ad8', 1, 20, 0.6, 2, -300); } },
     draw(ctx, ph, t) { const R = ph.rect, cx = (R.x0 + R.x1) / 2, h = R.y1 - R.y0; ctx.save(); ctx.strokeStyle = '#6c5ab8'; ctx.globalAlpha = 0.5 * fade(ph); ctx.lineWidth = 1.5; for (let k = 0; k < 12; k++) { const y = R.y1 - ((k / 12 + t * 0.6) % 1) * h, w = (R.x1 - R.x0) / 2 * (0.5 + 0.5 * (R.y1 - y) / h); ctx.beginPath(); ctx.ellipse(cx, y, w, 4, 0, 0, TAU); ctx.stroke(); } ctx.restore(); },
   });
@@ -367,7 +371,7 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { nuage(ctx, ph.x, ph.y, ph.r, '#c8b070', 0.25 * fade(ph), t * 4); },
   });
   // TRANSMUTATION + VENT : air solide
-  def('transmutation|vent', { r: 50, life: 8, couleur: '#cfe3ea',
+  def('transmutation|vent', { r: 50, statique: true, life: 8, couleur: '#cfe3ea',
     init(ph) {
       if (ph.ligne) { const L = ph.ligne, n = Math.max(2, Math.round(Math.hypot(L.x2 - L.x1, L.y2 - L.y1) / 16)); for (let k = 0; k < n; k++) { const x = L.x1 + (L.x2 - L.x1) * k / n, y = L.y1 + (L.y2 - L.y1) * k / n, x2 = L.x1 + (L.x2 - L.x1) * (k + 1) / n, y2 = L.y1 + (L.y2 - L.y1) * (k + 1) / n; plateforme(ph, Math.min(x, x2), Math.min(y, y2), Math.abs(x2 - x) + 2, Math.max(8, Math.abs(y2 - y))); } }
       else if (ph.rect) { const R = ph.rect; plateforme(ph, R.x0, R.y0, R.x1 - R.x0, R.y1 - R.y0); }
@@ -377,24 +381,24 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { if (!ph.objs) return; ctx.save(); ctx.strokeStyle = '#9ac8d8'; ctx.fillStyle = '#e4f2fa'; for (const o of ph.objs) { ctx.globalAlpha = 0.25 * fade(ph); ctx.fillRect(o.x, o.y, o.w, o.h); ctx.globalAlpha = 0.6 * fade(ph); ctx.lineWidth = 1; ctx.strokeRect(o.x, o.y, o.w, o.h); } ctx.restore(); },
   });
   // LUMIÈRE + VIE : arbre de lumière
-  def('lumiere|vie', { r: 40, life: 40, lum: 300, couleur: '#c8e080',
+  def('lumiere|vie', { r: 40, statique: true, life: 40, lum: 300, couleur: '#c8e080',
     init(ph) { const g = sol(ph.x, ph.y - 10); const gx = Math.floor(ph.x / CS), gy = Math.floor(g / CS); const h = Math.round(12 + 4 * ph.sz); ph.data.q = arbre(gx, gy, h, Math.round(6 * ph.sz), Math.round(4 * ph.sz)); ph.x = gx * CS; ph.y = (gy - h - 3) * CS; },
     tick(ph, dt) { pousserFile(ph, 12); const p = st().p; if (Math.abs(p.x + p.w / 2 - ph.x) < 60 && p.y > ph.y - 30) p.hp = Math.min(p.hpMax, p.hp + dt * 0.3); for (const c of st().crs) if (c.hp > 0 && Math.abs(c.x + c.w / 2 - ph.x) < 60 && c.y > ph.y - 30) c.hp = Math.min(c.hpMax, c.hp + dt * 0.3); if (rnd() < 0.2) W.part(ph.x + (rnd() - 0.5) * 70, ph.y + (rnd() - 0.5) * 30, '#f0e080', 1, 10, 1, 2, 30, 'spark'); },
     draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y, 90, '#f0e080', 0.35 * fade(ph)); },
   });
   // FOUDRE + VIE : ronces électriques
-  def('foudre|vie', { r: 45, life: 10, couleur: '#a0c040',
+  def('foudre|vie', { r: 45, statique: true, life: 10, couleur: '#a0c040',
     init(ph) { const q = []; ph.data.q = q; ph.data.remplace = false; if (ph.g === 'point') { const g = sol(ph.x, ph.y - 10); ph.y = g - ph.r * 0.5; } cells(ph, (x, y, i, m) => { if (air(m) && (ph.rect || ph.ligne || (y + 1) * CS > ph.y - ph.r * 0.1) && rnd() < 0.55) q.push([x, y, M.PLANTE]); }); },
     tick(ph, dt) { pousserFile(ph, 20); if (ev(ph, 'z', 0.3)) for (const c of hostiles(ph, 4)) { if (!Sim.rectHas(c, (m) => m === M.PLANTE)) continue; blesser(c, 0.8 * ph.pw); c.sta.stun = Math.max(c.sta.stun, 0.6); const q = auHasard(ph); zap(q.x, q.y, c.x + c.w / 2, c.y + c.h / 2); } if (joueurDans(ph, -4) && Sim.rectHas(st().p, (m) => m === M.PLANTE) && ev(ph, 'j', 0.6)) blesserJoueur(0.4, 'Les ronces crépitent !'); if (rnd() < 0.3) { const q = auHasard(ph); W.part(q.x, q.y, '#fff4a0', 1, 30, 0.2, 2, 0, 'spark'); } },
   });
   // GRAVITÉ + VIE : îlot flottant
-  def('gravite|vie', { r: 50, life: 30, couleur: '#6c5ab8',
+  def('gravite|vie', { r: 50, statique: true, life: 30, couleur: '#6c5ab8',
     init(ph) { const cx = Math.floor(ph.x / CS), cy = Math.floor(ph.y / CS), rx = Math.round(ph.r * 1.1 / CS), ry = Math.max(2, Math.round(rx * 0.45)); ph.data.c = []; for (let y = -1; y <= ry; y++) for (let x = -rx; x <= rx; x++) { if ((x * x) / (rx * rx) + (y * y) / (ry * ry) > 1 && y > 0) continue; if (y < 0 && Math.abs(x) > rx) continue; const X = cx + x, Y = cy + y; if (!air(Sim.get(X, Y))) continue; const m = y < 0 ? M.HERBE : M.TERRE; Sim.set(X, Y, m); const i = Y * Sim.W + X; if (m === M.TERRE) { Sim.ancrerCase(i, 1); ph.data.c.push(i); } } for (let k = 0; k < 3; k++) { const X = cx + Math.round((rnd() - 0.5) * rx * 1.4); if (Sim.get(X, cy - 2) === M.AIR) Sim.set(X, cy - 2, M.PLANTE); } W.son('burst', 'terre'); },
     fin(ph) { for (const i of ph.data.c) { Sim.ancrerCase(i, 0); } if (ph.data.c.length) Sim.fissurer(ph.data.c[0]); W.msg('L\'îlot retombe !'); },
     draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y + ph.r * 0.5, ph.r * 1.2, '#6c5ab8', 0.25 * fade(ph)); },
   });
   // TEMPS + VIE : forêt instantanée
-  def('temps|vie', { r: 70, life: 2.2, couleur: '#5c8f3e',
+  def('temps|vie', { r: 70, statique: true, life: 2.2, couleur: '#5c8f3e',
     init(ph) { const q = []; ph.data.q = q; const n = 2 + Math.round(ph.sz); for (let k = 0; k < n; k++) { const x0 = ph.x + (n > 1 ? (k / (n - 1) - 0.5) : 0) * ph.r * 1.8; const g = sol(x0, ph.y - 10); arbre(Math.floor(x0 / CS), Math.floor(g / CS), 10 + Math.floor(rnd() * 7), 5 + Math.floor(rnd() * 2), 3 + Math.floor(rnd() * 2), q); } q.sort((a, b) => b[1] - a[1]); effet(ph, 'vie', ph.x, ph.y, ph.r * 1.4, 1); },
     tick(ph) { pousserFile(ph, 18); },
   });
@@ -408,7 +412,7 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y, 40, '#f6e8a0', 0.5 * fade(ph)); ctx.save(); ctx.translate(ph.x, ph.y); ctx.rotate(t * 1.5); ctx.globalAlpha = fade(ph); ctx.fillStyle = 'rgba(240,236,200,0.6)'; ctx.strokeStyle = U.INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, -ph.r); ctx.lineTo(ph.r * 0.87, ph.r * 0.5); ctx.lineTo(-ph.r * 0.87, ph.r * 0.5); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); },
   });
   // GRAVITÉ + LUMIÈRE : trou noir
-  def('gravite|lumiere', { r: 14, point: true, life: 5, couleur: '#2a2040', sombre: 260,
+  def('gravite|lumiere', { r: 14, explose: true, point: true, life: 5, couleur: '#2a2040', sombre: 260,
     init(ph) { ph.data.masse = 0; ph.R = ph.r * 8; },
     tick(ph, dt) {
       attirer(ph, ph.R, 1500 * ph.pw, dt, ph.x, ph.y, 0.45);
@@ -422,7 +426,7 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { const a = fade(ph); ctx.save(); const g = ctx.createRadialGradient(ph.x, ph.y, ph.r * 0.5, ph.x, ph.y, ph.R * 0.7); g.addColorStop(0, 'rgba(10,6,20,' + 0.95 * a + ')'); g.addColorStop(0.3, 'rgba(30,20,50,' + 0.5 * a + ')'); g.addColorStop(1, 'rgba(30,20,50,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.R * 0.7, 0, TAU); ctx.fill(); ctx.strokeStyle = '#e0b050'; ctx.globalAlpha = 0.7 * a; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(ph.x, ph.y, ph.r * 2.4, ph.r * 0.7, t * 0.5, 0, TAU); ctx.stroke(); ctx.fillStyle = '#000'; ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.r, 0, TAU); ctx.fill(); ctx.restore(); },
   });
   // LUMIÈRE + TEMPS : aube (ou crépuscule)
-  def('lumiere|temps', { r: 30, point: true, life: 3, lum: 200, couleur: '#f0c070',
+  def('lumiere|temps', { r: 30, statique: true, point: true, life: 3, lum: 200, couleur: '#f0c070',
     init(ph) { const tod = st().tod, jour = W.daylight() > 0.45; ph.data.de = tod; ph.data.vers = jour ? 0.8 : 0.28; if (ph.data.vers < tod && !jour) ph.data.vers += 1; W.msg(jour ? 'Le jour tombe en crépuscule.' : 'La nuit se lève en aube.'); },
     tick(ph) { const k = Math.min(1, ph.t / ph.max); st().tod = (ph.data.de + (ph.data.vers - ph.data.de) * k) % 1; },
     draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#f0c070'; ctx.globalAlpha = 0.6 * fade(ph); ctx.lineWidth = 2; for (let k = 0; k < 8; k++) { const a = k / 8 * TAU + t; ctx.beginPath(); ctx.moveTo(ph.x + Math.cos(a) * 14, ph.y + Math.sin(a) * 14); ctx.lineTo(ph.x + Math.cos(a) * 34, ph.y + Math.sin(a) * 34); ctx.stroke(); } ctx.restore(); },
@@ -449,8 +453,9 @@ function creerPhenomenes(W) {
   });
   // FOUDRE + TEMPS : foudre suspendue
   def('foudre|temps', { r: 10, life: 6, lum: 150, couleur: '#e8d060',
-    init(ph) { if (!ph.ligne) { if (ph.rect) { const R = ph.rect, cx = (R.x0 + R.x1) / 2; ph.ligne = { x1: cx, y1: R.y0, x2: cx, y2: R.y1, w: 9 }; } else { const g = sol(ph.x, ph.y - 10); ph.ligne = { x1: ph.x, y1: g - 220 * ph.sz, x2: ph.x, y2: g, w: 9 }; } ph.g = 'ligne'; } ph.data.pts = FX.eclairPts(ph.ligne.x1, ph.ligne.y1, ph.ligne.x2, ph.ligne.y2, 0.12); },
+    init(ph) { if (!ph.ligne) { if (ph.rect) { const R = ph.rect, cx = (R.x0 + R.x1) / 2; ph.ligne = { x1: cx, y1: R.y0, x2: cx, y2: R.y1, w: 9 }; } else { const g = sol(ph.x, ph.y - 10); ph.ligne = { x1: ph.x, y1: g - 220 * ph.sz, x2: ph.x, y2: g, w: 9 }; ph.data.vertical = true; } ph.g = 'ligne'; } ph.data.pts = FX.eclairPts(ph.ligne.x1, ph.ligne.y1, ph.ligne.x2, ph.ligne.y2, 0.12); },
     tick(ph) { if (ev(ph, 'r', 0.15)) ph.data.pts = FX.eclairPts(ph.ligne.x1, ph.ligne.y1, ph.ligne.x2, ph.ligne.y2, 0.12); if (ev(ph, 'z', 0.25)) { for (const c of creatures(ph, 2)) { blesser(c, 1 * ph.pw); c.sta.stun = Math.max(c.sta.stun, 0.8); W.part(c.x + c.w / 2, c.y + c.h / 2, '#fff4a0', 6, 60, 0.3, 2, 0, 'spark'); } if (joueurDans(ph, 0)) blesserJoueur(0.5, 'Zzzt !'); cells(ph, (x, y, i, m) => { if (P[m].cond) { Sim.elec[i] = 40; Sim.touch(i); } }); } },
+    viser(ph, tx, ty, dt) { const L = ph.ligne, k = Math.min(1, dt * 7); if (ph.data.vertical) { const g = sol(tx, ty - 10), H = L.y2 - L.y1; L.x1 = L.x2 = L.x2 + (tx - L.x2) * k; L.y2 += (g - L.y2) * k; L.y1 = L.y2 - H; } else visLigne(ph, tx, ty, k); ph.data.pts = FX.eclairPts(L.x1, L.y1, L.x2, L.y2, 0.12); },
     draw(ctx, ph) { FX.eclair(ctx, ph.data.pts, '#e8d060', 2.2, fade(ph)); },
   });
   // FOUDRE + TRANSMUTATION : électrolyse (l'eau devient un gaz qui explose)
@@ -459,7 +464,7 @@ function creerPhenomenes(W) {
   });
   // GRAVITÉ + TEMPS : horizon
   def('gravite|temps', { r: 40, point: true, life: 8, couleur: '#7a7090',
-    init(ph) { for (const [k, f] of [[1, 0.08], [2, 0.3], [3.2, 0.6]]) st().sp.push({ k: 'bulle', mode: 'lent', x: ph.x, y: ph.y, r: ph.r * k, life: ph.max, max: ph.max, fx: f, horizon: true }); },
+    init(ph) { for (const [k, f] of [[1, 0.08], [2, 0.3], [3.2, 0.6]]) { const b = { k: 'bulle', mode: 'lent', x: ph.x, y: ph.y, r: ph.r * k, life: ph.max, max: ph.max, fx: f, horizon: true }; st().sp.push(b); lier(ph, b); } },
     tick(ph, dt) { attirer(ph, ph.r * 3.2, 380 * ph.pw, dt, ph.x, ph.y, 0.25); },
     draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#7a7090'; ctx.globalAlpha = 0.4 * fade(ph); for (let k = 1; k <= 3; k++) { ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.r * k * (1 - 0.05 * Math.sin(t * 2 + k)), 0, TAU); ctx.stroke(); } ctx.restore(); },
   });
@@ -514,8 +519,9 @@ function creerPhenomenes(W) {
     draw(ctx, ph) { FX.onde(ctx, ph.x, ph.y, ph.R * Math.min(1, ph.t / 0.5), 1 - ph.t / ph.max, '#e8e0c0'); },
   });
   def('explosion|gravite', { r: 40, point: true, life: 1.5, couleur: '#c86040',
-    tick(ph, dt) { if (ph.t < 1.2) { attirer(ph, ph.r * 5, 2000 * ph.pw, dt, ph.x, ph.y, 0.5); if (ev(ph, 'f', 0.05)) effet(ph, 'force', ph.x, ph.y, ph.r * 4, 0.9, 0.05); } else if (!ph.data.boum) { ph.data.boum = true; effet(ph, 'explosion', ph.x, ph.y, ph.r * 1.8, 1.4); repousser(ph, ph.r * 5, 1000 * ph.pw); W.shake(0.7); } },
-    draw(ctx, ph, t) { if (ph.t < 1.2) { ctx.save(); ctx.strokeStyle = '#c86040'; ctx.globalAlpha = 0.6; const r = ph.r * 4 * (1 - ph.t / 1.2); ctx.beginPath(); ctx.arc(ph.x, ph.y, Math.max(2, r), 0, TAU); ctx.stroke(); ctx.restore(); } },
+    tick(ph, dt) { if (ph.t < 1.2 || ph.tenu) { attirer(ph, ph.r * 5, 2000 * ph.pw, dt, ph.x, ph.y, 0.5); if (ev(ph, 'f', 0.05)) effet(ph, 'force', ph.x, ph.y, ph.r * 4, 0.9, 0.05); } else if (!ph.data.boum) this.relache(ph); },
+    relache(ph) { if (ph.data.boum) return; ph.data.boum = true; effet(ph, 'explosion', ph.x, ph.y, ph.r * 1.8, 1.4); repousser(ph, ph.r * 5, 1000 * ph.pw); W.shake(0.7); },
+    draw(ctx, ph, t) { if (ph.t < 1.2 || ph.tenu) { ctx.save(); ctx.strokeStyle = '#c86040'; ctx.globalAlpha = 0.6; const r = ph.r * 4 * (1 - (ph.tenu ? (t * 0.8) % 1 : ph.t / 1.2)); ctx.beginPath(); ctx.arc(ph.x, ph.y, Math.max(2, r), 0, TAU); ctx.stroke(); ctx.restore(); } },
   });
   def('fumee|vent', { r: 50, life: 10, couleur: '#5a524c', bouge: 'roule', vitesse: 20, init(ph) { auSol(ph); ph.y -= ph.r * 0.7; ph.vx = (ph.dir.x >= 0 ? 1 : -1) * 20; },
     tick(ph, dt) { if (ev(ph, 's', 0.06)) for (let k = 0; k < 2; k++) { const q = auHasard(ph); const x = Math.floor(q.x / CS), y = Math.floor(q.y / CS); if (Sim.get(x, y) === M.AIR) Sim.set(x, y, M.FUMEE, 90); } if (joueurDans(ph, 10)) st().p.sta.invisible = Math.max(st().p.sta.invisible, 0.5); for (const c of creatures(ph, 0)) c.fuite = null; },
@@ -532,12 +538,13 @@ function creerPhenomenes(W) {
   def('eau|froid', { r: 50, life: 0.6, couleur: '#bfe0f2',
     init(ph) { let n = 0; const R = ph.r * 3; Sim.forRadius(ph.x, ph.y, R, (x, y, i, m) => { if ((m === M.EAU || m === M.SAUMURE) && !P[Sim.get(x, y - 1)].liquid && Sim.get(x, y - 1) !== M.GLACE) { for (let d = 0; d < 3; d++) if (P[Sim.get(x, y + d)].liquid) { Sim.set(x, y + d, M.GLACE); Sim.temp[(y + d) * Sim.W + x] = 20; n++; } } }); if (n < 10) Sim.forRadius(ph.x, ph.y, ph.r * 0.6, (x, y, i, m) => { if (air(m) || P[m].liquid) Sim.set(x, y, M.GLACE); }); W.son('burst', 'eau'); },
   });
-  def('eau|seisme', { r: 40, life: 3, couleur: '#3b6fb6', bouge: 'roule', vitesse: 260, init(ph) { auSol(ph); ph.vx = (ph.dir.x >= 0 ? 1 : -1) * 260; ph.H = Math.round(9 * ph.sz); },
+  def('eau|seisme', { r: 40, life: 3, couleur: '#3b6fb6', bouge: 'roule', hSol: 1, vitesse: 260, init(ph) { auSol(ph); ph.vx = (ph.dir.x >= 0 ? 1 : -1) * 260; ph.H = Math.round(9 * ph.sz); },
     tick(ph, dt) { const sg = Math.sign(ph.vx); if (ev(ph, 'w', 0.04)) { const x = Math.floor((ph.x + sg * 12) / CS), g = Math.floor(sol(ph.x + sg * 12, ph.y - 30) / CS); for (let k = 1; k <= ph.H; k++) if (Sim.get(x, g - k) === M.AIR) Sim.set(x, g - k, M.EAU); } const box = { x: ph.x - 30, y: ph.y - ph.H * CS - 20, w: 60, h: ph.H * CS + 20 }; for (const e of st().crs.concat(st().objs.filter((o) => o.dyn && !o.mort))) { if ((e.hp !== undefined && e.hp <= 0 && !e.dyn) || !U.rectsOverlap(box, e)) continue; e.vx += sg * 2200 * dt / W.masse(e); e.vy -= 500 * dt; if (e.sta) e.sta.wet = 6; } if (U.rectsOverlap(box, st().p)) { st().p.vx += sg * 900 * dt; } },
     draw(ctx, ph, t) { const sg = Math.sign(ph.vx); ctx.save(); ctx.strokeStyle = '#3b6fb6'; ctx.globalAlpha = 0.7 * fade(ph); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ph.x - sg * 40, ph.y); ctx.quadraticCurveTo(ph.x, ph.y - ph.H * CS * 1.4, ph.x + sg * 20, ph.y - ph.H * CS * 0.7); ctx.stroke(); ctx.restore(); },
   });
   def('force|gravite', { r: 40, point: true, life: 3, couleur: '#9a4a8c',
-    tick(ph, dt) { if (ph.t < 2.4) { attirer(ph, ph.r * 5, 1600 * ph.pw, dt, ph.x, ph.y, 0.4); if (ev(ph, 'f', 0.05)) effet(ph, 'force', ph.x, ph.y, ph.r * 4, 1, 0.05); } else if (!ph.data.boum) { ph.data.boum = true; repousser(ph, ph.r * 5, 1100 * ph.pw); effet(ph, 'repulsion', ph.x, ph.y, ph.r * 3, 1.2); W.shake(0.5); } },
+    tick(ph, dt) { if (ph.t < 2.4 || ph.tenu) { attirer(ph, ph.r * 5, 1600 * ph.pw, dt, ph.x, ph.y, 0.4); if (ev(ph, 'f', 0.05)) effet(ph, 'force', ph.x, ph.y, ph.r * 4, 1, 0.05); } else if (!ph.data.boum) this.relache(ph); },
+    relache(ph) { if (ph.data.boum) return; ph.data.boum = true; repousser(ph, ph.r * 5, 1100 * ph.pw); effet(ph, 'repulsion', ph.x, ph.y, ph.r * 3, 1.2); W.shake(0.5); },
     draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#9a4a8c'; ctx.globalAlpha = 0.6 * fade(ph); for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.r * (1 + k) * (1 - (t * 1.5 % 1) * 0.5), t * 3 + k, t * 3 + k + 4); ctx.stroke(); } ctx.restore(); },
   });
 
@@ -554,7 +561,7 @@ function creerPhenomenes(W) {
         if (m != null && ev(ph, 'm', 0.04)) for (let k = 0; k < 2; k++) { const a = rnd() * TAU, d = ph.r * (0.6 + rnd() * 0.6); const cx = Math.floor((ph.x + Math.cos(a) * d) / CS), cy = Math.floor((ph.y + Math.sin(a) * d) / CS); if (Sim.get(cx, cy) === M.AIR) { if (m === M.FEU) Sim.setFeu(cx, cy, 25, 0); else Sim.set(cx, cy, m, m === M.FUMEE ? 80 : 0); } }
         if (x === 'vent' || x === 'son' || x === 'repulsion') repousser(ph, ph.r * 5, 500 * dt * 60 * 0.02 * ph.pw);
         else if (x === 'gravite' || x === 'force') attirer(ph, ph.r * 5, 800 * ph.pw, dt);
-        else if (x === 'temps' && !ph.data.b) { ph.data.b = true; st().sp.push({ k: 'bulle', mode: 'vite', x: ph.x, y: ph.y, r: ph.r * 3, life: ph.max, max: ph.max, fx: 4 }); }
+        else if (x === 'temps' && !ph.data.b) { ph.data.b = true; { const b = { k: 'bulle', mode: 'vite', x: ph.x, y: ph.y, r: ph.r * 3, life: ph.max, max: ph.max, fx: 4 }; st().sp.push(b); lier(ph, b); } }
         else if (m == null && ev(ph, 'e', 0.5)) effet(ph, x, ph.x, ph.y, ph.r * 2.5, 0.8);
         if (rnd() < 0.5) W.part(ph.x + (rnd() - 0.5) * ph.r, ph.y + (rnd() - 0.5) * ph.r * 2, C, 1, 40, 0.5, 2, 0, 'spark');
       },
@@ -564,8 +571,8 @@ function creerPhenomenes(W) {
       tick(ph, dt) {
         let best = null, bd = 340; for (const c of st().crs) if (c.hp > 0 && !c.sta.tame && c.t !== 'familier' && !c.glaise) { const d = dist(ph.x, ph.y, c.x + c.w / 2, c.y + c.h / 2); if (d < bd) { bd = d; best = c; } }
         const p = st().p; const tx = best ? best.x + best.w / 2 : p.x + p.w / 2 - p.face * 40, ty = best ? best.y + best.h / 2 : p.y - 20;
-        ph.vx += (tx - ph.x) * 3 * dt; ph.vy += (ty - ph.y) * 3 * dt; ph.vx *= 1 - 2 * dt; ph.vy *= 1 - 2 * dt;
-        if (best && bd < 30 && ev(ph, 'h', 0.6)) { effet(ph, x, ph.x, ph.y, 32, 0.9); W.part(ph.x, ph.y, C, 8, 80, 0.4, 2); }
+        if (!ph.tenu) { ph.vx += (tx - ph.x) * 3 * dt; ph.vy += (ty - ph.y) * 3 * dt; ph.vx *= 1 - 2 * dt; ph.vy *= 1 - 2 * dt; }
+        if (best && bd < (ph.tenu ? 40 : 30) && ev(ph, 'h', 0.6)) { effet(ph, x, ph.x, ph.y, 32, 0.9); W.part(ph.x, ph.y, C, 8, 80, 0.4, 2); }
         if (rnd() < 0.5) W.part(ph.x, ph.y, C, 1, 15, 0.5, 2, -20, 'spark');
       },
       draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y, ph.r * 3, C, 0.6 * fade(ph)); ctx.save(); ctx.fillStyle = C; ctx.globalAlpha = fade(ph); ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.r * (0.8 + 0.15 * Math.sin(t * 7)), 0, TAU); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ph.x - 3, ph.y - 2, 2, 0, TAU); ctx.arc(ph.x + 3, ph.y - 2, 2, 0, TAU); ctx.fill(); ctx.restore(); },
@@ -593,6 +600,7 @@ function creerPhenomenes(W) {
         best.ench = { spec: specX, t: ph.max, tick: 0 }; ph.follow = best; W.part(best.x + best.w / 2, best.y, C, 16, 80, 0.8, 3, 0, 'spark'); W.msg('La créature devient ' + DATA.comboInfo(cle).nom.toLowerCase().replace('chimère ', 'chimère ') + '.');
       },
       tick(ph, dt) { if (!ph.data.soi) return; const p = st().p; const s = p.sta; const T = 0.3; if (x === 'feu' || x === 'explosion') s.garde = Math.max(s.garde || 0, T); else if (x === 'eau' || x === 'courant') s.branchies = Math.max(s.branchies || 0, T); else if (x === 'terre' || x === 'metal' || x === 'seisme') s.armure = Math.max(s.armure || 0, T); else if (x === 'vent' || x === 'son') s.glide = Math.max(s.glide || 0, T); else if (x === 'foudre') s.vitesse = Math.max(s.vitesse || 0, T); else if (x === 'froid') s.patins = Math.max(s.patins || 0, T); else if (x === 'lumiere') s.lumiere = Math.max(s.lumiere || 0, T); else if (x === 'vie') s.regen = Math.max(s.regen || 0, T); else if (x === 'gravite') s.lowgrav = Math.max(s.lowgrav || 0, T); if (rnd() < 0.4) W.part(p.x + rnd() * p.w, p.y + rnd() * p.h, C, 1, 20, 0.5, 2, -30, 'spark'); },
+      fin(ph) { if (ph.tenu && ph.follow && ph.follow !== st().p && ph.follow.ench) ph.follow.ench = null; },
       draw(ctx, ph, t) { const e = ph.follow; if (!e) return; FX.glow(ctx, e.x + e.w / 2, e.y + e.h / 2, Math.max(e.w, e.h), C, 0.35 * fade(ph)); },
     };
     return null;
@@ -622,6 +630,7 @@ function creerPhenomenes(W) {
     else if (shape === 'mur' && o.mur) { const mw = 30 * sz * (pr0.dimL || 1), mh = 180 * sz * (pr0.dimH || 1); ph.rect = { x0: x - mw / 2, x1: x + mw / 2, y0: y - mh / 2, y1: y + mh / 2 }; ph.g = 'rect'; }
     if (o.ligne) { ph.ligne = { ...o.ligne }; ph.g = 'ligne'; ph.x = (o.ligne.x1 + o.ligne.x2) / 2; ph.y = (o.ligne.y1 + o.ligne.y2) / 2; }
     if (o.follow) ph.follow = o.follow;
+    if (o.tenu && D.life >= 2) ph.tenu = o.tenu;
     if (D.point && ph.g !== 'point') { if (ph.ligne) { ph.x = ph.ligne.x2; ph.y = ph.ligne.y2; } ph.rect = null; ph.ligne = null; ph.g = 'point'; }
     if (!ph.dir.x && !ph.dir.y) ph.dir = { x: 1, y: 0 };
     if (liste.length >= 28) { const v = liste.shift(); finir(v); }
@@ -631,13 +640,29 @@ function creerPhenomenes(W) {
     decouvrir(id);
     return ph;
   }
-  function finir(ph) { if (ph.fini) return; ph.fini = true; ph.mort = true; if (ph.D.fin) { try { ph.D.fin(ph); } catch (e) { console.warn(e); } } if (ph.objs) retirerPlateformes(ph); }
+  function finir(ph, doux) { if (ph.fini) return; ph.fini = true; ph.mort = true; if (doux) { W.part(ph.x, ph.y, ph.D.couleur, 16, 70, 0.5, 3, 0, 'spark'); W.son('fizzle'); } if (ph.D.fin && !(doux && ph.D.explose)) { try { ph.D.fin(ph); } catch (e) { console.warn(e); } } if (ph.liens) for (const q of ph.liens) q.life = Math.min(q.life, 0.01); if (ph.objs) retirerPlateformes(ph); }
+  // tenu : le phénomène suit la souris
+  function visLigne(ph, tx, ty, k) { const L = ph.ligne, o = W.origine(); L.x1 = o.x; L.y1 = o.y; const dx = tx - o.x, dy = ty - o.y, d = Math.hypot(dx, dy) || 1; const hit = Sim.raycast(o.x + dx / d * 20, o.y + dy / d * 20, dx / d, dy / d, d - 20); const ex = hit ? hit.x : tx, ey = hit ? hit.y : ty; L.x2 += (ex - L.x2) * k; L.y2 += (ey - L.y2) * k; ph.x = (L.x1 + L.x2) / 2; ph.y = (L.y1 + L.y2) / 2; }
+  function viser(ph, dt) {
+    const D = ph.D; if (D.statique) return;
+    const c = W.cible(ph.tenu.portee || 300), k = Math.min(1, dt * 6);
+    if (D.viser) return D.viser(ph, c.x, c.y, dt);
+    if (ph.ligne) return visLigne(ph, c.x, c.y, k);
+    if (D.bouge === 'roule' || D.bouge === 'derive') { ph.vx = clamp((c.x - ph.x) * 3.5, -320, 320); if (Math.abs(c.x - ph.x) < 4) ph.vx = 0;
+      // ce qui roule au sol monte ou descend vers le sol que vise la souris
+      if (D.bouge === 'roule' && !ph.rect) { const h = D.hSol != null ? D.hSol : ph.r * 0.6, g = sol(ph.x, c.y - 10) - h; if (Math.abs(g - ph.y) < 260) deplacer(ph, 0, (g - ph.y) * k); }
+      return; }
+    if (ph.rect) { const R = ph.rect, cx = (R.x0 + R.x1) / 2; const dy = ph.spec.shape === 'colonne' || D.sol ? (sol(c.x, c.y - 10) - R.y1) * k : (c.y - (R.y0 + R.y1) / 2) * k; deplacer(ph, (c.x - cx) * k, dy); return; }
+    if (D.sol) { const g = sol(c.x, c.y - 10); deplacer(ph, (c.x - ph.x) * k, (g - ph.y) * k); return; }
+    ph.vx *= 0.5; ph.vy *= 0.5; deplacer(ph, (c.x - ph.x) * k, (c.y - ph.y) * k);
+  }
   function update(dt) {
     dtC = dt;
     for (const ph of liste) {
       if (ph.mort) continue;
       const f = W.tempsDe ? W.tempsDe(ph.x, ph.y) : 1; const d = dt * f; dtC = d; if (d <= 0) continue;
       ph.t += d; ph.life -= d;
+      if (ph.tenu) { if (!W.tient(ph.tenu.hand) || !W.boire(ph.tenu.drain * d)) { if (ph.D.relache) { try { ph.D.relache(ph); } catch (e) { console.warn(e); } } finir(ph, !ph.D.relache); continue; } ph.life = Math.max(ph.life, 0.6); if (ph.liens) for (const q of ph.liens) q.life = Math.max(q.life, 0.6); if (!ph.follow) viser(ph, d); }
       if (ph.follow) { const e = ph.follow; if (e.mort || (e.hp !== undefined && e.hp <= 0 && e !== st().p) || (e.life !== undefined && e.k && e.life <= 0)) { ph.life = 0; } else { const nx = e.w ? e.x + e.w / 2 : e.x, ny = e.h ? e.y + e.h / 2 : e.y; deplacer(ph, nx - ph.x, ny - ph.y); } }
       else bouger(ph, d);
       try { if (ph.D.tick) ph.D.tick(ph, d); } catch (e) { console.warn('phénomène', ph.id, e); ph.life = 0; }
@@ -651,7 +676,7 @@ function creerPhenomenes(W) {
     if (b === 'fixe') return;
     if (b === 'flotte') { ph.vx *= 1 - 1.2 * dt; ph.vy *= 1 - 1.2 * dt; const nx = ph.x + ph.vx * dt, ny = ph.y + ph.vy * dt; if (Sim.solidAt(nx, ny)) { ph.vx = -ph.vx * 0.5; ph.vy = -ph.vy * 0.5; } else deplacer(ph, nx - ph.x, ny - ph.y); return; }
     if (b === 'derive') { const nx = ph.x + ph.vx * dt; if (Sim.solidAt(nx + Math.sign(ph.vx) * ph.r, ph.y)) ph.vx = -ph.vx; else deplacer(ph, nx - ph.x, 0); ph.vx = clamp(ph.vx, -220, 220); return; }
-    if (b === 'roule') { const nx = ph.x + ph.vx * dt; const h = ph.rect ? (ph.rect.y1 - ph.y) : ph.r * 0.6; if (Sim.solidAt(nx + Math.sign(ph.vx) * 10, ph.y)) { ph.vx = -ph.vx * 0.6; return; } const g = W.groundBelow(nx, ph.y - 40); deplacer(ph, nx - ph.x, g != null && Math.abs(g - h - ph.y) < 80 ? (g - h - ph.y) * Math.min(1, dt * 6) : 0); return; }
+    if (b === 'roule') { const nx = ph.x + ph.vx * dt; const h = ph.rect ? (ph.rect.y1 - ph.y) : ph.D.hSol != null ? ph.D.hSol : ph.r * 0.6; if (ph.vx && Sim.solidAt(nx + Math.sign(ph.vx) * 10, ph.y - Math.max(h, 14))) { ph.vx = ph.tenu ? 0 : -ph.vx * 0.6; return; } const g = W.groundBelow(nx, ph.y - 40); deplacer(ph, nx - ph.x, g != null && Math.abs(g - h - ph.y) < 80 ? (g - h - ph.y) * Math.min(1, dt * 6) : 0); return; }
     if (b === 'erre') { ph.vx += (rnd() - 0.5) * 900 * dt; ph.vy += (rnd() - 0.5) * 900 * dt - 30 * dt; ph.vx = clamp(ph.vx, -140, 140); ph.vy = clamp(ph.vy, -140, 140); const nx = ph.x + ph.vx * dt, ny = ph.y + ph.vy * dt; if (Sim.solidAt(nx, ny)) { ph.vx = -ph.vx; ph.vy = -ph.vy; } else deplacer(ph, nx - ph.x, ny - ph.y); return; }
     if (b === 'chasse') { deplacer(ph, ph.vx * dt, ph.vy * dt); return; }
     if (b === 'tombe') { ph.vy += 1500 * dt; const nx = ph.x + ph.vx * dt, ny = ph.y + ph.vy * dt; if (ph.D.trace) ph.D.trace(ph); const hit = Sim.solidAt(nx, ny + ph.r * 0.6) || st().crs.some((c) => c.hp > 0 && c.t !== 'familier' && U.circleRect(nx, ny, ph.r, c)); deplacer(ph, nx - ph.x, ny - ph.y); if (hit || ny > Sim.H * CS) { if (ph.D.impact) ph.D.impact(ph); else ph.life = 0; } }
@@ -675,7 +700,7 @@ function creerPhenomenes(W) {
   // un projectile qui porte un combo laisse la trace du phénomène
   function trainee(s, dt) { if (!s.spec || !s.spec.combo) return; const D = defDe(s.spec.combo); if (!D) return; if (rnd() < 0.7) W.part(s.x, s.y, rnd() < 0.5 ? D.couleur : s.color, 1, 25, 0.5, 3, 0, 'spark'); }
   function lumieres() { const out = []; for (const ph of liste) { if (ph.mort) continue; if (ph.D.lumieres) { for (const l of ph.D.lumieres(ph)) out.push(l); } else if (ph.D.lum) out.push({ x: ph.x, y: ph.y, r: ph.D.lum * Math.sqrt(ph.sz) * fade(ph) }); } return out; }
-  function draw(ctx, t) { for (const ph of liste) { if (ph.mort) continue; try { if (ph.D.draw) ph.D.draw(ctx, ph, t); else { FX.glow(ctx, ph.x, ph.y, ph.r * 1.5, ph.D.couleur, 0.35 * fade(ph)); } } catch (e) { console.warn(e); } } }
+  function draw(ctx, t) { for (const ph of liste) { if (ph.mort) continue; if (ph.tenu && !ph.follow) { const o = W.origine(); ctx.save(); ctx.strokeStyle = ph.D.couleur; ctx.globalAlpha = 0.45; ctx.lineWidth = 1.5; ctx.setLineDash([4, 6]); ctx.lineDashOffset = -t * 30; ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(ph.x, ph.y); ctx.stroke(); ctx.restore(); } try { if (ph.D.draw) ph.D.draw(ctx, ph, t); else { FX.glow(ctx, ph.x, ph.y, ph.r * 1.5, ph.D.couleur, 0.35 * fade(ph)); } } catch (e) { console.warn(e); } } }
   function reset() { for (const ph of liste) if (ph.objs) retirerPlateformes(ph); liste = []; }
   return { deployer, update, draw, reagir, dissiper, trainee, lumieres, reset, defDe, get liste() { return liste; }, DEFS };
 }

@@ -37,6 +37,12 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 - **Filtres de matière** (pointe droite) : avec Au contact, le sort ne réagit qu'à l'eau, au feu, à la pierre, à la terre, au bois, au métal, à la glace ou aux créatures, et traverse tout le reste.
 - **Cibles** (pointe gauche) : souris, créature hostile la plus proche (le sort la suit), ou marque la plus récente posée par le glyphe Marque, même hors de vue.
 - **Déclencheurs** : Immédiat, Au contact, Retardé (1, 2, 5 ou 10 s), Sur commande (la touche F libère tous les sorts en attente), Répétition (toutes les 1, 2 ou 5 s), À l'expiration (dernier éclat quand l'effet s'éteint).
+- **Maintenu** (déclencheur) : le sort ne vit que tant qu'on tient le clic. Il naît à l'appui, sans charge, puis suit la souris en buvant de l'encre, et disparaît dès qu'on lâche.
+  - Un petit soleil, une tornade de feu, un orage, une sphère d'eau se promènent au bout de la main. On peut porter l'eau ailleurs et la lâcher.
+  - Un rayon ardent ou un fil de foudre suivent le regard.
+  - Une Singularité ou une Implosion tenues rassemblent tout, puis éclatent au relâchement.
+  - Sans fusion, un projectile tenu se tient au bout de la main, une zone ou une aura est canalisée là où l'on pointe, un trait devient un rayon continu.
+  - Le clic droit fait de même avec la main gauche. Lâché pendant le tracé, le sceau se défait et rend presque toute son encre.
 - **Lancer** : maintenir le clic charge le sort (plus puissant, plus loin, plus cher) ; la main gauche lance un second sceau au clic droit (Maj + 1-5) ; dix enchaînements nommés quand un second sort éclate près du premier dans la seconde ; deux projectiles qui se croisent fusionnent.
 - **Bouclier** : arc élémentaire tourné vers la souris, qui repousse créatures, eau et sable (bulle sèche sous l'eau). **Contre-sort** : dissipe champs, pièges, totems, sorts en attente, portails et marques.
 - **Éditeur** : fiche lisible du sceau et aperçu animé de son effet.

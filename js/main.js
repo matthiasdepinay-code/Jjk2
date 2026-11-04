@@ -395,7 +395,7 @@
       if (hand === 'L' && !this.progress.deuxMains) { this.toast('La main gauche n\'est pas encore maîtrisée (voir le grimoire).', 'warn'); return; }
       const e = this.itemMain(hand);
       const seal = e && (e.type === 'seal' ? e.seal : e.type === 'parchemin' && this.inv.parchemins[e.nom] ? this.inv.parchemins[e.nom].seal : null);
-      if (seal && seal.core && !Seal.params(seal).canalise) { this.charging[hand] = { t0: performance.now(), color: (DATA.CORES[seal.core] || {}).couleur }; return; }
+      if (seal && seal.core && !Seal.params(seal).canalise && !Seal.triggers(seal).includes('tenu')) { this.charging[hand] = { t0: performance.now(), color: (DATA.CORES[seal.core] || {}).couleur }; return; }
       this.useSelected(hand, 0);
     },
     relacherMain(hand) {
@@ -503,7 +503,7 @@
     Son.init(); Son.resume();
     const m = mousePos(e); inp.mouse.x = m.x; inp.mouse.y = m.y;
     if (UI.isOpen()) return;
-    if (e.button === 2) { if (game.state === 'world') { if (World.state().p.carry) World.throwCarried(World.toWorld(m.x, m.y)); else game.presserMain('L'); } return; }
+    if (e.button === 2) { inp.mouse.rdown = true; if (game.state === 'world') { if (World.state().p.carry) World.throwCarried(World.toWorld(m.x, m.y)); else game.presserMain('L'); } return; }
     if (e.button !== 0) return;
     inp.mouse.down = true;
     if (game.state === 'lab') {
@@ -521,10 +521,10 @@
       else if (id === 'alambic' || id === 'presse' || id === 'terrarium' || id === 'bac') { if (game.progress.labo[id]) UI.openPanel(id); else { const u = DATA.UNLOCKS.find((q) => q.item === id && q.type === 'labo'); game.toast('Ce poste est encore scellé. ' + (u ? 'Indice : ' + u.indice : ''), 'warn'); } }
     } else if (game.state === 'world') game.presserMain('R');
   });
-  window.addEventListener('mouseup', (e) => { if (e.button === 0) { inp.mouse.down = false; if (game.state === 'world') game.relacherMain('R'); } if (e.button === 2 && game.state === 'world') game.relacherMain('L'); });
+  window.addEventListener('mouseup', (e) => { if (e.button === 0) { inp.mouse.down = false; if (game.state === 'world') game.relacherMain('R'); } if (e.button === 2) inp.mouse.rdown = false; if (e.button === 2 && game.state === 'world') game.relacherMain('L'); });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('wheel', (e) => { if (game.state !== 'world' || UI.isOpen()) return; game.selected = (game.selected + (e.deltaY > 0 ? 1 : 4)) % 5; UI.refreshHotbar(); e.preventDefault(); }, { passive: false });
-  window.addEventListener('blur', () => { inp.left = inp.right = inp.up = inp.down = inp.jumpHeld = inp.dig = false; game.charging.R = game.charging.L = null; });
+  window.addEventListener('blur', () => { inp.left = inp.right = inp.up = inp.down = inp.jumpHeld = inp.dig = false; inp.mouse.down = inp.mouse.rdown = false; game.charging.R = game.charging.L = null; });
   window.addEventListener('beforeunload', () => { game.save(); game.saveWorld(); });
 
   function resize() {
