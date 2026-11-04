@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>L'Atelier des Sceaux</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
@@ -54,6 +54,21 @@
   body:not([data-state="world"]) #btn-lab { display: none; }
   body[data-state="create"] #topright, body[data-state="create"] #hotbar { display: none; }
 
+  /* commandes tactiles : un joystick à gauche, des boutons à droite ; on vise et on lance en touchant l'écran */
+  #tactile { display: none; position: absolute; inset: 0; pointer-events: none; }
+  body.tactile[data-state="world"] #tactile { display: block; }
+  body.tactile #game, #tactile button, #joy { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  body.tactile { touch-action: manipulation; }
+  #joy { position: absolute; left: calc(36px * var(--s)); bottom: calc(36px * var(--s)); width: calc(150px * var(--s)); height: calc(150px * var(--s)); border-radius: 50%; border: 2px solid rgba(31,26,22,0.55); background: rgba(239,227,196,0.35); pointer-events: auto; }
+  #joy::before { content: ''; position: absolute; inset: 18%; border-radius: 50%; border: 1.5px dashed rgba(31,26,22,0.3); }
+  #joy-pouce { position: absolute; left: 50%; top: 50%; width: calc(62px * var(--s)); height: calc(62px * var(--s)); margin: calc(-31px * var(--s)) 0 0 calc(-31px * var(--s)); border-radius: 50%; background: rgba(31,26,22,0.28); border: 2px solid var(--ink); }
+  #t-boutons { position: absolute; right: calc(28px * var(--s)); bottom: calc(36px * var(--s)); display: grid; grid-template-columns: repeat(3, auto); gap: calc(10px * var(--s)); }
+  #t-ordres { position: absolute; right: calc(28px * var(--s)); bottom: calc(196px * var(--s)); display: flex; gap: calc(8px * var(--s)); }
+  #tactile button { pointer-events: auto; width: calc(62px * var(--s)); height: calc(62px * var(--s)); padding: 0; border-radius: 50%; font-size: calc(21px * var(--s)); background: rgba(246,238,216,0.78); box-shadow: 0 2px 0 rgba(31,26,22,0.35); }
+  #tactile button small { display: block; font-size: calc(10px * var(--s)); line-height: 1; color: var(--sepia); }
+  #t-ordres button { width: calc(46px * var(--s)); height: calc(46px * var(--s)); font-size: calc(15px * var(--s)); }
+  #tactile button.appui { transform: translateY(2px); box-shadow: none; background: var(--paper); }
+  #tactile button.on { background: var(--gold); }
   #hotbar { position: absolute; left: 50%; bottom: calc(14px * var(--s)); transform: translateX(-50%); display: flex; gap: calc(8px * var(--s)); pointer-events: auto; }
   .slot { position: relative; width: calc(62px * var(--s)); height: calc(62px * var(--s)); border: 1.5px solid var(--ink); border-radius: 8px; background: rgba(239,227,196,0.92); box-shadow: 2px 2px 0 rgba(31,26,22,0.3); cursor: pointer; }
   .slot canvas { width: 100%; height: 100%; display: block; }
@@ -204,6 +219,14 @@
       <button id="btn-mute" title="Son (M)">🔊</button>
     </div>
     <div id="hotbar"></div>
+  </div>
+  <div id="tactile" aria-hidden="true">
+    <div id="joy"><div id="joy-pouce"></div></div>
+    <div id="t-ordres"><button data-t="garder" title="Reste ici / suis-moi">V</button><button data-t="attaquer" title="Attaque">B</button><button data-t="congedier" title="Congédier">N</button></div>
+    <div id="t-boutons">
+      <button data-t="main" id="t-main">✋<small>droite</small></button><button data-t="liberer">F<small>libérer</small></button><button data-t="agir">E<small>agir</small></button>
+      <button data-t="creuser">X<small>creuser</small></button><button data-t="saut" style="grid-column: span 2; width: auto; border-radius: calc(31px * var(--s));">⤒<small>sauter</small></button>
+    </div>
   </div>
   <div id="toasts"></div>
 
@@ -382,13 +405,18 @@
       <p>Chaque élément a son <b>langage</b>. Emploie souvent le feu et tu apprendras le mot <b>Chaleur</b> : un glyphe qui rend la flamme blanche ; doublé, quand tu le parleras bien, elle devient bleue et fond la pierre. Il en va de même pour l'eau, le froid, la terre, le vent, la foudre, la vie... Le grimoire tient le compte.</p>
       <p>Avec la forme <b>Prise</b>, la Force ou la Gravité saisissent la matière : l'eau d'un lac, un tas de sable, une créature. Promène-la à la souris, puis clique pour la lancer. Certains ingrédients ne poussent que dans une région ; creuse-les et brasse-les en <b>encres spéciales</b>, que tu choisiras à la table des sceaux.</p>
       <p>J'ai laissé des <b>coffres scellés</b> un peu partout : un levier, une plaque, deux brasiers, une roue à sec, un moulin... Approche-toi, les fils d'encre te montreront ce qui les ouvre. Et prends le temps de voir passer les saisons.</p>
+      <p>Quatre <b>stèles</b> gravées d'essences dorment aussi dehors : chacune s'éveille quand naît près d'elle la fusion qu'elle porte. Le grand sceau, lui, a une <b>troisième case d'effet</b> : certaines fusions à trois font naître une étoile, un ouragan, un volcan...</p>
+      <p>Prends garde aux <b>gardiens</b> : un par région, l'Ent-ronce, le Grand Cerf, le Golem de magma, l'Automate des ruines. La force seule n'en vient pas à bout : observe ce qui les soigne et ce qu'ils craignent. Ils dorment tant que tu n'as pas pris assez de forces ; ne les réveille pas trop tôt.</p>
+      <p>Le vent a de la mémoire : un sort de Vent souffle pour de bon, et la fumée, les flammes, le sable fin et les nuages s'en vont avec lui. Tes familiers t'écoutent : <kbd>V</kbd> pour « reste ici » ou « suis-moi », <kbd>B</kbd> pour « attaque », <kbd>N</kbd> pour les congédier.</p>
       <h3>Dehors</h3>
       <ul>
         <li><kbd>←</kbd><kbd>→</kbd> ou <kbd>Q</kbd><kbd>D</kbd> : marcher · <kbd>Espace</kbd> : sauter (maintenir pour un grand saut) · <kbd>↑</kbd> : grimper aux plantes · en vol : toutes les directions</li>
         <li><kbd>E</kbd> : agir (porte, cueillir, lire, remplir une fiole, porter / poser) · <kbd>Clic droit</kbd> : lancer ce qu'on porte · <kbd>X</kbd> maintenu : creuser ou cueillir vers la souris (terre, sable, neige, plantes, cristal)</li>
         <li><kbd>1</kbd>–<kbd>5</kbd> ou molette : choisir dans la barre · <kbd>Clic</kbd> : lancer vers la souris (maintenir pour charger) · plus tard, <kbd>Clic droit</kbd> + <kbd>Maj</kbd>+<kbd>1</kbd>–<kbd>5</kbd> : la main gauche · <kbd>F</kbd> : libérer les sorts Sur commande</li>
         <li>Glyphe Esprit : flèches pour guider la créature, <kbd>E</kbd> pour revenir · Glyphe Lien : <kbd>↑</kbd><kbd>↓</kbd> pour raccourcir ou allonger la corde, <kbd>Espace</kbd> pour lâcher</li>
+        <li><kbd>V</kbd> : familiers, reste ici / suis-moi · <kbd>B</kbd> : attaque (la créature sous la souris) · <kbd>N</kbd> : congédier</li>
         <li><kbd>G</kbd> : grimoire · <kbd>H</kbd> : cette lettre · <kbd>M</kbd> : son · <kbd>Échap</kbd> : fermer</li>
+        <li>Sur écran tactile : le joystick à gauche pour marcher, les boutons à droite (sauter, agir, creuser, libérer, ordres) ; touche l'écran pour viser et lancer, garde le doigt posé pour charger ou tenir un sort Maintenu ; le bouton ✋ passe à la main gauche.</li>
         <li>Revenir au labo (la porte, ou le bouton 🏠) restaure encre et vitalité et sauvegarde le monde tel que tu l'as laissé. Rien ne meurt vraiment ici : on s'évanouit, on se réveille devant la porte.</li>
       </ul>
       <p class="muted">Tout inondé, tout brûlé ? <button id="btn-restaurer">Restaurer le monde</button> (les découvertes restent). Pour tout recommencer : <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>R</kbd>.</p>

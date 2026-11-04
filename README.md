@@ -99,7 +99,9 @@ La forme **Invocation** fait naître le familier de l'essence posée au centre d
 - Les modificateurs comptent : Double invoque deux familiers, Puissance les rend plus robustes, Durée les fait rester plus longtemps, Taille les fait plus grands. Un aspect change leur coup : l'Ondine de l'Eau avec Gel gèle ce qu'elle touche.
 - Avec une fusion, le familier porte le phénomène, et il se tient alors plus loin de toi pour ne pas te brûler.
 - Les familiers ne craignent pas tes sorts ni ceux des autres familiers. Seules les créatures hostiles les blessent, au contact. On en garde six au plus à la fois.
-- Le bestiaire du grimoire les révèle à la première invocation.
+- Le bestiaire du grimoire les révèle à la première invocation, et un bouton pose le sceau d'invocation sur la table.
+- **Ordres** : <kbd>V</kbd> « reste ici » (ils gardent l'endroit, marqué d'un fanion) ou « suis-moi » ; <kbd>B</kbd> « attaque » la créature sous la souris ; <kbd>N</kbd> les congédie.
+- Les familiers, comme les phénomènes en cours, sont gardés dans la sauvegarde du monde.
 
 ## Fusions : quand deux essences s'allient
 
@@ -118,7 +120,17 @@ Deux effets dans un même sceau (le second sous le cercle, sur un sceau moyen ou
   - **Absorption** (Contre-sort) : avale cette matière et rend un peu d'encre.
   - **Chimère** (Métamorphose) : la créature porte l'élément partout. Sur soi, tu en prends la nature.
 - **La forme du sceau compte.** En projectile, le phénomène file et naît à l'impact. En zone, il est posé. En mur ou en colonne, il en prend le rectangle : une colonne de geyser, un rideau d'orage, une tour de cyclone. En trait, il suit la ligne : un rayon ardent, un fil électrique, un pont de racines ou d'air solide. Sur soi, en aura, sur un objet ou un familier, il suit son porteur.
-- **À découvrir** : le grimoire (onglet Fusions) montre « ??? » et un indice. Le phénomène se révèle la première fois qu'on le lance, et rapporte de l'expérience.
+- **À découvrir** : le grimoire (onglet Fusions) montre « ??? » et un indice. Le phénomène se révèle la première fois qu'on le lance, et rapporte de l'expérience. Une fusion connue se recopie sur la table des sceaux d'un clic (« Copier sur la table »), et l'éditeur en montre l'aperçu animé.
+- **Fusions à trois** : le grand sceau a une troisième case d'effet. Huit trios ont leur propre phénomène :
+  - **Étoile** (Feu, Gravité, Temps) : un soleil plus grand qui dure longtemps, puis finit en nova.
+  - **Ouragan** (Eau, Foudre, Vent) : un orage qui marche, foudroie, aspire et soulève.
+  - **Volcan** (Feu, Gravité, Terre) : un cône de pierre qui crache la lave.
+  - **Jardin suspendu** (Eau, Gravité, Vie) : une île flotte, avec son arbre et sa source, puis finit par retomber.
+  - **Pulsar** (Foudre, Gravité, Lumière) : une étoile qui tourne et balaie le monde de deux rayons foudroyants.
+  - **Canyon** (Eau, Temps, Terre) : un ravin s'ouvre sous le point visé, et une rivière y coule.
+  - **Trou blanc** (Gravité, Lumière, Temps) : il repousse tout et recrache la matière.
+  - **Printemps éternel** (Lumière, Temps, Vie) : longtemps, tout pousse alentour (herbe, fleurs qui luisent, arbres) et les blessures guérissent.
+- Chaque phénomène a sa **nappe sonore**, qui s'éloigne et se place à gauche ou à droite avec lui.
 
 ## Physique
 
@@ -135,6 +147,11 @@ Deux effets dans un même sceau (le second sous le cercle, sur un sceau moyen ou
   - Chaque chose a une masse : le vent pousse un lapin bien plus loin qu'un golem.
   - La caisse flotte, le rocher coule, le golem marche au fond du lac.
   - Une créature projetée contre un mur ou qui tombe de haut se blesse. Un rocher qui tombe blesse ce qu'il touche. Une chute de très haut fait mal.
+- **Basculement** : un bloc haut et étroit qui perd son pied bascule et se couche, au lieu de tomber droit.
+- **Vent** : l'air a sa vitesse, qui garde son élan puis s'apaise.
+  - Les sorts de Vent et de Son soufflent, les explosions repoussent l'air, la Force l'aspire.
+  - La fumée, la vapeur, les gaz et les flammes suivent le vent ; le sable fin et la neige s'envolent ; les créatures légères, les projectiles et les phénomènes dérivent. Dehors, une brise suit la météo.
+  - Le vent se voit en traits d'encre.
 - **Nouvelle matière** : le gaz de l'Électrolyse, léger, explose à la moindre flamme.
 
 ## Dehors
@@ -147,13 +164,41 @@ Nouvelles matières : poudre explosive, mousse sur la pierre humide, miel des ru
 
 **Énigmes** : leviers, plaques de pression, brasiers, roue à aubes, moulin à vent, lampe d'éclair, grilles et coffres scellés, reliés par des circuits (des fils d'encre visibles de près). Sept coffres à ouvrir : le levier du jardin, la plaque de la forêt, la roue à sec au bord du lac, les deux brasiers du volcan, la combinaison de la clairière, la lampe et la plaque des ruines, la cave du désert sous la trappe du moulin.
 
+**Énigmes de fusion** : quatre stèles gravées d'essences dorment dans le monde. Chacune s'éveille quand la fusion qu'elle porte naît près d'elle, et ouvre son coffre ; <kbd>E</kbd> devant une stèle dit ce qu'elle attend.
+- au jardin, la **stèle de la source** : la Source vive (Eau + Vie) ;
+- au sommet de la montagne, la **stèle du passeur** : un pont né de rien (Arc-en-ciel, Air solide ou Racines) ;
+- au volcan, le **cœur du volcan** : la fusion à trois du Volcan, au grand sceau ;
+- dans les ruines, le **carillon de verre**, qu'un Tonnerre ou un Choc thermique brise.
+
+**Leçons du maître** : l'onglet Défis du grimoire propose de petits essais guidés (le premier sceau, changer de forme, les aspects, faire naître un phénomène, tenir un sort, parler aux familiers, les stèles, les gardiens...). Elles paraissent avec ce que tu débloques et rapportent de l'expérience.
+
 **Monde vivant** : quatre saisons de deux jours chacune (teintes, neige et lacs gelés l'hiver, feuilles d'automne, fonte au printemps), l'herbe et les arbres brûlés repoussent hors de vue, deux bêtes de la même espèce font des petits qui grandissent.
+
+## Gardiens
+
+Chaque région a son gardien. Aucun ne tombe sous la seule force : chacun a son tour à trouver. Ils dorment tant que tu n'as pas le niveau (de 3 à 6), sauf si tu les provoques. Leurs attaques s'annoncent (racines qui craquent, sabot qui gratte, ligne de visée) pour qu'on puisse les esquiver. Une barre de vie s'affiche pendant le combat.
+
+| Gardien | Région | Son tour |
+|---|---|---|
+| L'Ent-ronce | La Prairie | Le feu le blesse et le fait brûler ; l'eau et la vie le soignent. Il fait jaillir ses racines sous tes pieds et lance des graines épineuses. |
+| Le Grand Cerf | Les Collines | Rien ne l'entame quand il court. Dresse un mur sur sa route : il s'y assomme, et c'est le moment de frapper. |
+| Le Golem de magma | La Plaine de cendres | Le feu le nourrit, la lave le soigne. L'eau et le froid figent sa croûte : il ralentit et se brise. Il lance des boulets de lave et frappe le sol. |
+| L'Automate des ruines | Le Marais | Coque épaisse : la foudre glisse dessus, sauf s'il est trempé (court-circuit). L'acide le ronge. Son œil vise, puis tire un rayon. |
+
+On ne dompte, n'endort, ne possède ni ne métamorphose un gardien. Vaincu, il laisse des présents rares, et ne revient pas. Le bestiaire du grimoire garde ce que tu as appris d'eux.
 
 **Personnage** : redessiné et animé (marche, saut, bras qui trace le sort), personnalisable : teint, coiffure, cheveux, chapeau et sa couleur, cape, robe, écharpe, objet à la main.
 
 Un seul grand monde, 1 800 cases de large : jardin, prairie, forêt, rivière, lac, collines, montagne enneigée, gorge (et son pont de bois), volcan, plaine de cendres, clairière, marais, ruines de métal, dunes, désert ; des îles volantes dans le ciel ; des grottes à cristaux, un lac souterrain, une poche d'acide et une nappe d'huile sous terre. Le monde est une grille de matières : on creuse, on inonde, on gèle, on brûle, et le tout persiste.
 
-Contrôles : flèches ou ZQSD, Espace pour sauter (maintenir pour un grand saut), haut pour grimper aux plantes, E pour agir (porte, cueillir, lire, remplir une fiole, porter), clic droit pour lancer ce qu'on porte, X maintenu pour creuser vers la souris, 1 à 5 ou molette pour la barre, clic pour lancer, G grimoire, H aide, M son, Échap pour fermer.
+Contrôles : flèches ou ZQSD, Espace pour sauter (maintenir pour un grand saut), haut pour grimper aux plantes, E pour agir (porte, cueillir, lire, remplir une fiole, porter), clic droit pour lancer ce qu'on porte, X maintenu pour creuser vers la souris, 1 à 5 ou molette pour la barre, clic pour lancer (maintenir pour charger), clic droit et Maj + 1 à 5 pour la main gauche, F pour libérer les sorts Sur commande, V, B et N pour les ordres aux familiers, G grimoire, H aide, M son, Échap pour fermer.
+
+**Sur écran tactile** (téléphone en paysage, tablette), des commandes apparaissent d'elles-mêmes :
+- un joystick à gauche pour marcher, grimper ou descendre ;
+- à droite, Sauter, E (agir), X (creuser), F (libérer), V/B/N (ordres) ;
+- toucher l'écran vise et lance le sceau choisi ; garder le doigt posé charge le sort, ou garde un sort Maintenu en vie ;
+- deux doigts : on marche et on lance à la fois ;
+- le bouton ✋ fait passer le doigt à la main gauche ; la barre choisit alors pour elle.
 
 Pour tout recommencer : Ctrl + Maj + R.
 
@@ -169,12 +214,20 @@ js/fx.js        effets visuels : halos, flammes, traînées, ondes, éclairs
 js/audio.js     sons génératifs (WebAudio)
 js/sim.js       simulation de matières (grille) et rendu encre par morceaux
 js/gen.js       génération du grand monde
+js/familiers.js dessin des familiers (un par essence)
 js/combos.js    phénomènes : les fusions d'essences, leur physique et leur dessin
-js/world.js     monde extérieur : entités, effets, créatures, météo, rendu
+js/gardiens.js  gardiens des régions : comportement, projectiles, dessin, barre de vie
+js/rendu.js     rendu du monde : ciel, nuit, objets, créatures, joueur, sorts
+js/creatures.js bêtes du monde et familiers : mise à jour, ordres, affinité
+js/world.js     monde extérieur : état, sorts et effets, joueur, mécanismes, météo
 js/lab.js       scène du labo
 js/ui.js        éditeur de sceaux, chaudron, grimoire, HUD
 js/main.js      boucle, états, progression, expérience, sauvegarde
 docs/DESIGN.md  décisions de design et étapes à venir
 build.sh        fabrique dist/atelier-des-sceaux.html
-tests/          bancs d'essai (node tests/lancer.js) et outils : hasard, perf, endurance, traversée
+tests/          bancs d'essai (node tests/lancer.js) et outils : hasard, perf, endurance, traversée, tactile
 ```
+
+Les modules extraits de `world.js` (phénomènes, gardiens, rendu, créatures) sont des fabriques `creerX(W)` : le monde leur passe un contexte de getters vers son état et ses fonctions, et garde quelques relais pour les appels qui restent chez lui.
+
+Tests : `node tests/lancer.js` lance tous les bancs dans un Chromium sans écran (Playwright) : glyphes, physique, fusions (les 69 fusions lancées dans plusieurs formes), fusions à trois, Maintenu, familiers, vent, énigmes, gardiens, sauvegarde, sons, lisibilité. `node tests/lancer.js gardiens enigmes` n'en lance que certains. `node tests/outils/tactile.js` vérifie les commandes tactiles sur un téléphone simulé.

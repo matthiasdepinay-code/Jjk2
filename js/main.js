@@ -518,10 +518,13 @@
   });
   function mousePos(e) { const r = canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) * (VW / r.width), y: (e.clientY - r.top) * (VH / r.height) }; }
   canvas.addEventListener('mousemove', (e) => { const m = mousePos(e); inp.mouse.x = m.x; inp.mouse.y = m.y; });
-  canvas.addEventListener('mousedown', (e) => {
+  canvas.addEventListener('mousedown', (e) => pointeurBas(mousePos(e), e.button));
+  // appui d'un pointeur (souris ou doigt) : bouton 0 = main droite, 2 = main gauche (ou lancer ce qu'on porte)
+  function pointeurBas(m, bouton) {
     Son.init(); Son.resume();
-    const m = mousePos(e); inp.mouse.x = m.x; inp.mouse.y = m.y;
+    inp.mouse.x = m.x; inp.mouse.y = m.y;
     if (UI.isOpen()) return;
+    const e = { button: bouton };
     if (e.button === 2) { inp.mouse.rdown = true; if (game.state === 'world') { if (World.state().p.carry) World.throwCarried(World.toWorld(m.x, m.y)); else game.presserMain('L'); } return; }
     if (e.button !== 0) return;
     inp.mouse.down = true;
@@ -539,8 +542,59 @@
       else if (id === 'trophees') { UI.openPanel('grimoire'); UI.grimTab('lettres'); }
       else if (id === 'alambic' || id === 'presse' || id === 'terrarium' || id === 'bac') { if (game.progress.labo[id]) UI.openPanel(id); else { const u = DATA.UNLOCKS.find((q) => q.item === id && q.type === 'labo'); game.toast('Ce poste est encore scellé. ' + (u ? 'Indice : ' + u.indice : ''), 'warn'); } }
     } else if (game.state === 'world') game.presserMain('R');
-  });
-  window.addEventListener('mouseup', (e) => { if (e.button === 0) { inp.mouse.down = false; if (game.state === 'world') game.relacherMain('R'); } if (e.button === 2) inp.mouse.rdown = false; if (e.button === 2 && game.state === 'world') game.relacherMain('L'); });
+  }
+  function pointeurHaut(bouton) { if (bouton === 0) { inp.mouse.down = false; if (game.state === 'world') game.relacherMain('R'); } if (bouton === 2) inp.mouse.rdown = false; if (bouton === 2 && game.state === 'world') game.relacherMain('L'); }
+  window.addEventListener('mouseup', (e) => pointeurHaut(e.button));
+
+  // ---------- Commandes tactiles ----------
+  // un doigt sur l'écran vise et lance (tenir : charger, ou garder un sort Maintenu) ; joystick et boutons à côté
+  const tact = { doigt: null, bouton: 0, joy: null };
+  game.mainTactile = 'R';
+  function activerTactile() { if (!document.body.classList.contains('tactile')) document.body.classList.add('tactile'); }
+  if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) activerTactile();
+  window.addEventListener('touchstart', activerTactile, { passive: true, capture: true });
+  const posDoigt = (t) => mousePos(t);
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault(); if (tact.doigt !== null) return;
+    const t = e.changedTouches[0]; tact.doigt = t.identifier;
+    tact.bouton = game.state === 'world' && World.state().p.carry ? 2 : game.mainTactile === 'L' ? 2 : 0;
+    pointeurBas(posDoigt(t), tact.bouton);
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === tact.doigt) { const m = posDoigt(t); inp.mouse.x = m.x; inp.mouse.y = m.y; } }, { passive: false });
+  const finDoigt = (e) => { for (const t of e.changedTouches) if (t.identifier === tact.doigt) { tact.doigt = null; pointeurHaut(tact.bouton); } };
+  canvas.addEventListener('touchend', finDoigt); canvas.addEventListener('touchcancel', finDoigt);
+  // le joystick : gauche, droite, monter (grimper, nager, voler), descendre
+  const joy = document.getElementById('joy'), pouce = document.getElementById('joy-pouce');
+  function majJoy(t) {
+    const r = joy.getBoundingClientRect(), R = r.width / 2; let dx = (t.clientX - r.left - R) / R, dy = (t.clientY - r.top - R) / R; const d = Math.hypot(dx, dy); if (d > 1) { dx /= d; dy /= d; }
+    pouce.style.transform = 'translate(' + (dx * R * 0.62) + 'px,' + (dy * R * 0.62) + 'px)';
+    inp.left = dx < -0.35; inp.right = dx > 0.35; inp.up = dy < -0.55; inp.down = dy > 0.6;
+  }
+  const finJoy = () => { tact.joy = null; inp.left = inp.right = inp.up = inp.down = false; pouce.style.transform = ''; };
+  joy.addEventListener('touchstart', (e) => { e.preventDefault(); Son.init(); Son.resume(); const t = e.changedTouches[0]; tact.joy = t.identifier; majJoy(t); }, { passive: false });
+  joy.addEventListener('touchmove', (e) => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === tact.joy) majJoy(t); }, { passive: false });
+  joy.addEventListener('touchend', (e) => { for (const t of e.changedTouches) if (t.identifier === tact.joy) finJoy(); });
+  joy.addEventListener('touchcancel', finJoy);
+  // les boutons (pointer events : doigt comme souris)
+  function boutonTactile(k, bas) {
+    if (game.state !== 'world' || UI.isOpen()) { if (!bas) { inp.jumpHeld = false; inp.dig = false; } return; }
+    switch (k) {
+      case 'saut': if (bas) { if (!inp.jumpHeld) inp.jump = true; inp.jumpHeld = true; } else inp.jumpHeld = false; break;
+      case 'agir': if (bas) inp.interact = true; break;
+      case 'creuser': inp.dig = bas; break;
+      case 'liberer': if (bas) World.detoner(); break;
+      case 'main': if (!bas) break; if (!game.progress.deuxMains) { game.toast('La main gauche n\'est pas encore maîtrisée (voir le grimoire).', 'warn'); break; } game.mainTactile = game.mainTactile === 'R' ? 'L' : 'R'; majMainTactile(); break;
+      case 'garder': case 'attaquer': case 'congedier': if (bas) World.ordonner(k); break;
+    }
+  }
+  function majMainTactile() { const b = document.getElementById('t-main'); b.innerHTML = '✋<small>' + (game.mainTactile === 'L' ? 'gauche' : 'droite') + '</small>'; b.classList.toggle('on', game.mainTactile === 'L'); UI.refreshHotbar(); }
+  for (const b of document.querySelectorAll('#tactile button')) {
+    const k = b.dataset.t; let tenu = false;
+    b.addEventListener('pointerdown', (e) => { e.preventDefault(); Son.init(); Son.resume(); tenu = true; b.classList.add('appui'); boutonTactile(k, true); });
+    const fin = () => { if (!tenu) return; tenu = false; b.classList.remove('appui'); boutonTactile(k, false); };
+    b.addEventListener('pointerup', fin); b.addEventListener('pointercancel', fin); b.addEventListener('pointerleave', fin);
+    b.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('wheel', (e) => { if (game.state !== 'world' || UI.isOpen()) return; game.selected = (game.selected + (e.deltaY > 0 ? 1 : 4)) % 5; UI.refreshHotbar(); e.preventDefault(); }, { passive: false });
   window.addEventListener('blur', () => { inp.left = inp.right = inp.up = inp.down = inp.jumpHeld = inp.dig = false; inp.mouse.down = inp.mouse.rdown = false; game.charging.R = game.charging.L = null; });

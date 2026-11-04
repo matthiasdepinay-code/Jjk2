@@ -49,8 +49,8 @@ const UI = (() => {
     for (let i = 0; i < 5; i++) {
       const s = el('div', 'slot');
       s.innerHTML = '<canvas width="56" height="56"></canvas><span class="key">' + (i + 1) + '</span><span class="count"></span>';
-      s.addEventListener('click', () => { game.selected = i; refreshHotbar(); Son.sfx('click'); });
-      s.addEventListener('contextmenu', (e) => { e.preventDefault(); if (game.hotbar[i]) { game.hotbar[i] = null; game.save(); refreshHotbar(); } });
+      s.addEventListener('click', () => { if (game.mainTactile === 'L' && game.progress.deuxMains) game.selectedL = i; else game.selected = i; refreshHotbar(); Son.sfx('click'); });
+      s.addEventListener('contextmenu', (e) => { e.preventDefault(); if (document.body.classList.contains('tactile')) return; if (game.hotbar[i]) { game.hotbar[i] = null; game.save(); refreshHotbar(); } });
       hb.appendChild(s);
     }
     $('#btn-mute').addEventListener('click', () => { const m = Son.toggleMute(); $('#btn-mute').textContent = m ? '🔇' : '🔊'; });
