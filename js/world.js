@@ -32,12 +32,21 @@ const World = (() => {
     for (const o of L.objs) st.objs.push(makeObj(o));
     for (const c of L.crs) st.crs.push(makeCreature(c));
     if (saved) restore(saved);
-    Sim.ancrer();
+    Sim.ancrer(); PH.reset();
     st.cam.x = clamp(st.p.x - VW / 2, 0, L.w - VW); st.cam.y = clamp(st.p.y - VH / 2, 0, L.h - VH);
     if (!darkCv) { darkCv = document.createElement('canvas'); darkCv.width = VW / 2; darkCv.height = VH / 2; } // l'obscurité, toute en dégradés, se calcule à demi-résolution
     Sim.onEvent = onSimEvent;
   }
   function ensure(g, saved) { if (!st) build(g, saved); game = g; }
+  // ---------- Phénomènes (combos d'essences) ----------
+  const PH = creerPhenomenes({
+    Sim, get st() { return st; }, game: () => game, time: () => time,
+    applyEffect: (...a) => applyEffect(...a), hurt: (...a) => hurt(...a), part: (...a) => part(...a), msg: (...a) => msg(...a), evt: (...a) => evt(...a),
+    groundBelow: (...a) => groundBelow(...a), spawnLiquid: (...a) => spawnLiquid(...a), addGField: (...a) => addGField(...a), vieillir: (...a) => vieillir(...a),
+    makeCreature: (c) => makeCreature(c), masse: (e) => masse(e), chaudOk: (c) => CHAUD_OK.includes(c.t), froidOk: (c) => FROID_OK.includes(c.t),
+    flash: (v) => { st.flash = Math.max(st.flash, v); }, shake: (v) => { st.shake = Math.max(st.shake, v); }, son: (a, b) => Son.sfx(a, b), colorOf: (c) => colorOf(c),
+    daylight: () => daylight(), revenir: (c) => finMorph(c), addXp: (n) => { if (game && game.addXp) game.addXp(n); }, tempsDe: (x, y) => (bullesT.length ? tempsDe(x, y, 2) : 1),
+  });
   function respawn() {
     const p = st.p;
     p.x = L.spawn.x; p.y = L.spawn.y; p.vx = 0; p.vy = 0; p.hp = p.hpMax; p.pg = null; p.w = 26; p.h = 50;
@@ -178,8 +187,8 @@ const World = (() => {
   function serialize() {
     return {
       mat: Sim.serialize(), tod: st.tod, jour: st.jour || 0, meteo: st.meteo, mecaV: 1,
-      objs: st.objs.filter((o) => !o.mort).map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
-      crs: st.crs.filter((c) => c.t !== 'familier').map((c) => ({ t: c.orig ? c.orig.t : c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.orig ? c.orig.hp : c.hp, tame: c.sta.tame, aff: c.aff ? Math.round(c.aff) : undefined, affJ: c.affJ, affDuJour: c.affDuJour })),
+      objs: st.objs.filter((o) => !o.mort && o.t !== 'magie').map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
+      crs: st.crs.filter((c) => c.t !== 'familier' && !c.temporaire).map((c) => ({ t: c.orig ? c.orig.t : c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.orig ? c.orig.hp : c.hp, tame: c.sta.tame, aff: c.aff ? Math.round(c.aff) : undefined, affJ: c.affJ, affDuJour: c.affDuJour })),
     };
   }
   function restore(d) {
@@ -329,6 +338,7 @@ const World = (() => {
     const ls = Sim.lights(st.cam, VW, VH);
     const p = st.p;
     ls.push({ x: p.x + p.w / 2, y: p.y + p.h / 2, r: p.sta.lumiere > 0 ? 320 : 130 });
+    for (const l of PH.lumieres()) ls.push(l);
     for (const o of st.objs) {
       if (o.t === 'torche' && o.lit) ls.push({ x: o.x + o.w / 2, y: o.y + 6, r: 230 });
       if (o.burning > 0) ls.push({ x: o.x + o.w / 2, y: o.y + o.h / 2, r: 130 });
@@ -914,6 +924,7 @@ const World = (() => {
     for (const c of st.crs) if (c.hp > 0 && Math.abs(c.x + c.w / 2 - cx) < R + c.w && Math.abs(c.y + c.h / 2 - cy) < R + c.h) snap.push(c, c.vx, c.vy);
     for (const o of st.objs) if (o.dyn && !o.mort && !o.carried && Math.abs(o.x + o.w / 2 - cx) < R + o.w && Math.abs(o.y + o.h / 2 - cy) < R + o.h) snap.push(o, o.vx, o.vy);
     applyEffet0(core, cx, cy, rad, prm, mode, opts);
+    if (!opts.phen) PH.reagir(core, cx, cy, rad, prm, mode);
     for (let k = 0; k < snap.length; k += 3) { const e = snap[k], m = masse(e); if (m === 1) continue; const f = clamp(Math.pow(m, -0.6), 0.25, 1.35); e.vx = snap[k + 1] + (e.vx - snap[k + 1]) * f; e.vy = snap[k + 2] + (e.vy - snap[k + 2]) * f; }
   }
   function applyEffet0(core, cx, cy, rad, prm, mode, opts = {}) {
@@ -1202,7 +1213,7 @@ const World = (() => {
     if (prm.inverse) { prm.gInv = cores.includes('gravite'); cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c)); }
     const lg = prm.lg || {};
     if (lg.gravite && cores.includes('gravite')) { prm.size *= 1 + 0.3 * lg.gravite; prm.power *= 1 + 0.4 * lg.gravite; }
-    const combo = effets0.length > 1 && !prm.inverse ? effets0.slice().sort().join('|') : null;
+    const combo = !prm.inverse ? DATA.comboCle(effets0) : null;
     const trs = Seal.triggers(seal);
     const proj = seal.shape === 'projectile' || seal.shape === 'chaine';
     const trig = trs.find((t) => PRIM.includes(t)) || (trs.includes('repetition') && proj ? 'contact' : 'immediat');
@@ -1254,6 +1265,7 @@ const World = (() => {
     for (const o of st.objs) if (o.ench && dist(x, y, o.x + o.w / 2, o.y + o.h / 2) < R) { o.ench = null; n++; }
     if (pin) { if (p.pg) { p.pg = null; n++; } if (p.sta.vol > 0) { p.sta.vol = 0; n++; } if (p.trap) { p.trap = null; n++; } }
     Sim.forRadius(x, y, R, (cx, cy, i, m) => { if (Sim.elec[i] > 0) { Sim.elec[i] = 0; Sim.touch(i); } });
+    n += PH.dissiper(x, y, R);
     st.sp.push({ k: 'ring', core: 'contre', x, y, r: R, life: 0.6, max: 0.6, color: '#a8a29a' });
     msg(n ? 'La magie se dissipe (' + n + ').' : 'Rien à dissiper ici.');
   }
@@ -1314,43 +1326,15 @@ const World = (() => {
     if (spec.repeat && !opts.noRepeat) capRepetitions();
     if (spec.repeat && !opts.noRepeat) st.sp.push({ k: 'repeat', spec, x, y, r, ent: opts.ent || null, opts: { ...opts, noRepeat: true, noExpire: true, noEcho: true, noCombo: true }, t: spec.repeat, max: spec.repeat, left: clamp(Math.round(8 * spec.prm.duration / spec.repeat), 2, 8) });
     if (spec.expire && !opts.noExpire) { const T = (spec.repeat ? spec.repeat * clamp(Math.round(8 * spec.prm.duration / spec.repeat), 2, 8) : 0) + 4 * spec.prm.duration * (1 + (spec.prm.persist || 0)); st.sp.push({ k: 'expire', spec, x, y, r, t: T, max: T }); }
-    for (const core of spec.cores) applyEffect(core, x, y, r, { ...spec.prm, power: spec.prm.power * pm }, 'burst', opts);
+    // une fusion nommée fait naître son phénomène à la place des deux effets de base
+    if (!spec.combo) for (const core of spec.cores) applyEffect(core, x, y, r, { ...spec.prm, power: spec.prm.power * pm }, 'burst', opts);
     if (spec.encre && !opts.noEncre) encreBurst(spec, x, y, r);
-    if (spec.combo) comboEffect(spec.combo, x, y, r, spec.prm);
+    if (spec.combo && !opts.noCombo) PH.deployer(spec, x, y, r, opts, dir);
     if (spec.prm.echo > 0 && !opts.noEcho) st.sp.push({ k: 'echo', spec, x, y, r, opts: { ...opts, noEcho: true }, t: 0.5, left: spec.prm.echo });
     for (const sub of spec.subs) launch(sub, { x, y }, { x: x + (dir ? dir.x : 0) * 100, y: y + (dir ? dir.y : -1) * 100 }, { depth: spec.depth + 1 });
   }
   function doContinuous(spec, x, y, r, dt, opts = {}) {
     for (const core of spec.cores) applyEffect(core, x, y, r, { ...spec.prm, power: spec.prm.power * 0.5 }, dt, opts);
-  }
-  function comboEffect(key, x, y, r, prm) {
-    const C = DATA.COMBOS[key]; const size = prm.size || 1, dur = prm.duration || 1;
-    if (C && C.nom) st.sp.push({ k: 'label', x, y: y - 40, txt: C.nom, life: 1.6, max: 1.6 });
-    evt('combo', key);
-    switch (key) {
-      case 'feu|vent': st.sp.push({ k: 'field', core: 'feu', x, y, r: r * 0.7, life: 5 * dur, max: 5 * dur, prm, vx: (Math.random() < 0.5 ? -1 : 1) * 60 }); break;
-      case 'feu|terre': { let cap = 25 * size; Sim.forRadius(x, y, r * 0.6, (cx, cy, i, m) => { if (cap > 0 && (m === M.TERRE || m === M.PIERRE || m === M.SABLE) && Math.random() < 0.7) { Sim.set(cx, cy, M.LAVE); cap--; } }); break; }
-      case 'eau|feu': Sim.forRadius(x, y, r * 1.2, (cx, cy, i, m) => { if (m === M.AIR && Math.random() < 0.5) Sim.set(cx, cy, M.VAPEUR, 80 + (Math.random() * 60) | 0); }); break;
-      case 'eau|froid': Sim.forRadius(x, y, r * 0.7, (cx, cy, i, m) => { if ((m === M.AIR || m === M.EAU) && !U.rectsOverlap({ x: cx * CS, y: cy * CS, w: CS, h: CS }, st.p)) Sim.set(cx, cy, M.GLACE); }); break;
-      case 'eau|foudre': Sim.forRadius(x, y, r * 2.2, (cx, cy, i, m) => { if (P[m].cond) { Sim.elec[i] = 60; Sim.touch(i); } }); for (let k = 0; k < 30; k++) { const cx = Math.floor((x - r + Math.random() * 2 * r) / CS), cy = Math.floor(y / CS) - 20 - Math.floor(Math.random() * 10); if (Sim.get(cx, cy) === M.AIR) Sim.set(cx, cy, M.EAU); } break;
-      case 'froid|vent': { let cap = 40 * size; Sim.forRadius(x, y - r * 0.5, r, (cx, cy, i, m) => { if (cap > 0 && m === M.AIR && Math.random() < 0.3) { Sim.set(cx, cy, M.NEIGE); cap--; } }); break; }
-      case 'eau|vie': for (let k = 0; k < 3; k++) gridEffect('vie', x, y, r * 1.3, prm, true, 1); break;
-      case 'lumiere|ombre': msg('Lumière et ombre s\'annulent dans un silence gêné.'); break;
-      case 'force|terre': st.shake = 0.6; for (const c of st.crs) if (c.hp > 0 && dist(x, y, c.x, c.y) < r * 3) { c.sta.stun = Math.max(c.sta.stun, 3); c.vy -= 200; } break;
-      case 'gravite|vent': addGField(x, y - r, r * 1.5, 0, -1, 1.1, 12 * dur); break;
-      case 'force|gravite': st.sp.push({ k: 'singularite', x, y, r: r * 2.2, life: 3 * dur, max: 3 * dur }); break;
-      case 'gravite|terre': { const g = Math.floor(x / CS), top = 2; for (let yy = top; yy < top + 6; yy++) for (let xx = g - 3; xx <= g + 3; xx++) if (Sim.get(xx, yy) === M.AIR && Math.hypot(xx - g, yy - top - 3) < 3.3) Sim.set(xx, yy, M.PIERRE); addGField(x, (top + 3) * CS, 40, 0, 1, 3, 3); msg('Un météore se détache du ciel...'); break; }
-      case 'eau|gravite': { spawnLiquid(M.EAU, x, y - 30, 40); addGField(x, y - 30, r, 0, 1, 0, 10 * dur); break; }
-      case 'gravite|temps': addGField(x, y, r * 1.4, 0, 1, 0.25, 10 * dur); break;
-      case 'feu|froid': Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (m === M.PIERRE && Math.random() < 0.5) Sim.set(cx, cy, M.SABLE); else if (m === M.AIR && Math.random() < 0.3) Sim.set(cx, cy, M.VAPEUR, 40); }); break;
-      case 'acide|feu': Sim.forRadius(x, y, r * 1.3, (cx, cy, i, m) => { if (m === M.AIR && Math.random() < 0.5) Sim.set(cx, cy, M.FUMEE, 120); }); for (const c of st.crs) if (c.hp > 0 && dist(x, y, c.x, c.y) < r * 1.5) c.sta.sleep = Math.max(c.sta.sleep, 8 * dur); break;
-      case 'ombre|vie': { const g = groundBelow(x, y); if (g != null) { for (let k = 0; k < 2; k++) st.objs.push(makeObj({ t: 'champignon', x: x - 20 + k * 30, y: g - 26 })); } break; }
-      case 'eau|terre': Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (m === M.TERRE && Math.random() < 0.8) Sim.set(cx, cy, M.BOUE, 200); }); break;
-      case 'feu|lumiere': st.sp.push({ k: 'field', core: 'lumiere', x, y, r: r * 3, life: 12 * dur, max: 12 * dur, prm, faible: true }); break;
-      case 'foudre|metal': Sim.forRadius(x, y, r * 2, (cx, cy, i, m) => { if (m === M.METAL) { Sim.elec[i] = 250; Sim.touch(i); } }); break;
-      case 'temps|vie': for (let k = 0; k < 4; k++) gridEffect('vie', x, y, r * 1.5, prm, true, 1); for (let k = 0; k < 3; k++) gridEffect('temps', x, y, r * 1.5, prm, true, 1); break;
-      case 'portail|eau': { const q = st.portails[0]; if (q) spawnLiquid(M.EAU, q.x, q.y, 40); break; }
-    }
   }
   function groundBelow(x, y) { for (let yy = y; yy < L.h; yy += CS) if (Sim.solidAt(x, yy)) return yy - (yy % CS); return null; }
 
@@ -1442,7 +1426,8 @@ const World = (() => {
           if (trig === 'commande') { st.sp.push({ k: 'attente', spec, x: tx, y: ty, life: 40, mur: seal.shape === 'mur', dir: { x: dx, y: dy } }); continue; }
           if (seal.shape === 'mur') {
             const mw = 30 * prm.size * (prm.dimL || 1), mh = 180 * prm.size * (prm.dimH || 1), rect = { x0: tx - mw / 2, x1: tx + mw / 2, y0: ty - mh / 2, y1: ty + mh / 2 };
-            if (trig === 'immediat' && champForme(spec, rect, { x: dx, y: dy })) continue;
+            if (trig === 'immediat' && spec.combo) PH.deployer(spec, tx, ty, mw / 2, { rect, mur: true }, { x: dx, y: dy });
+            if (trig === 'immediat' && !spec.combo && champForme(spec, rect, { x: dx, y: dy })) continue;
             if (trig === 'immediat' && prm.matiere) matiereRect(spec, rect);
             const pts = murPoints(tx, ty, mw, mh);
             pts.forEach((q, k) => { const pr = k === Math.floor(pts.length / 2); if (trig === 'immediat') doBurst(spec, q.x, q.y, q.r, { mur: true, noMatiere: true, noField: !pr, noEcho: !pr, noRepeat: !pr, noExpire: !pr, noCombo: !pr }); else st.sp.push({ k: 'timer', spec, x: q.x, y: q.y, r: q.r, t: trig === 'retarde' ? spec.delai : 0.1 + Math.abs(k - pts.length / 2) * 0.05, max: trig === 'retarde' ? spec.delai : 0.5, color: C, noField: !pr, mur: true }); });
@@ -1462,7 +1447,7 @@ const World = (() => {
         else if (trig === 'commande') { st.sp.push({ k: 'attente', spec, trait: true, self: true, life: 40 }); if (o.player) msg('Le trait attend. Touche F pour le tirer vers la souris.'); }
         else { const n = 1 + prm.extra, a0 = Math.atan2(dy, dx); for (let i = 0; i < n; i++) { const a = a0 + (n > 1 ? (i - (n - 1) / 2) * 0.18 : 0); fireBeam(spec, ox, oy, Math.cos(a), Math.sin(a), trig); } }
         break;
-      case 'aura': st.sp.push({ k: 'field', spec, core: spec.core, x: ox, y: oy, r: 70 * prm.size * (prm.dimL || 1), life: 6 * prm.duration, max: 6 * prm.duration, prm, follow: true }); if (o.player) msg('L\'effet t\'enveloppe un moment.'); break;
+      case 'aura': if (!spec.combo) st.sp.push({ k: 'field', spec, core: spec.core, x: ox, y: oy, r: 70 * prm.size * (prm.dimL || 1), life: 6 * prm.duration, max: 6 * prm.duration, prm, follow: true }); if (spec.combo && o.player) PH.deployer(spec, ox, oy, 70 * prm.size, { follow: p }, { x: dx, y: dy }); if (o.player) msg('L\'effet t\'enveloppe un moment.'); break;
       case 'prise': {
         const dd = portee(300 * prm.range); const tx = ox + dx * dd, ty = oy + dy * dd;
         saisir(spec, tx, ty, !!o.player);
@@ -1476,8 +1461,9 @@ const World = (() => {
         let best = null, bd = 140;
         for (const q of st.objs) if ((q.t === 'caisse' || q.t === 'rocher') && !q.mort) { const dq = dist(tx, ty, q.x + q.w / 2, q.y + q.h / 2); if (dq < bd) { bd = dq; best = q; } }
         for (const c of st.crs) if (c.hp > 0) { const dq = dist(tx, ty, c.x + c.w / 2, c.y + c.h / 2); if (dq < bd) { bd = dq; best = c; } }
-        if (best) { best.ench = { spec, t: 15 * prm.duration, tick: 0 }; part(best.x + best.w / 2, best.y, C, 12, 60, 0.8, 3, 0, 'spark'); if (o.player) msg('L\'objet porte maintenant l\'effet.'); }
-        else if (o.player) msg('Rien à enchanter par ici.');
+        if (best && spec.combo) PH.deployer(spec, best.x + best.w / 2, best.y + best.h / 2, 50 * prm.size, { follow: best }, { x: dx, y: dy });
+        if (best && !spec.combo) { best.ench = { spec, t: 15 * prm.duration, tick: 0 }; part(best.x + best.w / 2, best.y, C, 12, 60, 0.8, 3, 0, 'spark'); if (o.player) msg('L\'objet porte maintenant l\'effet.'); }
+        else if (!best && o.player) msg('Rien à enchanter par ici.');
         break;
       }
       case 'vague': {
@@ -1488,6 +1474,7 @@ const World = (() => {
       case 'colonne': {
         const dd = portee(260 * prm.range); const tx = ox + dx * dd, ty = oy + dy * dd; const g = groundBelow(tx, ty - 20);
         const cw = 22 * prm.size * (prm.dimL || 1), ch = 200 * prm.size * (prm.dimH || 1), gy0 = g != null ? g : ty, rect = { x0: tx - cw, x1: tx + cw, y0: gy0 - ch, y1: gy0 };
+        if (spec.combo) { PH.deployer(spec, tx, gy0 - ch / 2, cw, { rect }, { x: dx, y: dy }); break; }
         if (champForme(spec, rect, null)) break;
         if (prm.matiere) { matiereRect(spec, { x0: tx - cw * 0.6, x1: tx + cw * 0.6, y0: gy0 - ch, y1: gy0 - 1 }); Son.sfx('burst', 'terre'); part(tx, gy0, spec.color, 14, 120, 0.6, 3, 300, 'eclat'); break; }
         st.sp.push({ k: 'colonne', spec, x: tx, y: gy0, h: ch, w: cw, life: 2 * prm.duration, max: 2 * prm.duration, color: C, tick: 0 });
@@ -1496,17 +1483,17 @@ const World = (() => {
       case 'invocation': {
         const f = makeCreature({ t: 'familier', x: ox, y: oy - 30 });
         f.spec = spec; f.core = spec.core; f.life = 30 * prm.duration; f.sta.tame = true; f.filDonne = true; f.vole = true; f.hp = 4; f.hpMax = 4; f.dmg = 0; f.w = 20; f.h = 20; f.cd = 0; f.x0 = ox; f.y0 = oy - 40;
-        st.crs.push(f); if (o.player) msg('Un petit familier de ' + (DATA.CORES[spec.core] || DATA.PSEUDO[spec.core]).nom.toLowerCase() + ' t\'accompagne.');
+        st.crs.push(f); if (spec.combo) PH.deployer(spec, ox, oy - 30, 30 * prm.size, { follow: f }, { x: dx, y: dy }); if (o.player) msg('Un petit familier de ' + (DATA.CORES[spec.core] || DATA.PSEUDO[spec.core]).nom.toLowerCase() + ' t\'accompagne.');
         break;
       }
     }
   }
   function selfCast(spec, aim, noRepeat) {
-    for (const core of spec.cores) applySelf(core, spec.prm, aim, spec);
+    if (!spec.combo) for (const core of spec.cores) applySelf(core, spec.prm, aim, spec);
     if (spec.repeat && !noRepeat) capRepetitions();
     if (spec.repeat && !noRepeat) st.sp.push({ k: 'repeat', self: true, spec, aim, t: spec.repeat, max: spec.repeat, left: clamp(Math.round(8 * spec.prm.duration / spec.repeat), 2, 8) });
     if (noRepeat) return;
-    if (spec.combo) comboEffect(spec.combo, st.p.x + st.p.w / 2, st.p.y + st.p.h / 2, 60 * (spec.prm.size || 1), spec.prm);
+    if (spec.combo) PH.deployer(spec, st.p.x + st.p.w / 2, st.p.y + st.p.h / 2, 60 * (spec.prm.size || 1), { follow: st.p }, aim ? { x: Math.sign(aim.x - st.p.x) || 1, y: 0 } : null);
     for (const sub of spec.subs) launch(sub, { x: st.p.x + st.p.w / 2, y: st.p.y + st.p.h / 2 }, aim, { depth: spec.depth + 1 });
   }
   function fireBeam(spec, x, y, dx, dy, trig) {
@@ -1527,10 +1514,11 @@ const World = (() => {
     st.sp.push({ k: 'beam', core, x1: x, y1: y, x2: ex, y2: ey, life: 0.35, max: 0.35, color: C, w: 6 * prm.size * (prm.dimL || 1) });
     if (prm.matiere) matiereLigne(spec, x + dx * 24, y + dy * 24, ex, ey, 5 * prm.size * (prm.dimL || 1));
     Son.sfx('cast', core);
+    if (spec.combo) PH.deployer(spec, ex, ey, 30 * prm.size, { ligne: { x1: x + dx * 20, y1: y + dy * 20, x2: ex, y2: ey, w: 14 * prm.size * (prm.dimL || 1) } }, { x: dx, y: dy });
     if (trig === 'contact') doBurst(spec, ex, ey, 55 * prm.size, { noPlayer: true }, { x: dx, y: dy });
     else {
-      for (let t = 10; t < Math.hypot(ex - x, ey - y); t += 14) for (const c of spec.cores) gridEffect(c, x + dx * t, y + dy * t, 9 * prm.size * (prm.dimL || 1), { ...prm, power: prm.power * 0.6 }, true, 1);
-      for (const e of touched) for (const c of spec.cores) applyEffect(c, e.x + e.w / 2, e.y + e.h / 2, Math.max(e.w, e.h) * 0.6, { ...prm, power: prm.power * 0.8 }, 'burst', { noPlayer: true, noField: true, noGrid: true });
+      if (!spec.combo) for (let t = 10; t < Math.hypot(ex - x, ey - y); t += 14) for (const c of spec.cores) gridEffect(c, x + dx * t, y + dy * t, 9 * prm.size * (prm.dimL || 1), { ...prm, power: prm.power * 0.6 }, true, 1);
+      if (!spec.combo) for (const e of touched) for (const c of spec.cores) applyEffect(c, e.x + e.w / 2, e.y + e.h / 2, Math.max(e.w, e.h) * 0.6, { ...prm, power: prm.power * 0.8 }, 'burst', { noPlayer: true, noField: true, noGrid: true });
       doBurst(spec, ex - dx * 6, ey - dy * 6, 24 * prm.size, { noPlayer: true, noField: core !== 'lumiere' }, { x: dx, y: dy });
     }
   }
@@ -1928,6 +1916,7 @@ const World = (() => {
     updateObjs(dt);
     updateCreatures(dt);
     updateSpells(dt);
+    PH.update(dt);
     updateParts(dt);
     updatePickups(dt);
     // caméra
@@ -2098,7 +2087,7 @@ const World = (() => {
 
   // facteur de temps à un endroit : 1 dehors, 0 figé, < 1 ralenti, > 1 accéléré (le lanceur n'y est pas soumis)
   let bullesT = [];
-  function majBulles() { bullesT = []; for (const b of st.sp) if (b.k === 'bulle' && !b.mort) bullesT.push({ x: b.x, y: b.y, r: b.r, rect: b.rect || null, f: b.mode === 'vite' ? 3 : b.mode === 'lent' ? 0.3 : 0 }); Sim.tzones = bullesT; }
+  function majBulles() { bullesT = []; for (const b of st.sp) if (b.k === 'bulle' && !b.mort) bullesT.push({ x: b.x, y: b.y, r: b.r, rect: b.rect || null, f: b.fx != null ? b.fx : b.mode === 'vite' ? 3 : b.mode === 'lent' ? 0.3 : 0 }); Sim.tzones = bullesT; }
   function tempsDe(x, y, vite = 3) { for (const z of bullesT) if (dansZone(z, x, y)) return z.f > 1 ? vite : z.f; return 1; }
   function updateObjs(dtG) {
     let dt = dtG;
@@ -2318,10 +2307,10 @@ const World = (() => {
   function collision(a, b) {
     const x = (a.x + b.x) / 2, y = (a.y + b.y) / 2;
     const ca = a.spec.cores[0], cb = b.spec.cores[0];
-    const key = [ca, cb].sort().join('|'); const nomme = DATA.COMBOS[key];
+    const key = [ca, cb].sort().join('|'); const nomme = DATA.comboInfo(key);
     const pw = ((a.prm.power + b.prm.power) / 2) * (nomme ? 1.3 : 1.1), r = 60 * Math.max(a.prm.size, b.prm.size);
     for (const core of new Set([ca, cb])) applyEffect(core, x, y, r, { ...a.prm, power: pw }, 'burst');
-    if (ca !== cb) comboEffect(key, x, y, r, a.prm);
+    if (ca !== cb && DATA.comboInfo(key)) PH.deployer({ ...a.spec, combo: key, castId: a.spec.castId * 1000 + 7, shape: 'zone' }, x, y, r, {}, { x: Math.sign(a.vx) || 1, y: 0 });
     st.sp.push({ k: 'label', x, y: y - 46, txt: 'Collision' + (nomme ? ' : ' + nomme.nom : ''), life: 1.6, max: 1.6 });
     st.shake = 0.25; a.mort = true; b.mort = true; evt('collision');
   }
@@ -2526,6 +2515,7 @@ const World = (() => {
             break;
           }
           s.x = nx; s.y = ny;
+          if (s.spec && s.spec.combo) PH.trainee(s, dt);
           const lm = Sim.matAt(s.x, s.y);
           if (P[lm].liquid && !s.plouf) { s.plouf = true; part(s.x, s.y - 4, P[lm].color, 12, 220, 0.7, 2, 900, 'goutte'); }
           if (P[lm].liquid) {
@@ -2751,6 +2741,7 @@ const World = (() => {
     if (st.control) { const c = st.control.c; ctx.save(); ctx.strokeStyle = '#b08ad8'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); U.inkCircle(ctx, c.x + c.w / 2, c.y + c.h / 2, Math.max(c.w, c.h) * 0.8, 2, 1.5); ctx.setLineDash([]); ctx.globalAlpha = 0.5; U.inkLine(ctx, p.x + p.w / 2, p.y + 10, c.x + c.w / 2, c.y, 3, 3); ctx.restore(); }
     for (const z of st.gz) drawGField(ctx, z);
     st.marques.forEach((mq, i) => { const q = posMarque(mq); if (!q) return; const last = i === st.marques.length - 1; ctx.save(); ctx.globalAlpha = last ? 0.95 : 0.5; const g = ctx.createRadialGradient(q.x, q.y, 2, q.x, q.y, 26); g.addColorStop(0, 'rgba(224,176,80,0.45)'); g.addColorStop(1, 'rgba(224,176,80,0)'); ctx.fillStyle = g; ctx.fillRect(q.x - 26, q.y - 26, 52, 52); ctx.translate(q.x, q.y - (mq.ent ? mq.ent.h / 2 + 12 : 0)); ctx.rotate(time * 0.8); Seal.glyph(ctx, 'marque', 0, 0, last ? 9 : 7, '#c08a2a', 3); ctx.restore(); });
+    PH.draw(ctx, time);
     for (const s of st.sp) drawSpell(ctx, s);
     for (const q of st.parts) drawPart(ctx, q);
     // halos : feu, lave, torches, cristaux
@@ -3339,5 +3330,5 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a) };
+  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a), get phen() { return PH; } };
 })();

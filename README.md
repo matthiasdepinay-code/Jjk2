@@ -57,7 +57,7 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
   - **Champs sculptés** : la Gravité et le Temps épousent la forme. Une Colonne de Gravité écrase tout ce qui s'y tient (inversée, tout y monte) ; une Colonne de Temps figé suspend le sable et les créatures ; un Mur de temps ralenti fait traverser les projectiles au ralenti.
 - **Filtres** : Eau, Feu, Pierre, Terre, Bois, Métal, Glace, Créature, Liquide, Objet. **Cibles** : Souris, Créature proche, Marque, Objet proche (brasier, lampe, levier, caisse...).
 - **Apprivoiser** : chaque créature se gagne par affinité (l'élément qu'elle aime, les soins, le calme) ; la blesser la fait reculer. Les petites bêtes en quelques gestes, le golem en plusieurs jours (20 % au plus par jour).
-- **Fusion** : deux glyphes d'effet dans un sceau, avec des combos nommés (tornade de feu, banquise, lave, orage, blizzard...).
+- **Fusion** : deux effets dans un sceau font naître un phénomène (voir plus bas, « Fusions »).
 - **Sous-sceaux** : un emplacement de modificateur peut contenir un sceau consigné entier, lancé là où le premier éclate (deux niveaux).
 - **Formes** : Projectile, Sur soi, puis Zone, Trait, Aura, Mur, Totem, Chaîne, Pluie, Sur objet, Bouclier, Prise, Invocation.
 - **Modificateurs** : Puissance, Portée, Durée, Taille, Rebond, Persistance, Vitesse, Double, Inverser, Écho, Téléguidé, Orbite, Canalisé, Boomerang, Spirale, Rase-sol, et les onze glyphes de langage. Un à cinq emplacements selon la taille.
@@ -68,6 +68,42 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 - **Métamorphose** : un golem en grenouille, une caisse en rocher ; sur soi, une forme animale choisie par le glyphe fusionné (eau : grenouille, vent : chauve-souris, vie : lapin, terre : golem). **Rembobinage** : le monde garde six secondes de mémoire ; la matière revient, les créatures reculent et se relèvent, on revient sur ses pas.
 - **Prise** : saisir de la matière (l'eau d'un lac, du sable, des créatures), la promener, puis la lancer d'un geste sur un golem.
 - **Encres spéciales** : sept ingrédients ne se trouvent qu'en creusant (X) dans leur région (cœur de braise au volcan, nacre au fond du lac, ambre en forêt, givre bleu en montagne, poudre d'or aux ruines, sable chantant au désert, pollen à la clairière). Brassées au chaudron, elles donnent huit gouttes ; on choisit l'encre d'un sceau à la table, une goutte par lancer.
+
+## Fusions : quand deux essences s'allient
+
+Deux effets dans un même sceau (le second sous le cercle, sur un sceau moyen ou grand) peuvent fusionner. Une fusion connue fait naître un **phénomène** : il dure, il a sa propre physique, il agit sur le monde, et il **remplace** les deux effets de base. Un aspect compte comme son effet : Eau + Gel, c'est le froid ; Gravité + Attraction, c'est la force.
+
+- **Toutes les paires des dix essences physiques** (Feu, Eau, Terre, Vent, Vie, Lumière, Foudre, Gravité, Temps, Transmutation), soit 45 phénomènes. Quelques exemples :
+  - Feu + Gravité, **Petit soleil** : une combustion tenue par la pesanteur. L'étoile flotte, attire, chauffe tout autour, éclaire la nuit et grossit en avalant ce qui brûle. L'eau l'affaiblit, le vent la déplace.
+  - **Geyser**, **Magma**, **Tornade de feu**, **Rayon ardent**, **Foudre en boule**, **Forge**.
+  - **Nuée**, **Orage**, **Sphère d'eau**, **Arc-en-ciel** (on marche dessus), **Érosion**, **Liquéfaction**.
+  - **Météore**, **Géode**, **Fulgurite**, **Racines**, **Pétrification**, **Golem de glaise**.
+  - **Cyclone**, **Tempête de sable**, **Air solide**, **Lucioles**, **Trou noir**, **Horizon**, **Aube**, **Miroir**, **Aimant**, **Électrolyse**, **Origine**...
+- **Seize fusions avec les aspects** : Blizzard, Comète de glace, Choc thermique, Cryostase, Bobine, Métal rougi, Fumée toxique, Pluie acide, Tonnerre, Implosion, Écran de fumée, Éboulement, Fil électrique, Banquise, Raz-de-marée, Singularité.
+- **Quatre familles** qui s'allient à n'importe quel effet :
+  - **Faille** (Espace) : une faille qui crache l'élément.
+  - **Élémentaire** (Esprit) : un esprit de l'élément qui chasse tes ennemis.
+  - **Absorption** (Contre-sort) : avale cette matière et rend un peu d'encre.
+  - **Chimère** (Métamorphose) : la créature porte l'élément partout. Sur soi, tu en prends la nature.
+- **La forme du sceau compte.** En projectile, le phénomène file et naît à l'impact. En zone, il est posé. En mur ou en colonne, il en prend le rectangle : une colonne de geyser, un rideau d'orage, une tour de cyclone. En trait, il suit la ligne : un rayon ardent, un fil électrique, un pont de racines ou d'air solide. Sur soi, en aura, sur un objet ou un familier, il suit son porteur.
+- **À découvrir** : le grimoire (onglet Fusions) montre « ??? » et un indice. Le phénomène se révèle la première fois qu'on le lance, et rapporte de l'expérience.
+
+## Physique
+
+- **Chaleur** : chaque case a une température.
+  - Le feu et la lave chauffent ce qui les entoure, selon la matière : le métal conduit, le bois isole. L'air chaud monte, l'air froid descend.
+  - La glace fond près d'une pierre brûlante, l'eau bout sur une plaque de métal chauffée, le bois s'embrase à distance d'une grande chaleur. La lave refroidie par le gel devient obsidienne, le sable très chaud devient verre.
+  - Les sorts de Feu chauffent, ceux de Gel refroidissent. Les solides chauffés luisent au rouge, le froid laisse du givre.
+  - Les créatures et l'apprenti(e) brûlent près d'une forte chaleur et s'engourdissent dans le grand froid.
+- **Effondrement** : ce qui ne tient plus à rien tombe d'un bloc.
+  - Creuser sous une dalle, faire sauter les piliers d'une arche ou couper un arbre au pied les fait tomber.
+  - Le bloc écrase ce qui est dessous et s'émiette à l'impact. La glace et le bois flottent sur l'eau, la pierre coule.
+  - Les îles volantes tiennent par magie.
+- **Masse et flottaison** :
+  - Chaque chose a une masse : le vent pousse un lapin bien plus loin qu'un golem.
+  - La caisse flotte, le rocher coule, le golem marche au fond du lac.
+  - Une créature projetée contre un mur ou qui tombe de haut se blesse. Un rocher qui tombe blesse ce qu'il touche. Une chute de très haut fait mal.
+- **Nouvelle matière** : le gaz de l'Électrolyse, léger, explose à la moindre flamme.
 
 ## Dehors
 
@@ -101,6 +137,7 @@ js/fx.js        effets visuels : halos, flammes, traînées, ondes, éclairs
 js/audio.js     sons génératifs (WebAudio)
 js/sim.js       simulation de matières (grille) et rendu encre par morceaux
 js/gen.js       génération du grand monde
+js/combos.js    phénomènes : les fusions d'essences, leur physique et leur dessin
 js/world.js     monde extérieur : entités, effets, créatures, météo, rendu
 js/lab.js       scène du labo
 js/ui.js        éditeur de sceaux, chaudron, grimoire, HUD

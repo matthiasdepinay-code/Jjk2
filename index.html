@@ -150,6 +150,7 @@
   .potion-item { display: flex; align-items: flex-start; gap: 10px; border-bottom: 1px solid rgba(31,26,22,0.2); padding: 6px 0; flex-wrap: wrap; }
   .potion-item > div { flex: 1; min-width: 200px; }
   .recette { padding: 3px 0; }
+  .recette.verrou { opacity: 0.72; }
 
   /* grimoire */
   #grim-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; position: sticky; top: -18px; z-index: 3; background: var(--paper); padding: 8px 0 6px; border-bottom: 1px solid rgba(31,26,22,0.2); }
@@ -300,6 +301,7 @@
       <div id="grim-tabs">
         <button data-tab="decouvertes" class="on">Découvertes</button>
         <button data-tab="glyphes">Glyphes</button>
+        <button data-tab="fusions">Fusions</button>
         <button data-tab="recettes">Recettes</button>
         <button data-tab="ingredients">Ingrédients</button>
         <button data-tab="intuitions">Réactions</button>
@@ -368,6 +370,8 @@
       <p>Maintiens le clic pour <b>charger</b> un sort. Plus tard, ta main gauche lancera un second sceau au clic droit. Deux sorts à la suite au même endroit peuvent former un <b>enchaînement</b> (l'eau puis le froid, le feu puis le vent...) ; deux projectiles qui se croisent fusionnent. Le <b>Bouclier</b> se dresse devant toi et repousse l'eau : on peut marcher au fond du lac. Le <b>Contre-sort</b> défait la magie posée.</p>
       <p>La <b>Gravité</b> ne sert pas qu'à voler : elle pose un champ de pesanteur dans le sens où tu la lances. Lancée vers la droite, tout y tombe à droite, même l'eau et le sable ; vers le haut, tout tombe vers le ciel. Avec Puissance, la pesanteur écrase ; avec Inverser, plus rien ne pèse. Sur toi, elle pointe vers la surface que tu vises : tu marches sur les murs et au plafond. Vise le vide pour voler, ajoute Puissance pour devenir une enclume.</p>
       <p>Un sceau moyen ou grand se <b>sculpte</b> : sous le cercle, règle la largeur et la hauteur de la forme. Un Mur très large et très bas se couche en pont ; une Colonne étroite et haute monte jusqu'au ciel. Le glyphe <b>Matière</b> rend l'effet solide : l'Eau gelée devient des lames de glace à jeter sur les monstres, un pont, ou la grêle. <b>Rafale</b> lance une volée. La Gravité et le Temps prennent la forme qu'on leur donne : une colonne qui écrase, un mur où tout ralentit.</p>
+      <p>Deux essences dans un même sceau peuvent <b>fusionner</b> : le Feu tenu par la Gravité devient un <b>petit soleil</b> qui flotte, attire et chauffe tout autour ; l'Eau et la Lumière tendent un arc-en-ciel sur lequel on marche ; la Gravité et la Terre font tomber un météore. Le grimoire garde la trace des fusions que tu découvres, et donne un indice pour les autres. La forme du sceau compte : une colonne, un mur, un trait donnent au phénomène leur forme.</p>
+      <p>Le monde a sa <b>physique</b> : la chaleur se propage (la lave chauffe la pierre, la glace fond près d'elle, l'air chaud monte), ce qui ne tient plus sur rien s'effondre, le bois flotte et la pierre coule, et ce qui tombe de haut fait mal.</p>
       <p>Mon <b>corbeau</b> passera de temps en temps à la fenêtre avec une lettre : des commandes, des épreuves, des sceaux à inventer. Réponds-y, il te rapportera des choses qu'on ne trouve nulle part ailleurs.</p>
       <p>Le labo grandit avec toi : un <b>bac d'essai</b> sous verre pour tester un sceau, un <b>alambic</b> qui distille deux fioles en une forte, une <b>presse à glyphes</b> qui tire des parchemins lançables sans encre, et un <b>terrarium</b> pour loger les créatures apprivoisées que tu ramènes dans tes bras.</p>
       <p>Il n'y a que quatorze <b>essences</b>, des forces premières. Tout le reste en découle : ce sont des <b>aspects</b>, qu'on pose sur le second anneau avec leur essence. L'Eau avec <b>Gel</b> devient le froid, la Terre avec <b>Minerai</b> donne le métal, la Gravité avec <b>Attraction</b> attire tout. Une créature ne s'apprivoise pas d'un sort : elle se gagne avec le temps, en lui offrant ce qu'elle aime. Le golem est long à convaincre.</p>
@@ -395,6 +399,7 @@
 <script src="js/audio.js"></script>
 <script src="js/sim.js"></script>
 <script src="js/gen.js"></script>
+<script src="js/combos.js"></script>
 <script src="js/world.js"></script>
 <script src="js/lab.js"></script>
 <script src="js/ui.js"></script>

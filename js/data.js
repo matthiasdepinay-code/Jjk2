@@ -39,32 +39,97 @@ const DATA = (() => {
     rouille:     { id: 'rouille',     nom: 'Rouille',     couleur: '#9a5a3a' },
   };
   const INVERSE = { marque: 'marque', contre: 'contre', feu: 'froid', froid: 'feu', force: 'repulsion', vent: 'force', lumiere: 'ombre', ombre: 'lumiere', terre: 'creuser', vie: 'fanaison', acide: 'neutraliser', foudre: 'neutraliser', gravite: 'poids', eau: 'secheresse', temps: 'ralentir', son: 'silence', metal: 'rouille', transmutation: 'transmutation', esprit: 'esprit', lien: 'lien', portail: 'portail', metamorphose: 'metamorphose', rembobinage: 'temps' };
-  // Fusions nommées (clé : deux glyphes triés)
+  // Fusions nommées (clé : deux effets triés). Chacune fait naître un phénomène qui dure et épouse la forme du sceau.
   const COMBOS = {
-    'feu|vent': { nom: 'Tornade de feu', desc: 'Des flammes qui tourbillonnent et se déplacent.' },
-    'feu|terre': { nom: 'Lave', desc: 'La terre fond en lave.' },
-    'eau|feu': { nom: 'Vapeur', desc: 'Les deux s\'annulent dans un grand nuage.' },
-    'eau|froid': { nom: 'Banquise', desc: 'Un bloc de glace solide, même en l\'air.' },
-    'eau|foudre': { nom: 'Orage', desc: 'L\'eau conduit loin, la pluie tombe.' },
-    'froid|vent': { nom: 'Blizzard', desc: 'Neige et bourrasques.' },
-    'eau|vie': { nom: 'Printemps', desc: 'Tout pousse d\'un coup.' },
-    'lumiere|ombre': { nom: 'Crépuscule', desc: 'Rien. Un silence gêné.' },
-    'force|terre': { nom: 'Séisme', desc: 'Le sol tremble et attire.' },
-    'gravite|vent': { nom: 'Cyclone', desc: 'Une colonne qui soulève tout, longtemps.' },
-    'force|gravite': { nom: 'Singularité', desc: 'Tout est aspiré vers un point, puis recraché.' },
-    'gravite|terre': { nom: 'Météore', desc: 'Un rocher se détache du ciel et s\'écrase.' },
-    'eau|gravite': { nom: 'Sphère d\'eau', desc: 'Une bulle d\'eau qui flotte en apesanteur.' },
-    'gravite|temps': { nom: 'Chute lente', desc: 'Tout tombe au ralenti dans la bulle.' },
-    'feu|froid': { nom: 'Choc thermique', desc: 'La pierre éclate en sable.' },
-    'acide|feu': { nom: 'Fumée toxique', desc: 'Un nuage qui endort.' },
-    'ombre|vie': { nom: 'Mycélium', desc: 'Des champignons d\'ombre poussent.' },
-    'eau|terre': { nom: 'Boue', desc: 'La terre coule en sable mouillé.' },
-    'feu|lumiere': { nom: 'Petit soleil', desc: 'Une lumière immense et chaude.' },
-    'foudre|metal': { nom: 'Dynamo', desc: 'Le métal garde la charge longtemps.' },
-    'son|verre': { nom: 'Chant du verre', desc: '' },
-    'temps|vie': { nom: 'Forêt instantanée', desc: 'Les plantes jaillissent.' },
-    'portail|eau': { nom: 'Source', desc: 'De l\'eau jaillit du portail.' },
+    // --- le Feu ---
+    'eau|feu':            { nom: 'Geyser', desc: 'Une colonne de vapeur brûlante jaillit du sol : elle soulève tout et ébouillante.', indice: 'L\'eau bout quand le feu la presse.' },
+    'feu|terre':          { nom: 'Magma', desc: 'Une fontaine de lave crache du sol, puis refroidit en roche.', indice: 'La terre fond quand le feu la travaille.' },
+    'feu|vent':           { nom: 'Tornade de feu', desc: 'Un tourbillon de flammes qui avance, soulève les petites choses et allume tout.', indice: 'Le vent fait danser la flamme.' },
+    'feu|vie':            { nom: 'Brûlis', desc: 'Le feu passe sur l\'herbe, puis tout repousse, plus vert qu\'avant.', indice: 'Après la flamme, la pousse.' },
+    'feu|lumiere':        { nom: 'Rayon ardent', desc: 'Un rayon de soleil concentré : il vitrifie le sable, allume de loin, fait fondre la pierre.', indice: 'La loupe sous le soleil.' },
+    'feu|foudre':         { nom: 'Foudre en boule', desc: 'Une boule de plasma qui erre, foudroie ce qui l\'approche et éclate dans l\'eau.', indice: 'La flamme électrique ne tient pas en place.' },
+    'feu|gravite':        { nom: 'Petit soleil', desc: 'Une combustion tenue par la pesanteur : une étoile qui flotte, attire, chauffe tout autour, éclaire la nuit et se nourrit de ce qui brûle.', indice: 'Le feu qui ne peut plus s\'échapper.' },
+    'feu|temps':          { nom: 'Feu éternel', desc: 'Une flamme hors du temps : elle ne s\'éteint pas, ne se propage pas, réchauffe et redonne de l\'encre à qui s\'assoit près d\'elle.', indice: 'Une flamme qui ne vieillit pas.' },
+    'feu|transmutation':  { nom: 'Forge', desc: 'La chaleur change la matière : la pierre devient métal, le sable verre, la terre pierre.', indice: 'Le creuset de l\'alchimiste.' },
+    // --- l'Eau ---
+    'eau|terre':          { nom: 'Marécage', desc: 'Le sol devient boue : les lourds s\'enfoncent, tout s\'englue.', indice: 'La terre qui boit trop.' },
+    'eau|vent':           { nom: 'Nuée', desc: 'Un nuage de pluie qui dérive : il éteint les feux, remplit les trous, fait pousser.', indice: 'L\'eau que le vent emporte.' },
+    'eau|vie':            { nom: 'Source vive', desc: 'Une source qui soigne ceux qui s\'y tiennent et fait tout pousser alentour.', indice: 'L\'eau qui donne la vie.' },
+    'eau|lumiere':        { nom: 'Arc-en-ciel', desc: 'Un arc de lumière solide, de toi jusqu\'au point visé : on peut marcher dessus.', indice: 'La lumière dans la pluie.' },
+    'eau|foudre':         { nom: 'Orage', desc: 'Un nuage noir qui foudroie le sol au-dessous, de préférence les créatures et l\'eau.', indice: 'Le ciel qui gronde.' },
+    'eau|gravite':        { nom: 'Sphère d\'eau', desc: 'Une bulle d\'eau en apesanteur : elle aspire les liquides, emprisonne les créatures et lâche tout à la fin.', indice: 'L\'eau qui ne tombe plus.' },
+    'eau|temps':          { nom: 'Érosion', desc: 'Mille ans d\'eau en quelques secondes : elle creuse la terre et use la pierre.', indice: 'La goutte qui creuse la pierre.' },
+    'eau|transmutation':  { nom: 'Liquéfaction', desc: 'Le sol, même la pierre, devient boue... puis se fige en pierre et retient ce qui s\'y est enfoncé.', indice: 'La pierre qui coule.' },
+    // --- la Terre ---
+    'terre|vent':         { nom: 'Tempête de sable', desc: 'Un mur de sable qui avance : il pousse, aveugle, use et laisse des dunes.', indice: 'La poussière que le vent soulève.' },
+    'terre|vie':          { nom: 'Racines', desc: 'Des racines jaillissent et ligotent les créatures ; en trait, elles poussent en pont de bois.', indice: 'Ce qui pousse sous la terre.' },
+    'lumiere|terre':      { nom: 'Géode', desc: 'Des pics de cristal jaillissent du sol, projettent les créatures et luisent ensuite.', indice: 'La lumière prisonnière de la roche.' },
+    'foudre|terre':       { nom: 'Fulgurite', desc: 'Un éclair qui fore le sol et laisse un tunnel aux parois de verre.', indice: 'La foudre qui entre dans la terre.' },
+    'gravite|terre':      { nom: 'Météore', desc: 'Un rocher tombe du ciel sur le point visé : cratère, onde de choc, éboulements.', indice: 'La pierre qui tombe d\'en haut.' },
+    'temps|terre':        { nom: 'Pétrification', desc: 'Les créatures deviennent statues un moment ; le bois devient pierre, le miel ambre.', indice: 'Ce que les siècles font de la terre.' },
+    'terre|transmutation':{ nom: 'Golem de glaise', desc: 'La terre du lieu se lève en golem allié, qui frappe tes ennemis puis retourne au sol.', indice: 'La glaise qu\'on anime.' },
+    // --- le Vent ---
+    'vent|vie':           { nom: 'Pollen', desc: 'Un nuage de pollen : l\'herbe pousse sur son passage, les créatures s\'endorment.', indice: 'Le vent qui sème.' },
+    'lumiere|vent':       { nom: 'Lucioles', desc: 'Un essaim de lumières qui dansent longtemps : elles éclairent et attirent les curieux.', indice: 'La lumière portée par la brise.' },
+    'foudre|vent':        { nom: 'Front d\'orage', desc: 'Une rafale chargée qui balaie tout devant elle et foudroie ce qu\'elle pousse.', indice: 'La bourrasque avant l\'orage.' },
+    'gravite|vent':       { nom: 'Cyclone', desc: 'Une colonne qui aspire et soulève tout, sable, eau et créatures, puis les recrache.', indice: 'Le vent qui tombe vers le haut.' },
+    'temps|vent':         { nom: 'Souffle des âges', desc: 'Une bourrasque qui fait vieillir tout ce qu\'elle traverse : les plantes poussent et fanent, le métal rouille.', indice: 'Le vent des années.' },
+    'transmutation|vent': { nom: 'Air solide', desc: 'L\'air se fige en verre invisible : une plateforme, un mur, un pont, qui arrête aussi les sorts.', indice: 'Le vent changé en pierre.' },
+    // --- la Vie ---
+    'lumiere|vie':        { nom: 'Arbre de lumière', desc: 'Un arbre pousse d\'un coup ; son feuillage luit et soigne ceux qui s\'abritent dessous.', indice: 'Ce que la lumière fait pousser.' },
+    'foudre|vie':         { nom: 'Ronces électriques', desc: 'Un roncier épais et chargé : qui le touche est piqué et foudroyé.', indice: 'Les épines qui crépitent.' },
+    'gravite|vie':        { nom: 'Îlot flottant', desc: 'Une motte de terre herbue flotte dans le ciel... puis retombe, sur qui se trouve dessous.', indice: 'Le jardin qui ne pèse plus.' },
+    'temps|vie':          { nom: 'Forêt instantanée', desc: 'Des arbres entiers poussent en un instant.', indice: 'Cent printemps d\'un coup.' },
+    'transmutation|vie':  { nom: 'Bois vivant', desc: 'La pierre et la terre deviennent bois et mousse... et le bois, ça brûle.', indice: 'La roche qui se met à vivre.' },
+    // --- la Lumière ---
+    'foudre|lumiere':     { nom: 'Prisme', desc: 'Un prisme flottant qui tire des rayons sur les créatures hostiles proches.', indice: 'La lumière qui se brise en éclairs.' },
+    'gravite|lumiere':    { nom: 'Trou noir', desc: 'Une pesanteur si forte que la lumière n\'en sort plus : elle avale la matière, les sorts et tire tout à elle.', indice: 'La lumière qui tombe.' },
+    'lumiere|temps':      { nom: 'Aube', desc: 'Le temps du ciel avance : la nuit se lève en aube, le jour tombe en crépuscule.', indice: 'Le soleil qui se presse.' },
+    'lumiere|transmutation': { nom: 'Miroir', desc: 'Un miroir qui renvoie les projectiles et barre le passage.', indice: 'La lumière qu\'on fige en surface.' },
+    // --- la Foudre ---
+    'foudre|gravite':     { nom: 'Aimant', desc: 'Un champ magnétique : il capture les projectiles, attire golems, rochers et caisses, charge le métal.', indice: 'La foudre qui attire.' },
+    'foudre|temps':       { nom: 'Foudre suspendue', desc: 'Un éclair figé dans le temps : il reste là et foudroie qui le touche.', indice: 'L\'éclair qui ne finit pas.' },
+    'foudre|transmutation': { nom: 'Électrolyse', desc: 'La foudre défait l\'eau en un gaz léger, qui explose à la moindre flamme.', indice: 'L\'eau qui se défait sous la foudre.' },
+    // --- Gravité et Temps ---
+    'gravite|temps':      { nom: 'Horizon', desc: 'Près du centre, le temps ralentit jusqu\'à presque s\'arrêter ; tout y est attiré, doucement.', indice: 'Le temps qui pèse.' },
+    'gravite|transmutation': { nom: 'Presse', desc: 'La pesanteur écrase la matière : le sable devient pierre, la pierre cristal.', indice: 'La pression qui change tout.' },
+    'temps|transmutation':{ nom: 'Origine', desc: 'Chaque chose redevient ce qu\'elle était : le verre sable, l\'obsidienne lave, la cendre bois, le métal pierre.', indice: 'Revenir à ce qu\'on était.' },
+    // --- avec les aspects ---
+    'froid|vent':         { nom: 'Blizzard', desc: 'Une tempête de neige qui dérive, gèle l\'eau et engourdit.', indice: 'Le vent glacé.' },
+    'froid|gravite':      { nom: 'Comète de glace', desc: 'Un bloc de glace tombe du ciel et gèle tout à l\'impact.', indice: 'La glace qui tombe d\'en haut.' },
+    'feu|froid':          { nom: 'Choc thermique', desc: 'Chaud puis froid d\'un coup : la pierre, le verre et la glace éclatent.', indice: 'Ce qui casse quand on le trempe.' },
+    'froid|temps':        { nom: 'Cryostase', desc: 'Les créatures sont prises dans des blocs de glace qui ne fondent pas de sitôt.', indice: 'Le froid qui arrête le temps.' },
+    'foudre|metal':       { nom: 'Bobine', desc: 'Le métal garde la charge et lance des arcs sur les créatures proches.', indice: 'Le métal qui chante sous la foudre.' },
+    'feu|metal':          { nom: 'Métal rougi', desc: 'Le métal chauffe au rouge : il brûle ce qui le touche et allume ce qui l\'approche.', indice: 'Le fer dans la forge.' },
+    'acide|feu':          { nom: 'Fumée toxique', desc: 'Un nuage âcre qui empoisonne et assoupit.', indice: 'Ce qui fume quand l\'acide brûle.' },
+    'acide|eau':          { nom: 'Pluie acide', desc: 'Un nuage qui pleut de l\'acide et ronge ce qui est dessous.', indice: 'La pluie qui ronge.' },
+    'foudre|son':         { nom: 'Tonnerre', desc: 'Un fracas qui brise le verre, la glace et le cristal, renverse et réveille tout.', indice: 'Le bruit de l\'éclair.' },
+    'explosion|gravite':  { nom: 'Implosion', desc: 'Tout est aspiré vers un point... puis tout explose.', indice: 'L\'explosion qui commence à l\'envers.' },
+    'fumee|vent':         { nom: 'Écran de fumée', desc: 'Un mur de fumée : les créatures y perdent ta trace.', indice: 'La fumée qu\'on pousse.' },
+    'force|terre':        { nom: 'Éboulement', desc: 'La roche se défait en éboulis qui glissent, et ce qui tenait dessus s\'écroule.', indice: 'La pente qui cède.' },
+    'foudre|lien':        { nom: 'Fil électrique', desc: 'Un fil tendu jusqu\'au point visé, qui foudroie ce qui le franchit.', indice: 'Le fil qui conduit.' },
+    'eau|froid':          { nom: 'Banquise', desc: 'La surface de l\'eau gèle en un grand radeau de glace qui flotte.', indice: 'L\'eau qui durcit.' },
+    'eau|seisme':         { nom: 'Raz-de-marée', desc: 'Une vague immense déferle dans le sens du lancer et emporte tout.', indice: 'La terre qui secoue la mer.' },
+    'force|gravite':      { nom: 'Singularité', desc: 'Tout est aspiré vers un point, puis recraché.', indice: 'La pesanteur qui se replie.' },
   };
+  // Familles : l'Espace, l'Esprit, le Contre-sort et la Métamorphose s'allient à n'importe quel effet
+  const GENRES = {
+    portail:      { nom: 'Faille', desc: 'Une faille dans l\'espace qui crache l\'autre effet pendant un moment.', indice: 'L\'Espace qui s\'ouvre sur un élément.' },
+    esprit:       { nom: 'Élémentaire', desc: 'Un esprit fait de l\'autre effet, qui chasse tes ennemis.', indice: 'L\'Esprit qui habite un élément.' },
+    contre:       { nom: 'Absorption', desc: 'Le Contre-sort avale la matière de l\'autre effet autour du point visé et te rend un peu d\'encre.', indice: 'Défaire un seul élément.' },
+    metamorphose: { nom: 'Chimère', desc: 'La créature touchée devient une créature de l\'autre effet et le porte partout où elle va. Sur soi : tu prends cette nature.', indice: 'Changer une bête en élément.' },
+  };
+  const deEffet = (e) => { const n = ((CORES[e] || PSEUDO[e] || {}).nom || e).toLowerCase(); return (/^[aeiouéèêh]/.test(n) ? 'd\'' : 'de ') + n; };
+  function comboInfo(k) {
+    if (COMBOS[k]) return COMBOS[k];
+    const [a, b] = k.split('|'); const g = GENRES[a] && !GENRES[b] ? a : GENRES[b] && !GENRES[a] ? b : null; if (!g) return null;
+    const x = g === a ? b : a; const G = GENRES[g]; return { nom: G.nom + ' ' + deEffet(x), desc: G.desc, indice: G.indice, genre: g, effet: x };
+  }
+  function comboCle(effets) {
+    const u = effets.filter((e, i) => effets.indexOf(e) === i); if (u.length < 2) return null; let fam = null;
+    for (let i = 0; i < u.length; i++) for (let j = i + 1; j < u.length; j++) { const k = [u[i], u[j]].sort().join('|'); if (COMBOS[k]) return k; if (!fam && comboInfo(k)) fam = k; }
+    return fam;
+  }
   // Formes (anneau intérieur)
   const SHAPES = {
     projectile: { id: 'projectile', nom: 'Projectile', cout: 1, desc: 'Une bille d\'encre qui file dans la direction visée.' },
@@ -388,11 +453,11 @@ const DATA = (() => {
   // Épreuves de sceaux : « invente un sort qui... » ; spec = sceau évalué
   const EPREUVES = {
     eteindre_loin: { texte: 'un sort qui éteigne un feu de loin', test: (s) => !['soi', 'aura'].includes(s.shape) && s.cores.some((c) => ['eau', 'froid', 'vent', 'neutraliser', 'secheresse'].includes(c)), indice: 'Il faut un effet qui éteint (Eau, Froid, Vent...) et une forme qui porte loin.' },
-    pont:          { texte: 'un sort qui fasse un pont au-dessus de l\'eau', test: (s) => !['soi', 'aura'].includes(s.shape) && (s.cores.includes('froid') || s.cores.includes('metal') || (s.cores.includes('terre') && s.persist > 0) || s.combo === 'eau|froid'), indice: 'Geler l\'eau, faire surgir du métal, ou de la terre qui dure (Persistance).' },
+    pont:          { texte: 'un sort qui fasse un pont au-dessus de l\'eau', test: (s) => !['soi', 'aura'].includes(s.shape) && (s.cores.includes('froid') || s.cores.includes('metal') || (s.cores.includes('terre') && s.persist > 0) || ['eau|froid', 'eau|lumiere', 'transmutation|vent', 'terre|vie'].includes(s.combo)), indice: 'Geler l\'eau, faire surgir du métal, ou de la terre qui dure (Persistance).' },
     trois_cibles:  { texte: 'un sort qui touche trois épouvantails d\'un coup', test: (s) => s.shape === 'chaine' || s.shape === 'pluie' || s.extra > 0 || s.echo > 0 || (s.shape === 'zone' && s.size >= 1.5), indice: 'Une Chaîne, une Pluie, un Double, un Écho, ou une très grande Zone.' },
     fusion:        { texte: 'un sort qui fusionne deux éléments', test: (s) => s.cores.length >= 2, indice: 'Un second glyphe d\'effet en bas du premier anneau.' },
     emboite:       { texte: 'un sort qui en lance un autre', test: (s) => s.subs > 0, indice: 'Un sous-sceau dans un emplacement de modificateur.' },
-    endormir:      { texte: 'un sort qui endorme tout un troupeau', test: (s) => (s.cores.includes('ombre') || s.cores.includes('silence') || s.combo === 'acide|feu') && ['zone', 'pluie', 'aura', 'totem', 'mur'].includes(s.shape), indice: 'L\'Ombre, sur une forme qui couvre large.' },
+    endormir:      { texte: 'un sort qui endorme tout un troupeau', test: (s) => (s.cores.includes('ombre') || s.cores.includes('silence') || s.combo === 'acide|feu' || s.combo === 'vent|vie') && ['zone', 'pluie', 'aura', 'totem', 'mur', 'projectile'].includes(s.shape), indice: 'L\'Esprit et son aspect Sommeil sur une forme qui couvre large, ou un nuage de pollen.' },
   };
   // Lettres du maître, apportées par le corbeau, dans l'ordre
   const LETTRES = [
@@ -679,5 +744,5 @@ const DATA = (() => {
   // affinité : combien un geste aimé rapproche (sur 100)
   const AFFINITE = { golem: { gain: 4, parJour: 20 }, follet: { gain: 12 }, limace: { gain: 15 }, salamandre: { gain: 14 }, chauve: { gain: 15 } };
 
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE };
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle };
 })();

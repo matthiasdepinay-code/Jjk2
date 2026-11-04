@@ -17,7 +17,7 @@ function createSim() {
   let gzones = [];  // champs de gravité locaux : {x, y, r (px), gx, gy, mag}
   let feuMul = 1;   // option : vitesse de propagation du feu
 
-  const M = { AIR: 0, PIERRE: 1, TERRE: 2, SABLE: 3, BOIS: 4, PLANTE: 5, HERBE: 6, EAU: 7, HUILE: 8, ACIDE: 9, LAVE: 10, GLACE: 11, NEIGE: 12, VAPEUR: 13, FUMEE: 14, FEU: 15, SEVE: 16, VERRE: 17, METAL: 18, OBSIDIENNE: 19, CENDRE: 20, CRISTAL: 21, POUDRE: 22, MOUSSE: 23, MIEL: 24, SEL: 25, SAUMURE: 26, BOUE: 27, BULLE: 28, MEUBLE: 29 };
+  const M = { AIR: 0, PIERRE: 1, TERRE: 2, SABLE: 3, BOIS: 4, PLANTE: 5, HERBE: 6, EAU: 7, HUILE: 8, ACIDE: 9, LAVE: 10, GLACE: 11, NEIGE: 12, VAPEUR: 13, FUMEE: 14, FEU: 15, SEVE: 16, VERRE: 17, METAL: 18, OBSIDIENNE: 19, CENDRE: 20, CRISTAL: 21, POUDRE: 22, MOUSSE: 23, MIEL: 24, SEL: 25, SAUMURE: 26, BOUE: 27, BULLE: 28, MEUBLE: 29, GAZ: 30 };
   const P = [];
   const def = (id, p) => { P[id] = Object.assign({ solid: 0, powder: 0, liquid: 0, gas: 0, pass: 0, climb: 0, dig: 0, flam: 0, burn: 0, corrode: 0, dens: 0, flow: 0, hot: 0, light: 0, cond: 0, hatch: 0, alpha: 0.6 }, p); };
   def(M.AIR, { nom: 'air' });
@@ -48,6 +48,7 @@ function createSim() {
   def(M.SEL, { nom: 'sel', solid: 1, powder: 1, dig: 1, color: '#f2efe6', corrode: 0.3, alpha: 0.9 });
   def(M.SAUMURE, { nom: 'saumure', liquid: 1, dens: 2.5, flow: 5, color: '#5f8fb8', cond: 1, alpha: 0.55 });
   def(M.BULLE, { nom: 'bulle', color: '#a8dede', alpha: 0.28 });
+  def(M.GAZ, { nom: 'gaz', gas: 1, color: '#d8e8c8', alpha: 0.28, flam: 1 });
   def(M.MEUBLE, { nom: 'terre meuble', solid: 1, powder: 1, dig: 1, color: '#a3844f', corrode: 0.08, alpha: 0.95 });
   def(M.BOUE, { nom: 'boue', liquid: 1, dens: 4.5, flow: 1, color: '#6b5330', alpha: 0.85 });
   const FLAMMABLE_SOLID = (m) => m === M.BOIS || m === M.PLANTE || m === M.HERBE;
@@ -59,9 +60,10 @@ function createSim() {
   const RELAX = new Float32Array(64).fill(0.005);
   RELAX[M.AIR] = 0.035; for (const m of [M.VAPEUR, M.FUMEE, M.FEU, M.BULLE]) RELAX[m] = 0.04; for (const m of [M.EAU, M.HUILE, M.ACIDE, M.SAUMURE, M.BOUE, M.MIEL, M.SEVE]) RELAX[m] = 0.012; RELAX[M.METAL] = 0.012; RELAX[M.LAVE] = 0.004;
   const BRULE = new Uint8Array(64); for (const m of [M.BOIS, M.PLANTE, M.HERBE, M.MOUSSE]) BRULE[m] = 1;
+  const EMET = new Uint8Array(64); for (const m of [M.FEU, M.LAVE, M.BOIS, M.PLANTE, M.HERBE, M.MOUSSE]) EMET[m] = 1;
   // température d'une source (0 : pas une source)
   function emitT(i, m) { if (m === M.FEU) return 165 + 35 * chaud[i]; if (m === M.LAVE) return temp[i] >= 170 ? T_LAVE : 0; if (BRULE[m] && aux[i] > 0) return 160; return 0; }
-  const visT = (t, m) => (t > 124 ? 1 + ((t - 124) >> 4) : t < 46 && m !== M.GLACE && m !== M.NEIGE ? -1 - ((46 - t) >> 3) : 0);
+  const visT = (t, m) => (t > 124 ? 1 + ((t - 124) >> 5) : t < 46 && m !== M.GLACE && m !== M.NEIGE ? -1 - ((46 - t) >> 4) : 0);
   function chauffeChunk(i) { const x = i % W, y = (i - x) / W, c = (y >> 5) * CW + (x >> 5); chunkHeat[c] = frame + 60; }
   // ---------- Effondrement : la pierre qui ne tient plus sur rien tombe ----------
   const STRUCT = new Uint8Array(64); for (const m of [M.PIERRE, M.TERRE, M.BOIS, M.METAL, M.GLACE, M.CRISTAL, M.OBSIDIENNE, M.VERRE]) STRUCT[m] = 1;
@@ -164,7 +166,7 @@ function createSim() {
       }
       for (let cy = Math.floor(y0 / CH); cy <= Math.floor(y1 / CH); cy++) for (let cx = Math.floor(x0 / CH); cx <= Math.floor(x1 / CH); cx++) { const c = cy * CW + cx; if (chunkActive[c] <= frame) chunkActive[c] = frame + 2; }
     }
-    if (frame & 1) stepChaleur();
+    if (frame % 3 === 0) stepChaleur();
     if (effondre) { traiterFissures(); majBlocs(); }
   }
   // ---------- Chaleur : conduction de l'écart à la température naturelle, retour au calme, changements d'état ----------
@@ -176,21 +178,21 @@ function createSim() {
       let vivant = false, redraw = false;
       for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
         const i = y * W + x, m = mat[i];
-        const e = emitT(i, m);
+        const e = EMET[m] ? emitT(i, m) : 0;
         if (e) { temp[i] = e; vivant = true;
           // rayonnement : l'air juste au-dessus d'une flamme ou de la lave brûle
-          if (m === M.LAVE || m === M.FEU) { let j = i - W; for (let dd = 1; dd <= 3 && j >= 0 && mat[j] === M.AIR; dd++, j -= W) { const tt = temp[j], tg = e - 22 * dd; if (tt < tg) temp[j] = tt + (((tg - tt) * 0.35) | 0); } }
+          if (m === M.LAVE || m === M.FEU) { const kr = m === M.LAVE ? 0.35 : 0.15, nr = m === M.LAVE ? 3 : 2; let j = i - W; for (let dd = 1; dd <= nr && j >= 0 && mat[j] === M.AIR; dd++, j -= W) { const tt = temp[j], tg = e - 26 * dd; if (tt < tg) temp[j] = tt + (((tg - tt) * kr) | 0); } }
           if (x === x0 || y === y0 || x === x1 - 1 || y === y1 - 1) { if (x === x0 && cx > 0) chunkHeat[c - 1] = frame + 60; if (x === x1 - 1 && cx < CW - 1) chunkHeat[c + 1] = frame + 60; if (y === y0 && cy > 0) chunkHeat[c - CW] = frame + 60; if (y === y1 - 1 && cy < CHn - 1) chunkHeat[c + CW] = frame + 60; } continue; }
         const t = temp[i], n0 = NAT[m]; let d = t - n0; let any = d > 1 || d < -1; const cm = COND[m]; let flux = 0;
         for (let k = 0; k < 4; k++) {
           const j = k === 0 ? i - W : k === 1 ? i + W : k === 2 ? (x > 0 ? i - 1 : -1) : (x < W - 1 ? i + 1 : -1);
           if (j < 0 || j >= N) continue;
-          const nj = mat[j], ej = emitT(j, nj), dj = ej ? ej - AMB : temp[j] - NAT[nj];
+          const nj = mat[j], ej = EMET[nj] ? emitT(j, nj) : 0, dj = ej ? ej - AMB : temp[j] - NAT[nj];
           if (dj > 1 || dj < -1) any = true; else if (!any) continue;
           flux += (ej ? 0.45 : cm < COND[nj] ? cm : COND[nj]) * (dj - d);
         }
         if (!any) continue;
-        d = (d + flux * 0.4) * (1 - RELAX[m]);
+        d = (d + flux * 0.55) * (1 - RELAX[m] * 1.5);
         let nt = n0 + d; nt = nt < 0 ? 0 : nt > 255 ? 255 : nt; nt = (nt + rnd()) | 0; if (nt > 255) nt = 255;
         if (visT(t, m) !== visT(nt, m)) redraw = true;
         temp[i] = nt;
@@ -214,9 +216,9 @@ function createSim() {
       case M.NEIGE: if (t >= 70) { setI(i, M.EAU); evt('fonte', x, y); } break;
       case M.VAPEUR: if (t <= 50) setI(i, M.EAU); break;
       case M.BOUE: if (t >= 106) setI(i, M.TERRE); break;
-      case M.BOIS: if (t >= 152 && aux[i] === 0) { aux[i] = P[m].burn; touch(i); evt('incendie', x, y); } break;
-      case M.PLANTE: case M.HERBE: if (t >= 136 && aux[i] === 0) { aux[i] = P[m].burn; touch(i); if (rnd() < 0.2) evt('incendie', x, y); } break;
-      case M.MOUSSE: if (t >= 145 && aux[i] === 0) { aux[i] = 20; touch(i); } break;
+      case M.BOIS: if (t >= 165 && aux[i] === 0 && rnd() < 0.35 * feuMul) { aux[i] = P[m].burn; touch(i); evt('incendie', x, y); } break;
+      case M.PLANTE: case M.HERBE: if (t >= 150 && aux[i] === 0 && rnd() < 0.3 * feuMul) { aux[i] = P[m].burn; touch(i); if (rnd() < 0.2) evt('incendie', x, y); } break;
+      case M.MOUSSE: if (t >= 155 && aux[i] === 0 && rnd() < 0.3 * feuMul) { aux[i] = 20; touch(i); } break;
       case M.HUILE: case M.SEVE: if (t >= 138) { setI(i, M.FEU, P[m].burn); evt('incendie', x, y); } break;
       case M.POUDRE: if (t >= 135) explode(x, y, 5); break;
       case M.SABLE: if (t >= 205) { setI(i, M.VERRE); temp[i] = t; evt('verre', x, y); } break;
@@ -245,8 +247,9 @@ function createSim() {
     visGen++; const g = visGen, st = [s], comp = []; vis[s] = g; let ancreOk = false;
     while (st.length) {
       const a = st.pop(); comp.push(a);
-      if (comp.length > LIM_BLOC || ancre[a] || a >= W * (H - 2) || sure[a] === frame) { ancreOk = true; break; }
       const x = a % W;
+      // sous la surface d'origine, la roche tient au reste du monde
+      if (comp.length > LIM_BLOC || ancre[a] || a >= W * (H - 2) || sure[a] === frame || (surf && (a - x) / W > surf[x] + 12)) { ancreOk = true; break; }
       // l'ordre fait descendre d'abord : on trouve vite le sol
       if (a >= W) { const j = a - W; if (vis[j] !== g && STRUCT[mat[j]] && !enBloc[j]) { vis[j] = g; st.push(j); } }
       if (x > 0) { const j = a - 1; if (vis[j] !== g && STRUCT[mat[j]] && !enBloc[j]) { vis[j] = g; st.push(j); } }
@@ -438,6 +441,7 @@ function createSim() {
     }
   }
   function stepGas(x, y, i, m, p) {
+    if (m === M.GAZ && (hotNear(i) || temp[i] > 160)) { explode(x, y, 3); return; }
     if (aux[i] > 0) aux[i]--;
     if (aux[i] === 0) {
       if (m === M.VAPEUR) { if (rnd() < 0.3) { setI(i, M.EAU); evt('condensation', x, y); } else setI(i, M.AIR); }
@@ -668,7 +672,7 @@ function createSim() {
   }
 
   return { CS, CH, M, P, init, get, set, swap, wake, touch, idx, step, matAt, solidAt, rectBlocked, rectHas, forRadius, raycast, countAround, countRect, draw, lights, dirtyAll, serialize, deserialize,
-    get W() { return W; }, get H() { return H; }, get mat() { return mat; }, get aux() { return aux; }, get elec() { return elec; }, get chaud() { return chaud; }, setFeu, chauffer, tempAt, tempMax, tempMin, ancrer, get temp() { return temp; }, get blocs() { return blocs; }, get AMB() { return AMB; }, set effondre(v) { effondre = v; }, get effondre() { return effondre; }, get nFiss() { return fiss.length; },
+    get W() { return W; }, get H() { return H; }, get mat() { return mat; }, get aux() { return aux; }, get elec() { return elec; }, get chaud() { return chaud; }, setFeu, chauffer, tempAt, tempMax, tempMin, ancrer, get temp() { return temp; }, get blocs() { return blocs; }, get AMB() { return AMB; }, set effondre(v) { effondre = v; }, get effondre() { return effondre; }, get nFiss() { return fiss.length; }, ancrerCase(i, v) { ancre[i] = v ? 1 : 0; }, fissurer(i) { fissure(i); },
     set onEvent(f) { onEvent = f; }, set sunny(v) { sunny = v; }, get gzones() { return gzones; }, set gzones(v) { gzones = v; }, set tzones(v) { tzones = v; }, get tzones() { return tzones; }, tempsAt, gravAt, set feuMul(v) { feuMul = v; }, set surf(v) { surf = v; }, get surf() { return surf; }, get frame() { return frame; } };
 })();
 }

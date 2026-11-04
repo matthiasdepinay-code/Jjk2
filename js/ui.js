@@ -106,6 +106,10 @@ const UI = (() => {
     for (let i = 0; i < 5; i++) { const b = el('button', 'btn-slot', String(i + 1)); b.addEventListener('click', () => cb(i)); c.appendChild(b); }
   }
 
+  // recette lisible d'un combo : « Feu + Gravité », « Eau (Gel) + Vent »
+  function effetLisible(e) { if (DATA.CORES[e] && !DATA.CORES[e].interne) return DATA.CORES[e].nom; for (const a in DATA.ASPECTS) if (DATA.ASPECTS[a].devient === e) return DATA.CORES[DATA.ASPECTS[a].aspect].nom + ' (' + DATA.ASPECTS[a].nom + ')'; return (DATA.CORES[e] || DATA.PSEUDO[e] || { nom: e }).nom; }
+  function recetteCombo(k) { return k.split('|').map(effetLisible).join(' + '); }
+  const comboConnu = (k) => !!(game.progress.combos && game.progress.combos[k]);
   // ---------- Ouverture / fermeture ----------
   function openPanel(name) {
     close();
@@ -302,11 +306,14 @@ const UI = (() => {
     const nomG = (c) => (DATA.CORES[c] || DATA.PSEUDO[c] || { nom: c }).nom.toLowerCase();
     let cores = Seal.effets(s);
     if (prm.inverse) cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c));
-    const combo = cores.length > 1 && !prm.inverse ? DATA.COMBOS[cores.slice().sort().join('|')] : null;
+    const cleC = cores.length > 1 && !prm.inverse ? DATA.comboCle(cores) : null; const infoC = cleC && DATA.comboInfo(cleC);
+    const combo = infoC ? (comboConnu(cleC) ? infoC : { nom: 'fusion inconnue', inconnu: true }) : null;
     const L = [];
     L.push('<b>' + T.nom + ' sceau</b> · ' + Seal.cost(s) + ' encre · tracé en ' + T.geste + ' s · maintenir le clic charge jusqu\'à +80 %.');
     let eff = 'Effet : ' + cores.map(nomG).join(' et ') + (combo ? ' (fusion : ' + combo.nom.toLowerCase() + ')' : '') + (prm.inverse ? (cores.includes('gravite') ? ', apesanteur' : ', inversé') : '') + '.';
     L.push(eff);
+    if (infoC) L.push(comboConnu(cleC) ? '<b>' + infoC.nom + '</b> : ' + infoC.desc + ' <span class="muted">La fusion remplace les deux effets de base.</span>' : '<b>Fusion inconnue</b> <span class="muted">— ' + infoC.indice + ' Lance-la pour la découvrir.</span>');
+    else if (cores.length > 1 && !prm.inverse) L.push('<span class="muted">Ces deux effets ne fusionnent pas : ils s\'appliquent ensemble.</span>');
     if (s.shape) L.push('Forme : ' + DATA.SHAPES[s.shape].nom.toLowerCase() + (prm.extra ? ', en double' : '') + (prm.orbite ? ', en orbite autour de toi' : '') + (prm.teleguide ? ', guidé par la souris' : '') + (prm.canalise ? ', canalisé tant que tu maintiens' : '') + '.');
     if (s.cible && s.taille !== 'petit') L.push('Cible : ' + (s.cible === 'creature' ? 'la créature hostile la plus proche, qu\'il suit' : 'ta marque la plus récente, même hors de vue') + '.');
     const tx = [];
@@ -398,7 +405,8 @@ const UI = (() => {
     ctx.clearRect(0, 0, c.width, c.height);
     Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, SEAL_R, { t: time, slots: game.progress.slots, highlight: selSlot, empty: true, fusion: game.progress.fusion, filtres: game.progress.filtres.length > 0, cibles: game.progress.cibles.length > 1 });
     const combo = Seal.comboName(game.editSeal);
-    const hint = combo ? 'Fusion : ' + combo + '. ' + (DATA.COMBOS[[game.editSeal.core, game.editSeal.core2].sort().join('|')].desc || '') : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot === 'filtre' ? 'Choisis un filtre de matière.' : selSlot === 'cible' ? 'Choisis une cible.' : selSlot === 'trigger2' ? 'Choisis un second déclencheur.' : selSlot ? 'Choisis un glyphe dans la palette, ou clique à nouveau pour vider.' : game.progress.fusion ? 'Centre, formes, modificateurs, pointes. En bas : un second effet à fusionner.' : 'Clique un emplacement, puis un glyphe. Clic droit : vider.';
+    const cleH = DATA.comboCle(Seal.effets(game.editSeal)), infoH = cleH && DATA.comboInfo(cleH);
+    const hint = combo ? 'Fusion : ' + combo + '.' : infoH ? 'Fusion inconnue — ' + infoH.indice : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot === 'filtre' ? 'Choisis un filtre de matière.' : selSlot === 'cible' ? 'Choisis une cible.' : selSlot === 'trigger2' ? 'Choisis un second déclencheur.' : selSlot ? 'Choisis un glyphe dans la palette, ou clique à nouveau pour vider.' : game.progress.fusion ? 'Centre, formes, modificateurs, pointes. En bas : un second effet à fusionner.' : 'Clique un emplacement, puis un glyphe. Clic droit : vider.';
     U.txt(ctx, hint, c.width / 2, 16, 13, 'center', '#6b4f2a', 'IM Fell English', 'italic');
   }
 
@@ -560,14 +568,26 @@ const UI = (() => {
       c.appendChild(el('h3', '', 'Tailles de sceau'));
       c.appendChild(el('p', '', Object.values(DATA.TAILLES).map((T) => (p.tailles.includes(T.id) ? '<b>' + T.nom + '</b>' : '<span class="muted">' + T.nom + ' (scellé)</span>') + ' : ' + T.desc).join('<br>')));
       c.appendChild(el('p', 'intro', 'Lancer : maintenir le clic charge le sort (plus fort, plus loin, plus cher). ' + (p.deuxMains ? 'Clic droit : main gauche (Maj + 1-5 pour la choisir).' : 'La main gauche viendra avec l\'expérience.') + ' F libère les sorts Sur commande. Deux projectiles qui se croisent fusionnent.'));
-      if (p.fusion) {
-        c.appendChild(el('h3', '', 'Fusions connues'));
-        const known = Object.keys(DATA.COMBOS).filter((k) => k.split('|').every((q) => p.cores.includes(q)));
-        if (!known.length) c.appendChild(el('p', 'muted', 'Aucune : il faut posséder les deux glyphes.'));
-        for (const k of known) { const [a, b] = k.split('|'); const Cm = DATA.COMBOS[k]; c.appendChild(el('div', 'recette', '<b>' + Cm.nom + '</b> : ' + DATA.CORES[a].nom + ' + ' + DATA.CORES[b].nom + (Cm.desc ? ' — ' + Cm.desc : ''))); }
-        c.appendChild(el('p', 'intro', 'Toute autre paire fusionne aussi : les deux effets s\'appliquent ensemble.'));
-      }
+      if (p.fusion) c.appendChild(el('p', 'intro', 'Deux effets dans un même sceau peuvent fusionner en un phénomène : voir l\'onglet Fusions.'));
       c.appendChild(el('p', 'intro', 'Déclencheurs : <b>Immédiat</b> agit en continu sur ce que le sort touche (un projectile traverse les créatures). <b>Au contact</b> éclate en zone à la première chose touchée. <b>Retardé</b> se fixe et éclate après deux secondes.'));
+    } else if (grimTab === 'fusions') {
+      const pc = p.combos || {};
+      c.appendChild(el('p', 'intro', 'Pose deux effets dans un sceau (le second sous le cercle, sur un sceau moyen ou grand) : certaines paires font naître un phénomène qui dure, a sa propre physique et prend la forme du sceau (en projectile, en mur, en colonne, en trait, sur soi...). Un aspect compte comme son effet : l\'Eau avec Gel, c\'est le froid. La fusion remplace les deux effets de base.'));
+      if (!p.fusion) c.appendChild(el('p', 'muted', 'La fusion de deux effets viendra avec l\'expérience.'));
+      const cles = Object.keys(DATA.COMBOS); const nConnus = cles.filter((k) => pc[k]).length;
+      c.appendChild(el('h3', '', 'Phénomènes (' + nConnus + ' / ' + cles.length + ')'));
+      const possede = (e) => { if (p.cores.includes(e)) return true; for (const a in DATA.ASPECTS) if (DATA.ASPECTS[a].devient === e) return p.cores.includes(DATA.ASPECTS[a].aspect) && p.mods.includes(a); return false; };
+      const tri = cles.slice().sort((a, b) => (pc[b] ? 1 : 0) - (pc[a] ? 1 : 0));
+      for (const k of tri) {
+        const I = DATA.COMBOS[k];
+        if (pc[k]) c.appendChild(el('div', 'recette', '<b>' + I.nom + '</b> <span class="muted">(' + recetteCombo(k) + ', lancé ' + pc[k] + ' fois)</span><br>' + I.desc));
+        else { const pret = k.split('|').every(possede); c.appendChild(el('div', 'recette verrou', '<b>???</b> — <i>' + I.indice + '</i>' + (pret ? ' <span class="muted">Tu as de quoi le tenter.</span>' : ''))); }
+      }
+      c.appendChild(el('h3', '', 'Familles'));
+      for (const g in DATA.GENRES) {
+        const G = DATA.GENRES[g], faits = Object.keys(pc).filter((k) => { const I = DATA.comboInfo(k); return I && I.genre === g; });
+        c.appendChild(el('div', 'recette', '<b>' + G.nom + '</b> : ' + DATA.CORES[g].nom + ' + n\'importe quel autre effet. ' + G.desc + (faits.length ? '<br><span class="muted">Déjà : ' + faits.map((k) => DATA.comboInfo(k).nom).join(', ') + '.</span>' : '')));
+      }
     } else if (grimTab === 'recettes') {
       c.appendChild(el('p', 'intro', 'Le chaudron accepte jusqu\'à trois ingrédients et trois étapes, dans l\'ordre. Les recettes inconnues ne sont que des énigmes ; le chaudron lui-même te guide par l\'odeur et le bruit.'));
       const bz = (p.bizarresVues || []); if (bz.length) { c.appendChild(el('h3', '', 'Potions bizarres rencontrées')); for (const id of bz) { const B = DATA.BIZARRES[id]; if (B) c.appendChild(el('div', 'recette', '<b>' + B.nom + '</b> — ' + B.desc)); } }

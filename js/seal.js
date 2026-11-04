@@ -51,8 +51,8 @@ const Seal = (() => {
   }
   function comboName(s) {
     const ef = effets(s); if (ef.length < 2) return null;
-    const k = ef.slice().sort().join('|');
-    return DATA.COMBOS[k] ? DATA.COMBOS[k].nom : null;
+    const k = DATA.comboCle(ef); const I = k && DATA.comboInfo(k);
+    return I && api.comboConnu(k) ? I.nom : null;
   }
   function autoNom(s) {
     if (!s.core) return 'Pétard';
@@ -352,5 +352,6 @@ const Seal = (() => {
     ctx.restore();
   }
 
-  return { aspects, effets, create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, slotList, draw, drawMini, isSub, subs, depth, modId, comboName, taille, nbSlots, triggers, NMODS };
+  const api = { comboConnu: () => true };
+  return Object.assign(api, { aspects, effets, create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, slotList, draw, drawMini, isSub, subs, depth, modId, comboName, taille, nbSlots, triggers, NMODS });
 })();

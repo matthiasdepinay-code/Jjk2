@@ -19,7 +19,7 @@
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
       tailles: DATA.DEBUT.tailles.slice(), filtres: DATA.DEBUT.filtres.slice(), cibles: DATA.DEBUT.cibles.slice(), deuxMains: false, enchainements: [],
-      recettes: [], ingredientsVus: [], done: [], maitrise: {}, nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
+      recettes: [], ingredientsVus: [], done: [], maitrise: {}, combos: {}, nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
       compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0, terre: 0, creaturesTouchees: 0, vols: 0, portes: 0, lancers: 0, niveau: 1, sceaux: 0 },
       event(name, data) {
         const k = this.compteurs;
@@ -102,6 +102,7 @@
   }
 
   // ---------- Jeu ----------
+  Seal.comboConnu = (k) => !!(game.progress.combos && game.progress.combos[k]);
   const game = {
     state: 'create',
     look: { nom: '', chapeau: 0, cape: 0, acc: 0 },
@@ -188,9 +189,9 @@
     },
     specEpreuve(seal) {
       const prm = Seal.params(seal);
-      let cores = [seal.core]; if (seal.core2) cores.push(seal.core2);
+      let cores = Seal.effets(seal); const combo = !prm.inverse ? DATA.comboCle(cores) : null;
       if (prm.inverse) cores = cores.map((q) => (q === 'gravite' ? q : DATA.INVERSE[q] || q));
-      return { cores: cores.filter(Boolean), shape: seal.shape, persist: prm.persist, extra: prm.extra, echo: prm.echo, size: prm.size, combo: seal.core2 ? [seal.core, seal.core2].sort().join('|') : null, subs: Seal.subs(seal).length };
+      return { cores: cores.filter(Boolean), shape: seal.shape, persist: prm.persist, extra: prm.extra, echo: prm.echo, size: prm.size, combo, subs: Seal.subs(seal).length };
     },
     peutLivrer() {
       const l = this.lettreCourante(); if (!l) return false; const m = l.cmd;
@@ -441,7 +442,7 @@
         if (d.carte) this.carte = d.carte;
         if (d.courrier) this.courrier = Object.assign(this.courrier, d.courrier); if (d.bonus) this.bonus = Object.assign(this.bonus, d.bonus); if (d.trophees) this.trophees = d.trophees;
         if (d.progress) Object.assign(this.progress, d.progress);
-        if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {};
+        if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {}; if (!this.progress.combos) this.progress.combos = {};
         { // refonte : les anciennes essences deviennent des aspects
           const p = this.progress; if (!p.mods.includes('reduire')) p.mods.push('reduire');
           for (const c of p.cores.slice()) { const M2 = DATA.MIGRATION[c]; if (!M2) continue; p.cores = p.cores.filter((q) => q !== c); if (!p.mods.includes(M2[1])) p.mods.push(M2[1]); if (p.maitrise[c]) { p.maitrise[M2[0]] = (p.maitrise[M2[0]] || 0) + p.maitrise[c]; delete p.maitrise[c]; } }

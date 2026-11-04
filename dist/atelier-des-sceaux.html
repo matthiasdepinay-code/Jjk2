@@ -150,6 +150,7 @@
   .potion-item { display: flex; align-items: flex-start; gap: 10px; border-bottom: 1px solid rgba(31,26,22,0.2); padding: 6px 0; flex-wrap: wrap; }
   .potion-item > div { flex: 1; min-width: 200px; }
   .recette { padding: 3px 0; }
+  .recette.verrou { opacity: 0.72; }
 
   /* grimoire */
   #grim-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; position: sticky; top: -18px; z-index: 3; background: var(--paper); padding: 8px 0 6px; border-bottom: 1px solid rgba(31,26,22,0.2); }
@@ -300,6 +301,7 @@
       <div id="grim-tabs">
         <button data-tab="decouvertes" class="on">Découvertes</button>
         <button data-tab="glyphes">Glyphes</button>
+        <button data-tab="fusions">Fusions</button>
         <button data-tab="recettes">Recettes</button>
         <button data-tab="ingredients">Ingrédients</button>
         <button data-tab="intuitions">Réactions</button>
@@ -368,6 +370,8 @@
       <p>Maintiens le clic pour <b>charger</b> un sort. Plus tard, ta main gauche lancera un second sceau au clic droit. Deux sorts à la suite au même endroit peuvent former un <b>enchaînement</b> (l'eau puis le froid, le feu puis le vent...) ; deux projectiles qui se croisent fusionnent. Le <b>Bouclier</b> se dresse devant toi et repousse l'eau : on peut marcher au fond du lac. Le <b>Contre-sort</b> défait la magie posée.</p>
       <p>La <b>Gravité</b> ne sert pas qu'à voler : elle pose un champ de pesanteur dans le sens où tu la lances. Lancée vers la droite, tout y tombe à droite, même l'eau et le sable ; vers le haut, tout tombe vers le ciel. Avec Puissance, la pesanteur écrase ; avec Inverser, plus rien ne pèse. Sur toi, elle pointe vers la surface que tu vises : tu marches sur les murs et au plafond. Vise le vide pour voler, ajoute Puissance pour devenir une enclume.</p>
       <p>Un sceau moyen ou grand se <b>sculpte</b> : sous le cercle, règle la largeur et la hauteur de la forme. Un Mur très large et très bas se couche en pont ; une Colonne étroite et haute monte jusqu'au ciel. Le glyphe <b>Matière</b> rend l'effet solide : l'Eau gelée devient des lames de glace à jeter sur les monstres, un pont, ou la grêle. <b>Rafale</b> lance une volée. La Gravité et le Temps prennent la forme qu'on leur donne : une colonne qui écrase, un mur où tout ralentit.</p>
+      <p>Deux essences dans un même sceau peuvent <b>fusionner</b> : le Feu tenu par la Gravité devient un <b>petit soleil</b> qui flotte, attire et chauffe tout autour ; l'Eau et la Lumière tendent un arc-en-ciel sur lequel on marche ; la Gravité et la Terre font tomber un météore. Le grimoire garde la trace des fusions que tu découvres, et donne un indice pour les autres. La forme du sceau compte : une colonne, un mur, un trait donnent au phénomène leur forme.</p>
+      <p>Le monde a sa <b>physique</b> : la chaleur se propage (la lave chauffe la pierre, la glace fond près d'elle, l'air chaud monte), ce qui ne tient plus sur rien s'effondre, le bois flotte et la pierre coule, et ce qui tombe de haut fait mal.</p>
       <p>Mon <b>corbeau</b> passera de temps en temps à la fenêtre avec une lettre : des commandes, des épreuves, des sceaux à inventer. Réponds-y, il te rapportera des choses qu'on ne trouve nulle part ailleurs.</p>
       <p>Le labo grandit avec toi : un <b>bac d'essai</b> sous verre pour tester un sceau, un <b>alambic</b> qui distille deux fioles en une forte, une <b>presse à glyphes</b> qui tire des parchemins lançables sans encre, et un <b>terrarium</b> pour loger les créatures apprivoisées que tu ramènes dans tes bras.</p>
       <p>Il n'y a que quatorze <b>essences</b>, des forces premières. Tout le reste en découle : ce sont des <b>aspects</b>, qu'on pose sur le second anneau avec leur essence. L'Eau avec <b>Gel</b> devient le froid, la Terre avec <b>Minerai</b> donne le métal, la Gravité avec <b>Attraction</b> attire tout. Une créature ne s'apprivoise pas d'un sort : elle se gagne avec le temps, en lui offrant ce qu'elle aime. Le golem est long à convaincre.</p>
@@ -609,32 +613,97 @@ const DATA = (() => {
     rouille:     { id: 'rouille',     nom: 'Rouille',     couleur: '#9a5a3a' },
   };
   const INVERSE = { marque: 'marque', contre: 'contre', feu: 'froid', froid: 'feu', force: 'repulsion', vent: 'force', lumiere: 'ombre', ombre: 'lumiere', terre: 'creuser', vie: 'fanaison', acide: 'neutraliser', foudre: 'neutraliser', gravite: 'poids', eau: 'secheresse', temps: 'ralentir', son: 'silence', metal: 'rouille', transmutation: 'transmutation', esprit: 'esprit', lien: 'lien', portail: 'portail', metamorphose: 'metamorphose', rembobinage: 'temps' };
-  // Fusions nommées (clé : deux glyphes triés)
+  // Fusions nommées (clé : deux effets triés). Chacune fait naître un phénomène qui dure et épouse la forme du sceau.
   const COMBOS = {
-    'feu|vent': { nom: 'Tornade de feu', desc: 'Des flammes qui tourbillonnent et se déplacent.' },
-    'feu|terre': { nom: 'Lave', desc: 'La terre fond en lave.' },
-    'eau|feu': { nom: 'Vapeur', desc: 'Les deux s\'annulent dans un grand nuage.' },
-    'eau|froid': { nom: 'Banquise', desc: 'Un bloc de glace solide, même en l\'air.' },
-    'eau|foudre': { nom: 'Orage', desc: 'L\'eau conduit loin, la pluie tombe.' },
-    'froid|vent': { nom: 'Blizzard', desc: 'Neige et bourrasques.' },
-    'eau|vie': { nom: 'Printemps', desc: 'Tout pousse d\'un coup.' },
-    'lumiere|ombre': { nom: 'Crépuscule', desc: 'Rien. Un silence gêné.' },
-    'force|terre': { nom: 'Séisme', desc: 'Le sol tremble et attire.' },
-    'gravite|vent': { nom: 'Cyclone', desc: 'Une colonne qui soulève tout, longtemps.' },
-    'force|gravite': { nom: 'Singularité', desc: 'Tout est aspiré vers un point, puis recraché.' },
-    'gravite|terre': { nom: 'Météore', desc: 'Un rocher se détache du ciel et s\'écrase.' },
-    'eau|gravite': { nom: 'Sphère d\'eau', desc: 'Une bulle d\'eau qui flotte en apesanteur.' },
-    'gravite|temps': { nom: 'Chute lente', desc: 'Tout tombe au ralenti dans la bulle.' },
-    'feu|froid': { nom: 'Choc thermique', desc: 'La pierre éclate en sable.' },
-    'acide|feu': { nom: 'Fumée toxique', desc: 'Un nuage qui endort.' },
-    'ombre|vie': { nom: 'Mycélium', desc: 'Des champignons d\'ombre poussent.' },
-    'eau|terre': { nom: 'Boue', desc: 'La terre coule en sable mouillé.' },
-    'feu|lumiere': { nom: 'Petit soleil', desc: 'Une lumière immense et chaude.' },
-    'foudre|metal': { nom: 'Dynamo', desc: 'Le métal garde la charge longtemps.' },
-    'son|verre': { nom: 'Chant du verre', desc: '' },
-    'temps|vie': { nom: 'Forêt instantanée', desc: 'Les plantes jaillissent.' },
-    'portail|eau': { nom: 'Source', desc: 'De l\'eau jaillit du portail.' },
+    // --- le Feu ---
+    'eau|feu':            { nom: 'Geyser', desc: 'Une colonne de vapeur brûlante jaillit du sol : elle soulève tout et ébouillante.', indice: 'L\'eau bout quand le feu la presse.' },
+    'feu|terre':          { nom: 'Magma', desc: 'Une fontaine de lave crache du sol, puis refroidit en roche.', indice: 'La terre fond quand le feu la travaille.' },
+    'feu|vent':           { nom: 'Tornade de feu', desc: 'Un tourbillon de flammes qui avance, soulève les petites choses et allume tout.', indice: 'Le vent fait danser la flamme.' },
+    'feu|vie':            { nom: 'Brûlis', desc: 'Le feu passe sur l\'herbe, puis tout repousse, plus vert qu\'avant.', indice: 'Après la flamme, la pousse.' },
+    'feu|lumiere':        { nom: 'Rayon ardent', desc: 'Un rayon de soleil concentré : il vitrifie le sable, allume de loin, fait fondre la pierre.', indice: 'La loupe sous le soleil.' },
+    'feu|foudre':         { nom: 'Foudre en boule', desc: 'Une boule de plasma qui erre, foudroie ce qui l\'approche et éclate dans l\'eau.', indice: 'La flamme électrique ne tient pas en place.' },
+    'feu|gravite':        { nom: 'Petit soleil', desc: 'Une combustion tenue par la pesanteur : une étoile qui flotte, attire, chauffe tout autour, éclaire la nuit et se nourrit de ce qui brûle.', indice: 'Le feu qui ne peut plus s\'échapper.' },
+    'feu|temps':          { nom: 'Feu éternel', desc: 'Une flamme hors du temps : elle ne s\'éteint pas, ne se propage pas, réchauffe et redonne de l\'encre à qui s\'assoit près d\'elle.', indice: 'Une flamme qui ne vieillit pas.' },
+    'feu|transmutation':  { nom: 'Forge', desc: 'La chaleur change la matière : la pierre devient métal, le sable verre, la terre pierre.', indice: 'Le creuset de l\'alchimiste.' },
+    // --- l'Eau ---
+    'eau|terre':          { nom: 'Marécage', desc: 'Le sol devient boue : les lourds s\'enfoncent, tout s\'englue.', indice: 'La terre qui boit trop.' },
+    'eau|vent':           { nom: 'Nuée', desc: 'Un nuage de pluie qui dérive : il éteint les feux, remplit les trous, fait pousser.', indice: 'L\'eau que le vent emporte.' },
+    'eau|vie':            { nom: 'Source vive', desc: 'Une source qui soigne ceux qui s\'y tiennent et fait tout pousser alentour.', indice: 'L\'eau qui donne la vie.' },
+    'eau|lumiere':        { nom: 'Arc-en-ciel', desc: 'Un arc de lumière solide, de toi jusqu\'au point visé : on peut marcher dessus.', indice: 'La lumière dans la pluie.' },
+    'eau|foudre':         { nom: 'Orage', desc: 'Un nuage noir qui foudroie le sol au-dessous, de préférence les créatures et l\'eau.', indice: 'Le ciel qui gronde.' },
+    'eau|gravite':        { nom: 'Sphère d\'eau', desc: 'Une bulle d\'eau en apesanteur : elle aspire les liquides, emprisonne les créatures et lâche tout à la fin.', indice: 'L\'eau qui ne tombe plus.' },
+    'eau|temps':          { nom: 'Érosion', desc: 'Mille ans d\'eau en quelques secondes : elle creuse la terre et use la pierre.', indice: 'La goutte qui creuse la pierre.' },
+    'eau|transmutation':  { nom: 'Liquéfaction', desc: 'Le sol, même la pierre, devient boue... puis se fige en pierre et retient ce qui s\'y est enfoncé.', indice: 'La pierre qui coule.' },
+    // --- la Terre ---
+    'terre|vent':         { nom: 'Tempête de sable', desc: 'Un mur de sable qui avance : il pousse, aveugle, use et laisse des dunes.', indice: 'La poussière que le vent soulève.' },
+    'terre|vie':          { nom: 'Racines', desc: 'Des racines jaillissent et ligotent les créatures ; en trait, elles poussent en pont de bois.', indice: 'Ce qui pousse sous la terre.' },
+    'lumiere|terre':      { nom: 'Géode', desc: 'Des pics de cristal jaillissent du sol, projettent les créatures et luisent ensuite.', indice: 'La lumière prisonnière de la roche.' },
+    'foudre|terre':       { nom: 'Fulgurite', desc: 'Un éclair qui fore le sol et laisse un tunnel aux parois de verre.', indice: 'La foudre qui entre dans la terre.' },
+    'gravite|terre':      { nom: 'Météore', desc: 'Un rocher tombe du ciel sur le point visé : cratère, onde de choc, éboulements.', indice: 'La pierre qui tombe d\'en haut.' },
+    'temps|terre':        { nom: 'Pétrification', desc: 'Les créatures deviennent statues un moment ; le bois devient pierre, le miel ambre.', indice: 'Ce que les siècles font de la terre.' },
+    'terre|transmutation':{ nom: 'Golem de glaise', desc: 'La terre du lieu se lève en golem allié, qui frappe tes ennemis puis retourne au sol.', indice: 'La glaise qu\'on anime.' },
+    // --- le Vent ---
+    'vent|vie':           { nom: 'Pollen', desc: 'Un nuage de pollen : l\'herbe pousse sur son passage, les créatures s\'endorment.', indice: 'Le vent qui sème.' },
+    'lumiere|vent':       { nom: 'Lucioles', desc: 'Un essaim de lumières qui dansent longtemps : elles éclairent et attirent les curieux.', indice: 'La lumière portée par la brise.' },
+    'foudre|vent':        { nom: 'Front d\'orage', desc: 'Une rafale chargée qui balaie tout devant elle et foudroie ce qu\'elle pousse.', indice: 'La bourrasque avant l\'orage.' },
+    'gravite|vent':       { nom: 'Cyclone', desc: 'Une colonne qui aspire et soulève tout, sable, eau et créatures, puis les recrache.', indice: 'Le vent qui tombe vers le haut.' },
+    'temps|vent':         { nom: 'Souffle des âges', desc: 'Une bourrasque qui fait vieillir tout ce qu\'elle traverse : les plantes poussent et fanent, le métal rouille.', indice: 'Le vent des années.' },
+    'transmutation|vent': { nom: 'Air solide', desc: 'L\'air se fige en verre invisible : une plateforme, un mur, un pont, qui arrête aussi les sorts.', indice: 'Le vent changé en pierre.' },
+    // --- la Vie ---
+    'lumiere|vie':        { nom: 'Arbre de lumière', desc: 'Un arbre pousse d\'un coup ; son feuillage luit et soigne ceux qui s\'abritent dessous.', indice: 'Ce que la lumière fait pousser.' },
+    'foudre|vie':         { nom: 'Ronces électriques', desc: 'Un roncier épais et chargé : qui le touche est piqué et foudroyé.', indice: 'Les épines qui crépitent.' },
+    'gravite|vie':        { nom: 'Îlot flottant', desc: 'Une motte de terre herbue flotte dans le ciel... puis retombe, sur qui se trouve dessous.', indice: 'Le jardin qui ne pèse plus.' },
+    'temps|vie':          { nom: 'Forêt instantanée', desc: 'Des arbres entiers poussent en un instant.', indice: 'Cent printemps d\'un coup.' },
+    'transmutation|vie':  { nom: 'Bois vivant', desc: 'La pierre et la terre deviennent bois et mousse... et le bois, ça brûle.', indice: 'La roche qui se met à vivre.' },
+    // --- la Lumière ---
+    'foudre|lumiere':     { nom: 'Prisme', desc: 'Un prisme flottant qui tire des rayons sur les créatures hostiles proches.', indice: 'La lumière qui se brise en éclairs.' },
+    'gravite|lumiere':    { nom: 'Trou noir', desc: 'Une pesanteur si forte que la lumière n\'en sort plus : elle avale la matière, les sorts et tire tout à elle.', indice: 'La lumière qui tombe.' },
+    'lumiere|temps':      { nom: 'Aube', desc: 'Le temps du ciel avance : la nuit se lève en aube, le jour tombe en crépuscule.', indice: 'Le soleil qui se presse.' },
+    'lumiere|transmutation': { nom: 'Miroir', desc: 'Un miroir qui renvoie les projectiles et barre le passage.', indice: 'La lumière qu\'on fige en surface.' },
+    // --- la Foudre ---
+    'foudre|gravite':     { nom: 'Aimant', desc: 'Un champ magnétique : il capture les projectiles, attire golems, rochers et caisses, charge le métal.', indice: 'La foudre qui attire.' },
+    'foudre|temps':       { nom: 'Foudre suspendue', desc: 'Un éclair figé dans le temps : il reste là et foudroie qui le touche.', indice: 'L\'éclair qui ne finit pas.' },
+    'foudre|transmutation': { nom: 'Électrolyse', desc: 'La foudre défait l\'eau en un gaz léger, qui explose à la moindre flamme.', indice: 'L\'eau qui se défait sous la foudre.' },
+    // --- Gravité et Temps ---
+    'gravite|temps':      { nom: 'Horizon', desc: 'Près du centre, le temps ralentit jusqu\'à presque s\'arrêter ; tout y est attiré, doucement.', indice: 'Le temps qui pèse.' },
+    'gravite|transmutation': { nom: 'Presse', desc: 'La pesanteur écrase la matière : le sable devient pierre, la pierre cristal.', indice: 'La pression qui change tout.' },
+    'temps|transmutation':{ nom: 'Origine', desc: 'Chaque chose redevient ce qu\'elle était : le verre sable, l\'obsidienne lave, la cendre bois, le métal pierre.', indice: 'Revenir à ce qu\'on était.' },
+    // --- avec les aspects ---
+    'froid|vent':         { nom: 'Blizzard', desc: 'Une tempête de neige qui dérive, gèle l\'eau et engourdit.', indice: 'Le vent glacé.' },
+    'froid|gravite':      { nom: 'Comète de glace', desc: 'Un bloc de glace tombe du ciel et gèle tout à l\'impact.', indice: 'La glace qui tombe d\'en haut.' },
+    'feu|froid':          { nom: 'Choc thermique', desc: 'Chaud puis froid d\'un coup : la pierre, le verre et la glace éclatent.', indice: 'Ce qui casse quand on le trempe.' },
+    'froid|temps':        { nom: 'Cryostase', desc: 'Les créatures sont prises dans des blocs de glace qui ne fondent pas de sitôt.', indice: 'Le froid qui arrête le temps.' },
+    'foudre|metal':       { nom: 'Bobine', desc: 'Le métal garde la charge et lance des arcs sur les créatures proches.', indice: 'Le métal qui chante sous la foudre.' },
+    'feu|metal':          { nom: 'Métal rougi', desc: 'Le métal chauffe au rouge : il brûle ce qui le touche et allume ce qui l\'approche.', indice: 'Le fer dans la forge.' },
+    'acide|feu':          { nom: 'Fumée toxique', desc: 'Un nuage âcre qui empoisonne et assoupit.', indice: 'Ce qui fume quand l\'acide brûle.' },
+    'acide|eau':          { nom: 'Pluie acide', desc: 'Un nuage qui pleut de l\'acide et ronge ce qui est dessous.', indice: 'La pluie qui ronge.' },
+    'foudre|son':         { nom: 'Tonnerre', desc: 'Un fracas qui brise le verre, la glace et le cristal, renverse et réveille tout.', indice: 'Le bruit de l\'éclair.' },
+    'explosion|gravite':  { nom: 'Implosion', desc: 'Tout est aspiré vers un point... puis tout explose.', indice: 'L\'explosion qui commence à l\'envers.' },
+    'fumee|vent':         { nom: 'Écran de fumée', desc: 'Un mur de fumée : les créatures y perdent ta trace.', indice: 'La fumée qu\'on pousse.' },
+    'force|terre':        { nom: 'Éboulement', desc: 'La roche se défait en éboulis qui glissent, et ce qui tenait dessus s\'écroule.', indice: 'La pente qui cède.' },
+    'foudre|lien':        { nom: 'Fil électrique', desc: 'Un fil tendu jusqu\'au point visé, qui foudroie ce qui le franchit.', indice: 'Le fil qui conduit.' },
+    'eau|froid':          { nom: 'Banquise', desc: 'La surface de l\'eau gèle en un grand radeau de glace qui flotte.', indice: 'L\'eau qui durcit.' },
+    'eau|seisme':         { nom: 'Raz-de-marée', desc: 'Une vague immense déferle dans le sens du lancer et emporte tout.', indice: 'La terre qui secoue la mer.' },
+    'force|gravite':      { nom: 'Singularité', desc: 'Tout est aspiré vers un point, puis recraché.', indice: 'La pesanteur qui se replie.' },
   };
+  // Familles : l'Espace, l'Esprit, le Contre-sort et la Métamorphose s'allient à n'importe quel effet
+  const GENRES = {
+    portail:      { nom: 'Faille', desc: 'Une faille dans l\'espace qui crache l\'autre effet pendant un moment.', indice: 'L\'Espace qui s\'ouvre sur un élément.' },
+    esprit:       { nom: 'Élémentaire', desc: 'Un esprit fait de l\'autre effet, qui chasse tes ennemis.', indice: 'L\'Esprit qui habite un élément.' },
+    contre:       { nom: 'Absorption', desc: 'Le Contre-sort avale la matière de l\'autre effet autour du point visé et te rend un peu d\'encre.', indice: 'Défaire un seul élément.' },
+    metamorphose: { nom: 'Chimère', desc: 'La créature touchée devient une créature de l\'autre effet et le porte partout où elle va. Sur soi : tu prends cette nature.', indice: 'Changer une bête en élément.' },
+  };
+  const deEffet = (e) => { const n = ((CORES[e] || PSEUDO[e] || {}).nom || e).toLowerCase(); return (/^[aeiouéèêh]/.test(n) ? 'd\'' : 'de ') + n; };
+  function comboInfo(k) {
+    if (COMBOS[k]) return COMBOS[k];
+    const [a, b] = k.split('|'); const g = GENRES[a] && !GENRES[b] ? a : GENRES[b] && !GENRES[a] ? b : null; if (!g) return null;
+    const x = g === a ? b : a; const G = GENRES[g]; return { nom: G.nom + ' ' + deEffet(x), desc: G.desc, indice: G.indice, genre: g, effet: x };
+  }
+  function comboCle(effets) {
+    const u = effets.filter((e, i) => effets.indexOf(e) === i); if (u.length < 2) return null; let fam = null;
+    for (let i = 0; i < u.length; i++) for (let j = i + 1; j < u.length; j++) { const k = [u[i], u[j]].sort().join('|'); if (COMBOS[k]) return k; if (!fam && comboInfo(k)) fam = k; }
+    return fam;
+  }
   // Formes (anneau intérieur)
   const SHAPES = {
     projectile: { id: 'projectile', nom: 'Projectile', cout: 1, desc: 'Une bille d\'encre qui file dans la direction visée.' },
@@ -958,11 +1027,11 @@ const DATA = (() => {
   // Épreuves de sceaux : « invente un sort qui... » ; spec = sceau évalué
   const EPREUVES = {
     eteindre_loin: { texte: 'un sort qui éteigne un feu de loin', test: (s) => !['soi', 'aura'].includes(s.shape) && s.cores.some((c) => ['eau', 'froid', 'vent', 'neutraliser', 'secheresse'].includes(c)), indice: 'Il faut un effet qui éteint (Eau, Froid, Vent...) et une forme qui porte loin.' },
-    pont:          { texte: 'un sort qui fasse un pont au-dessus de l\'eau', test: (s) => !['soi', 'aura'].includes(s.shape) && (s.cores.includes('froid') || s.cores.includes('metal') || (s.cores.includes('terre') && s.persist > 0) || s.combo === 'eau|froid'), indice: 'Geler l\'eau, faire surgir du métal, ou de la terre qui dure (Persistance).' },
+    pont:          { texte: 'un sort qui fasse un pont au-dessus de l\'eau', test: (s) => !['soi', 'aura'].includes(s.shape) && (s.cores.includes('froid') || s.cores.includes('metal') || (s.cores.includes('terre') && s.persist > 0) || ['eau|froid', 'eau|lumiere', 'transmutation|vent', 'terre|vie'].includes(s.combo)), indice: 'Geler l\'eau, faire surgir du métal, ou de la terre qui dure (Persistance).' },
     trois_cibles:  { texte: 'un sort qui touche trois épouvantails d\'un coup', test: (s) => s.shape === 'chaine' || s.shape === 'pluie' || s.extra > 0 || s.echo > 0 || (s.shape === 'zone' && s.size >= 1.5), indice: 'Une Chaîne, une Pluie, un Double, un Écho, ou une très grande Zone.' },
     fusion:        { texte: 'un sort qui fusionne deux éléments', test: (s) => s.cores.length >= 2, indice: 'Un second glyphe d\'effet en bas du premier anneau.' },
     emboite:       { texte: 'un sort qui en lance un autre', test: (s) => s.subs > 0, indice: 'Un sous-sceau dans un emplacement de modificateur.' },
-    endormir:      { texte: 'un sort qui endorme tout un troupeau', test: (s) => (s.cores.includes('ombre') || s.cores.includes('silence') || s.combo === 'acide|feu') && ['zone', 'pluie', 'aura', 'totem', 'mur'].includes(s.shape), indice: 'L\'Ombre, sur une forme qui couvre large.' },
+    endormir:      { texte: 'un sort qui endorme tout un troupeau', test: (s) => (s.cores.includes('ombre') || s.cores.includes('silence') || s.combo === 'acide|feu' || s.combo === 'vent|vie') && ['zone', 'pluie', 'aura', 'totem', 'mur', 'projectile'].includes(s.shape), indice: 'L\'Esprit et son aspect Sommeil sur une forme qui couvre large, ou un nuage de pollen.' },
   };
   // Lettres du maître, apportées par le corbeau, dans l'ordre
   const LETTRES = [
@@ -1249,7 +1318,7 @@ const DATA = (() => {
   // affinité : combien un geste aimé rapproche (sur 100)
   const AFFINITE = { golem: { gain: 4, parJour: 20 }, follet: { gain: 12 }, limace: { gain: 15 }, salamandre: { gain: 14 }, chauve: { gain: 15 } };
 
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE };
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle };
 })();
 
 </script>
@@ -1307,8 +1376,8 @@ const Seal = (() => {
   }
   function comboName(s) {
     const ef = effets(s); if (ef.length < 2) return null;
-    const k = ef.slice().sort().join('|');
-    return DATA.COMBOS[k] ? DATA.COMBOS[k].nom : null;
+    const k = DATA.comboCle(ef); const I = k && DATA.comboInfo(k);
+    return I && api.comboConnu(k) ? I.nom : null;
   }
   function autoNom(s) {
     if (!s.core) return 'Pétard';
@@ -1608,7 +1677,8 @@ const Seal = (() => {
     ctx.restore();
   }
 
-  return { aspects, effets, create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, slotList, draw, drawMini, isSub, subs, depth, modId, comboName, taille, nbSlots, triggers, NMODS };
+  const api = { comboConnu: () => true };
+  return Object.assign(api, { aspects, effets, create, clone, cost, count, etat, autoNom, nom, params, glyph, layout, slotList, draw, drawMini, isSub, subs, depth, modId, comboName, taille, nbSlots, triggers, NMODS });
 })();
 
 </script>
@@ -2047,7 +2117,8 @@ function createSim() {
   const CH = 32;       // cellules par côté de morceau (chunk)
   const CPX = CS * CH; // pixels par morceau
   let W = 0, H = 0, CW = 0, CHn = 0;
-  let mat, aux, elec, upd, chaud, chunkVide, chunkRendu, nDraw = 0;
+  let mat, aux, elec, upd, chaud, temp, ancre, enBloc, vis, sure, chunkVide, chunkRendu, chunkHeat, nDraw = 0;
+  let visGen = 1, fiss = [], fissStamp = null, blocs = [], effondre = true;
   let tzones = []; // bulles de temps : { x, y, r, f } en pixels ; f = 0 figé, < 1 ralenti, > 1 accéléré
   let chunkActive, chunkDirty, chunkCv, chunkLights, chunkHasLiquid;
   let frame = 0;
@@ -2057,7 +2128,7 @@ function createSim() {
   let gzones = [];  // champs de gravité locaux : {x, y, r (px), gx, gy, mag}
   let feuMul = 1;   // option : vitesse de propagation du feu
 
-  const M = { AIR: 0, PIERRE: 1, TERRE: 2, SABLE: 3, BOIS: 4, PLANTE: 5, HERBE: 6, EAU: 7, HUILE: 8, ACIDE: 9, LAVE: 10, GLACE: 11, NEIGE: 12, VAPEUR: 13, FUMEE: 14, FEU: 15, SEVE: 16, VERRE: 17, METAL: 18, OBSIDIENNE: 19, CENDRE: 20, CRISTAL: 21, POUDRE: 22, MOUSSE: 23, MIEL: 24, SEL: 25, SAUMURE: 26, BOUE: 27, BULLE: 28, MEUBLE: 29 };
+  const M = { AIR: 0, PIERRE: 1, TERRE: 2, SABLE: 3, BOIS: 4, PLANTE: 5, HERBE: 6, EAU: 7, HUILE: 8, ACIDE: 9, LAVE: 10, GLACE: 11, NEIGE: 12, VAPEUR: 13, FUMEE: 14, FEU: 15, SEVE: 16, VERRE: 17, METAL: 18, OBSIDIENNE: 19, CENDRE: 20, CRISTAL: 21, POUDRE: 22, MOUSSE: 23, MIEL: 24, SEL: 25, SAUMURE: 26, BOUE: 27, BULLE: 28, MEUBLE: 29, GAZ: 30 };
   const P = [];
   const def = (id, p) => { P[id] = Object.assign({ solid: 0, powder: 0, liquid: 0, gas: 0, pass: 0, climb: 0, dig: 0, flam: 0, burn: 0, corrode: 0, dens: 0, flow: 0, hot: 0, light: 0, cond: 0, hatch: 0, alpha: 0.6 }, p); };
   def(M.AIR, { nom: 'air' });
@@ -2088,9 +2159,31 @@ function createSim() {
   def(M.SEL, { nom: 'sel', solid: 1, powder: 1, dig: 1, color: '#f2efe6', corrode: 0.3, alpha: 0.9 });
   def(M.SAUMURE, { nom: 'saumure', liquid: 1, dens: 2.5, flow: 5, color: '#5f8fb8', cond: 1, alpha: 0.55 });
   def(M.BULLE, { nom: 'bulle', color: '#a8dede', alpha: 0.28 });
+  def(M.GAZ, { nom: 'gaz', gas: 1, color: '#d8e8c8', alpha: 0.28, flam: 1 });
   def(M.MEUBLE, { nom: 'terre meuble', solid: 1, powder: 1, dig: 1, color: '#a3844f', corrode: 0.08, alpha: 0.95 });
   def(M.BOUE, { nom: 'boue', liquid: 1, dens: 4.5, flow: 1, color: '#6b5330', alpha: 0.85 });
   const FLAMMABLE_SOLID = (m) => m === M.BOIS || m === M.PLANTE || m === M.HERBE;
+  // ---------- Chaleur : une température par case (AMB = ambiante) ----------
+  const AMB = 64, T_LAVE = 225;
+  const NAT = new Uint8Array(64).fill(AMB); NAT[M.GLACE] = 40; NAT[M.NEIGE] = 42; NAT[M.LAVE] = T_LAVE;
+  const COND = new Float32Array(64).fill(0.12);
+  [[M.AIR, 0.14], [M.PIERRE, 0.26], [M.TERRE, 0.12], [M.SABLE, 0.1], [M.BOIS, 0.07], [M.PLANTE, 0.09], [M.HERBE, 0.09], [M.EAU, 0.26], [M.HUILE, 0.14], [M.ACIDE, 0.2], [M.LAVE, 0.3], [M.GLACE, 0.22], [M.NEIGE, 0.08], [M.VAPEUR, 0.18], [M.FEU, 0.4], [M.VERRE, 0.2], [M.METAL, 0.5], [M.OBSIDIENNE, 0.16], [M.CRISTAL, 0.22], [M.SAUMURE, 0.26], [M.BOUE, 0.15], [M.MEUBLE, 0.1], [M.MOUSSE, 0.09]].forEach(([m, c]) => { COND[m] = c; });
+  const RELAX = new Float32Array(64).fill(0.005);
+  RELAX[M.AIR] = 0.035; for (const m of [M.VAPEUR, M.FUMEE, M.FEU, M.BULLE]) RELAX[m] = 0.04; for (const m of [M.EAU, M.HUILE, M.ACIDE, M.SAUMURE, M.BOUE, M.MIEL, M.SEVE]) RELAX[m] = 0.012; RELAX[M.METAL] = 0.012; RELAX[M.LAVE] = 0.004;
+  const BRULE = new Uint8Array(64); for (const m of [M.BOIS, M.PLANTE, M.HERBE, M.MOUSSE]) BRULE[m] = 1;
+  const EMET = new Uint8Array(64); for (const m of [M.FEU, M.LAVE, M.BOIS, M.PLANTE, M.HERBE, M.MOUSSE]) EMET[m] = 1;
+  // température d'une source (0 : pas une source)
+  function emitT(i, m) { if (m === M.FEU) return 165 + 35 * chaud[i]; if (m === M.LAVE) return temp[i] >= 170 ? T_LAVE : 0; if (BRULE[m] && aux[i] > 0) return 160; return 0; }
+  const visT = (t, m) => (t > 124 ? 1 + ((t - 124) >> 5) : t < 46 && m !== M.GLACE && m !== M.NEIGE ? -1 - ((46 - t) >> 4) : 0);
+  function chauffeChunk(i) { const x = i % W, y = (i - x) / W, c = (y >> 5) * CW + (x >> 5); chunkHeat[c] = frame + 60; }
+  // ---------- Effondrement : la pierre qui ne tient plus sur rien tombe ----------
+  const STRUCT = new Uint8Array(64); for (const m of [M.PIERRE, M.TERRE, M.BOIS, M.METAL, M.GLACE, M.CRISTAL, M.OBSIDIENNE, M.VERRE]) STRUCT[m] = 1;
+  const PASSAGER = new Uint8Array(64); for (const m of [M.HERBE, M.PLANTE, M.MOUSSE]) PASSAGER[m] = 1;
+  function fissure(i) {
+    if (!fissStamp) return; const x = i % W, y = (i - x) / W, b = (y >> 2) * Math.ceil(W / 4) + (x >> 2);
+    if (fissStamp[b] === frame + 1) return; fissStamp[b] = frame + 1; if (fiss.length < 3000) fiss.push(b);
+  }
+  function changeMat(i, m) { const o = mat[i]; if (STRUCT[o] !== STRUCT[m] && !enBloc[i]) { if (STRUCT[o]) ancre[i] = 0; fissure(i); } }
   // gravité locale d'une cellule : [dx, dy, mag] ; mag 0 = apesanteur
   function gravAt(x, y) {
     for (const z of gzones) { const px = (x + 0.5) * CS, py = (y + 0.5) * CS; if (z.rect ? px >= z.rect.x0 && px <= z.rect.x1 && py >= z.rect.y0 && py <= z.rect.y1 : (px - z.x) * (px - z.x) + (py - z.y) * (py - z.y) <= z.r * z.r) return [z.gx, z.gy, z.mag]; }
@@ -2105,7 +2198,9 @@ function createSim() {
 
   function init(w, h) {
     W = w; H = h; CW = Math.ceil(W / CH); CHn = Math.ceil(H / CH);
-    mat = new Uint8Array(W * H); aux = new Uint8Array(W * H); elec = new Uint8Array(W * H); upd = new Uint8Array(W * H); chaud = new Uint8Array(W * H);
+    mat = new Uint8Array(W * H); aux = new Uint8Array(W * H); elec = new Uint8Array(W * H); upd = new Uint8Array(W * H); chaud = new Uint8Array(W * H); temp = new Uint8Array(W * H).fill(AMB);
+    ancre = new Uint8Array(W * H); enBloc = new Uint8Array(W * H); vis = new Uint32Array(W * H); sure = new Uint32Array(W * H); fissStamp = new Uint32Array(Math.ceil(W / 4) * Math.ceil(H / 4)); fiss = []; blocs = [];
+    chunkHeat = new Int32Array(Math.ceil(W / CH) * Math.ceil(H / CH)).fill(30);
     chunkActive = new Int32Array(CW * CHn); chunkDirty = new Uint8Array(CW * CHn).fill(1); chunkHasLiquid = new Uint8Array(CW * CHn);
     chunkCv = new Array(CW * CHn).fill(null); chunkLights = new Array(CW * CHn).fill(null); chunkVide = new Uint8Array(CW * CHn); chunkRendu = new Uint32Array(CW * CHn);
     frame = 0;
@@ -2123,14 +2218,26 @@ function createSim() {
     if (lx === 0) mark(cx - 1, cy); else if (lx === 31) mark(cx + 1, cy);
     if (ly === 0) mark(cx, cy - 1); else if (ly === 31) mark(cx, cy + 1);
   }
-  function set(x, y, m, a = 0) { if (!inB(x, y)) return; const i = y * W + x; mat[i] = m; aux[i] = a; elec[i] = 0; chaud[i] = 0; touch(i); }
-  function setI(i, m, a = 0) { mat[i] = m; aux[i] = a; elec[i] = 0; chaud[i] = 0; touch(i); }
+  function set(x, y, m, a = 0) { if (!inB(x, y)) return; const i = y * W + x; changeMat(i, m); mat[i] = m; aux[i] = a; elec[i] = 0; chaud[i] = 0; temp[i] = NAT[m]; if (m === M.LAVE || m === M.FEU) chauffeChunk(i); touch(i); }
+  function setI(i, m, a = 0) { changeMat(i, m); mat[i] = m; aux[i] = a; elec[i] = 0; chaud[i] = 0; if (m === M.LAVE) temp[i] = T_LAVE; if (m === M.LAVE || m === M.FEU) chauffeChunk(i); touch(i); }
   // flamme chauffée : 1 blanche, 2 bleue
   function setFeu(x, y, a, c) { if (!inB(x, y)) return; set(x, y, M.FEU, a); chaud[y * W + x] = c; }
+  // chauffer (T > AMB) ou refroidir (T < AMB) une zone, en pixels
+  function chauffer(px, py, r, T, k = 0.6) {
+    forRadius(px, py, r, (x, y, i, m) => {
+      const dx = (x + 0.5) * CS - px, dy = (y + 0.5) * CS - py, f = k * (1 - 0.5 * Math.sqrt(dx * dx + dy * dy) / Math.max(1, r));
+      if (m === M.FEU && T < AMB) { setI(i, M.VAPEUR, 20); return; }
+      temp[i] = Math.max(0, Math.min(255, Math.round(temp[i] + (T - temp[i]) * f)));
+      chauffeChunk(i); touch(i);
+    });
+  }
+  function tempAt(px, py) { const x = Math.floor(px / CS), y = Math.floor(py / CS); return inB(x, y) ? temp[y * W + x] : AMB; }
+  function tempMax(px, py, r) { let t = 0; forRadius(px, py, r, (x, y, i) => { if (temp[i] > t) t = temp[i]; }); return t; }
+  function tempMin(px, py, r) { let t = 255; forRadius(px, py, r, (x, y, i) => { if (temp[i] < t) t = temp[i]; }); return t; }
   function swap(i, j) {
-    const m = mat[i], a = aux[i], e = elec[i], c = chaud[i];
-    mat[i] = mat[j]; aux[i] = aux[j]; elec[i] = elec[j]; chaud[i] = chaud[j];
-    mat[j] = m; aux[j] = a; elec[j] = e; chaud[j] = c;
+    const m = mat[i], a = aux[i], e = elec[i], c = chaud[i], t = temp[i];
+    mat[i] = mat[j]; aux[i] = aux[j]; elec[i] = elec[j]; chaud[i] = chaud[j]; temp[i] = temp[j];
+    mat[j] = m; aux[j] = a; elec[j] = e; chaud[j] = c; temp[j] = t;
     upd[i] = frame & 255; upd[j] = frame & 255;
     touch(i); touch(j);
   }
@@ -2170,6 +2277,168 @@ function createSim() {
       }
       for (let cy = Math.floor(y0 / CH); cy <= Math.floor(y1 / CH); cy++) for (let cx = Math.floor(x0 / CH); cx <= Math.floor(x1 / CH); cx++) { const c = cy * CW + cx; if (chunkActive[c] <= frame) chunkActive[c] = frame + 2; }
     }
+    if (frame % 3 === 0) stepChaleur();
+    if (effondre) { traiterFissures(); majBlocs(); }
+  }
+  // ---------- Chaleur : conduction de l'écart à la température naturelle, retour au calme, changements d'état ----------
+  function stepChaleur() {
+    const N = W * H;
+    for (let c = 0; c < CW * CHn; c++) {
+      if (chunkHeat[c] <= frame) continue;
+      const cx = c % CW, cy = (c - cx) / CW, x0 = cx * CH, y0 = cy * CH, x1 = Math.min(W, x0 + CH), y1 = Math.min(H, y0 + CH);
+      let vivant = false, redraw = false;
+      for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+        const i = y * W + x, m = mat[i];
+        const e = EMET[m] ? emitT(i, m) : 0;
+        if (e) { temp[i] = e; vivant = true;
+          // rayonnement : l'air juste au-dessus d'une flamme ou de la lave brûle
+          if (m === M.LAVE || m === M.FEU) { const kr = m === M.LAVE ? 0.35 : 0.15, nr = m === M.LAVE ? 3 : 2; let j = i - W; for (let dd = 1; dd <= nr && j >= 0 && mat[j] === M.AIR; dd++, j -= W) { const tt = temp[j], tg = e - 26 * dd; if (tt < tg) temp[j] = tt + (((tg - tt) * kr) | 0); } }
+          if (x === x0 || y === y0 || x === x1 - 1 || y === y1 - 1) { if (x === x0 && cx > 0) chunkHeat[c - 1] = frame + 60; if (x === x1 - 1 && cx < CW - 1) chunkHeat[c + 1] = frame + 60; if (y === y0 && cy > 0) chunkHeat[c - CW] = frame + 60; if (y === y1 - 1 && cy < CHn - 1) chunkHeat[c + CW] = frame + 60; } continue; }
+        const t = temp[i], n0 = NAT[m]; let d = t - n0; let any = d > 1 || d < -1; const cm = COND[m]; let flux = 0;
+        for (let k = 0; k < 4; k++) {
+          const j = k === 0 ? i - W : k === 1 ? i + W : k === 2 ? (x > 0 ? i - 1 : -1) : (x < W - 1 ? i + 1 : -1);
+          if (j < 0 || j >= N) continue;
+          const nj = mat[j], ej = EMET[nj] ? emitT(j, nj) : 0, dj = ej ? ej - AMB : temp[j] - NAT[nj];
+          if (dj > 1 || dj < -1) any = true; else if (!any) continue;
+          flux += (ej ? 0.45 : cm < COND[nj] ? cm : COND[nj]) * (dj - d);
+        }
+        if (!any) continue;
+        d = (d + flux * 0.55) * (1 - RELAX[m] * 1.5);
+        let nt = n0 + d; nt = nt < 0 ? 0 : nt > 255 ? 255 : nt; nt = (nt + rnd()) | 0; if (nt > 255) nt = 255;
+        if (visT(t, m) !== visT(nt, m)) redraw = true;
+        temp[i] = nt;
+        // l'air chaud monte
+        if (m === M.AIR && nt > AMB + 6 && y > 0 && mat[i - W] === M.AIR && temp[i - W] < nt && rnd() < 0.6) { temp[i] = temp[i - W]; temp[i - W] = nt; }
+        // l'air froid descend
+        else if (m === M.AIR && nt < AMB - 6 && i + W < N && mat[i + W] === M.AIR && temp[i + W] > nt && rnd() < 0.5) { temp[i] = temp[i + W]; temp[i + W] = nt; }
+        if (nt - n0 > 1 || nt - n0 < -1) { vivant = true; if ((x === x0 && cx > 0) || (x === x1 - 1 && cx < CW - 1) || (y === y0 && cy > 0) || (y === y1 - 1 && cy < CHn - 1)) { if (x === x0 && cx > 0) chunkHeat[c - 1] = Math.max(chunkHeat[c - 1], frame + 20); if (x === x1 - 1 && cx < CW - 1) chunkHeat[c + 1] = Math.max(chunkHeat[c + 1], frame + 20); if (y === y0 && cy > 0) chunkHeat[c - CW] = Math.max(chunkHeat[c - CW], frame + 20); if (y === y1 - 1 && cy < CHn - 1) chunkHeat[c + CW] = Math.max(chunkHeat[c + CW], frame + 20); } }
+        if (nt >= 100 || nt <= 50) etat(x, y, i, m, nt);
+      }
+      if (vivant) chunkHeat[c] = frame + 60;
+      if (redraw) chunkDirty[c] = 1;
+    }
+  }
+  function etat(x, y, i, m, t) {
+    switch (m) {
+      case M.AIR: if (t <= 24 && rnd() < 0.004) { setI(i, M.NEIGE); temp[i] = t; } break;
+      case M.EAU: if (t >= 112) { setI(i, M.VAPEUR, 70); evt('ebullition', x, y); } else if (t <= 44) { setI(i, M.GLACE); temp[i] = t; evt('gel', x, y); } break;
+      case M.SAUMURE: if (t >= 116) { setI(i, rnd() < 0.3 ? M.SEL : M.VAPEUR, 70); } else if (t <= 28) { setI(i, M.GLACE); temp[i] = t; } break;
+      case M.GLACE: if (t >= 74) { setI(i, M.EAU); evt('fonte', x, y); } break;
+      case M.NEIGE: if (t >= 70) { setI(i, M.EAU); evt('fonte', x, y); } break;
+      case M.VAPEUR: if (t <= 50) setI(i, M.EAU); break;
+      case M.BOUE: if (t >= 106) setI(i, M.TERRE); break;
+      case M.BOIS: if (t >= 165 && aux[i] === 0 && rnd() < 0.35 * feuMul) { aux[i] = P[m].burn; touch(i); evt('incendie', x, y); } break;
+      case M.PLANTE: case M.HERBE: if (t >= 150 && aux[i] === 0 && rnd() < 0.3 * feuMul) { aux[i] = P[m].burn; touch(i); if (rnd() < 0.2) evt('incendie', x, y); } break;
+      case M.MOUSSE: if (t >= 155 && aux[i] === 0 && rnd() < 0.3 * feuMul) { aux[i] = 20; touch(i); } break;
+      case M.HUILE: case M.SEVE: if (t >= 138) { setI(i, M.FEU, P[m].burn); evt('incendie', x, y); } break;
+      case M.POUDRE: if (t >= 135) explode(x, y, 5); break;
+      case M.SABLE: if (t >= 205) { setI(i, M.VERRE); temp[i] = t; evt('verre', x, y); } break;
+      case M.LAVE: if (t < 150) { setI(i, M.OBSIDIENNE); temp[i] = t; evt('obsidienne', x, y); } break;
+      case M.PIERRE: case M.TERRE: case M.VERRE: case M.SEL: case M.CRISTAL: if (t >= 236) { setI(i, M.LAVE); evt('magma', x, y); } break;
+      case M.METAL: if (t >= 245) { setI(i, M.LAVE); evt('magma', x, y); } break;
+    }
+  }
+  // ---------- Effondrement ----------
+  const LIM_BLOC = 2600;
+  function traiterFissures() {
+    let budget = 9000, n = 0; const lot = visGen + 1;
+    while (fiss.length && budget > 0 && n < 10) {
+      const b = fiss.shift(); n++;
+      const BW = Math.ceil(W / 4), bx = (b % BW) * 4, by = ((b / BW) | 0) * 4;
+      // tout le carreau et son pourtour : les bords de la coupure
+      for (let y = Math.max(0, by - 1); y <= Math.min(H - 1, by + 4); y++) for (let x = Math.max(0, bx - 1); x <= Math.min(W - 1, bx + 4); x++) {
+        const j = y * W + x;
+        if (!STRUCT[mat[j]] || enBloc[j] || sure[j] === frame || vis[j] >= lot) continue;
+        budget -= flotte(j);
+      }
+    }
+  }
+  // explore le morceau qui contient s ; s'il ne tient à rien, il devient un bloc qui tombe. Renvoie le coût.
+  function flotte(s) {
+    visGen++; const g = visGen, st = [s], comp = []; vis[s] = g; let ancreOk = false;
+    while (st.length) {
+      const a = st.pop(); comp.push(a);
+      const x = a % W;
+      // sous la surface d'origine, la roche tient au reste du monde
+      if (comp.length > LIM_BLOC || ancre[a] || a >= W * (H - 2) || sure[a] === frame || (surf && (a - x) / W > surf[x] + 12)) { ancreOk = true; break; }
+      // l'ordre fait descendre d'abord : on trouve vite le sol
+      if (a >= W) { const j = a - W; if (vis[j] !== g && STRUCT[mat[j]] && !enBloc[j]) { vis[j] = g; st.push(j); } }
+      if (x > 0) { const j = a - 1; if (vis[j] !== g && STRUCT[mat[j]] && !enBloc[j]) { vis[j] = g; st.push(j); } }
+      if (x < W - 1) { const j = a + 1; if (vis[j] !== g && STRUCT[mat[j]] && !enBloc[j]) { vis[j] = g; st.push(j); } }
+      { const j = a + W; if (j < W * H && vis[j] !== g && STRUCT[mat[j]] && !enBloc[j]) { vis[j] = g; st.push(j); } }
+    }
+    if (ancreOk) { for (const a of comp) sure[a] = frame; return comp.length + 20; }
+    creerBloc(comp, g);
+    return comp.length + 20;
+  }
+  function creerBloc(comp, g) {
+    // les herbes, plantes et mousses accrochées suivent (si elles ne tiennent pas ailleurs)
+    const pass = []; const q = comp.slice();
+    while (q.length && pass.length < 900) {
+      const a = q.pop(); const x = a % W;
+      for (const j of [a - W, a + W, x > 0 ? a - 1 : -1, x < W - 1 ? a + 1 : -1]) {
+        if (j < 0 || j >= W * H || vis[j] === g || !PASSAGER[mat[j]]) continue;
+        vis[j] = g; const xj = j % W; let tient = false;
+        for (const k of [j - W, j + W, xj > 0 ? j - 1 : -1, xj < W - 1 ? j + 1 : -1]) if (k >= 0 && k < W * H && STRUCT[mat[k]] && vis[k] !== g) tient = true;
+        if (!tient) { pass.push(j); q.push(j); }
+      }
+    }
+    const cells = comp.concat(pass).sort((a, b) => b - a);
+    let leger = 0, glace = 0, x0 = W, x1 = 0, y0 = H, y1 = 0;
+    for (const a of cells) { enBloc[a] = 1; const m = mat[a]; if (m === M.BOIS || PASSAGER[m]) leger++; else if (m === M.GLACE) glace++; const x = a % W, y = (a - x) / W; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    const dens = leger > cells.length * 0.6 ? 1.4 : glace + leger > cells.length * 0.6 ? 1.8 : 6;
+    blocs.push({ cells, n: comp.length, vy: 0, acc: 0, dens, x0, x1, y0, y1, chute: 0, pose: false, impact: 0 });
+    if (onEvent) onEvent('effondrement', (x0 + x1 + 1) / 2 * CS, (y0 + y1 + 1) / 2 * CS);
+  }
+  function majBlocs() {
+    for (let k = blocs.length - 1; k >= 0; k--) {
+      const b = blocs[k];
+      if (b.pose) { blocs.splice(k, 1); continue; }
+      b.vy = Math.min(3, b.vy + 0.07); b.acc += b.vy;
+      while (b.acc >= 1) { b.acc -= 1; if (!descendre(b)) { atterrir(b); break; } }
+    }
+  }
+  function descendre(b) {
+    // les cases qui ont changé de nature (fondu, brûlé, rongé) quittent le bloc
+    let n = 0; for (let k = 0; k < b.cells.length; k++) { const a = b.cells[k]; if (STRUCT[mat[a]] || PASSAGER[mat[a]]) b.cells[n++] = a; else enBloc[a] = 0; }
+    b.cells.length = n; if (!n) return false;
+    for (const a of b.cells) {
+      const j = a + W; if (j >= W * H) return false;
+      if (enBloc[j]) continue;
+      const q = P[mat[j]];
+      if (mat[j] === M.AIR || q.gas) continue;
+      if (q.liquid && q.dens < b.dens) continue;
+      return false;
+    }
+    for (let k = 0; k < b.cells.length; k++) { const a = b.cells[k], j = a + W; swap(a, j); enBloc[a] = 0; enBloc[j] = 1; b.cells[k] = j; }
+    b.y0++; b.y1++; b.chute++;
+    return true;
+  }
+  function atterrir(b) {
+    b.pose = true; b.impact = b.vy;
+    for (const a of b.cells) enBloc[a] = 0;
+    if (b.vy > 0.9) {
+      const set0 = new Set(b.cells);
+      for (const a of b.cells) {
+        if (set0.has(a + W)) continue; const m = mat[a], r = rnd();
+        if (m === M.PIERRE && r < 0.35) setI(a, M.SABLE);
+        else if (m === M.TERRE && r < 0.5) setI(a, M.MEUBLE);
+        else if (m === M.GLACE && r < 0.4) setI(a, M.NEIGE);
+        else if ((m === M.VERRE || m === M.CRISTAL) && r < 0.6) setI(a, M.AIR);
+      }
+    }
+    if (onEvent) onEvent('eboulement', (b.x0 + b.x1 + 1) / 2 * CS, (b.y1 + 1) * CS);
+  }
+  // au chargement : ce qui flotte déjà (îles volantes...) est ancré par magie
+  function ancrer() {
+    ancre.fill(0); enBloc.fill(0); fiss = []; blocs = []; if (fissStamp) fissStamp.fill(0);
+    const seen = new Uint8Array(W * H), stk = [];
+    for (let x = 0; x < W; x++) for (const y of [H - 1, H - 2]) { const i = y * W + x; if (STRUCT[mat[i]] && !seen[i]) { seen[i] = 1; stk.push(i); } }
+    while (stk.length) { const a = stk.pop(); const x = a % W; for (const j of [a - W, a + W, x > 0 ? a - 1 : -1, x < W - 1 ? a + 1 : -1]) if (j >= 0 && j < W * H && !seen[j] && STRUCT[mat[j]]) { seen[j] = 1; stk.push(j); } }
+    let n = 0; for (let i = 0; i < W * H; i++) if (STRUCT[mat[i]] && !seen[i]) { ancre[i] = 1; n++; }
+    for (let i = 0; i < W * H; i++) temp[i] = NAT[mat[i]];
+    chunkHeat.fill(frame + 4);
+    return n;
   }
 
   function cell(x, y, i, m, f) {
@@ -2283,6 +2552,7 @@ function createSim() {
     }
   }
   function stepGas(x, y, i, m, p) {
+    if (m === M.GAZ && (hotNear(i) || temp[i] > 160)) { explode(x, y, 3); return; }
     if (aux[i] > 0) aux[i]--;
     if (aux[i] === 0) {
       if (m === M.VAPEUR) { if (rnd() < 0.3) { setI(i, M.EAU); evt('condensation', x, y); } else setI(i, M.AIR); }
@@ -2386,7 +2656,9 @@ function createSim() {
     // 1. remplissages
     for (let y = y0; y < y1; y++) {
       for (let x = x0; x < x1; x++) {
-        const i = y * W + x; const m = mat[i]; if (!m) continue; plein = 1;
+        const i = y * W + x; const m = mat[i];
+        if (!m) { const t = temp[i]; if (t > 118 || t < 40) { plein = 1; g.fillStyle = t > 118 ? '#f08a3a' : '#cfe8f6'; g.globalAlpha = t > 118 ? Math.min(0.22, (t - 118) / 300) : Math.min(0.3, (40 - t) / 60); g.fillRect((x - x0) * CS, (y - y0) * CS, CS, CS); g.globalAlpha = 1; } continue; }
+        plein = 1;
         const p = P[m]; const lx = (x - x0) * CS, ly = (y - y0) * CS;
         if (p.solid && !p.powder) anySolid = true;
         if (m === M.FEU) {
@@ -2406,6 +2678,7 @@ function createSim() {
         g.globalAlpha = 1;
         if (p.light && ((x & 3) === 0) && ((y & 3) === 0)) lights.push({ x: (x + 0.5) * CS, y: (y + 0.5) * CS, r: m === M.LAVE ? 90 : 60 });
         if ((m === M.BOIS || m === M.PLANTE || m === M.HERBE) && aux[i] > 0) { g.fillStyle = U.hash2(x, y + (frame >> 2)) < 0.5 ? '#e0642a' : '#f0a040'; g.globalAlpha = 0.55; g.fillRect(lx, ly, CS, CS); g.globalAlpha = 1; if (((x & 3) === 0) && ((y & 3) === 0)) lights.push({ x: (x + 0.5) * CS, y: (y + 0.5) * CS, r: 60 }); }
+        { const t = temp[i]; if (t > 124 && m !== M.LAVE) { g.fillStyle = t > 200 ? '#f6d080' : t > 165 ? '#f08a3a' : '#c8502a'; g.globalAlpha = Math.min(0.65, (t - 124) / 120); g.fillRect(lx, ly, CS, CS); g.globalAlpha = 1; if (t > 175 && ((x & 3) === 0) && ((y & 3) === 0)) lights.push({ x: (x + 0.5) * CS, y: (y + 0.5) * CS, r: 50 }); } else if (t < 46 && m !== M.GLACE && m !== M.NEIGE && !p.gas) { g.fillStyle = '#e4f2fa'; g.globalAlpha = Math.min(0.55, (46 - t) / 40); g.fillRect(lx, ly, CS, CS); g.globalAlpha = 1; } }
         if (elec[i] > 0 && U.hash2(x, y + frame) < 0.5) { g.fillStyle = '#fff4a0'; g.globalAlpha = 0.6; g.fillRect(lx, ly, CS, CS); g.globalAlpha = 1; }
       }
     }
@@ -2505,12 +2778,12 @@ function createSim() {
   function deserialize(s) {
     let i = 0;
     for (const r of s.split(',')) { const k = r.indexOf(':'); const m = +r.substring(0, k), n = +r.substring(k + 1); mat.fill(m, i, i + n); i += n; }
-    aux.fill(0); elec.fill(0); dirtyAll();
+    aux.fill(0); elec.fill(0); chaud.fill(0); for (let k = 0; k < mat.length; k++) temp[k] = NAT[mat[k]]; dirtyAll();
     for (let c = 0; c < chunkActive.length; c++) chunkActive[c] = frame + 40;
   }
 
   return { CS, CH, M, P, init, get, set, swap, wake, touch, idx, step, matAt, solidAt, rectBlocked, rectHas, forRadius, raycast, countAround, countRect, draw, lights, dirtyAll, serialize, deserialize,
-    get W() { return W; }, get H() { return H; }, get mat() { return mat; }, get aux() { return aux; }, get elec() { return elec; }, get chaud() { return chaud; }, setFeu,
+    get W() { return W; }, get H() { return H; }, get mat() { return mat; }, get aux() { return aux; }, get elec() { return elec; }, get chaud() { return chaud; }, setFeu, chauffer, tempAt, tempMax, tempMin, ancrer, get temp() { return temp; }, get blocs() { return blocs; }, get AMB() { return AMB; }, set effondre(v) { effondre = v; }, get effondre() { return effondre; }, get nFiss() { return fiss.length; }, ancrerCase(i, v) { ancre[i] = v ? 1 : 0; }, fissurer(i) { fissure(i); },
     set onEvent(f) { onEvent = f; }, set sunny(v) { sunny = v; }, get gzones() { return gzones; }, set gzones(v) { gzones = v; }, set tzones(v) { tzones = v; }, get tzones() { return tzones; }, tempsAt, gravAt, set feuMul(v) { feuMul = v; }, set surf(v) { surf = v; }, get surf() { return surf; }, get frame() { return frame; } };
 })();
 }
@@ -2910,10 +3183,699 @@ const Gen = (() => {
 </script>
 <script>
 'use strict';
+// ---------- Phénomènes : ce que deux essences font naître ensemble ----------
+// Un phénomène dure, a sa propre physique et épouse la forme du sceau :
+// point (zone, projectile, totem...), rectangle (mur, colonne), ligne (trait), ou attaché (sur soi, aura, objet, invocation).
+function creerPhenomenes(W) {
+  const Sim = W.Sim, M = Sim.M, P = Sim.P, CS = Sim.CS, TAU = Math.PI * 2;
+  const rnd = Math.random, clamp = (v, a, b) => (v < a ? a : v > b ? b : v), dist = (a, b, c, d) => Math.hypot(c - a, d - b);
+  let liste = [], dtC = 1 / 60;
+  const st = () => W.st;
+
+  // ---------- géométrie ----------
+  function deplacer(ph, dx, dy) {
+    ph.x += dx; ph.y += dy;
+    if (ph.rect) { ph.rect.x0 += dx; ph.rect.x1 += dx; ph.rect.y0 += dy; ph.rect.y1 += dy; }
+    if (ph.ligne) { ph.ligne.x1 += dx; ph.ligne.x2 += dx; ph.ligne.y1 += dy; ph.ligne.y2 += dy; }
+  }
+  function dSeg(px, py, L) { const vx = L.x2 - L.x1, vy = L.y2 - L.y1, l2 = vx * vx + vy * vy || 1; const t = clamp(((px - L.x1) * vx + (py - L.y1) * vy) / l2, 0, 1); return Math.hypot(px - (L.x1 + vx * t), py - (L.y1 + vy * t)); }
+  function contient(ph, px, py, marge = 0, k = 1) {
+    if (ph.rect) { const R = ph.rect, cx = (R.x0 + R.x1) / 2, cy = (R.y0 + R.y1) / 2, hw = (R.x1 - R.x0) / 2 * k + marge, hh = (R.y1 - R.y0) / 2 * k + marge; return Math.abs(px - cx) <= hw && Math.abs(py - cy) <= hh; }
+    if (ph.ligne) return dSeg(px, py, ph.ligne) <= ph.ligne.w * k + marge;
+    return dist(px, py, ph.x, ph.y) <= ph.r * k + marge;
+  }
+  function touche(ph, e, marge = 0, k = 1) { return contient(ph, e.x + e.w / 2, e.y + e.h / 2, marge + Math.max(e.w, e.h) * 0.4, k); }
+  function cells(ph, fn, k = 1) {
+    if (ph.rect) { const R = ph.rect, cx = (R.x0 + R.x1) / 2, cy = (R.y0 + R.y1) / 2, hw = (R.x1 - R.x0) / 2 * k, hh = (R.y1 - R.y0) / 2 * k; const x0 = Math.max(0, Math.floor((cx - hw) / CS)), x1 = Math.min(Sim.W - 1, Math.floor((cx + hw) / CS)), y0 = Math.max(0, Math.floor((cy - hh) / CS)), y1 = Math.min(Sim.H - 1, Math.floor((cy + hh) / CS)); for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const i = y * Sim.W + x; fn(x, y, i, Sim.mat[i]); } return; }
+    if (ph.ligne) { const L = ph.ligne, w = L.w * k; const x0 = Math.max(0, Math.floor((Math.min(L.x1, L.x2) - w) / CS)), x1 = Math.min(Sim.W - 1, Math.floor((Math.max(L.x1, L.x2) + w) / CS)), y0 = Math.max(0, Math.floor((Math.min(L.y1, L.y2) - w) / CS)), y1 = Math.min(Sim.H - 1, Math.floor((Math.max(L.y1, L.y2) + w) / CS)); for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (dSeg((x + 0.5) * CS, (y + 0.5) * CS, L) <= w) { const i = y * Sim.W + x; fn(x, y, i, Sim.mat[i]); } return; }
+    Sim.forRadius(ph.x, ph.y, ph.r * k, fn);
+  }
+  // un point au hasard dans la forme
+  function auHasard(ph, k = 1) {
+    if (ph.rect) { const R = ph.rect, cx = (R.x0 + R.x1) / 2, cy = (R.y0 + R.y1) / 2; return { x: cx + (rnd() - 0.5) * (R.x1 - R.x0) * k, y: cy + (rnd() - 0.5) * (R.y1 - R.y0) * k }; }
+    if (ph.ligne) { const L = ph.ligne, t = rnd(); return { x: L.x1 + (L.x2 - L.x1) * t + (rnd() - 0.5) * L.w, y: L.y1 + (L.y2 - L.y1) * t + (rnd() - 0.5) * L.w }; }
+    const a = rnd() * TAU, d = Math.sqrt(rnd()) * ph.r * k; return { x: ph.x + Math.cos(a) * d, y: ph.y + Math.sin(a) * d };
+  }
+  const creatures = (ph, marge = 0, k = 1) => st().crs.filter((c) => c.hp > 0 && c.t !== 'familier' && !c.glaise && touche(ph, c, marge, k));
+  const hostiles = (ph, marge = 0, k = 1) => creatures(ph, marge, k).filter((c) => !c.sta.tame);
+  const objets = (ph, marge = 0, k = 1) => st().objs.filter((o) => o.dyn && !o.mort && !o.carried && touche(ph, o, marge, k));
+  const joueurDans = (ph, marge = 0, k = 1) => touche(ph, st().p, marge, k);
+  function ev(ph, cle, periode) { ph.acc[cle] = (ph.acc[cle] || 0) + dtC; if (ph.acc[cle] >= periode) { ph.acc[cle] -= periode; return true; } return false; }
+  const pr = (ph, k = 1) => ({ power: ph.pw * k, size: ph.sz, duration: 1, persist: 0, range: 1, speed: 1, lg: {}, asp: {} });
+  function effet(ph, core, x, y, r, k = 1, mode = 'burst', o = {}) { W.applyEffect(core, x, y, r, pr(ph, k), mode, Object.assign({ noPlayer: true, noField: true, noGrid: false, phen: true }, o)); }
+  const fade = (ph) => clamp(Math.min(ph.t / 0.3, ph.life / Math.min(1, ph.max * 0.25)), 0, 1);
+  const sol = (x, y) => { const g = W.groundBelow(x, y); return g == null ? y : g; };
+  const air = (m) => m === M.AIR || P[m].gas;
+  function zap(x1, y1, x2, y2, couleur) { st().eclairs.push({ x: x2, y1: y2, pts: FX.eclairPts(x1, y1, x2, y2, 0.2), branches: [], life: 0.22, couleur }); }
+  function attirer(ph, R, force, dt, cx = ph.x, cy = ph.y, joueur = 0.35) {
+    const tire = (e, f) => { const ex = e.x + e.w / 2, ey = e.y + e.h / 2, d = Math.hypot(cx - ex, cy - ey) || 1; if (d > R) return; const k = force * (1 - d / R) * dt / W.masse(e) * f; e.vx += (cx - ex) / d * k; e.vy += (cy - ey) / d * k; };
+    for (const c of st().crs) if (c.hp > 0 && c.t !== 'familier') tire(c, 1);
+    for (const o of st().objs) if (o.dyn && !o.mort && !o.carried) tire(o, 1);
+    if (joueur) tire(st().p, joueur);
+  }
+  function repousser(ph, R, force, cx = ph.x, cy = ph.y, joueur = 0.5) {
+    const pousse = (e, f) => { const ex = e.x + e.w / 2, ey = e.y + e.h / 2, d = Math.hypot(ex - cx, ey - cy) || 1; if (d > R) return; const k = force * (1 - d / R) / W.masse(e) * f; e.vx += (ex - cx) / d * k; e.vy += (ey - cy) / d * k - k * 0.3; };
+    for (const c of st().crs) if (c.hp > 0 && c.t !== 'familier') pousse(c, 1);
+    for (const o of st().objs) if (o.dyn && !o.mort && !o.carried) pousse(o, 1);
+    if (joueur) pousse(st().p, joueur);
+  }
+  function blesser(c, d) { if (c && c.hp > 0) W.hurt(c, d); }
+  function blesserJoueur(d, txt) { const p = st().p; if (p.sta.stone > 0 || p.sta.garde > 0) return; p.hp -= d; if (txt && W.time() - (p.phenT || -9) > 2) { p.phenT = W.time(); W.msg(txt, 'warn'); } }
+  function nuage(ctx, x, y, r, couleur, a, t) { ctx.save(); ctx.fillStyle = couleur; for (let k = 0; k < 7; k++) { const ox = Math.cos(k * 1.7 + t * 0.3) * r * 0.7, oy = Math.sin(k * 2.3) * r * 0.22; ctx.globalAlpha = a * (0.6 + 0.4 * Math.sin(k + t)); ctx.beginPath(); ctx.arc(x + ox, y + oy, r * (0.38 + 0.12 * Math.sin(k * 3.1)), 0, TAU); ctx.fill(); } ctx.restore(); }
+  // plateformes solides (arc-en-ciel, air solide, miroir) : des objets invisibles que le monde traite comme solides
+  function plateforme(ph, x, y, w, h) { const o = { t: 'magie', x, y, w, h, solid: true, ph }; st().objs.push(o); (ph.objs = ph.objs || []).push(o); return o; }
+  function retirerPlateformes(ph) { if (ph.objs) for (const o of ph.objs) o.mort = true; ph.objs = null; }
+  // pousser un arbre : tronc et feuillage, en cases
+  function arbre(cx, gy, h, rx, ry, q) {
+    const out = q || [];
+    for (let k = 0; k < h; k++) { out.push([cx, gy - 1 - k, M.BOIS]); if (k < 2) { out.push([cx - 1, gy - 1 - k, M.BOIS]); } }
+    for (let yy = -ry; yy <= ry; yy++) for (let xx = -rx; xx <= rx; xx++) if ((xx * xx) / (rx * rx) + (yy * yy) / (ry * ry) <= 1 && rnd() < 0.88) out.push([cx + xx, gy - h - ry + 1 + yy, M.PLANTE]);
+    return out;
+  }
+  function pousserFile(ph, n) { const q = ph.data.q; if (!q) return; for (let k = 0; k < n && q.length; k++) { const [x, y, m] = q.shift(); const g = Sim.get(x, y); if (air(g) || (m === M.PLANTE && g === M.HERBE) || (ph.data.remplace && P[g].powder)) Sim.set(x, y, m); } }
+
+  // ---------- les phénomènes ----------
+  const DEFS = {};
+  const def = (k, d) => { DEFS[k] = Object.assign({ r: 50, life: 6, couleur: '#c08a3a', bouge: 'fixe' }, d); };
+  // nuages : au-dessus du point visé, ils dérivent
+  const enCiel = (h) => (ph) => { if (ph.g === 'point' && !ph.follow) { const g = sol(ph.x, ph.y - 20); ph.y = Math.max(40, Math.min(ph.y, g) - h); } if (!ph.vx) ph.vx = (ph.dir.x >= 0 ? 1 : -1) * (ph.D.vitesse || 35); };
+  const auSol = (ph) => { if (ph.g === 'point' && !ph.follow) ph.y = sol(ph.x, ph.y - 20); };
+  function nuee(ph, mat, taux, largeur = 1.3) { const R = ph.rect ? (ph.rect.x1 - ph.rect.x0) / 2 : ph.r * largeur; const y = ph.rect ? ph.rect.y1 : ph.y + ph.r * 0.25; for (let k = 0; k < taux; k++) { const x = ph.x + (rnd() * 2 - 1) * R; const cx = Math.floor(x / CS), cy = Math.floor(y / CS); if (Sim.get(cx, cy) === M.AIR) Sim.set(cx, cy, mat); } }
+
+  // FEU + GRAVITÉ : le petit soleil
+  def('feu|gravite', { r: 20, life: 10, lum: 460, couleur: '#f0a040', bouge: 'flotte', eteint: 0.6, nourrit: true,
+    init(ph) { if (ph.g === 'point' && !ph.follow) { const g = sol(ph.x, ph.y - 10); if (g - ph.y < 50) ph.y = g - 60; } ph.R = (ph.rect ? Math.max(ph.rect.x1 - ph.rect.x0, ph.rect.y1 - ph.rect.y0) * 0.6 : ph.r * 6.5); },
+    tick(ph, dt) {
+      const R = ph.R * (0.6 + 0.4 * fade(ph));
+      if (ev(ph, 'h', 0.12)) { Sim.chauffer(ph.x, ph.y, R, 150 + 18 * ph.pw, 0.22); Sim.chauffer(ph.x, ph.y, ph.r * 1.5, 250, 0.7); }
+      if (ev(ph, 'g', 0.06)) effet(ph, 'force', ph.x, ph.y, R * 0.75, 0.45, 0.06);
+      attirer(ph, R, 1500 * ph.pw, dt, ph.x, ph.y, 0.25);
+      if (ev(ph, 'n', 0.2)) { let n = 0; Sim.forRadius(ph.x, ph.y, ph.r * 1.4, (x, y, i, m) => { if (m === M.HUILE || m === M.BOIS || m === M.FEU || m === M.POUDRE || m === M.PLANTE || m === M.SEVE) { Sim.set(x, y, M.AIR); n++; } }); if (n) { ph.life = Math.min(ph.max * 1.6, ph.life + n * 0.06); ph.r = Math.min(ph.r0 * 1.6, ph.r + n * 0.05); } }
+      for (const c of creatures(ph, 6)) { blesser(c, dt * 2.4 * ph.pw); c.sta.burn = Math.max(c.sta.burn, 1); }
+      if (joueurDans(ph, 4)) blesserJoueur(dt * 1.5, 'Le petit soleil te brûle !');
+      if (rnd() < 0.6) { const a = rnd() * TAU; W.part(ph.x + Math.cos(a) * ph.r * 1.6, ph.y + Math.sin(a) * ph.r * 1.6, rnd() < 0.5 ? '#f0d070' : '#e0642a', 1, 30, 0.6, 2, -20, 'spark'); }
+    },
+    fin(ph) { effet(ph, 'explosion', ph.x, ph.y, ph.r * 2.2, 0.8); W.flash(0.1); W.part(ph.x, ph.y, '#fff0b0', 30, 260, 0.8, 3, 0, 'spark'); },
+    draw(ctx, ph, t) { const a = fade(ph), r = ph.r * (1 + 0.06 * Math.sin(t * 9)); FX.glow(ctx, ph.x, ph.y, r * 7, '#f0a040', 0.35 * a); FX.glow(ctx, ph.x, ph.y, r * 3, '#fff0b0', 0.6 * a); ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = '#fff6d8'; ctx.beginPath(); ctx.arc(ph.x, ph.y, r, 0, TAU); ctx.fill(); ctx.strokeStyle = '#e0642a'; ctx.lineWidth = 2; for (let k = 0; k < 10; k++) { const an = k / 10 * TAU + t * 0.8, l = r * (1.4 + 0.35 * Math.sin(t * 6 + k * 2)); ctx.beginPath(); ctx.moveTo(ph.x + Math.cos(an) * r * 1.05, ph.y + Math.sin(an) * r * 1.05); ctx.lineTo(ph.x + Math.cos(an) * l, ph.y + Math.sin(an) * l); ctx.stroke(); } ctx.restore(); },
+  });
+  // EAU + FEU : geyser
+  def('eau|feu', { r: 24, life: 5, couleur: '#dcdcdc', init(ph) { auSol(ph); ph.H = ph.rect ? ph.rect.y1 - ph.rect.y0 : 220 * ph.sz; if (ph.rect) { ph.x = (ph.rect.x0 + ph.rect.x1) / 2; ph.y = ph.rect.y1; } },
+    tick(ph, dt) {
+      const w = ph.rect ? (ph.rect.x1 - ph.rect.x0) / 2 : ph.r * 0.6, top = ph.y - ph.H * fade(ph);
+      if (ev(ph, 'v', 0.03)) for (let k = 0; k < 3; k++) { const x = ph.x + (rnd() * 2 - 1) * w, y = ph.y - rnd() * (ph.y - top); const cx = Math.floor(x / CS), cy = Math.floor(y / CS); if (Sim.get(cx, cy) === M.AIR) { Sim.set(cx, cy, M.VAPEUR, 50 + (rnd() * 40) | 0); Sim.temp[cy * Sim.W + cx] = 150; } }
+      if (ev(ph, 'h', 0.15)) Sim.chauffer(ph.x, (ph.y + top) / 2, w * 1.4, 140, 0.25);
+      const col = { x: ph.x - w, y: top, w: w * 2, h: ph.y - top };
+      const leve = (e, k) => { const h = clamp((e.y + e.h - top) / (ph.y - top + 1), 0, 1); e.vy = Math.max(e.vy - 3400 * dt * k, -460 * k * (0.35 + 0.65 * h)); };
+      for (const c of st().crs) if (c.hp > 0 && U.rectsOverlap(col, c)) { leve(c, Math.sqrt(ph.pw) / Math.sqrt(W.masse(c))); if (!W.chaudOk(c)) blesser(c, dt * 1.2); }
+      for (const o of st().objs) if (o.dyn && !o.mort && U.rectsOverlap(col, o)) leve(o, 1 / Math.sqrt(W.masse(o)));
+      const p = st().p; if (U.rectsOverlap(col, p)) { leve(p, 1.2); p.onGround = false; }
+      if (rnd() < 0.7) W.part(ph.x + (rnd() - 0.5) * w * 2, ph.y - rnd() * (ph.y - top), '#f2f2f2', 1, 40, 0.8, 5, -260);
+    },
+    draw(ctx, ph, t) { const w = ph.rect ? (ph.rect.x1 - ph.rect.x0) / 2 : ph.r * 0.6, top = ph.y - ph.H * fade(ph); ctx.save(); ctx.globalAlpha = 0.35 * fade(ph); ctx.fillStyle = '#ffffff'; for (let y = ph.y; y > top; y -= 16) { const k = (ph.y - y) / (ph.H || 1); ctx.beginPath(); ctx.arc(ph.x + Math.sin(y * 0.05 + t * 6) * 4, y, w * (0.6 + k * 0.7), 0, TAU); ctx.fill(); } ctx.restore(); },
+  });
+  // FEU + TERRE : magma
+  def('feu|terre', { r: 26, life: 4, lum: 220, couleur: '#e0622b', init(ph) { auSol(ph); ph.data.n = Math.round(70 * ph.sz * ph.pw); },
+    tick(ph, dt) {
+      if (ev(ph, 'l', 0.05) && ph.data.n > 0) for (let k = 0; k < 3; k++) { const q = auHasard(ph, ph.rect ? 1 : 0.4); const x = Math.floor(q.x / CS), y0 = Math.floor((ph.rect ? q.y : ph.y) / CS) - 1 - Math.floor(rnd() * 6); if (Sim.get(x, y0) === M.AIR) { Sim.set(x, y0, M.LAVE); ph.data.n--; } }
+      if (ev(ph, 's', 0.3)) { W.shake(0.15); W.part(ph.x, ph.y, '#e0622b', 6, 160, 0.7, 3, 700); }
+    },
+    draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y, ph.r * 2.5, '#e0622b', 0.5 * fade(ph)); ctx.save(); ctx.strokeStyle = '#f0a040'; ctx.lineWidth = 2; ctx.globalAlpha = fade(ph); for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(ph.x + k * 8, ph.y); ctx.lineTo(ph.x + k * 11 + Math.sin(t * 4 + k) * 3, ph.y + 6); ctx.stroke(); } ctx.restore(); },
+  });
+  // FEU + VENT : tornade de feu
+  def('feu|vent', { r: 34, life: 6, lum: 260, couleur: '#e8842a', bouge: 'roule', vitesse: 80, eteint: 0.4,
+    init(ph) { auSol(ph); ph.H = 150 * ph.sz; ph.vx = (ph.dir.x >= 0 ? 1 : -1) * 80; },
+    tick(ph, dt) {
+      const cible = hostiles({ x: ph.x, y: ph.y - ph.H / 2, r: 260, g: 'point' }, 0)[0]; if (cible) ph.vx += (Math.sign(cible.x - ph.x) * 110 - ph.vx) * dt;
+      const col = { x: ph.x - ph.r, y: ph.y - ph.H, w: ph.r * 2, h: ph.H };
+      if (ev(ph, 'f', 0.04)) for (let k = 0; k < 3; k++) { const x = Math.floor((ph.x + (rnd() - 0.5) * ph.r * 1.6) / CS), y = Math.floor((ph.y - rnd() * ph.H) / CS); if (Sim.get(x, y) === M.AIR) Sim.setFeu(x, y, 25, 0); }
+      if (ev(ph, 'e', 0.12)) effet(ph, 'feu', ph.x, ph.y - 20, ph.r * 1.2, 0.7, 0.12);
+      for (const e of st().crs.concat(st().objs.filter((o) => o.dyn && !o.mort))) { if (!(e.hp > 0) && e.hp !== undefined && !e.dyn) continue; if (!U.rectsOverlap(col, e) || W.masse(e) > 2) continue; e.vy -= 1500 * dt; e.vx += (ph.x - e.x - e.w / 2) * 4 * dt + Math.sin(ph.t * 8) * 400 * dt; if (e.sta && !W.chaudOk(e)) { e.sta.burn = Math.max(e.sta.burn, 1.5); } }
+      if (U.rectsOverlap(col, st().p)) { st().p.sta.burning = Math.max(st().p.sta.burning, 1); st().p.vy -= 900 * dt; }
+    },
+    draw(ctx, ph, t) { ctx.save(); ctx.globalAlpha = 0.75 * fade(ph); for (let k = 0; k < 9; k++) { const y = ph.y - (k / 9) * ph.H, w = ph.r * (0.4 + k / 9), a = t * 9 + k; ctx.strokeStyle = k % 2 ? '#f0a040' : '#e0642a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(ph.x + Math.sin(a * 0.7) * 6, y, w, 5, 0, a, a + 4.2); ctx.stroke(); } ctx.restore(); FX.glow(ctx, ph.x, ph.y - ph.H / 2, ph.H * 0.6, '#e0642a', 0.3 * fade(ph)); },
+  });
+  // FEU + VIE : brûlis
+  def('feu|vie', { r: 70, life: 7, couleur: '#8aa040', init: auSol,
+    tick(ph, dt) {
+      if (ph.t < 2.4) { if (ev(ph, 'b', 0.08)) { const rr = ph.t / 2.4; cells(ph, (x, y, i, m) => { if ((m === M.HERBE || m === M.PLANTE || m === M.MOUSSE) && Sim.aux[i] === 0 && rnd() < 0.5) { Sim.aux[i] = 12; Sim.touch(i); } }, rr); } }
+      else if (ph.t > 3) { if (ev(ph, 'p', 0.12)) cells(ph, (x, y, i, m) => { const up = Sim.get(x, y - 1); if (m === M.CENDRE && rnd() < 0.4) Sim.set(x, y, M.TERRE); else if (m === M.TERRE && up === M.AIR && rnd() < 0.35) Sim.set(x, y - 1, M.HERBE); else if (m === M.HERBE && up === M.AIR && rnd() < 0.08) Sim.set(x, y - 1, M.PLANTE); }); for (const c of creatures(ph, 10)) c.hp = Math.min(c.hpMax, c.hp + dt * 0.5); }
+    },
+    draw(ctx, ph, t) { ctx.save(); ctx.globalAlpha = 0.5 * fade(ph); ctx.strokeStyle = ph.t < 2.6 ? '#e0642a' : '#6a9a45'; ctx.lineWidth = 2; ctx.setLineDash([3, 6]); U.inkCircle(ctx, ph.x, ph.y, ph.r * Math.min(1, ph.t / 2.4 + 0.1), 3, 1); ctx.restore(); },
+  });
+  // FEU + LUMIÈRE : rayon ardent
+  def('feu|lumiere', { r: 12, life: 4, lum: 240, couleur: '#fff0b0',
+    init(ph) { if (!ph.ligne) { const g = sol(ph.x, ph.y - 10); ph.ligne = { x1: ph.x + 60, y1: Math.max(0, g - 520), x2: ph.x, y2: g + 3, w: 8 * ph.sz }; ph.g = 'ligne'; } else { const L = ph.ligne; L.w = 7 * ph.sz; } ph.spot = { x: ph.ligne.x2, y: ph.ligne.y2 }; },
+    tick(ph, dt) {
+      const S = ph.spot;
+      if (ev(ph, 'h', 0.05)) { Sim.chauffer(S.x, S.y, 14 * ph.sz, 252, 0.55); cells(ph, (x, y, i, m) => { if (P[m].flam && Sim.aux[i] === 0 && rnd() < 0.2) { Sim.aux[i] = P[m].burn || 20; Sim.touch(i); } }); }
+      for (const c of creatures(ph, 4)) { if (!W.chaudOk(c)) { blesser(c, dt * 3 * ph.pw); c.sta.burn = Math.max(c.sta.burn, 1); } }
+      if (joueurDans(ph, 2) && ph.t > 0.3) blesserJoueur(dt * 2, 'Le rayon te brûle !');
+      if (rnd() < 0.7) W.part(S.x, S.y, '#fff0b0', 1, 60, 0.4, 2, 200, 'spark');
+    },
+    draw(ctx, ph, t) { const L = ph.ligne, a = fade(ph) * (0.8 + 0.2 * Math.sin(t * 30)); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = '#f6d080'; ctx.globalAlpha = 0.35 * a; ctx.lineWidth = L.w * 2.5; ctx.beginPath(); ctx.moveTo(L.x1, L.y1); ctx.lineTo(L.x2, L.y2); ctx.stroke(); ctx.strokeStyle = '#fffbe8'; ctx.globalAlpha = 0.9 * a; ctx.lineWidth = L.w * 0.6; ctx.stroke(); ctx.restore(); FX.glow(ctx, ph.spot.x, ph.spot.y, 40, '#fff0b0', 0.7 * a); },
+  });
+  // FEU + FOUDRE : foudre en boule
+  def('feu|foudre', { r: 12, point: true, life: 8, lum: 170, couleur: '#e8d060', bouge: 'erre', eteint: 0.5,
+    tick(ph, dt) {
+      if (ev(ph, 'z', 0.45)) { let best = null, bd = 130; for (const c of st().crs) if (c.hp > 0 && !c.sta.tame && c.t !== 'familier') { const d = dist(ph.x, ph.y, c.x + c.w / 2, c.y + c.h / 2); if (d < bd) { bd = d; best = c; } } if (best) { zap(ph.x, ph.y, best.x + best.w / 2, best.y + best.h / 2); blesser(best, 1 * ph.pw); best.sta.stun = Math.max(best.sta.stun, 0.6); W.son('burst', 'foudre'); } }
+      const m = Sim.matAt(ph.x, ph.y); if (m === M.EAU || m === M.SAUMURE || m === M.METAL) { effet(ph, 'foudre', ph.x, ph.y, 90, 1.4); ph.life = 0; }
+      if (m === M.HUILE || m === M.BOIS || m === M.PLANTE || m === M.HERBE) effet(ph, 'feu', ph.x, ph.y, 16, 0.6, 0.05);
+      for (const c of creatures(ph, 2)) { effet(ph, 'foudre', ph.x, ph.y, 30, 1); ph.life = 0; break; }
+    },
+    fin(ph) { effet(ph, 'explosion', ph.x, ph.y, 36, 0.7); effet(ph, 'foudre', ph.x, ph.y, 50, 1); },
+    draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y, ph.r * 4, '#e8d060', 0.6 * fade(ph)); ctx.save(); ctx.fillStyle = '#fffbe8'; ctx.globalAlpha = fade(ph); ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.r * (0.8 + 0.2 * Math.sin(t * 25)), 0, TAU); ctx.fill(); ctx.restore(); if (rnd() < 0.5) FX.eclair(ctx, FX.eclairPts(ph.x, ph.y, ph.x + (rnd() - 0.5) * 50, ph.y + (rnd() - 0.5) * 50, 0.3), '#e8d060', 1.2, 0.8); },
+  });
+  // FEU + TEMPS : feu éternel
+  def('feu|temps', { r: 16, life: 60, lum: 280, couleur: '#f0a040', init: auSol,
+    tick(ph, dt) {
+      if (ev(ph, 'h', 0.2)) { Sim.chauffer(ph.x, ph.y - 10, 65 * ph.sz, 122, 0.18); Sim.chauffer(ph.x, ph.y - 8, 12, 160, 0.3); }
+      const p = st().p; if (dist(ph.x, ph.y, p.x + p.w / 2, p.y + p.h / 2) < 90) { p.hp = Math.min(p.hpMax, p.hp + dt * 0.25); p.ink = Math.min(p.inkMax, p.ink + dt * 0.8); p.sta.wet = 0; }
+      for (const c of creatures(ph, 70)) { c.sta.gele = 0; c.sta.lent = 0; }
+    },
+    draw(ctx, ph, t) { FX.flamme(ctx, ph.x, ph.y, 34 * ph.sz, 16 * ph.sz, t, 1, fade(ph)); FX.flamme(ctx, ph.x - 6, ph.y, 22 * ph.sz, 10 * ph.sz, t + 1.3, 0, 0.8 * fade(ph)); FX.glow(ctx, ph.x, ph.y - 14, 70, '#f0a040', 0.45 * fade(ph)); ctx.save(); ctx.strokeStyle = '#8a8f9a'; ctx.globalAlpha = 0.5; U.inkCircle(ctx, ph.x, ph.y - 12, 22, 5, 1); ctx.restore(); },
+  });
+  // FEU + TRANSMUTATION : forge
+  def('feu|transmutation', { r: 50, life: 4, lum: 150, couleur: '#c08a3a',
+    tick(ph, dt) {
+      if (ev(ph, 'c', 0.1)) { const rr = Math.min(1, ph.t / 1.5 + 0.2); cells(ph, (x, y, i, m) => { const r = rnd(); if (m === M.PIERRE && r < 0.08) Sim.set(x, y, M.METAL); else if (m === M.SABLE && r < 0.15) Sim.set(x, y, M.VERRE); else if ((m === M.TERRE || m === M.MEUBLE) && r < 0.1) Sim.set(x, y, M.PIERRE); else if ((m === M.GLACE || m === M.NEIGE) && r < 0.3) Sim.set(x, y, M.EAU); else return; Sim.temp[i] = 200; }, rr); Sim.chauffer(ph.x, ph.y, ph.r, 170, 0.15); }
+      if (rnd() < 0.5) { const q = auHasard(ph); W.part(q.x, q.y, '#f0a040', 1, 90, 0.4, 2, 400, 'spark'); }
+    },
+    draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#c08a3a'; ctx.globalAlpha = 0.6 * fade(ph); ctx.lineWidth = 2; U.inkCircle(ctx, ph.x, ph.y, ph.r, 2, 1); ctx.restore(); FX.glow(ctx, ph.x, ph.y, ph.r * 1.2, '#e0642a', 0.25 * fade(ph)); },
+  });
+  // EAU + TERRE : marécage
+  def('eau|terre', { r: 60, life: 12, couleur: '#6b5330',
+    init(ph) { auSol(ph); cells(ph, (x, y, i, m) => { const s = Sim.surf ? 0 : 0; if ((m === M.TERRE || m === M.SABLE || m === M.MEUBLE) && y * CS >= ph.y - 6 && y * CS <= ph.y + ph.r * 0.5) Sim.set(x, y, M.BOUE, 250); else if ((m === M.HERBE || m === M.PLANTE) && y * CS >= ph.y - 12) Sim.set(x, y, M.AIR); }); },
+    tick(ph, dt) {
+      if (ev(ph, 'w', 0.8)) nuee({ x: ph.x, y: ph.y - 20, r: ph.r * 0.6, g: 'point' }, M.EAU, 3, 1);
+      for (const c of creatures(ph, 0)) { if (Sim.matAt(c.x + c.w / 2, c.y + c.h - 2) === M.BOUE) c.sta.lent = Math.max(c.sta.lent || 0, 0.5); }
+      if (rnd() < 0.3) { const q = auHasard(ph, 0.8); W.part(q.x, ph.y - 2, '#8a7050', 1, 10, 0.8, 3, -20); }
+    },
+  });
+  // EAU + VENT : nuée de pluie
+  def('eau|vent', { r: 50, life: 10, couleur: '#8aa0b8', bouge: 'derive', vitesse: 40, init: enCiel(150),
+    tick(ph, dt) { if (ev(ph, 'p', 0.04)) nuee(ph, M.EAU, 2); if (ev(ph, 'f', 0.2)) { const g = sol(ph.x, ph.y + 10); Sim.chauffer(ph.x, (ph.y + g) / 2, ph.r * 1.2, 55, 0.2); for (const c of st().crs) if (c.hp > 0 && Math.abs(c.x + c.w / 2 - ph.x) < ph.r * 1.3 && c.y > ph.y) { c.sta.wet = 6; c.sta.burn = 0; if (c.t === 'follet') blesser(c, 0.5); } } },
+    draw(ctx, ph, t) { nuage(ctx, ph.x, ph.y, ph.r, '#7a8ea6', 0.55 * fade(ph), t); },
+  });
+  // EAU + VIE : source vive
+  def('eau|vie', { r: 30, life: 15, lum: 90, couleur: '#6ab8a0', init(ph) { auSol(ph); ph.data.n = Math.round(80 * ph.sz); },
+    tick(ph, dt) {
+      if (ev(ph, 'e', 0.25) && ph.data.n > 0) { W.spawnLiquid(M.EAU, ph.x, ph.y - 4, 2, 30); ph.data.n -= 2; }
+      const p = st().p; if (dist(ph.x, ph.y, p.x + p.w / 2, p.y + p.h / 2) < ph.r * 2.5) { p.hp = Math.min(p.hpMax, p.hp + dt * 0.6); p.sta.burning = 0; }
+      for (const c of creatures(ph, ph.r * 1.5)) { c.hp = Math.min(c.hpMax, c.hp + dt * 0.5); c.sta.burn = 0; }
+      if (ev(ph, 'v', 1.2)) effet(ph, 'vie', ph.x, ph.y - 10, ph.r * 2.2, 0.6, 1.2);
+      if (rnd() < 0.4) W.part(ph.x + (rnd() - 0.5) * ph.r * 2, ph.y - 4, '#9ad8c0', 1, 20, 0.8, 2, -40, 'spark');
+    },
+  });
+  // EAU + LUMIÈRE : arc-en-ciel praticable
+  def('eau|lumiere', { r: 20, life: 12, lum: 120, couleur: '#c8a0e0',
+    init(ph) {
+      const p = st().p; let L = ph.ligne;
+      if (!L) { const px = p.x + p.w / 2, py = p.y + p.h; L = { x1: px + Math.sign(ph.x - px || 1) * 12, y1: py - 2, x2: ph.x, y2: ph.y, w: 8 }; }
+      const lx = L.x2 - L.x1, ly = L.y2 - L.y1, len = Math.hypot(lx, ly) || 1, bosse = Math.min(180, len * 0.28);
+      ph.arc = []; const n = Math.max(4, Math.round(len / 14));
+      for (let k = 0; k <= n; k++) { const t = k / n; const x = L.x1 + lx * t, y = L.y1 + ly * t - Math.sin(t * Math.PI) * bosse; ph.arc.push([x, y]); }
+      for (let k = 0; k < ph.arc.length - 1; k++) { const [x, y] = ph.arc[k], [x2, y2] = ph.arc[k + 1]; plateforme(ph, Math.min(x, x2) - 2, Math.min(y, y2), Math.abs(x2 - x) + 4, Math.max(6, Math.abs(y2 - y))); }
+      ph.ligne = { x1: L.x1, y1: L.y1, x2: L.x2, y2: L.y2, w: bosse + 10 }; ph.g = 'ligne'; ph.x = (L.x1 + L.x2) / 2; ph.y = (L.y1 + L.y2) / 2 - bosse;
+    },
+    fin: retirerPlateformes,
+    draw(ctx, ph, t) { if (!ph.arc) return; const cols = ['#d9622b', '#e0b050', '#e8d060', '#6a9a45', '#3b6fb6', '#7a5ab8']; ctx.save(); ctx.lineCap = 'round'; cols.forEach((c, k) => { ctx.strokeStyle = c; ctx.globalAlpha = 0.6 * fade(ph); ctx.lineWidth = 2.2; ctx.beginPath(); ph.arc.forEach(([x, y], i) => (i ? ctx.lineTo(x, y + k * 2 - 2) : ctx.moveTo(x, y + k * 2 - 2))); ctx.stroke(); }); ctx.restore(); },
+  });
+  // EAU + FOUDRE : orage
+  def('eau|foudre', { r: 55, life: 10, couleur: '#5a6478', bouge: 'derive', vitesse: 25, init: enCiel(170),
+    tick(ph, dt) {
+      if (ev(ph, 'p', 0.08)) nuee(ph, M.EAU, 1);
+      if (ev(ph, 'z', 0.9)) { let best = null, bd = ph.r * 2.6; for (const c of st().crs) if (c.hp > 0 && !c.sta.tame && c.t !== 'familier' && c.y > ph.y) { const d = Math.abs(c.x + c.w / 2 - ph.x); if (d < bd) { bd = d; best = c; } } const x = best ? best.x + best.w / 2 : ph.x + (rnd() - 0.5) * ph.r * 2; const g = best ? best.y + best.h / 2 : sol(x, ph.y + 20); zap(x + (rnd() - 0.5) * 20, ph.y + 10, x, g); effet(ph, 'foudre', x, g, 42, 1.2); if (best) { blesser(best, 1.5 * ph.pw); best.sta.stun = Math.max(best.sta.stun, 1); } W.flash(0.06); W.son('burst', 'foudre'); }
+    },
+    draw(ctx, ph, t) { nuage(ctx, ph.x, ph.y, ph.r, '#3c4252', 0.65 * fade(ph), t); },
+  });
+  // EAU + GRAVITÉ : sphère d'eau
+  def('eau|gravite', { r: 38, point: true, life: 10, couleur: '#3b6fb6', bouge: 'flotte', init(ph) { ph.data.eau = Math.round(30 * ph.sz); if (ph.g === 'point' && !ph.follow) { const g = sol(ph.x, ph.y - 10); if (g - ph.y < ph.r) ph.y = g - ph.r - 6; } },
+    tick(ph, dt) {
+      if (ev(ph, 'a', 0.08) && ph.data.eau < 400) Sim.forRadius(ph.x, ph.y, ph.r * 1.5, (x, y, i, m) => { if (P[m].liquid && m !== M.LAVE && ph.data.eau < 400) { Sim.set(x, y, M.AIR); ph.data.eau++; } else if (m === M.FEU) Sim.set(x, y, M.VAPEUR, 30); });
+      for (const c of creatures(ph, 0)) { c.vx *= 1 - 3 * dt; c.vy = c.vy * (1 - 3 * dt) - 1500 * dt; c.x += (ph.x - c.x - c.w / 2) * 2 * dt; c.y += (ph.y - c.y - c.h / 2) * 2 * dt; c.sta.burn = 0; c.sta.wet = 6; if (c.t !== 'poisson' && c.t !== 'grenouille') blesser(c, dt * 0.35); }
+      for (const o of objets(ph, 0)) { o.vy = o.vy * (1 - 3 * dt) - 1500 * dt; o.vx *= 1 - 3 * dt; o.burning = 0; }
+      const p = st().p; if (joueurDans(ph, 0)) { p.vy = p.vy * (1 - 4 * dt) - 1450 * dt; p.sta.burning = 0; p.sta.wet = 8; }
+      ph.r = ph.r0 * (0.8 + 0.4 * Math.min(1, ph.data.eau / 200));
+    },
+    fin(ph) { W.spawnLiquid(M.EAU, ph.x, ph.y, ph.data.eau, 90); W.part(ph.x, ph.y, '#3f7ab8', 20, 160, 0.7, 3, 600, 'goutte'); },
+    draw(ctx, ph, t) { const a = fade(ph); ctx.save(); ctx.globalAlpha = 0.35 * a; ctx.fillStyle = '#3f7ab8'; ctx.beginPath(); for (let k = 0; k <= 24; k++) { const an = k / 24 * TAU, rr = ph.r * (1 + 0.05 * Math.sin(an * 3 + t * 4)); const x = ph.x + Math.cos(an) * rr, y = ph.y + Math.sin(an) * rr; k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.fill(); ctx.globalAlpha = 0.8 * a; ctx.strokeStyle = '#3b6fb6'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.globalAlpha = 0.5 * a; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.ellipse(ph.x - ph.r * 0.35, ph.y - ph.r * 0.4, ph.r * 0.25, ph.r * 0.12, -0.6, 0, TAU); ctx.fill(); ctx.restore(); },
+  });
+  // EAU + TEMPS : érosion
+  def('eau|temps', { r: 60, life: 6, couleur: '#6a8aa8',
+    init(ph) { W.spawnLiquid(M.EAU, ph.x, ph.y, Math.round(40 * ph.sz), ph.r); },
+    tick(ph, dt) { if (ev(ph, 'e', 0.05)) { let eau = 0; cells(ph, (x, y, i, m) => { if (m !== M.EAU && m !== M.SAUMURE) return; eau++; for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [1, 1], [-1, 1]]) { const n = Sim.get(x + dx, y + dy), r = rnd(); if ((n === M.TERRE || n === M.SABLE || n === M.MEUBLE || n === M.CENDRE || n === M.BOUE) && r < 0.12) { Sim.set(x + dx, y + dy, r < 0.04 ? M.SABLE : M.AIR); break; } if (n === M.PIERRE && r < 0.025) { Sim.set(x + dx, y + dy, M.SABLE); break; } } }); if (eau < 25 * ph.sz && ph.t < ph.max * 0.7) W.spawnLiquid(M.EAU, ph.x, ph.y, 6, ph.r * 0.5); } },
+    draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#8a8f9a'; ctx.globalAlpha = 0.5 * fade(ph); ctx.setLineDash([2, 5]); U.inkCircle(ctx, ph.x, ph.y, ph.r, 4, 1); ctx.beginPath(); ctx.moveTo(ph.x, ph.y); ctx.lineTo(ph.x + Math.cos(t * 3) * ph.r * 0.6, ph.y + Math.sin(t * 3) * ph.r * 0.6); ctx.stroke(); ctx.restore(); },
+  });
+  // EAU + TRANSMUTATION : liquéfaction
+  def('eau|transmutation', { r: 50, life: 6, couleur: '#7a6040',
+    init(ph) { ph.data.c = []; cells(ph, (x, y, i, m) => { if ((m === M.TERRE || m === M.SABLE || m === M.MEUBLE || (m === M.PIERRE && rnd() < 0.7) || m === M.CENDRE) && ph.data.c.length < 700) { Sim.set(x, y, M.BOUE, 250); ph.data.c.push(i); } else if (m === M.HERBE) Sim.set(x, y, M.AIR); }); },
+    tick(ph, dt) { for (const c of creatures(ph, 0)) c.sta.lent = Math.max(c.sta.lent || 0, 0.4); },
+    fin(ph) { let n = 0; for (const i of ph.data.c) if (Sim.mat[i] === M.BOUE) { const x = i % Sim.W; Sim.set(x, (i - x) / Sim.W, M.PIERRE); n++; } for (const c of st().crs) if (c.hp > 0 && Sim.rectHas(c, (m) => m === M.PIERRE) && touche(ph, c, 10)) { c.sta.stun = Math.max(c.sta.stun, 4); W.part(c.x + c.w / 2, c.y, '#a8977a', 8, 40, 0.6, 2); } if (n) W.msg('La boue se fige en pierre.'); },
+  });
+  // TERRE + VENT : tempête de sable
+  def('terre|vent', { r: 60, life: 7, couleur: '#c8a868', bouge: 'roule', vitesse: 95, init(ph) { auSol(ph); ph.y -= ph.r * 0.6; ph.vx = (ph.dir.x >= 0 ? 1 : -1) * 95; },
+    tick(ph, dt) {
+      const sg = Math.sign(ph.vx) || 1;
+      if (ev(ph, 's', 0.06)) nuee({ x: ph.x, y: ph.y - ph.r * 0.5, r: ph.r * 0.7, g: 'point' }, M.SABLE, 2, 1);
+      for (const e of creatures(ph, 0)) { e.vx += sg * 700 * dt / W.masse(e); if (ev(ph, 'a' + (e.seed || 0), 1)) { e.sta.stun = Math.max(e.sta.stun, 0.6); } blesser(e, dt * 0.3 * ph.pw); }
+      for (const o of objets(ph, 0)) o.vx += sg * 500 * dt / W.masse(o);
+      if (joueurDans(ph, 0)) st().p.vx += sg * 300 * dt;
+      for (let k = 0; k < 3; k++) { const q = auHasard(ph); W.part(q.x, q.y, '#c8a868', 1, 30, 0.6, 2, 0); }
+    },
+    draw(ctx, ph, t) { nuage(ctx, ph.x, ph.y, ph.r, '#c8a868', 0.4 * fade(ph), t * 3); },
+  });
+  // TERRE + VIE : racines
+  def('terre|vie', { r: 55, life: 3, couleur: '#6b4f2a',
+    init(ph) {
+      const q = []; ph.data.q = q; ph.data.remplace = true;
+      if (ph.ligne) { const L = ph.ligne, n = Math.ceil(Math.hypot(L.x2 - L.x1, L.y2 - L.y1) / CS); for (let k = 0; k <= n; k++) { const x = Math.floor((L.x1 + (L.x2 - L.x1) * k / n) / CS), y = Math.floor((L.y1 + (L.y2 - L.y1) * k / n) / CS) + 1; q.push([x, y, M.BOIS], [x, y + 1, M.BOIS]); } }
+      else { const g = sol(ph.x, ph.y - 10), gx = Math.floor(ph.x / CS), gy = Math.floor(g / CS); for (let r = 0; r < 6; r++) { let x = gx + Math.round((r - 2.5) * ph.r / CS / 3), y = gy; const dx = (r - 2.5) * 0.25; for (let k = 0; k < Math.round(ph.r / CS * 0.9); k++) { q.push([x, y, M.BOIS]); y -= 1; x += Math.round(dx + (rnd() - 0.5)); } } }
+      for (const c of hostiles(ph, 20)) { c.sta.lent = Math.max(c.sta.lent || 0, 6); c.sta.stun = Math.max(c.sta.stun, 2.5); c.vx = 0; W.part(c.x + c.w / 2, c.y + c.h, '#6b4f2a', 8, 40, 0.6, 2); }
+    },
+    tick(ph) { pousserFile(ph, 6); },
+  });
+  // LUMIÈRE + TERRE : géode
+  def('lumiere|terre', { r: 50, life: 1, lum: 160, couleur: '#b58fd8',
+    init(ph) { const q = []; ph.data.q = q; const n = 4 + Math.round(ph.sz * 2); for (let s = 0; s < n; s++) { const x0 = ph.x + (s / (n - 1) - 0.5) * ph.r * 2, g = sol(x0, ph.y - 10), gx = Math.floor(x0 / CS), gy = Math.floor(g / CS) - 1, h = 5 + Math.floor(rnd() * 9 * ph.sz), pen = (rnd() - 0.5) * 0.5; for (let k = 0; k < h; k++) { const x = gx + Math.round(k * pen); q.push([x, gy - k, M.CRISTAL]); if (k < h * 0.5) q.push([x + 1, gy - k, M.CRISTAL]); } }
+      for (const c of hostiles(ph, 10)) { blesser(c, 2 * ph.pw); c.vy = -520 / Math.sqrt(W.masse(c)); c.sta.stun = Math.max(c.sta.stun, 1); } W.son('burst', 'terre'); },
+    tick(ph) { pousserFile(ph, 14); },
+  });
+  // FOUDRE + TERRE : fulgurite
+  def('foudre|terre', { r: 30, life: 0.9, lum: 200, couleur: '#e0c43a',
+    init(ph) {
+      const q = []; ph.data.chemin = q; let x = ph.x, y = ph.ligne ? ph.ligne.y1 : sol(ph.x, ph.y - 10); const L = ph.ligne; const n = Math.round(28 * ph.sz);
+      for (let k = 0; k < n; k++) { if (L) { x = L.x1 + (L.x2 - L.x1) * k / n; y = L.y1 + (L.y2 - L.y1) * k / n; } else { y += CS; x += (rnd() - 0.5) * CS * 1.6; } q.push([x, y]); }
+      zap(ph.x + (rnd() - 0.5) * 40, Math.max(0, (ph.ligne ? ph.ligne.y1 : ph.y) - 400), q[0][0], q[0][1]); W.flash(0.1); W.son('burst', 'foudre');
+      for (const c of st().crs) if (c.hp > 0 && !c.sta.tame && c.t !== 'familier' && dist(q[0][0], q[0][1], c.x + c.w / 2, c.y + c.h / 2) < 70) { blesser(c, 2.5 * ph.pw); c.sta.stun = Math.max(c.sta.stun, 1.5); }
+    },
+    tick(ph) { const q = ph.data.chemin; for (let k = 0; k < 4 && q.length; k++) { const [x, y] = q.shift(); Sim.forRadius(x, y, 9, (cx, cy, i, m) => { const d = dist(x, y, (cx + 0.5) * CS, (cy + 0.5) * CS); if (m === M.METAL || m === M.OBSIDIENNE) return; if (d < 5 && m !== M.AIR) Sim.set(cx, cy, M.AIR); else if (d >= 5 && (m === M.SABLE || m === M.TERRE || m === M.MEUBLE || m === M.PIERRE || m === M.NEIGE)) Sim.set(cx, cy, M.VERRE); if (P[Sim.mat[i]].cond) { Sim.elec[i] = 40; Sim.touch(i); } }); W.part(x, y, '#fff4a0', 3, 60, 0.3, 2, 0, 'spark'); } },
+  });
+  // GRAVITÉ + TERRE : météore (et COMÈTE DE GLACE avec le gel)
+  const chute = (matiere, froid) => ({ point: true, r: 14, life: 4, lum: froid ? 120 : 200, couleur: froid ? '#bfe0f2' : '#e0622b', bouge: 'tombe',
+    init(ph) { const tx = ph.x, ty = ph.y; ph.x = tx - (ph.dir.x >= 0 ? 1 : -1) * 160; ph.y = Math.max(-60, st().cam.y - 60); const T = Math.sqrt(2 * Math.max(60, ty - ph.y) / 1500); ph.vx = (tx - ph.x) / T; ph.vy = 0; ph.r = ph.r0 * Math.sqrt(ph.sz); },
+    trace(ph) { if (rnd() < 0.8) W.part(ph.x, ph.y, froid ? '#e4f2fa' : rnd() < 0.5 ? '#f0a040' : '#e0642a', 2, 30, 0.5, 4, -80); if (!froid && rnd() < 0.3) Sim.chauffer(ph.x, ph.y, 14, 200, 0.4); },
+    impact(ph) {
+      const R = ph.r * 2.4; Sim.forRadius(ph.x, ph.y, R, (x, y, i, m) => { if (m === M.METAL || m === M.OBSIDIENNE || m === M.AIR) return; if (rnd() < 0.75) Sim.set(x, y, P[m].liquid ? M.AIR : rnd() < 0.5 ? M.AIR : froid ? M.NEIGE : M.SABLE); });
+      Sim.forRadius(ph.x, ph.y - 2, ph.r * 0.9, (x, y, i, m) => { if (air(m)) Sim.set(x, y, matiere); });
+      if (froid) { Sim.chauffer(ph.x, ph.y, R * 2.2, 8, 0.8); effet(ph, 'froid', ph.x, ph.y, R * 1.8, 1.4); } else Sim.chauffer(ph.x, ph.y, R * 1.3, 205, 0.6);
+      repousser(ph, R * 3.5, 900 * ph.pw); for (const c of st().crs) if (c.hp > 0 && c.t !== 'familier' && dist(ph.x, ph.y, c.x + c.w / 2, c.y + c.h / 2) < R * 2) { blesser(c, (froid ? 3 : 4) * ph.pw / Math.sqrt(W.masse(c))); c.sta.stun = Math.max(c.sta.stun, 1.5); if (froid) c.sta.gele = Math.max(c.sta.gele || 0, 4); }
+      const p = st().p; if (dist(ph.x, ph.y, p.x + p.w / 2, p.y + p.h / 2) < R * 1.5) blesserJoueur(2, 'Le ciel te tombe dessus !');
+      W.shake(0.7); W.flash(0.08); W.son('burst', 'terre'); W.part(ph.x, ph.y, froid ? '#e4f2fa' : '#8a7a5a', 30, 260, 0.9, 4, 700, 'eclat'); ph.life = 0;
+    },
+    draw(ctx, ph, t) { const a = Math.atan2(ph.vy, ph.vx); ctx.save(); ctx.globalAlpha = 0.5; ctx.strokeStyle = froid ? '#e4f2fa' : '#f0a040'; ctx.lineWidth = ph.r * 1.2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(ph.x, ph.y); ctx.lineTo(ph.x - Math.cos(a) * 60, ph.y - Math.sin(a) * 60); ctx.stroke(); ctx.globalAlpha = 1; ctx.fillStyle = froid ? '#bfe0f2' : '#6b5a4a'; ctx.strokeStyle = U.INK; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.r, 0, TAU); ctx.fill(); ctx.stroke(); ctx.restore(); if (!froid) FX.glow(ctx, ph.x, ph.y, ph.r * 3, '#e0642a', 0.5); },
+  });
+  def('gravite|terre', chute(M.PIERRE, false));
+  def('froid|gravite', chute(M.GLACE, true));
+  // TEMPS + TERRE : pétrification
+  def('temps|terre', { r: 60, life: 6, couleur: '#a8977a',
+    init(ph) { ph.data.statues = hostiles(ph, 10, 1.2); for (const c of ph.data.statues) { c.sta.stun = Math.max(c.sta.stun, ph.max); c.vx = 0; } cells(ph, (x, y, i, m) => { if (m === M.BOIS && rnd() < 0.85) Sim.set(x, y, M.PIERRE); else if (m === M.PLANTE && rnd() < 0.6) Sim.set(x, y, M.PIERRE); else if (m === M.MIEL) Sim.set(x, y, M.CRISTAL); else if (m === M.HERBE || m === M.MOUSSE) Sim.set(x, y, M.SABLE); }); W.son('burst', 'terre'); },
+    tick(ph) { for (const c of ph.data.statues) if (c.hp > 0) { c.sta.stun = Math.max(c.sta.stun, 0.1); c.vx = 0; } },
+    draw(ctx, ph, t) { for (const c of ph.data.statues) if (c.hp > 0) { ctx.save(); ctx.globalAlpha = 0.6 * fade(ph); ctx.fillStyle = '#a8977a'; ctx.fillRect(c.x, c.y, c.w, c.h); ctx.strokeStyle = U.INK; ctx.globalAlpha = 0.5; ctx.strokeRect(c.x, c.y, c.w, c.h); ctx.restore(); } },
+  });
+  // TERRE + TRANSMUTATION : golem de glaise
+  def('terre|transmutation', { r: 50, life: 25, couleur: '#8a6b2f',
+    init(ph) {
+      let n = 0; const g = sol(ph.x, ph.y - 10); Sim.forRadius(ph.x, g + ph.r * 0.3, ph.r * 0.8, (x, y, i, m) => { if ((m === M.TERRE || m === M.SABLE || m === M.MEUBLE || m === M.BOUE || m === M.PIERRE) && n < 60) { Sim.set(x, y, M.AIR); n++; } });
+      ph.data.n = n; if (n < 12) { W.msg('Pas assez de terre ici pour lever un golem.'); ph.life = 0; return; }
+      const c = W.makeCreature({ t: 'golem', x: ph.x - 25, y: g - 80, tame: true }); c.glaise = true; c.temporaire = true; c.sta.tame = true; c.filDonne = true; c.hpMax = c.hp = Math.round(6 * ph.pw); st().crs.push(c); ph.data.g = c; ph.follow = c; W.msg('La glaise se lève et te suit.'); W.son('burst', 'terre');
+    },
+    tick(ph, dt) {
+      const c = ph.data.g; if (!c || c.hp <= 0) { ph.life = 0; return; }
+      let best = null, bd = 320; for (const e of st().crs) if (e !== c && e.hp > 0 && !e.sta.tame && e.t !== 'familier') { const d = dist(c.x, c.y, e.x, e.y); if (d < bd) { bd = d; best = e; } }
+      if (best) { c.vx = Math.sign(best.x - c.x) * 130; c.dir = Math.sign(c.vx) || 1; if (U.rectsOverlap({ x: c.x - 8, y: c.y, w: c.w + 16, h: c.h }, best) && ev(ph, 'coup', 0.8)) { blesser(best, 1.5 * ph.pw); best.vx += Math.sign(best.x - c.x) * 420 / W.masse(best); best.vy -= 200; W.shake(0.15); W.son('burst', 'terre'); } }
+    },
+    fin(ph) { const c = ph.data.g; if (c) { const k = st().crs.indexOf(c); if (k >= 0) st().crs.splice(k, 1); let n = ph.data.n; Sim.forRadius(c.x + c.w / 2, c.y + c.h * 0.6, 36, (x, y, i, m) => { if (n > 0 && m === M.AIR) { Sim.set(x, y, M.MEUBLE); n--; } }); W.part(c.x + c.w / 2, c.y + c.h / 2, '#8a6b2f', 16, 90, 0.7, 3, 300); } },
+  });
+  // VENT + VIE : pollen
+  def('vent|vie', { r: 50, life: 8, couleur: '#d8c860', bouge: 'roule', vitesse: 50, init(ph) { auSol(ph); ph.y -= ph.r * 0.5; ph.vx = (ph.dir.x >= 0 ? 1 : -1) * 50; },
+    tick(ph, dt) {
+      if (ev(ph, 'g', 0.12)) cells(ph, (x, y, i, m) => { const up = Sim.get(x, y - 1); if (m === M.TERRE && up === M.AIR && rnd() < 0.3) Sim.set(x, y - 1, M.HERBE); else if (m === M.HERBE && up === M.AIR && rnd() < 0.05) Sim.set(x, y - 1, M.PLANTE); }, 1.4);
+      for (const c of hostiles(ph, 0)) c.sta.sleep = Math.max(c.sta.sleep, 3);
+      if (joueurDans(ph, 0)) st().p.hp = Math.min(st().p.hpMax, st().p.hp + dt * 0.2);
+      for (let k = 0; k < 2; k++) { const q = auHasard(ph); W.part(q.x, q.y, rnd() < 0.5 ? '#e8d060' : '#c8e080', 1, 15, 1, 2, 10, 'spark'); }
+    },
+  });
+  // LUMIÈRE + VENT : lucioles
+  def('lumiere|vent', { r: 40, life: 25, couleur: '#f0e080',
+    init(ph) { ph.motes = []; for (let k = 0; k < 10; k++) ph.motes.push({ x: ph.x + (rnd() - 0.5) * 60, y: ph.y + (rnd() - 0.5) * 60, vx: 0, vy: 0, ph: rnd() * TAU }); },
+    tick(ph, dt) {
+      for (const m of ph.motes) { m.ph += dt; m.vx += (Math.cos(m.ph * 1.3) * 60 + (ph.x - m.x) * 0.8) * dt; m.vy += (Math.sin(m.ph * 1.7) * 60 + (ph.y - m.y) * 0.8) * dt; m.vx *= 1 - dt; m.vy *= 1 - dt; m.x += m.vx * dt; m.y += m.vy * dt; }
+      if (ev(ph, 'c', 0.5)) for (const c of st().crs) if (c.hp > 0 && !c.sta.tame && c.t !== 'familier' && dist(ph.x, ph.y, c.x, c.y) < 320) { c.curieux = ph.motes[(c.seed & 7) % ph.motes.length]; }
+    },
+    lumieres(ph) { const a = fade(ph); return ph.motes.map((m) => ({ x: m.x, y: m.y, r: 110 * a })); },
+    fin(ph) { for (const c of st().crs) if (ph.motes.includes(c.curieux)) c.curieux = null; },
+    draw(ctx, ph, t) { for (const m of ph.motes) { const b = 0.6 + 0.4 * Math.sin(t * 5 + m.ph * 3); FX.glow(ctx, m.x, m.y, 14, '#f0e080', 0.8 * b * fade(ph)); } },
+  });
+  // FOUDRE + VENT : front d'orage
+  def('foudre|vent', { r: 30, life: 2.6, couleur: '#c8c060', bouge: 'roule', vitesse: 320,
+    init(ph) { if (!ph.rect) { const g = sol(ph.x, ph.y - 10); ph.rect = { x0: ph.x - 16, x1: ph.x + 16, y0: g - 170 * ph.sz, y1: g }; ph.g = 'rect'; ph.y = (ph.rect.y0 + ph.rect.y1) / 2; } ph.vx = (ph.dir.x >= 0 ? 1 : -1) * 320; ph.data.hits = new Set(); ph.vy = 0; },
+    tick(ph, dt) {
+      const sg = Math.sign(ph.vx);
+      for (const c of creatures(ph, 8)) { c.vx += sg * 1800 * dt / W.masse(c); c.vy -= 300 * dt; if (!ph.data.hits.has(c) && !c.sta.tame) { ph.data.hits.add(c); zap(ph.x, ph.rect.y0, c.x + c.w / 2, c.y + c.h / 2); blesser(c, 1.4 * ph.pw); c.sta.stun = Math.max(c.sta.stun, 1); } }
+      for (const o of objets(ph, 8)) o.vx += sg * 1400 * dt / W.masse(o);
+      if (joueurDans(ph, 0)) st().p.vx += sg * 500 * dt;
+      if (ev(ph, 'e', 0.1)) cells(ph, (x, y, i, m) => { if (P[m].cond) { Sim.elec[i] = 30; Sim.touch(i); } else if (P[m].gas && rnd() < 0.5) { const j = i + sg; if (Sim.mat[j] === M.AIR) Sim.swap(i, j); } });
+      if (Sim.solidAt(ph.x + sg * 20, ph.y)) ph.life = Math.min(ph.life, 0.2);
+    },
+    draw(ctx, ph, t) { const R = ph.rect; ctx.save(); ctx.globalAlpha = 0.25 * fade(ph); ctx.fillStyle = '#c8c060'; ctx.fillRect(R.x0, R.y0, R.x1 - R.x0, R.y1 - R.y0); ctx.restore(); if (rnd() < 0.6) FX.eclair(ctx, FX.eclairPts(ph.x, R.y0, ph.x + (rnd() - 0.5) * 30, R.y1, 0.25), '#e8d060', 1.5, 0.8); },
+  });
+  // GRAVITÉ + VENT : cyclone
+  def('gravite|vent', { r: 40, life: 6, couleur: '#6c5ab8',
+    init(ph) { if (!ph.rect) { const g = sol(ph.x, ph.y - 10); ph.rect = { x0: ph.x - ph.r, x1: ph.x + ph.r, y0: g - 260 * ph.sz, y1: g }; ph.g = 'rect'; } W.addGField(ph.x, (ph.rect.y0 + ph.rect.y1) / 2, ph.r * 3, 0, -1, 1.05, ph.max, { ...ph.rect }); ph.data.top = ph.rect.y0; },
+    tick(ph, dt) { const R = ph.rect, cx = (R.x0 + R.x1) / 2; for (const e of creatures(ph, 60).concat(objets(ph, 60))) { e.vx += (cx - e.x - e.w / 2) * 3 * dt; if (e.y < R.y0 + 30) { e.vx += (e.x > cx ? 1 : -1) * 900 * dt; } } if (rnd() < 0.8) { const q = auHasard(ph); W.part(q.x, q.y, '#9a8ad8', 1, 20, 0.6, 2, -300); } },
+    draw(ctx, ph, t) { const R = ph.rect, cx = (R.x0 + R.x1) / 2, h = R.y1 - R.y0; ctx.save(); ctx.strokeStyle = '#6c5ab8'; ctx.globalAlpha = 0.5 * fade(ph); ctx.lineWidth = 1.5; for (let k = 0; k < 12; k++) { const y = R.y1 - ((k / 12 + t * 0.6) % 1) * h, w = (R.x1 - R.x0) / 2 * (0.5 + 0.5 * (R.y1 - y) / h); ctx.beginPath(); ctx.ellipse(cx, y, w, 4, 0, 0, TAU); ctx.stroke(); } ctx.restore(); },
+  });
+  // TEMPS + VENT : souffle des âges
+  def('temps|vent', { r: 40, life: 3, couleur: '#c8b070', bouge: 'roule', vitesse: 220, init(ph) { auSol(ph); ph.y -= ph.r * 0.6; ph.vx = (ph.dir.x >= 0 ? 1 : -1) * 220; },
+    tick(ph, dt) { W.vieillir('vite', ph.x, ph.y, ph.r, dt * 3, 8); if (ev(ph, 'r', 0.1)) cells(ph, (x, y, i, m) => { const r = rnd(); if (m === M.METAL && r < 0.05) Sim.set(x, y, M.SABLE); else if (m === M.BOIS && r < 0.03) Sim.set(x, y, M.MOUSSE); else if (m === M.PIERRE && r < 0.01) Sim.set(x, y, M.SABLE); }); for (const c of creatures(ph, 0)) c.sta.lent = Math.max(c.sta.lent || 0, 2); if (rnd() < 0.8) { const q = auHasard(ph); W.part(q.x, q.y, '#c8b070', 1, 40, 0.6, 2, 0); } },
+    draw(ctx, ph, t) { nuage(ctx, ph.x, ph.y, ph.r, '#c8b070', 0.25 * fade(ph), t * 4); },
+  });
+  // TRANSMUTATION + VENT : air solide
+  def('transmutation|vent', { r: 50, life: 8, couleur: '#cfe3ea',
+    init(ph) {
+      if (ph.ligne) { const L = ph.ligne, n = Math.max(2, Math.round(Math.hypot(L.x2 - L.x1, L.y2 - L.y1) / 16)); for (let k = 0; k < n; k++) { const x = L.x1 + (L.x2 - L.x1) * k / n, y = L.y1 + (L.y2 - L.y1) * k / n, x2 = L.x1 + (L.x2 - L.x1) * (k + 1) / n, y2 = L.y1 + (L.y2 - L.y1) * (k + 1) / n; plateforme(ph, Math.min(x, x2), Math.min(y, y2), Math.abs(x2 - x) + 2, Math.max(8, Math.abs(y2 - y))); } }
+      else if (ph.rect) { const R = ph.rect; plateforme(ph, R.x0, R.y0, R.x1 - R.x0, R.y1 - R.y0); }
+      else { const w = ph.r * 2.4; ph.rect = { x0: ph.x - w / 2, x1: ph.x + w / 2, y0: ph.y - 5, y1: ph.y + 5 }; ph.g = 'rect'; plateforme(ph, ph.rect.x0, ph.rect.y0, w, 10); }
+    },
+    fin: retirerPlateformes,
+    draw(ctx, ph, t) { if (!ph.objs) return; ctx.save(); ctx.strokeStyle = '#9ac8d8'; ctx.fillStyle = '#e4f2fa'; for (const o of ph.objs) { ctx.globalAlpha = 0.25 * fade(ph); ctx.fillRect(o.x, o.y, o.w, o.h); ctx.globalAlpha = 0.6 * fade(ph); ctx.lineWidth = 1; ctx.strokeRect(o.x, o.y, o.w, o.h); } ctx.restore(); },
+  });
+  // LUMIÈRE + VIE : arbre de lumière
+  def('lumiere|vie', { r: 40, life: 40, lum: 300, couleur: '#c8e080',
+    init(ph) { const g = sol(ph.x, ph.y - 10); const gx = Math.floor(ph.x / CS), gy = Math.floor(g / CS); const h = Math.round(12 + 4 * ph.sz); ph.data.q = arbre(gx, gy, h, Math.round(6 * ph.sz), Math.round(4 * ph.sz)); ph.x = gx * CS; ph.y = (gy - h - 3) * CS; },
+    tick(ph, dt) { pousserFile(ph, 12); const p = st().p; if (Math.abs(p.x + p.w / 2 - ph.x) < 60 && p.y > ph.y - 30) p.hp = Math.min(p.hpMax, p.hp + dt * 0.3); for (const c of st().crs) if (c.hp > 0 && Math.abs(c.x + c.w / 2 - ph.x) < 60 && c.y > ph.y - 30) c.hp = Math.min(c.hpMax, c.hp + dt * 0.3); if (rnd() < 0.2) W.part(ph.x + (rnd() - 0.5) * 70, ph.y + (rnd() - 0.5) * 30, '#f0e080', 1, 10, 1, 2, 30, 'spark'); },
+    draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y, 90, '#f0e080', 0.35 * fade(ph)); },
+  });
+  // FOUDRE + VIE : ronces électriques
+  def('foudre|vie', { r: 45, life: 10, couleur: '#a0c040',
+    init(ph) { const q = []; ph.data.q = q; ph.data.remplace = false; if (ph.g === 'point') { const g = sol(ph.x, ph.y - 10); ph.y = g - ph.r * 0.5; } cells(ph, (x, y, i, m) => { if (air(m) && (ph.rect || ph.ligne || (y + 1) * CS > ph.y - ph.r * 0.1) && rnd() < 0.55) q.push([x, y, M.PLANTE]); }); },
+    tick(ph, dt) { pousserFile(ph, 20); if (ev(ph, 'z', 0.3)) for (const c of hostiles(ph, 4)) { if (!Sim.rectHas(c, (m) => m === M.PLANTE)) continue; blesser(c, 0.8 * ph.pw); c.sta.stun = Math.max(c.sta.stun, 0.6); const q = auHasard(ph); zap(q.x, q.y, c.x + c.w / 2, c.y + c.h / 2); } if (joueurDans(ph, -4) && Sim.rectHas(st().p, (m) => m === M.PLANTE) && ev(ph, 'j', 0.6)) blesserJoueur(0.4, 'Les ronces crépitent !'); if (rnd() < 0.3) { const q = auHasard(ph); W.part(q.x, q.y, '#fff4a0', 1, 30, 0.2, 2, 0, 'spark'); } },
+  });
+  // GRAVITÉ + VIE : îlot flottant
+  def('gravite|vie', { r: 50, life: 30, couleur: '#6c5ab8',
+    init(ph) { const cx = Math.floor(ph.x / CS), cy = Math.floor(ph.y / CS), rx = Math.round(ph.r * 1.1 / CS), ry = Math.max(2, Math.round(rx * 0.45)); ph.data.c = []; for (let y = -1; y <= ry; y++) for (let x = -rx; x <= rx; x++) { if ((x * x) / (rx * rx) + (y * y) / (ry * ry) > 1 && y > 0) continue; if (y < 0 && Math.abs(x) > rx) continue; const X = cx + x, Y = cy + y; if (!air(Sim.get(X, Y))) continue; const m = y < 0 ? M.HERBE : M.TERRE; Sim.set(X, Y, m); const i = Y * Sim.W + X; if (m === M.TERRE) { Sim.ancrerCase(i, 1); ph.data.c.push(i); } } for (let k = 0; k < 3; k++) { const X = cx + Math.round((rnd() - 0.5) * rx * 1.4); if (Sim.get(X, cy - 2) === M.AIR) Sim.set(X, cy - 2, M.PLANTE); } W.son('burst', 'terre'); },
+    fin(ph) { for (const i of ph.data.c) { Sim.ancrerCase(i, 0); } if (ph.data.c.length) Sim.fissurer(ph.data.c[0]); W.msg('L\'îlot retombe !'); },
+    draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y + ph.r * 0.5, ph.r * 1.2, '#6c5ab8', 0.25 * fade(ph)); },
+  });
+  // TEMPS + VIE : forêt instantanée
+  def('temps|vie', { r: 70, life: 2.2, couleur: '#5c8f3e',
+    init(ph) { const q = []; ph.data.q = q; const n = 2 + Math.round(ph.sz); for (let k = 0; k < n; k++) { const x0 = ph.x + (n > 1 ? (k / (n - 1) - 0.5) : 0) * ph.r * 1.8; const g = sol(x0, ph.y - 10); arbre(Math.floor(x0 / CS), Math.floor(g / CS), 10 + Math.floor(rnd() * 7), 5 + Math.floor(rnd() * 2), 3 + Math.floor(rnd() * 2), q); } q.sort((a, b) => b[1] - a[1]); effet(ph, 'vie', ph.x, ph.y, ph.r * 1.4, 1); },
+    tick(ph) { pousserFile(ph, 18); },
+  });
+  // TRANSMUTATION + VIE : bois vivant
+  def('transmutation|vie', { r: 55, life: 1.4, couleur: '#8d6a3c',
+    tick(ph) { const rr = Math.min(1, ph.t / 1.1); if (ev(ph, 'c', 0.06)) cells(ph, (x, y, i, m) => { const r = rnd(); if (m === M.PIERRE && r < 0.5) Sim.set(x, y, M.BOIS); else if (m === M.TERRE && r < 0.3) Sim.set(x, y, M.BOIS); else if ((m === M.SABLE || m === M.MEUBLE) && r < 0.3) Sim.set(x, y, M.TERRE); if (Sim.mat[i] === M.BOIS && Sim.get(x, y - 1) === M.AIR && r < 0.15) Sim.set(x, y - 1, M.MOUSSE); }, rr); },
+  });
+  // FOUDRE + LUMIÈRE : prisme
+  def('foudre|lumiere', { r: 14, point: true, life: 10, lum: 180, couleur: '#e8e0a0', bouge: 'flotte', init(ph) { if (ph.g === 'point' && !ph.follow) { const g = sol(ph.x, ph.y - 10); if (g - ph.y < 60) ph.y = g - 70; } },
+    tick(ph, dt) { if (ev(ph, 'z', 0.65)) { let best = null, bd = 260; for (const c of st().crs) if (c.hp > 0 && !c.sta.tame && c.t !== 'familier') { const d = dist(ph.x, ph.y, c.x + c.w / 2, c.y + c.h / 2); if (d < bd && !Sim.raycast(ph.x, ph.y, (c.x + c.w / 2 - ph.x) / d, (c.y + c.h / 2 - ph.y) / d, d - 10)) { bd = d; best = c; } } if (best) { st().sp.push({ k: 'beam', core: 'lumiere', x1: ph.x, y1: ph.y, x2: best.x + best.w / 2, y2: best.y + best.h / 2, life: 0.2, max: 0.2, color: '#f6e8a0', w: 3 }); blesser(best, 1.2 * ph.pw); best.sta.stun = Math.max(best.sta.stun, 0.5); W.son('cast', 'lumiere'); } } },
+    draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y, 40, '#f6e8a0', 0.5 * fade(ph)); ctx.save(); ctx.translate(ph.x, ph.y); ctx.rotate(t * 1.5); ctx.globalAlpha = fade(ph); ctx.fillStyle = 'rgba(240,236,200,0.6)'; ctx.strokeStyle = U.INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, -ph.r); ctx.lineTo(ph.r * 0.87, ph.r * 0.5); ctx.lineTo(-ph.r * 0.87, ph.r * 0.5); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); },
+  });
+  // GRAVITÉ + LUMIÈRE : trou noir
+  def('gravite|lumiere', { r: 14, point: true, life: 5, couleur: '#2a2040', sombre: 260,
+    init(ph) { ph.data.masse = 0; ph.R = ph.r * 8; },
+    tick(ph, dt) {
+      attirer(ph, ph.R, 1500 * ph.pw, dt, ph.x, ph.y, 0.45);
+      if (ev(ph, 'f', 0.05)) effet(ph, 'force', ph.x, ph.y, ph.R * 0.7, 0.8, 0.05);
+      if (ev(ph, 'a', 0.05)) Sim.forRadius(ph.x, ph.y, ph.r * 1.3, (x, y, i, m) => { if (m !== M.AIR && m !== M.METAL && m !== M.OBSIDIENNE) { Sim.set(x, y, M.AIR); ph.data.masse++; } });
+      for (const c of creatures(ph, 4)) { blesser(c, dt * 3 * ph.pw); c.sta.stun = Math.max(c.sta.stun, 0.5); }
+      for (const s of st().sp) if (s.k === 'proj' && !s.mort && s.spec !== ph.spec) { const d = dist(s.x, s.y, ph.x, ph.y); if (d < ph.R) { s.vx += (ph.x - s.x) / d * 1400 * dt; s.vy += (ph.y - s.y) / d * 1400 * dt; if (d < ph.r * 1.5) s.mort = true; } }
+      if (joueurDans(ph, 2)) blesserJoueur(dt * 1.5, 'Le trou noir t\'aspire !');
+    },
+    fin(ph) { repousser(ph, ph.R, 700); W.flash(0.12); W.part(ph.x, ph.y, '#efe3c4', 26, 220, 0.8, 3, 0, 'spark'); let n = Math.min(60, Math.floor(ph.data.masse / 3)); Sim.forRadius(ph.x, ph.y, 30, (x, y, i, m) => { if (n > 0 && m === M.AIR) { Sim.set(x, y, M.SABLE); n--; } }); },
+    draw(ctx, ph, t) { const a = fade(ph); ctx.save(); const g = ctx.createRadialGradient(ph.x, ph.y, ph.r * 0.5, ph.x, ph.y, ph.R * 0.7); g.addColorStop(0, 'rgba(10,6,20,' + 0.95 * a + ')'); g.addColorStop(0.3, 'rgba(30,20,50,' + 0.5 * a + ')'); g.addColorStop(1, 'rgba(30,20,50,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.R * 0.7, 0, TAU); ctx.fill(); ctx.strokeStyle = '#e0b050'; ctx.globalAlpha = 0.7 * a; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(ph.x, ph.y, ph.r * 2.4, ph.r * 0.7, t * 0.5, 0, TAU); ctx.stroke(); ctx.fillStyle = '#000'; ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.r, 0, TAU); ctx.fill(); ctx.restore(); },
+  });
+  // LUMIÈRE + TEMPS : aube (ou crépuscule)
+  def('lumiere|temps', { r: 30, point: true, life: 3, lum: 200, couleur: '#f0c070',
+    init(ph) { const tod = st().tod, jour = W.daylight() > 0.45; ph.data.de = tod; ph.data.vers = jour ? 0.8 : 0.28; if (ph.data.vers < tod && !jour) ph.data.vers += 1; W.msg(jour ? 'Le jour tombe en crépuscule.' : 'La nuit se lève en aube.'); },
+    tick(ph) { const k = Math.min(1, ph.t / ph.max); st().tod = (ph.data.de + (ph.data.vers - ph.data.de) * k) % 1; },
+    draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#f0c070'; ctx.globalAlpha = 0.6 * fade(ph); ctx.lineWidth = 2; for (let k = 0; k < 8; k++) { const a = k / 8 * TAU + t; ctx.beginPath(); ctx.moveTo(ph.x + Math.cos(a) * 14, ph.y + Math.sin(a) * 14); ctx.lineTo(ph.x + Math.cos(a) * 34, ph.y + Math.sin(a) * 34); ctx.stroke(); } ctx.restore(); },
+  });
+  // LUMIÈRE + TRANSMUTATION : miroir
+  def('lumiere|transmutation', { r: 40, life: 10, lum: 80, couleur: '#cfe3ea',
+    init(ph) { if (!ph.rect) { const p = st().p, vert = Math.abs(ph.dir.x) >= Math.abs(ph.dir.y); ph.rect = vert ? { x0: ph.x - 4, x1: ph.x + 4, y0: ph.y - ph.r * 1.4, y1: ph.y + ph.r * 1.4 } : { x0: ph.x - ph.r * 1.4, x1: ph.x + ph.r * 1.4, y0: ph.y - 4, y1: ph.y + 4 }; ph.g = 'rect'; } ph.data.vert = (ph.rect.y1 - ph.rect.y0) >= (ph.rect.x1 - ph.rect.x0); },
+    tick(ph) { const R = ph.rect; for (const s of st().sp) { if (s.k !== 'proj' || s.mort || s.spec === ph.spec) continue; if (s.x > R.x0 - s.r - 4 && s.x < R.x1 + s.r + 4 && s.y > R.y0 - s.r - 4 && s.y < R.y1 + s.r + 4 && W.time() - (s.reflet || -9) > 0.15) { s.reflet = W.time(); if (ph.data.vert) { s.vx = -s.vx; s.x = s.vx > 0 ? R.x1 + s.r + 5 : R.x0 - s.r - 5; } else { s.vy = -s.vy; s.y = s.vy > 0 ? R.y1 + s.r + 5 : R.y0 - s.r - 5; } W.part(s.x, s.y, '#ffffff', 6, 60, 0.3, 2, 0, 'spark'); W.son('click'); } } for (const c of creatures(ph, 2)) { const cx = (R.x0 + R.x1) / 2; if (ph.data.vert) { c.x += c.x + c.w / 2 < cx ? -3 : 3; c.vx = 0; } } },
+    draw(ctx, ph, t) { const R = ph.rect; ctx.save(); ctx.globalAlpha = 0.75 * fade(ph); const g = ctx.createLinearGradient(R.x0, R.y0, R.x1, R.y1); g.addColorStop(0, '#e4f2fa'); g.addColorStop(0.5, '#ffffff'); g.addColorStop(1, '#9ac8d8'); ctx.fillStyle = g; ctx.fillRect(R.x0, R.y0, R.x1 - R.x0, R.y1 - R.y0); ctx.strokeStyle = U.INK; ctx.lineWidth = 1.5; ctx.strokeRect(R.x0, R.y0, R.x1 - R.x0, R.y1 - R.y0); ctx.restore(); },
+  });
+  // FOUDRE + GRAVITÉ : aimant
+  def('foudre|gravite', { r: 30, point: true, life: 8, lum: 90, couleur: '#a080d0',
+    init(ph) { ph.R = ph.r * 5; ph.data.orb = []; },
+    tick(ph, dt) {
+      const tire = (e, f) => { const ex = e.x + e.w / 2, ey = e.y + e.h / 2, d = Math.hypot(ph.x - ex, ph.y - ey) || 1; if (d > ph.R) return; const k = 900 * f * ph.pw * dt * (1 - d / ph.R); e.vx += (ph.x - ex) / d * k; e.vy += (ph.y - ey) / d * k; };
+      for (const c of st().crs) if (c.hp > 0 && c.t !== 'familier') tire(c, c.t === 'golem' ? 2.5 : 0.4);
+      for (const o of st().objs) if (o.dyn && !o.mort && !o.carried) tire(o, o.t === 'rocher' ? 2 : 1);
+      for (const s of st().sp) if (s.k === 'proj' && !s.mort && !ph.data.orb.includes(s) && s.spec !== ph.spec && dist(s.x, s.y, ph.x, ph.y) < ph.R) { ph.data.orb.push(s); s.life = 99; s.grav = 0; }
+      ph.data.orb = ph.data.orb.filter((s) => !s.mort); ph.data.orb.forEach((s, k) => { const a = ph.t * 4 + k / ph.data.orb.length * TAU, rr = ph.r * 1.6; const tx = ph.x + Math.cos(a) * rr, ty = ph.y + Math.sin(a) * rr; s.vx = (tx - s.x) * 10; s.vy = (ty - s.y) * 10; });
+      if (ev(ph, 'e', 0.3)) Sim.forRadius(ph.x, ph.y, ph.R, (x, y, i, m) => { if (m === M.METAL) { Sim.elec[i] = 40; Sim.touch(i); } });
+    },
+    fin(ph) { for (const s of ph.data.orb) { let best = null, bd = 600; for (const c of st().crs) if (c.hp > 0 && !c.sta.tame && c.t !== 'familier') { const d = dist(s.x, s.y, c.x, c.y); if (d < bd) { bd = d; best = c; } } const a = best ? Math.atan2(best.y + best.h / 2 - s.y, best.x + best.w / 2 - s.x) : Math.atan2(s.y - ph.y, s.x - ph.x); s.vx = Math.cos(a) * 700; s.vy = Math.sin(a) * 700; s.life = 1.2; } },
+    draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#a080d0'; ctx.lineWidth = 1.2; ctx.globalAlpha = 0.5 * fade(ph); for (let k = 1; k <= 3; k++) { ctx.beginPath(); ctx.ellipse(ph.x, ph.y, ph.r * k * 0.9, ph.r * k * 0.45, 0, 0, TAU); ctx.stroke(); } ctx.fillStyle = '#737e86'; ctx.globalAlpha = fade(ph); ctx.fillRect(ph.x - 8, ph.y - 8, 16, 16); ctx.restore(); },
+  });
+  // FOUDRE + TEMPS : foudre suspendue
+  def('foudre|temps', { r: 10, life: 6, lum: 150, couleur: '#e8d060',
+    init(ph) { if (!ph.ligne) { if (ph.rect) { const R = ph.rect, cx = (R.x0 + R.x1) / 2; ph.ligne = { x1: cx, y1: R.y0, x2: cx, y2: R.y1, w: 9 }; } else { const g = sol(ph.x, ph.y - 10); ph.ligne = { x1: ph.x, y1: g - 220 * ph.sz, x2: ph.x, y2: g, w: 9 }; } ph.g = 'ligne'; } ph.data.pts = FX.eclairPts(ph.ligne.x1, ph.ligne.y1, ph.ligne.x2, ph.ligne.y2, 0.12); },
+    tick(ph) { if (ev(ph, 'r', 0.15)) ph.data.pts = FX.eclairPts(ph.ligne.x1, ph.ligne.y1, ph.ligne.x2, ph.ligne.y2, 0.12); if (ev(ph, 'z', 0.25)) { for (const c of creatures(ph, 2)) { blesser(c, 1 * ph.pw); c.sta.stun = Math.max(c.sta.stun, 0.8); W.part(c.x + c.w / 2, c.y + c.h / 2, '#fff4a0', 6, 60, 0.3, 2, 0, 'spark'); } if (joueurDans(ph, 0)) blesserJoueur(0.5, 'Zzzt !'); cells(ph, (x, y, i, m) => { if (P[m].cond) { Sim.elec[i] = 40; Sim.touch(i); } }); } },
+    draw(ctx, ph) { FX.eclair(ctx, ph.data.pts, '#e8d060', 2.2, fade(ph)); },
+  });
+  // FOUDRE + TRANSMUTATION : électrolyse (l'eau devient un gaz qui explose)
+  def('foudre|transmutation', { r: 50, life: 3, couleur: '#c8e0a0',
+    tick(ph) { if (ev(ph, 'g', 0.05)) { let n = 0; cells(ph, (x, y, i, m) => { if ((m === M.EAU || m === M.SAUMURE) && rnd() < 0.15 && n < 20) { Sim.set(x, y, M.GAZ, 200); n++; } }); } if (rnd() < 0.5) { const q = auHasard(ph); W.part(q.x, q.y, '#fff4a0', 1, 30, 0.2, 2, 0, 'spark'); } },
+  });
+  // GRAVITÉ + TEMPS : horizon
+  def('gravite|temps', { r: 40, point: true, life: 8, couleur: '#7a7090',
+    init(ph) { for (const [k, f] of [[1, 0.08], [2, 0.3], [3.2, 0.6]]) st().sp.push({ k: 'bulle', mode: 'lent', x: ph.x, y: ph.y, r: ph.r * k, life: ph.max, max: ph.max, fx: f, horizon: true }); },
+    tick(ph, dt) { attirer(ph, ph.r * 3.2, 380 * ph.pw, dt, ph.x, ph.y, 0.25); },
+    draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#7a7090'; ctx.globalAlpha = 0.4 * fade(ph); for (let k = 1; k <= 3; k++) { ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.r * k * (1 - 0.05 * Math.sin(t * 2 + k)), 0, TAU); ctx.stroke(); } ctx.restore(); },
+  });
+  // GRAVITÉ + TRANSMUTATION : presse
+  def('gravite|transmutation', { r: 34, point: true, life: 4, couleur: '#6a6a8a',
+    tick(ph, dt) {
+      if (ev(ph, 'f', 0.06)) effet(ph, 'force', ph.x, ph.y, ph.r * 3, 0.7, 0.06);
+      attirer(ph, ph.r * 3, 600 * ph.pw, dt);
+      if (ev(ph, 'c', 0.1)) Sim.forRadius(ph.x, ph.y, ph.r, (x, y, i, m) => { const d = dist(ph.x, ph.y, (x + 0.5) * CS, (y + 0.5) * CS), r = rnd(); if ((m === M.SABLE || m === M.MEUBLE || m === M.TERRE || m === M.CENDRE || m === M.NEIGE || m === M.BOUE) && r < 0.2) Sim.set(x, y, M.PIERRE); else if (m === M.PIERRE && d < ph.r * 0.5 && r < 0.05) Sim.set(x, y, M.CRISTAL); else if (m === M.NEIGE && r < 0.3) Sim.set(x, y, M.GLACE); });
+      for (const c of creatures(ph, 0, 0.6)) blesser(c, dt * 1.5 * ph.pw);
+    },
+    draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#6a6a8a'; ctx.globalAlpha = 0.5 * fade(ph); for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; const r1 = ph.r * 1.8 * (1 - (t * 0.8 % 1)); ctx.beginPath(); ctx.moveTo(ph.x + Math.cos(a) * r1, ph.y + Math.sin(a) * r1); ctx.lineTo(ph.x + Math.cos(a) * (r1 - 10), ph.y + Math.sin(a) * (r1 - 10)); ctx.stroke(); } ctx.restore(); },
+  });
+  // TEMPS + TRANSMUTATION : origine
+  const ORIGINE = []; ORIGINE[M.VERRE] = M.SABLE; ORIGINE[M.OBSIDIENNE] = M.LAVE; ORIGINE[M.CENDRE] = M.BOIS; ORIGINE[M.METAL] = M.PIERRE; ORIGINE[M.GLACE] = M.EAU; ORIGINE[M.NEIGE] = M.EAU; ORIGINE[M.VAPEUR] = M.EAU; ORIGINE[M.BOUE] = M.TERRE; ORIGINE[M.MEUBLE] = M.TERRE; ORIGINE[M.CRISTAL] = M.PIERRE; ORIGINE[M.FUMEE] = M.AIR; ORIGINE[M.SAUMURE] = M.EAU; ORIGINE[M.MOUSSE] = M.AIR;
+  def('temps|transmutation', { r: 60, life: 1.3, couleur: '#b8a070',
+    init(ph) { ph.data.fait = new Set(); for (const c of creatures(ph, 10)) { c.hp = c.hpMax; if (c.orig) W.revenir(c); } for (const o of objets(ph, 10)) if (o.t === 'caisse') o.hp = 3; },
+    tick(ph) { const rr = Math.min(1, ph.t / 1.1 + 0.1); if (ev(ph, 'c', 0.05)) cells(ph, (x, y, i, m) => { if (ph.data.fait.has(i)) return; const o = ORIGINE[m]; if (o === undefined) return; ph.data.fait.add(i); Sim.set(x, y, o); }, rr); },
+    draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#b8a070'; ctx.globalAlpha = 0.6 * fade(ph); ctx.setLineDash([4, 4]); U.inkCircle(ctx, ph.x, ph.y, ph.r * Math.min(1, ph.t / 1.1 + 0.1), 6, 1); ctx.restore(); },
+  });
+  // ---- avec les aspects ----
+  def('froid|vent', { r: 55, life: 8, couleur: '#cfe8f6', bouge: 'derive', vitesse: 45, init: enCiel(120),
+    tick(ph, dt) { if (ev(ph, 'n', 0.05)) nuee(ph, M.NEIGE, 2); if (ev(ph, 'f', 0.2)) { const g = sol(ph.x, ph.y + 10); Sim.chauffer(ph.x, (ph.y + g) / 2, ph.r * 1.3, 22, 0.35); } for (const c of st().crs) if (c.hp > 0 && !W.froidOk(c) && Math.abs(c.x + c.w / 2 - ph.x) < ph.r * 1.3 && c.y > ph.y) c.sta.lent = Math.max(c.sta.lent || 0, 0.5); },
+    draw(ctx, ph, t) { nuage(ctx, ph.x, ph.y, ph.r, '#dde8f0', 0.6 * fade(ph), t); },
+  });
+  def('feu|froid', { r: 50, life: 0.8, couleur: '#c87080',
+    init(ph) { cells(ph, (x, y, i, m) => { const r = rnd(); if ((m === M.PIERRE || m === M.OBSIDIENNE) && r < 0.5) Sim.set(x, y, M.SABLE); else if ((m === M.VERRE || m === M.CRISTAL) && r < 0.8) Sim.set(x, y, M.SABLE); else if (m === M.GLACE && r < 0.7) Sim.set(x, y, M.NEIGE); else if (m === M.EAU && r < 0.3) Sim.set(x, y, M.VAPEUR, 40); }); for (const c of hostiles(ph, 10)) { blesser(c, (c.t === 'golem' ? 4 : 2) * ph.pw); c.sta.stun = Math.max(c.sta.stun, 1); } W.son('burst', 'terre'); W.shake(0.3); W.part(ph.x, ph.y, '#c87080', 20, 160, 0.6, 3, 300, 'eclat'); },
+    draw(ctx, ph) { FX.glow(ctx, ph.x, ph.y, ph.r * 1.5, ph.t < 0.4 ? '#e0642a' : '#7fb4d8', 0.6 * fade(ph)); },
+  });
+  def('froid|temps', { r: 55, life: 1, couleur: '#9ad0f0',
+    init(ph) { for (const c of hostiles(ph, 10, 1.3)) { const x0 = Math.floor(c.x / CS) - 1, x1 = Math.floor((c.x + c.w) / CS) + 1, y0 = Math.floor(c.y / CS) - 1, y1 = Math.floor((c.y + c.h) / CS) + 1; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (Sim.get(x, y) === M.AIR && (x === x0 || x === x1 || y === y0 || y === y1)) { Sim.set(x, y, M.GLACE); Sim.temp[y * Sim.W + x] = 5; } c.sta.gele = Math.max(c.sta.gele || 0, 10); c.sta.stun = Math.max(c.sta.stun, 10); c.vx = c.vy = 0; } cells(ph, (x, y, i, m) => { if (m === M.EAU || m === M.SAUMURE) { Sim.set(x, y, M.GLACE); Sim.temp[i] = 4; } }); Sim.chauffer(ph.x, ph.y, ph.r, 10, 0.6); W.son('burst', 'eau'); },
+    draw(ctx, ph) { FX.glow(ctx, ph.x, ph.y, ph.r * 1.4, '#cfe8f6', 0.6 * fade(ph)); },
+  });
+  def('foudre|metal', { r: 45, life: 10, lum: 120, couleur: '#c8c070',
+    init(ph) { let n = 0; Sim.forRadius(ph.x, ph.y, ph.r, (x, y, i, m) => { if (m === M.METAL) n++; }); if (n < 4) { const g = sol(ph.x, ph.y - 10), gx = Math.floor(ph.x / CS), gy = Math.floor(g / CS); for (let k = 1; k <= 10; k++) { Sim.set(gx, gy - k, M.METAL); if (k < 4) { Sim.set(gx - 1, gy - k, M.METAL); Sim.set(gx + 1, gy - k, M.METAL); } } ph.y = g - 30; } },
+    tick(ph) { if (ev(ph, 'e', 0.25)) { const met = []; Sim.forRadius(ph.x, ph.y, ph.r * 2, (x, y, i, m) => { if (m === M.METAL) { Sim.elec[i] = 60; Sim.touch(i); if (rnd() < 0.05) met.push([(x + 0.5) * CS, (y + 0.5) * CS]); } }); if (met.length && ev(ph, 'a', 0.5)) for (const c of st().crs) if (c.hp > 0 && !c.sta.tame && c.t !== 'familier') { const [mx, my] = met[(rnd() * met.length) | 0]; if (dist(mx, my, c.x + c.w / 2, c.y + c.h / 2) < 130) { zap(mx, my, c.x + c.w / 2, c.y + c.h / 2); blesser(c, 1 * ph.pw); c.sta.stun = Math.max(c.sta.stun, 0.6); W.son('burst', 'foudre'); break; } } } },
+  });
+  def('feu|metal', { r: 45, life: 8, lum: 140, couleur: '#e0642a',
+    init(ph) { let n = 0; Sim.forRadius(ph.x, ph.y, ph.r, (x, y, i, m) => { if (m === M.METAL) n++; }); if (n < 4) { const g = sol(ph.x, ph.y - 10), gy = Math.floor(g / CS); for (let x = Math.floor((ph.x - ph.r) / CS); x <= Math.floor((ph.x + ph.r) / CS); x++) { Sim.set(x, gy - 1, M.METAL); } ph.y = g; } },
+    tick(ph) { if (ev(ph, 'h', 0.1)) Sim.forRadius(ph.x, ph.y, ph.r * 1.3, (x, y, i, m) => { if (m === M.METAL) { Sim.temp[i] = Math.max(Sim.temp[i], 215); Sim.touch(i); } }); },
+  });
+  def('acide|feu', { r: 50, life: 8, couleur: '#7a8a40', bouge: 'roule', vitesse: 25, init(ph) { auSol(ph); ph.y -= ph.r * 0.6; ph.vx = (ph.dir.x >= 0 ? 1 : -1) * 25; },
+    tick(ph, dt) { if (ev(ph, 's', 0.1)) { const q = auHasard(ph); const x = Math.floor(q.x / CS), y = Math.floor(q.y / CS); if (Sim.get(x, y) === M.AIR) Sim.set(x, y, M.FUMEE, 80); } for (const c of hostiles(ph, 0)) { blesser(c, dt * 0.5 * ph.pw); if (rnd() < dt * 0.5) c.sta.sleep = Math.max(c.sta.sleep, 3); } if (joueurDans(ph, 0)) blesserJoueur(dt * 0.3, 'Tu tousses dans la fumée âcre.'); },
+    draw(ctx, ph, t) { nuage(ctx, ph.x, ph.y, ph.r, '#7a8a40', 0.35 * fade(ph), t); },
+  });
+  def('acide|eau', { r: 50, life: 6, couleur: '#8fbf2a', bouge: 'derive', vitesse: 30, init: enCiel(150),
+    tick(ph) { if (ev(ph, 'p', 0.07)) nuee(ph, M.ACIDE, 1); },
+    draw(ctx, ph, t) { nuage(ctx, ph.x, ph.y, ph.r, '#6a7a3a', 0.6 * fade(ph), t); },
+  });
+  def('foudre|son', { r: 50, life: 0.7, couleur: '#e8e0c0',
+    init(ph) { const R = ph.r * 4; Sim.forRadius(ph.x, ph.y, R, (x, y, i, m) => { const r = rnd(); if ((m === M.VERRE || m === M.CRISTAL) && r < 0.6) Sim.set(x, y, r < 0.3 ? M.AIR : M.SABLE); else if (m === M.GLACE && r < 0.5) Sim.set(x, y, M.NEIGE); }); repousser(ph, R, 800 * ph.pw); for (const c of st().crs) if (c.hp > 0 && dist(ph.x, ph.y, c.x, c.y) < R) { c.sta.stun = Math.max(c.sta.stun, 2); c.sta.sleep = 0; c.dort = false; } effet(ph, 'foudre', ph.x, ph.y, ph.r, 1); W.shake(0.8); W.flash(0.15); W.son('burst', 'foudre'); W.son('burst', 'terre'); ph.R = R; },
+    draw(ctx, ph) { FX.onde(ctx, ph.x, ph.y, ph.R * Math.min(1, ph.t / 0.5), 1 - ph.t / ph.max, '#e8e0c0'); },
+  });
+  def('explosion|gravite', { r: 40, point: true, life: 1.5, couleur: '#c86040',
+    tick(ph, dt) { if (ph.t < 1.2) { attirer(ph, ph.r * 5, 2000 * ph.pw, dt, ph.x, ph.y, 0.5); if (ev(ph, 'f', 0.05)) effet(ph, 'force', ph.x, ph.y, ph.r * 4, 0.9, 0.05); } else if (!ph.data.boum) { ph.data.boum = true; effet(ph, 'explosion', ph.x, ph.y, ph.r * 1.8, 1.4); repousser(ph, ph.r * 5, 1000 * ph.pw); W.shake(0.7); } },
+    draw(ctx, ph, t) { if (ph.t < 1.2) { ctx.save(); ctx.strokeStyle = '#c86040'; ctx.globalAlpha = 0.6; const r = ph.r * 4 * (1 - ph.t / 1.2); ctx.beginPath(); ctx.arc(ph.x, ph.y, Math.max(2, r), 0, TAU); ctx.stroke(); ctx.restore(); } },
+  });
+  def('fumee|vent', { r: 50, life: 10, couleur: '#5a524c', bouge: 'roule', vitesse: 20, init(ph) { auSol(ph); ph.y -= ph.r * 0.7; ph.vx = (ph.dir.x >= 0 ? 1 : -1) * 20; },
+    tick(ph, dt) { if (ev(ph, 's', 0.06)) for (let k = 0; k < 2; k++) { const q = auHasard(ph); const x = Math.floor(q.x / CS), y = Math.floor(q.y / CS); if (Sim.get(x, y) === M.AIR) Sim.set(x, y, M.FUMEE, 90); } if (joueurDans(ph, 10)) st().p.sta.invisible = Math.max(st().p.sta.invisible, 0.5); for (const c of creatures(ph, 0)) c.fuite = null; },
+    draw(ctx, ph, t) { nuage(ctx, ph.x, ph.y, ph.r, '#5a524c', 0.4 * fade(ph), t); },
+  });
+  def('force|terre', { r: 55, life: 0.6, couleur: '#8a6b2f',
+    init(ph) { cells(ph, (x, y, i, m) => { const r = rnd(); if (m === M.TERRE && r < 0.6) Sim.set(x, y, M.MEUBLE); else if (m === M.PIERRE && r < 0.45) Sim.set(x, y, M.SABLE); }); W.shake(0.5); W.son('burst', 'terre'); for (const c of hostiles(ph, 20)) c.sta.stun = Math.max(c.sta.stun, 1.5); },
+  });
+  def('foudre|lien', { r: 8, life: 10, couleur: '#e0c060',
+    init(ph) { if (!ph.ligne) { const p = st().p; ph.ligne = { x1: p.x + p.w / 2, y1: p.y + p.h * 0.4, x2: ph.x, y2: ph.y, w: 8 }; ph.g = 'ligne'; } },
+    tick(ph) { if (ev(ph, 'z', 0.2)) for (const c of creatures(ph, 2)) { blesser(c, 1 * ph.pw); c.sta.stun = Math.max(c.sta.stun, 0.8); W.part(c.x + c.w / 2, c.y + c.h / 2, '#fff4a0', 6, 60, 0.3, 2, 0, 'spark'); } },
+    draw(ctx, ph, t) { const L = ph.ligne; ctx.save(); ctx.strokeStyle = '#c9a63a'; ctx.globalAlpha = fade(ph); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(L.x1, L.y1); ctx.quadraticCurveTo((L.x1 + L.x2) / 2, (L.y1 + L.y2) / 2 + 10, L.x2, L.y2); ctx.stroke(); ctx.restore(); if (rnd() < 0.3) { const t2 = rnd(); W.part(L.x1 + (L.x2 - L.x1) * t2, L.y1 + (L.y2 - L.y1) * t2, '#fff4a0', 1, 30, 0.2, 2, 0, 'spark'); } },
+  });
+  def('eau|froid', { r: 50, life: 0.6, couleur: '#bfe0f2',
+    init(ph) { let n = 0; const R = ph.r * 3; Sim.forRadius(ph.x, ph.y, R, (x, y, i, m) => { if ((m === M.EAU || m === M.SAUMURE) && !P[Sim.get(x, y - 1)].liquid && Sim.get(x, y - 1) !== M.GLACE) { for (let d = 0; d < 3; d++) if (P[Sim.get(x, y + d)].liquid) { Sim.set(x, y + d, M.GLACE); Sim.temp[(y + d) * Sim.W + x] = 20; n++; } } }); if (n < 10) Sim.forRadius(ph.x, ph.y, ph.r * 0.6, (x, y, i, m) => { if (air(m) || P[m].liquid) Sim.set(x, y, M.GLACE); }); W.son('burst', 'eau'); },
+  });
+  def('eau|seisme', { r: 40, life: 3, couleur: '#3b6fb6', bouge: 'roule', vitesse: 260, init(ph) { auSol(ph); ph.vx = (ph.dir.x >= 0 ? 1 : -1) * 260; ph.H = Math.round(9 * ph.sz); },
+    tick(ph, dt) { const sg = Math.sign(ph.vx); if (ev(ph, 'w', 0.04)) { const x = Math.floor((ph.x + sg * 12) / CS), g = Math.floor(sol(ph.x + sg * 12, ph.y - 30) / CS); for (let k = 1; k <= ph.H; k++) if (Sim.get(x, g - k) === M.AIR) Sim.set(x, g - k, M.EAU); } const box = { x: ph.x - 30, y: ph.y - ph.H * CS - 20, w: 60, h: ph.H * CS + 20 }; for (const e of st().crs.concat(st().objs.filter((o) => o.dyn && !o.mort))) { if ((e.hp !== undefined && e.hp <= 0 && !e.dyn) || !U.rectsOverlap(box, e)) continue; e.vx += sg * 2200 * dt / W.masse(e); e.vy -= 500 * dt; if (e.sta) e.sta.wet = 6; } if (U.rectsOverlap(box, st().p)) { st().p.vx += sg * 900 * dt; } },
+    draw(ctx, ph, t) { const sg = Math.sign(ph.vx); ctx.save(); ctx.strokeStyle = '#3b6fb6'; ctx.globalAlpha = 0.7 * fade(ph); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ph.x - sg * 40, ph.y); ctx.quadraticCurveTo(ph.x, ph.y - ph.H * CS * 1.4, ph.x + sg * 20, ph.y - ph.H * CS * 0.7); ctx.stroke(); ctx.restore(); },
+  });
+  def('force|gravite', { r: 40, point: true, life: 3, couleur: '#9a4a8c',
+    tick(ph, dt) { if (ph.t < 2.4) { attirer(ph, ph.r * 5, 1600 * ph.pw, dt, ph.x, ph.y, 0.4); if (ev(ph, 'f', 0.05)) effet(ph, 'force', ph.x, ph.y, ph.r * 4, 1, 0.05); } else if (!ph.data.boum) { ph.data.boum = true; repousser(ph, ph.r * 5, 1100 * ph.pw); effet(ph, 'repulsion', ph.x, ph.y, ph.r * 3, 1.2); W.shake(0.5); } },
+    draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#9a4a8c'; ctx.globalAlpha = 0.6 * fade(ph); for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.r * (1 + k) * (1 - (t * 1.5 % 1) * 0.5), t * 3 + k, t * 3 + k + 4); ctx.stroke(); } ctx.restore(); },
+  });
+
+  // ---------- familles : Espace, Esprit, Contre-sort, Métamorphose avec n'importe quel effet ----------
+  const FAILLE = { feu: M.FEU, eau: M.EAU, terre: M.SABLE, froid: M.NEIGE, acide: M.ACIDE, fumee: M.FUMEE, metal: M.SABLE };
+  const COULEUR = (e) => W.colorOf(e);
+  const ABSORBE = { feu: [M.FEU], eau: [M.EAU, M.SAUMURE], terre: [M.TERRE, M.SABLE, M.MEUBLE, M.BOUE], vent: [M.FUMEE, M.VAPEUR, M.GAZ], froid: [M.GLACE, M.NEIGE], acide: [M.ACIDE], metal: [M.METAL], vie: [M.PLANTE, M.HERBE, M.MOUSSE], lumiere: [M.CRISTAL], fumee: [M.FUMEE], transmutation: [M.VERRE] };
+  function famille(cle) {
+    const info = DATA.comboInfo(cle); if (!info || !info.genre) return null;
+    const x = info.effet, g = info.genre, C = COULEUR(x);
+    if (g === 'portail') return { r: 22, life: 6, couleur: C, lum: x === 'lumiere' || x === 'feu' ? 150 : 60,
+      tick(ph, dt) {
+        const m = FAILLE[x];
+        if (m != null && ev(ph, 'm', 0.04)) for (let k = 0; k < 2; k++) { const a = rnd() * TAU, d = ph.r * (0.6 + rnd() * 0.6); const cx = Math.floor((ph.x + Math.cos(a) * d) / CS), cy = Math.floor((ph.y + Math.sin(a) * d) / CS); if (Sim.get(cx, cy) === M.AIR) { if (m === M.FEU) Sim.setFeu(cx, cy, 25, 0); else Sim.set(cx, cy, m, m === M.FUMEE ? 80 : 0); } }
+        if (x === 'vent' || x === 'son' || x === 'repulsion') repousser(ph, ph.r * 5, 500 * dt * 60 * 0.02 * ph.pw);
+        else if (x === 'gravite' || x === 'force') attirer(ph, ph.r * 5, 800 * ph.pw, dt);
+        else if (x === 'temps' && !ph.data.b) { ph.data.b = true; st().sp.push({ k: 'bulle', mode: 'vite', x: ph.x, y: ph.y, r: ph.r * 3, life: ph.max, max: ph.max, fx: 4 }); }
+        else if (m == null && ev(ph, 'e', 0.5)) effet(ph, x, ph.x, ph.y, ph.r * 2.5, 0.8);
+        if (rnd() < 0.5) W.part(ph.x + (rnd() - 0.5) * ph.r, ph.y + (rnd() - 0.5) * ph.r * 2, C, 1, 40, 0.5, 2, 0, 'spark');
+      },
+      draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#4fb0a0'; ctx.lineWidth = 3; ctx.globalAlpha = 0.9 * fade(ph); ctx.beginPath(); ctx.ellipse(ph.x, ph.y, ph.r * 0.5, ph.r, 0, 0, TAU); ctx.stroke(); ctx.strokeStyle = C; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(ph.x, ph.y, ph.r * 0.28, ph.r * 0.7, t * 2, 0, TAU); ctx.stroke(); ctx.restore(); FX.glow(ctx, ph.x, ph.y, ph.r * 2, C, 0.4 * fade(ph)); },
+    };
+    if (g === 'esprit') return { point: true, r: 12, life: 20, couleur: C, lum: 90, bouge: 'chasse',
+      tick(ph, dt) {
+        let best = null, bd = 340; for (const c of st().crs) if (c.hp > 0 && !c.sta.tame && c.t !== 'familier' && !c.glaise) { const d = dist(ph.x, ph.y, c.x + c.w / 2, c.y + c.h / 2); if (d < bd) { bd = d; best = c; } }
+        const p = st().p; const tx = best ? best.x + best.w / 2 : p.x + p.w / 2 - p.face * 40, ty = best ? best.y + best.h / 2 : p.y - 20;
+        ph.vx += (tx - ph.x) * 3 * dt; ph.vy += (ty - ph.y) * 3 * dt; ph.vx *= 1 - 2 * dt; ph.vy *= 1 - 2 * dt;
+        if (best && bd < 30 && ev(ph, 'h', 0.6)) { effet(ph, x, ph.x, ph.y, 32, 0.9); W.part(ph.x, ph.y, C, 8, 80, 0.4, 2); }
+        if (rnd() < 0.5) W.part(ph.x, ph.y, C, 1, 15, 0.5, 2, -20, 'spark');
+      },
+      draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y, ph.r * 3, C, 0.6 * fade(ph)); ctx.save(); ctx.fillStyle = C; ctx.globalAlpha = fade(ph); ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.r * (0.8 + 0.15 * Math.sin(t * 7)), 0, TAU); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ph.x - 3, ph.y - 2, 2, 0, TAU); ctx.arc(ph.x + 3, ph.y - 2, 2, 0, TAU); ctx.fill(); ctx.restore(); },
+    };
+    if (g === 'contre') return { r: 60, life: 0.8, couleur: '#a8a29a',
+      init(ph) {
+        let n = 0; const mats = ABSORBE[x] || [];
+        cells(ph, (cx, cy, i, m) => { if (mats.includes(m)) { Sim.set(cx, cy, M.AIR); n++; } else if (x === 'feu' && P[m].flam && Sim.aux[i] > 0) { Sim.aux[i] = 0; Sim.touch(i); n++; } else if (x === 'foudre' && Sim.elec[i] > 0) { Sim.elec[i] = 0; n++; } });
+        if (x === 'feu' || x === 'froid') Sim.chauffer(ph.x, ph.y, ph.r, Sim.AMB, 0.9);
+        if (x === 'gravite') { const a = st().gz.length; st().gz = st().gz.filter((z) => dist(ph.x, ph.y, z.x, z.y) > ph.r * 1.5); n += (a - st().gz.length) * 20; }
+        if (x === 'temps' || x === 'figer') for (const q of st().sp) if (q.k === 'bulle' && dist(ph.x, ph.y, q.x, q.y) < ph.r * 1.5) { q.life = 0.01; n += 20; }
+        for (const c of creatures(ph, 10)) { if (x === 'feu') c.sta.burn = 0; if (x === 'froid') { c.sta.gele = 0; c.sta.lent = 0; } }
+        const p = st().p; if (joueurDans(ph, 10)) { if (x === 'feu') p.sta.burning = 0; if (x === 'eau') p.sta.wet = 0; }
+        const gain = Math.min(12, n / 15); p.ink = Math.min(p.inkMax, p.ink + gain);
+        W.msg(n ? 'Absorbé : ' + n + ' parcelles' + (gain >= 1 ? ', +' + Math.floor(gain) + ' encre.' : '.') : 'Rien de cette nature à absorber ici.');
+      },
+      draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = C; ctx.globalAlpha = 0.6 * fade(ph); for (let k = 0; k < 10; k++) { const a = k / 10 * TAU + t * 4, r1 = ph.r * (1 - ph.t / ph.max); ctx.beginPath(); ctx.moveTo(ph.x + Math.cos(a) * r1, ph.y + Math.sin(a) * r1); ctx.lineTo(ph.x + Math.cos(a + 0.3) * r1 * 0.6, ph.y + Math.sin(a + 0.3) * r1 * 0.6); ctx.stroke(); } ctx.restore(); },
+    };
+    if (g === 'metamorphose') return { r: 60, life: 20, couleur: C,
+      init(ph) {
+        const specX = Object.assign({}, ph.spec, { cores: [x], core: x, combo: null, color: C, subs: [], repeat: 0, expire: false, encre: null, prm: Object.assign({}, ph.spec.prm, { power: (ph.spec.prm.power || 1) * 0.7 }) });
+        if (ph.follow === st().p) { ph.data.soi = true; W.msg('Tu prends la nature ' + DATA.comboInfo(cle).nom.replace('Chimère ', '') + '.'); return; }
+        let best = null, bd = ph.r * 1.5; for (const c of st().crs) if (c.hp > 0 && c.t !== 'familier') { const d = dist(ph.x, ph.y, c.x + c.w / 2, c.y + c.h / 2); if (d < bd) { bd = d; best = c; } }
+        if (!best) { W.msg('Aucune créature à changer ici.'); ph.life = 0; return; }
+        best.ench = { spec: specX, t: ph.max, tick: 0 }; ph.follow = best; W.part(best.x + best.w / 2, best.y, C, 16, 80, 0.8, 3, 0, 'spark'); W.msg('La créature devient ' + DATA.comboInfo(cle).nom.toLowerCase().replace('chimère ', 'chimère ') + '.');
+      },
+      tick(ph, dt) { if (!ph.data.soi) return; const p = st().p; const s = p.sta; const T = 0.3; if (x === 'feu' || x === 'explosion') s.garde = Math.max(s.garde || 0, T); else if (x === 'eau' || x === 'courant') s.branchies = Math.max(s.branchies || 0, T); else if (x === 'terre' || x === 'metal' || x === 'seisme') s.armure = Math.max(s.armure || 0, T); else if (x === 'vent' || x === 'son') s.glide = Math.max(s.glide || 0, T); else if (x === 'foudre') s.vitesse = Math.max(s.vitesse || 0, T); else if (x === 'froid') s.patins = Math.max(s.patins || 0, T); else if (x === 'lumiere') s.lumiere = Math.max(s.lumiere || 0, T); else if (x === 'vie') s.regen = Math.max(s.regen || 0, T); else if (x === 'gravite') s.lowgrav = Math.max(s.lowgrav || 0, T); if (rnd() < 0.4) W.part(p.x + rnd() * p.w, p.y + rnd() * p.h, C, 1, 20, 0.5, 2, -30, 'spark'); },
+      draw(ctx, ph, t) { const e = ph.follow; if (!e) return; FX.glow(ctx, e.x + e.w / 2, e.y + e.h / 2, Math.max(e.w, e.h), C, 0.35 * fade(ph)); },
+    };
+    return null;
+  }
+
+  // ---------- déploiement ----------
+  function defDe(id) { if (DEFS[id]) return DEFS[id]; const f = famille(id); if (f) DEFS[id] = Object.assign({ r: 50, life: 6, couleur: '#c08a3a', bouge: 'fixe' }, f); return DEFS[id] || null; }
+  function decouvrir(id) {
+    const pg = W.game().progress; if (!pg.combos) pg.combos = {};
+    if (pg.combos[id]) { pg.combos[id]++; return; }
+    pg.combos[id] = 1; const info = DATA.comboInfo(id);
+    W.msg('Découverte : ' + info.nom + ' ! ' + info.desc); W.addXp(20); pg.nouveau = true; W.evt('combo_decouvert', id);
+  }
+  function deployer(spec, x, y, r, o = {}, dir = null) {
+    const id = spec.combo; const D = id && defDe(id); if (!D) return null;
+    const shape = spec.shape;
+    if (shape === 'trait' && !o.ligne) return null;
+    const pr0 = spec.prm || {}, sz = pr0.size || 1, pw = pr0.power || 1, du = pr0.duration || 1;
+    // même lancer : on rafraîchit plutôt que d'empiler (écho, répétition, totem, rafale...)
+    const memes = liste.filter((q) => q.castId === spec.castId && q.id === id && !q.mort);
+    const proche = memes.find((q) => dist(q.x, q.y, x, y) < Math.max(80, q.r * 2));
+    if (proche || memes.length >= (shape === 'pluie' ? 5 : 3)) { const q = proche || memes[0]; q.life = Math.max(q.life, q.max * 0.8); return q; }
+    const mini = shape === 'pluie';
+    const ph = { id, D, spec, x, y, vx: 0, vy: 0, r: D.r * sz * (mini ? 0.55 : 1), life: D.life * du * (mini ? 0.45 : 1), max: 0, pw, sz: sz * (mini ? 0.6 : 1), t: 0, g: 'point', castId: spec.castId, dir: dir || o.dir || { x: 1, y: 0 }, data: {}, acc: {} };
+    ph.r0 = ph.r; ph.max = ph.life;
+    if (o.rect) { ph.rect = { ...o.rect }; ph.g = 'rect'; ph.x = (o.rect.x0 + o.rect.x1) / 2; ph.y = (o.rect.y0 + o.rect.y1) / 2; }
+    else if (shape === 'mur' && o.mur) { const mw = 30 * sz * (pr0.dimL || 1), mh = 180 * sz * (pr0.dimH || 1); ph.rect = { x0: x - mw / 2, x1: x + mw / 2, y0: y - mh / 2, y1: y + mh / 2 }; ph.g = 'rect'; }
+    if (o.ligne) { ph.ligne = { ...o.ligne }; ph.g = 'ligne'; ph.x = (o.ligne.x1 + o.ligne.x2) / 2; ph.y = (o.ligne.y1 + o.ligne.y2) / 2; }
+    if (o.follow) ph.follow = o.follow;
+    if (D.point && ph.g !== 'point') { if (ph.ligne) { ph.x = ph.ligne.x2; ph.y = ph.ligne.y2; } ph.rect = null; ph.ligne = null; ph.g = 'point'; }
+    if (!ph.dir.x && !ph.dir.y) ph.dir = { x: 1, y: 0 };
+    if (liste.length >= 28) { const v = liste.shift(); finir(v); }
+    liste.push(ph);
+    if (D.init) D.init(ph, o);
+    st().sp.push({ k: 'label', x: ph.x, y: ph.y - 40, txt: DATA.comboInfo(id).nom, life: 1.6, max: 1.6 });
+    decouvrir(id);
+    return ph;
+  }
+  function finir(ph) { if (ph.fini) return; ph.fini = true; ph.mort = true; if (ph.D.fin) { try { ph.D.fin(ph); } catch (e) { console.warn(e); } } if (ph.objs) retirerPlateformes(ph); }
+  function update(dt) {
+    dtC = dt;
+    for (const ph of liste) {
+      if (ph.mort) continue;
+      const f = W.tempsDe ? W.tempsDe(ph.x, ph.y) : 1; const d = dt * f; dtC = d; if (d <= 0) continue;
+      ph.t += d; ph.life -= d;
+      if (ph.follow) { const e = ph.follow; if (e.mort || (e.hp !== undefined && e.hp <= 0 && e !== st().p) || (e.life !== undefined && e.k && e.life <= 0)) { ph.life = 0; } else { const nx = e.w ? e.x + e.w / 2 : e.x, ny = e.h ? e.y + e.h / 2 : e.y; deplacer(ph, nx - ph.x, ny - ph.y); } }
+      else bouger(ph, d);
+      try { if (ph.D.tick) ph.D.tick(ph, d); } catch (e) { console.warn('phénomène', ph.id, e); ph.life = 0; }
+      if (ph.life <= 0) finir(ph);
+    }
+    dtC = dt;
+    if (liste.some((q) => q.mort)) liste = liste.filter((q) => !q.mort);
+  }
+  function bouger(ph, dt) {
+    const b = ph.D.bouge;
+    if (b === 'fixe') return;
+    if (b === 'flotte') { ph.vx *= 1 - 1.2 * dt; ph.vy *= 1 - 1.2 * dt; const nx = ph.x + ph.vx * dt, ny = ph.y + ph.vy * dt; if (Sim.solidAt(nx, ny)) { ph.vx = -ph.vx * 0.5; ph.vy = -ph.vy * 0.5; } else deplacer(ph, nx - ph.x, ny - ph.y); return; }
+    if (b === 'derive') { const nx = ph.x + ph.vx * dt; if (Sim.solidAt(nx + Math.sign(ph.vx) * ph.r, ph.y)) ph.vx = -ph.vx; else deplacer(ph, nx - ph.x, 0); ph.vx = clamp(ph.vx, -220, 220); return; }
+    if (b === 'roule') { const nx = ph.x + ph.vx * dt; const h = ph.rect ? (ph.rect.y1 - ph.y) : ph.r * 0.6; if (Sim.solidAt(nx + Math.sign(ph.vx) * 10, ph.y)) { ph.vx = -ph.vx * 0.6; return; } const g = W.groundBelow(nx, ph.y - 40); deplacer(ph, nx - ph.x, g != null && Math.abs(g - h - ph.y) < 80 ? (g - h - ph.y) * Math.min(1, dt * 6) : 0); return; }
+    if (b === 'erre') { ph.vx += (rnd() - 0.5) * 900 * dt; ph.vy += (rnd() - 0.5) * 900 * dt - 30 * dt; ph.vx = clamp(ph.vx, -140, 140); ph.vy = clamp(ph.vy, -140, 140); const nx = ph.x + ph.vx * dt, ny = ph.y + ph.vy * dt; if (Sim.solidAt(nx, ny)) { ph.vx = -ph.vx; ph.vy = -ph.vy; } else deplacer(ph, nx - ph.x, ny - ph.y); return; }
+    if (b === 'chasse') { deplacer(ph, ph.vx * dt, ph.vy * dt); return; }
+    if (b === 'tombe') { ph.vy += 1500 * dt; const nx = ph.x + ph.vx * dt, ny = ph.y + ph.vy * dt; if (ph.D.trace) ph.D.trace(ph); const hit = Sim.solidAt(nx, ny + ph.r * 0.6) || st().crs.some((c) => c.hp > 0 && c.t !== 'familier' && U.circleRect(nx, ny, ph.r, c)); deplacer(ph, nx - ph.x, ny - ph.y); if (hit || ny > Sim.H * CS) { if (ph.D.impact) ph.D.impact(ph); else ph.life = 0; } }
+  }
+  // ---------- interactions avec les autres sorts ----------
+  function reagir(core, x, y, r, prm, mode) {
+    if (!liste.length) return;
+    const burst = mode === 'burst', k = burst ? 1 : Math.min(1, mode * 3), pw = prm.power || 1;
+    for (const ph of liste) {
+      if (ph.mort || dist(x, y, ph.x, ph.y) > r + ph.r + 20) continue;
+      const mobile = ph.D.bouge && ph.D.bouge !== 'fixe' && ph.D.bouge !== 'tombe' && !ph.follow;
+      const dx = ph.x - x, dy = ph.y - y, d = Math.hypot(dx, dy) || 1;
+      if (mobile && (core === 'vent' || core === 'son' || core === 'repulsion')) { ph.vx += dx / d * 420 * pw * k; ph.vy += dy / d * 300 * pw * k; }
+      if (mobile && core === 'force') { ph.vx -= dx / d * 360 * pw * k; ph.vy -= dy / d * 300 * pw * k; }
+      if (ph.D.eteint && (core === 'eau' || core === 'froid')) { ph.life -= ph.max * ph.D.eteint * 0.25 * k; W.part(ph.x, ph.y, '#dcdcdc', 6, 50, 0.6, 4, -150); if (burst) W.son('fizzle'); }
+      if (ph.D.nourrit && (core === 'feu' || core === 'explosion')) { ph.life = Math.min(ph.max * 1.6, ph.life + 0.5 * k); }
+      if (ph.id === 'eau|gravite' && core === 'feu') { ph.data.eau = Math.max(0, ph.data.eau - 10 * k); W.part(ph.x, ph.y, '#dcdcdc', 4, 40, 0.6, 4, -150); }
+    }
+  }
+  function dissiper(x, y, R) { let n = 0; for (const ph of liste) if (!ph.mort && ph.t > 0.05 && dist(x, y, ph.x, ph.y) < R + ph.r) { finir(ph); n++; } return n; }
+  // un projectile qui porte un combo laisse la trace du phénomène
+  function trainee(s, dt) { if (!s.spec || !s.spec.combo) return; const D = defDe(s.spec.combo); if (!D) return; if (rnd() < 0.7) W.part(s.x, s.y, rnd() < 0.5 ? D.couleur : s.color, 1, 25, 0.5, 3, 0, 'spark'); }
+  function lumieres() { const out = []; for (const ph of liste) { if (ph.mort) continue; if (ph.D.lumieres) { for (const l of ph.D.lumieres(ph)) out.push(l); } else if (ph.D.lum) out.push({ x: ph.x, y: ph.y, r: ph.D.lum * Math.sqrt(ph.sz) * fade(ph) }); } return out; }
+  function draw(ctx, t) { for (const ph of liste) { if (ph.mort) continue; try { if (ph.D.draw) ph.D.draw(ctx, ph, t); else { FX.glow(ctx, ph.x, ph.y, ph.r * 1.5, ph.D.couleur, 0.35 * fade(ph)); } } catch (e) { console.warn(e); } } }
+  function reset() { for (const ph of liste) if (ph.objs) retirerPlateformes(ph); liste = []; }
+  return { deployer, update, draw, reagir, dissiper, trainee, lumieres, reset, defDe, get liste() { return liste; }, DEFS };
+}
+
+</script>
+<script>
+'use strict';
 // ---------- Monde extérieur : entités sur grille de matières, effets, créatures, météo, rendu ----------
 const World = (() => {
   const { TAU, INK, clamp, lerp, dist } = U;
   const GRAV = 1500;
+  const CHAUD_OK = ['follet', 'salamandre', 'golem', 'familier'], FROID_OK = ['lapin', 'golem', 'familier', 'poisson'];
+  // ---------- Masse et flottaison ----------
+  const MASSE = { caisse: 0.8, rocher: 4, golem: 6, tortue: 1.6, lapin: 0.4, limace: 0.5, grenouille: 0.3, poisson: 0.2, corbeau: 0.2, follet: 0.1, salamandre: 0.5, chauve: 0.2, escargot: 0.4, familier: 0.2 };
+  const DENS = { caisse: 0.5, rocher: 2.6, golem: 2.4, tortue: 1.05, escargot: 1.2, salamandre: 0.95, limace: 0.9, lapin: 0.8, grenouille: 0.85 };
+  function masse(e) { return e === (st && st.p) ? 1 : (e && MASSE[e.t]) || 1; }
   const VW = 1280, VH = 720;
   const CS = Sim.CS, M = Sim.M, P = Sim.P;
   let L = null, st = null, game = null, darkCv = null, time = 0;
@@ -2938,11 +3900,21 @@ const World = (() => {
     for (const o of L.objs) st.objs.push(makeObj(o));
     for (const c of L.crs) st.crs.push(makeCreature(c));
     if (saved) restore(saved);
+    Sim.ancrer(); PH.reset();
     st.cam.x = clamp(st.p.x - VW / 2, 0, L.w - VW); st.cam.y = clamp(st.p.y - VH / 2, 0, L.h - VH);
     if (!darkCv) { darkCv = document.createElement('canvas'); darkCv.width = VW / 2; darkCv.height = VH / 2; } // l'obscurité, toute en dégradés, se calcule à demi-résolution
     Sim.onEvent = onSimEvent;
   }
   function ensure(g, saved) { if (!st) build(g, saved); game = g; }
+  // ---------- Phénomènes (combos d'essences) ----------
+  const PH = creerPhenomenes({
+    Sim, get st() { return st; }, game: () => game, time: () => time,
+    applyEffect: (...a) => applyEffect(...a), hurt: (...a) => hurt(...a), part: (...a) => part(...a), msg: (...a) => msg(...a), evt: (...a) => evt(...a),
+    groundBelow: (...a) => groundBelow(...a), spawnLiquid: (...a) => spawnLiquid(...a), addGField: (...a) => addGField(...a), vieillir: (...a) => vieillir(...a),
+    makeCreature: (c) => makeCreature(c), masse: (e) => masse(e), chaudOk: (c) => CHAUD_OK.includes(c.t), froidOk: (c) => FROID_OK.includes(c.t),
+    flash: (v) => { st.flash = Math.max(st.flash, v); }, shake: (v) => { st.shake = Math.max(st.shake, v); }, son: (a, b) => Son.sfx(a, b), colorOf: (c) => colorOf(c),
+    daylight: () => daylight(), revenir: (c) => finMorph(c), addXp: (n) => { if (game && game.addXp) game.addXp(n); }, tempsDe: (x, y) => (bullesT.length ? tempsDe(x, y, 2) : 1),
+  });
   function respawn() {
     const p = st.p;
     p.x = L.spawn.x; p.y = L.spawn.y; p.vx = 0; p.vy = 0; p.hp = p.hpMax; p.pg = null; p.w = 26; p.h = 50;
@@ -3083,8 +4055,8 @@ const World = (() => {
   function serialize() {
     return {
       mat: Sim.serialize(), tod: st.tod, jour: st.jour || 0, meteo: st.meteo, mecaV: 1,
-      objs: st.objs.filter((o) => !o.mort).map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
-      crs: st.crs.filter((c) => c.t !== 'familier').map((c) => ({ t: c.orig ? c.orig.t : c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.orig ? c.orig.hp : c.hp, tame: c.sta.tame, aff: c.aff ? Math.round(c.aff) : undefined, affJ: c.affJ, affDuJour: c.affDuJour })),
+      objs: st.objs.filter((o) => !o.mort && o.t !== 'magie').map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
+      crs: st.crs.filter((c) => c.t !== 'familier' && !c.temporaire).map((c) => ({ t: c.orig ? c.orig.t : c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.orig ? c.orig.hp : c.hp, tame: c.sta.tame, aff: c.aff ? Math.round(c.aff) : undefined, affJ: c.affJ, affDuJour: c.affDuJour })),
     };
   }
   function restore(d) {
@@ -3106,25 +4078,28 @@ const World = (() => {
   function blockedBy(r, sols) { if (Sim.rectBlocked(r)) return true; for (const s of sols) if (U.rectsOverlap(r, s)) return true; return false; }
   function moveBody(b, dt, exclude) {
     const sols = dynSolids(exclude);
-    let dx = b.vx * dt; b.hitX = false;
+    let dx = b.vx * dt; b.hitX = false; b.choc = 0;
     while (Math.abs(dx) > 0.01) {
       const s = Math.abs(dx) < 3 ? dx : Math.sign(dx) * 3;
       if (!blockedBy({ x: b.x + s, y: b.y, w: b.w, h: b.h }, sols)) { b.x += s; dx -= s; continue; }
       let ok = false;
       if (b.canStep) for (let up = 1; up <= CS * 1.6; up += 1) { if (!blockedBy({ x: b.x + s, y: b.y - up, w: b.w, h: b.h }, sols) && !blockedBy({ x: b.x, y: b.y - up, w: b.w, h: b.h }, sols)) { b.y -= up; b.x += s; dx -= s; ok = true; break; } }
-      if (!ok) { b.hitX = true; b.vx = b.bounce ? -b.vx * 0.4 : 0; break; }
+      if (!ok) { b.hitX = true; b.choc = Math.abs(b.vx); b.vx = b.bounce ? -b.vx * 0.4 : 0; break; }
     }
     let dy = b.vy * dt; b.onGround = false;
     while (Math.abs(dy) > 0.01) {
       const s = Math.abs(dy) < 3 ? dy : Math.sign(dy) * 3;
       if (!blockedBy({ x: b.x, y: b.y + s, w: b.w, h: b.h }, sols)) { b.y += s; dy -= s; }
-      else { if (s > 0) b.onGround = true; b.vy = b.bounce && s > 0 && Math.abs(b.vy) > 200 ? -b.vy * 0.3 : 0; break; }
+      else { if (s > 0) b.onGround = true; b.choc = Math.max(b.choc, Math.abs(b.vy)); b.vy = b.bounce && s > 0 && Math.abs(b.vy) > 200 ? -b.vy * 0.3 : 0; break; }
     }
     if (!b.onGround && b.vy >= 0 && blockedBy({ x: b.x, y: b.y + 1, w: b.w, h: b.h }, sols)) b.onGround = true;
     // décoincement (une cellule est apparue sur nous)
     if (blockedBy(b, sols)) { for (let up = 1; up <= CS * 6; up++) { if (!blockedBy({ x: b.x, y: b.y - up, w: b.w, h: b.h }, sols)) { b.y -= up; break; } } }
     b.x = clamp(b.x, 0, L.w - b.w);
     if (b.y > L.h + 100) b.y = L.h + 100;
+    // une créature projetée contre un mur ou qui tombe de haut se fait mal
+    if (b.choc > 720 && b !== st.p && b.hp > 0 && DATA.ESPECES[b.t] && b.t !== 'familier') { hurt(b, Math.min(4, (b.choc - 720) / 240) / Math.sqrt(masse(b))); b.sta.stun = Math.max(b.sta.stun || 0, 0.6); part(b.x + b.w / 2, b.y + b.h, '#8a7a5a', 6, 60, 0.4, 2, 200); }
+    if (b.choc > 820 && b.t === 'caisse') { b.hp -= 1; part(b.x + b.w / 2, b.y + b.h / 2, '#8d6a3c', 6, 90, 0.5, 2, 400, 'eclat'); if (b.hp <= 0) { b.mort = true; Son.sfx('burst', 'terre'); } }
   }
   function unstick(b) {
     const sols = dynSolids(b);
@@ -3145,7 +4120,35 @@ const World = (() => {
     st.shake = 0.4; part(cx, cy, '#8a7a5a', 16, 130, 0.6, 3, 500); Son.sfx('burst', 'terre');
     if (n > 6) msg('Boum. Le sol cède sous ton poids.');
   }
+  // les blocs qui s'effondrent écrasent ce qui se trouve dessous
+  function blocsTombants() {
+    for (const b of Sim.blocs) {
+      if (b.pose || b.vy < 0.35) continue;
+      const r = { x: b.x0 * CS, y: b.y0 * CS, w: (b.x1 - b.x0 + 1) * CS, h: (b.y1 - b.y0 + 1) * CS + b.vy * CS };
+      b.touche = b.touche || new Set();
+      const ents = st.crs.filter((c) => c.hp > 0 && c.t !== 'familier'); ents.push(st.p);
+      for (const e of ents) {
+        if (b.touche.has(e) || !U.rectsOverlap(r, e) || e.y + e.h * 0.5 < r.y) continue;
+        b.touche.add(e); const dmg = Math.min(8, 1 + b.n / 40 * b.vy);
+        const cote = e.x + e.w / 2 < r.x + r.w / 2 ? -1 : 1;
+        if (e === st.p) { if (!(e.sta.stone > 0)) { e.hp -= dmg * 0.6; msg('Un bloc te tombe dessus !', 'warn'); } }
+        else { hurt(e, dmg / Math.sqrt(masse(e))); e.sta.stun = Math.max(e.sta.stun || 0, 1.5); }
+        e.vx = cote * 320; e.vy = -120; part(e.x + e.w / 2, e.y, '#8a7a5a', 8, 90, 0.5, 2, 300);
+      }
+    }
+  }
   function liquidOf(b) { const m = Sim.matAt(b.x + b.w / 2, b.y + b.h * 0.55); return P[m].liquid ? m : 0; }
+  const DENS_LIQ = []; DENS_LIQ[M.EAU] = 1; DENS_LIQ[M.SAUMURE] = 1.2; DENS_LIQ[M.HUILE] = 0.85; DENS_LIQ[M.ACIDE] = 1.1; DENS_LIQ[M.BOUE] = 1.7; DENS_LIQ[M.MIEL] = 1.4; DENS_LIQ[M.SEVE] = 1; DENS_LIQ[M.LAVE] = 3;
+  // poussée d'Archimède : ce qui est plus léger que le liquide flotte, le reste coule plus lentement
+  function flotter(b, dt, dens) {
+    let n = 0, rho = 0;
+    for (const f of [0.2, 0.5, 0.8]) { const m = Sim.matAt(b.x + b.w / 2, b.y + b.h * f); if (P[m].liquid) { n++; rho = Math.max(rho, DENS_LIQ[m] || 1); } }
+    if (!n) return 0; const frac = n / 3;
+    b.vy -= GRAV * frac * (rho / dens) * dt;
+    const visc = rho > 1.3 ? 4.5 : 2.2;
+    b.vx *= Math.max(0, 1 - frac * visc * dt); b.vy *= Math.max(0, 1 - frac * visc * dt);
+    return frac;
+  }
 
   // ---------- Particules / messages / événements ----------
   function part(x, y, color, n = 6, spd = 80, life = 0.6, size = 3, grav = 0, type = 'dot') {
@@ -3181,6 +4184,8 @@ const World = (() => {
   function onSimEvent(kind, x, y) {
     if (!st) return;
     if (kind === 'brule') { evt('brule'); return; }
+    if (kind === 'effondrement') { if (inView(x, y)) { Son.sfx('burst', 'terre'); part(x, y, '#8a7a5a', 10, 50, 0.6, 2, 100); if (time - (st.effT || -9) > 5) { st.effT = time; msg('Ça s\'effondre !'); } } evt('effondrement'); }
+    if (kind === 'eboulement') { if (inView(x, y)) { st.shake = Math.max(st.shake, 0.35); Son.sfx('burst', 'terre'); part(x, y, '#8a7a5a', 18, 140, 0.7, 3, 400); } }
     if (kind === 'explosion') {
       const R = 90;
       const souffle = (b, dmg) => { const bx = b.x + b.w / 2, by = b.y + b.h / 2; const dx = bx - x, dy = by - y; const d = Math.hypot(dx, dy) || 1; if (d > R) return false; const f = 1 - d / R; b.vx += dx / d * 700 * f; b.vy += dy / d * 600 * f - 200 * f; return f; };
@@ -3201,6 +4206,7 @@ const World = (() => {
     const ls = Sim.lights(st.cam, VW, VH);
     const p = st.p;
     ls.push({ x: p.x + p.w / 2, y: p.y + p.h / 2, r: p.sta.lumiere > 0 ? 320 : 130 });
+    for (const l of PH.lumieres()) ls.push(l);
     for (const o of st.objs) {
       if (o.t === 'torche' && o.lit) ls.push({ x: o.x + o.w / 2, y: o.y + 6, r: 230 });
       if (o.burning > 0) ls.push({ x: o.x + o.w / 2, y: o.y + o.h / 2, r: 130 });
@@ -3782,6 +4788,14 @@ const World = (() => {
     if (violet) Sim.forRadius(cx, cy, rad * 1.5, (x, y, i, m) => { const q = P[m]; if (FLAM(m) && Sim.aux[i] === 0 && Math.random() < 0.25) { Sim.aux[i] = q.burn; Sim.touch(i); } else if ((m === M.HUILE || m === M.POUDRE || m === M.SEVE) && Math.random() < 0.4) Sim.set(x, y, M.FEU, 30); });
   }
   function applyEffect(core, cx, cy, rad, prm, mode, opts = {}) {
+    const R = rad + 60, snap = [];
+    for (const c of st.crs) if (c.hp > 0 && Math.abs(c.x + c.w / 2 - cx) < R + c.w && Math.abs(c.y + c.h / 2 - cy) < R + c.h) snap.push(c, c.vx, c.vy);
+    for (const o of st.objs) if (o.dyn && !o.mort && !o.carried && Math.abs(o.x + o.w / 2 - cx) < R + o.w && Math.abs(o.y + o.h / 2 - cy) < R + o.h) snap.push(o, o.vx, o.vy);
+    applyEffet0(core, cx, cy, rad, prm, mode, opts);
+    if (!opts.phen) PH.reagir(core, cx, cy, rad, prm, mode);
+    for (let k = 0; k < snap.length; k += 3) { const e = snap[k], m = masse(e); if (m === 1) continue; const f = clamp(Math.pow(m, -0.6), 0.25, 1.35); e.vx = snap[k + 1] + (e.vx - snap[k + 1]) * f; e.vy = snap[k + 2] + (e.vy - snap[k + 2]) * f; }
+  }
+  function applyEffet0(core, cx, cy, rad, prm, mode, opts = {}) {
     const burst = mode === 'burst';
     const k = burst ? 1 : mode * 2.2;
     if (core === 'marque') { if (burst) placeMarque(cx, cy, rad); return; }
@@ -3793,6 +4807,9 @@ const World = (() => {
     const lgN = prm.lg ? prm.lg[core] || 0 : 0;
     if (lgN) prm = { ...prm, power: (prm.power || 1) * (1 + 0.3 * lgN), duration: (prm.duration || 1) * (core === 'ombre' ? 2 : 1) };
     const power = prm.power || 1, dur = prm.duration || 1;
+    // la chaleur : le feu chauffe, le gel refroidit, l'explosion et la foudre échauffent
+    { const kk = burst ? 1 : Math.min(1, mode * 3); const T = core === 'feu' ? 175 + 30 * lgN : core === 'explosion' ? 195 : core === 'froid' ? 18 - 8 * lgN : core === 'foudre' ? 150 : core === 'lumiere' && lgN ? 140 : core === 'secheresse' ? 120 : core === 'neutraliser' ? 48 : 0;
+      if (T) Sim.chauffer(cx, cy, rad * (core === 'foudre' ? 0.4 : 0.9), T, clamp((core === 'froid' || core === 'feu' ? 0.55 : 0.35) * power * kk, 0, 1)); }
     const C = colorOf(core);
     if (burst) st.sp.push({ k: 'ring', core, x: cx, y: cy, r: rad, life: 0.4, max: 0.4, color: C });
     if (effetDerive(core, cx, cy, rad, prm, burst, k, mode, opts)) return;
@@ -4064,7 +5081,7 @@ const World = (() => {
     if (prm.inverse) { prm.gInv = cores.includes('gravite'); cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c)); }
     const lg = prm.lg || {};
     if (lg.gravite && cores.includes('gravite')) { prm.size *= 1 + 0.3 * lg.gravite; prm.power *= 1 + 0.4 * lg.gravite; }
-    const combo = effets0.length > 1 && !prm.inverse ? effets0.slice().sort().join('|') : null;
+    const combo = !prm.inverse ? DATA.comboCle(effets0) : null;
     const trs = Seal.triggers(seal);
     const proj = seal.shape === 'projectile' || seal.shape === 'chaine';
     const trig = trs.find((t) => PRIM.includes(t)) || (trs.includes('repetition') && proj ? 'contact' : 'immediat');
@@ -4116,6 +5133,7 @@ const World = (() => {
     for (const o of st.objs) if (o.ench && dist(x, y, o.x + o.w / 2, o.y + o.h / 2) < R) { o.ench = null; n++; }
     if (pin) { if (p.pg) { p.pg = null; n++; } if (p.sta.vol > 0) { p.sta.vol = 0; n++; } if (p.trap) { p.trap = null; n++; } }
     Sim.forRadius(x, y, R, (cx, cy, i, m) => { if (Sim.elec[i] > 0) { Sim.elec[i] = 0; Sim.touch(i); } });
+    n += PH.dissiper(x, y, R);
     st.sp.push({ k: 'ring', core: 'contre', x, y, r: R, life: 0.6, max: 0.6, color: '#a8a29a' });
     msg(n ? 'La magie se dissipe (' + n + ').' : 'Rien à dissiper ici.');
   }
@@ -4176,43 +5194,15 @@ const World = (() => {
     if (spec.repeat && !opts.noRepeat) capRepetitions();
     if (spec.repeat && !opts.noRepeat) st.sp.push({ k: 'repeat', spec, x, y, r, ent: opts.ent || null, opts: { ...opts, noRepeat: true, noExpire: true, noEcho: true, noCombo: true }, t: spec.repeat, max: spec.repeat, left: clamp(Math.round(8 * spec.prm.duration / spec.repeat), 2, 8) });
     if (spec.expire && !opts.noExpire) { const T = (spec.repeat ? spec.repeat * clamp(Math.round(8 * spec.prm.duration / spec.repeat), 2, 8) : 0) + 4 * spec.prm.duration * (1 + (spec.prm.persist || 0)); st.sp.push({ k: 'expire', spec, x, y, r, t: T, max: T }); }
-    for (const core of spec.cores) applyEffect(core, x, y, r, { ...spec.prm, power: spec.prm.power * pm }, 'burst', opts);
+    // une fusion nommée fait naître son phénomène à la place des deux effets de base
+    if (!spec.combo) for (const core of spec.cores) applyEffect(core, x, y, r, { ...spec.prm, power: spec.prm.power * pm }, 'burst', opts);
     if (spec.encre && !opts.noEncre) encreBurst(spec, x, y, r);
-    if (spec.combo) comboEffect(spec.combo, x, y, r, spec.prm);
+    if (spec.combo && !opts.noCombo) PH.deployer(spec, x, y, r, opts, dir);
     if (spec.prm.echo > 0 && !opts.noEcho) st.sp.push({ k: 'echo', spec, x, y, r, opts: { ...opts, noEcho: true }, t: 0.5, left: spec.prm.echo });
     for (const sub of spec.subs) launch(sub, { x, y }, { x: x + (dir ? dir.x : 0) * 100, y: y + (dir ? dir.y : -1) * 100 }, { depth: spec.depth + 1 });
   }
   function doContinuous(spec, x, y, r, dt, opts = {}) {
     for (const core of spec.cores) applyEffect(core, x, y, r, { ...spec.prm, power: spec.prm.power * 0.5 }, dt, opts);
-  }
-  function comboEffect(key, x, y, r, prm) {
-    const C = DATA.COMBOS[key]; const size = prm.size || 1, dur = prm.duration || 1;
-    if (C && C.nom) st.sp.push({ k: 'label', x, y: y - 40, txt: C.nom, life: 1.6, max: 1.6 });
-    evt('combo', key);
-    switch (key) {
-      case 'feu|vent': st.sp.push({ k: 'field', core: 'feu', x, y, r: r * 0.7, life: 5 * dur, max: 5 * dur, prm, vx: (Math.random() < 0.5 ? -1 : 1) * 60 }); break;
-      case 'feu|terre': { let cap = 25 * size; Sim.forRadius(x, y, r * 0.6, (cx, cy, i, m) => { if (cap > 0 && (m === M.TERRE || m === M.PIERRE || m === M.SABLE) && Math.random() < 0.7) { Sim.set(cx, cy, M.LAVE); cap--; } }); break; }
-      case 'eau|feu': Sim.forRadius(x, y, r * 1.2, (cx, cy, i, m) => { if (m === M.AIR && Math.random() < 0.5) Sim.set(cx, cy, M.VAPEUR, 80 + (Math.random() * 60) | 0); }); break;
-      case 'eau|froid': Sim.forRadius(x, y, r * 0.7, (cx, cy, i, m) => { if ((m === M.AIR || m === M.EAU) && !U.rectsOverlap({ x: cx * CS, y: cy * CS, w: CS, h: CS }, st.p)) Sim.set(cx, cy, M.GLACE); }); break;
-      case 'eau|foudre': Sim.forRadius(x, y, r * 2.2, (cx, cy, i, m) => { if (P[m].cond) { Sim.elec[i] = 60; Sim.touch(i); } }); for (let k = 0; k < 30; k++) { const cx = Math.floor((x - r + Math.random() * 2 * r) / CS), cy = Math.floor(y / CS) - 20 - Math.floor(Math.random() * 10); if (Sim.get(cx, cy) === M.AIR) Sim.set(cx, cy, M.EAU); } break;
-      case 'froid|vent': { let cap = 40 * size; Sim.forRadius(x, y - r * 0.5, r, (cx, cy, i, m) => { if (cap > 0 && m === M.AIR && Math.random() < 0.3) { Sim.set(cx, cy, M.NEIGE); cap--; } }); break; }
-      case 'eau|vie': for (let k = 0; k < 3; k++) gridEffect('vie', x, y, r * 1.3, prm, true, 1); break;
-      case 'lumiere|ombre': msg('Lumière et ombre s\'annulent dans un silence gêné.'); break;
-      case 'force|terre': st.shake = 0.6; for (const c of st.crs) if (c.hp > 0 && dist(x, y, c.x, c.y) < r * 3) { c.sta.stun = Math.max(c.sta.stun, 3); c.vy -= 200; } break;
-      case 'gravite|vent': addGField(x, y - r, r * 1.5, 0, -1, 1.1, 12 * dur); break;
-      case 'force|gravite': st.sp.push({ k: 'singularite', x, y, r: r * 2.2, life: 3 * dur, max: 3 * dur }); break;
-      case 'gravite|terre': { const g = Math.floor(x / CS), top = 2; for (let yy = top; yy < top + 6; yy++) for (let xx = g - 3; xx <= g + 3; xx++) if (Sim.get(xx, yy) === M.AIR && Math.hypot(xx - g, yy - top - 3) < 3.3) Sim.set(xx, yy, M.PIERRE); addGField(x, (top + 3) * CS, 40, 0, 1, 3, 3); msg('Un météore se détache du ciel...'); break; }
-      case 'eau|gravite': { spawnLiquid(M.EAU, x, y - 30, 40); addGField(x, y - 30, r, 0, 1, 0, 10 * dur); break; }
-      case 'gravite|temps': addGField(x, y, r * 1.4, 0, 1, 0.25, 10 * dur); break;
-      case 'feu|froid': Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (m === M.PIERRE && Math.random() < 0.5) Sim.set(cx, cy, M.SABLE); else if (m === M.AIR && Math.random() < 0.3) Sim.set(cx, cy, M.VAPEUR, 40); }); break;
-      case 'acide|feu': Sim.forRadius(x, y, r * 1.3, (cx, cy, i, m) => { if (m === M.AIR && Math.random() < 0.5) Sim.set(cx, cy, M.FUMEE, 120); }); for (const c of st.crs) if (c.hp > 0 && dist(x, y, c.x, c.y) < r * 1.5) c.sta.sleep = Math.max(c.sta.sleep, 8 * dur); break;
-      case 'ombre|vie': { const g = groundBelow(x, y); if (g != null) { for (let k = 0; k < 2; k++) st.objs.push(makeObj({ t: 'champignon', x: x - 20 + k * 30, y: g - 26 })); } break; }
-      case 'eau|terre': Sim.forRadius(x, y, r, (cx, cy, i, m) => { if (m === M.TERRE && Math.random() < 0.8) Sim.set(cx, cy, M.BOUE, 200); }); break;
-      case 'feu|lumiere': st.sp.push({ k: 'field', core: 'lumiere', x, y, r: r * 3, life: 12 * dur, max: 12 * dur, prm, faible: true }); break;
-      case 'foudre|metal': Sim.forRadius(x, y, r * 2, (cx, cy, i, m) => { if (m === M.METAL) { Sim.elec[i] = 250; Sim.touch(i); } }); break;
-      case 'temps|vie': for (let k = 0; k < 4; k++) gridEffect('vie', x, y, r * 1.5, prm, true, 1); for (let k = 0; k < 3; k++) gridEffect('temps', x, y, r * 1.5, prm, true, 1); break;
-      case 'portail|eau': { const q = st.portails[0]; if (q) spawnLiquid(M.EAU, q.x, q.y, 40); break; }
-    }
   }
   function groundBelow(x, y) { for (let yy = y; yy < L.h; yy += CS) if (Sim.solidAt(x, yy)) return yy - (yy % CS); return null; }
 
@@ -4304,7 +5294,8 @@ const World = (() => {
           if (trig === 'commande') { st.sp.push({ k: 'attente', spec, x: tx, y: ty, life: 40, mur: seal.shape === 'mur', dir: { x: dx, y: dy } }); continue; }
           if (seal.shape === 'mur') {
             const mw = 30 * prm.size * (prm.dimL || 1), mh = 180 * prm.size * (prm.dimH || 1), rect = { x0: tx - mw / 2, x1: tx + mw / 2, y0: ty - mh / 2, y1: ty + mh / 2 };
-            if (trig === 'immediat' && champForme(spec, rect, { x: dx, y: dy })) continue;
+            if (trig === 'immediat' && spec.combo) PH.deployer(spec, tx, ty, mw / 2, { rect, mur: true }, { x: dx, y: dy });
+            if (trig === 'immediat' && !spec.combo && champForme(spec, rect, { x: dx, y: dy })) continue;
             if (trig === 'immediat' && prm.matiere) matiereRect(spec, rect);
             const pts = murPoints(tx, ty, mw, mh);
             pts.forEach((q, k) => { const pr = k === Math.floor(pts.length / 2); if (trig === 'immediat') doBurst(spec, q.x, q.y, q.r, { mur: true, noMatiere: true, noField: !pr, noEcho: !pr, noRepeat: !pr, noExpire: !pr, noCombo: !pr }); else st.sp.push({ k: 'timer', spec, x: q.x, y: q.y, r: q.r, t: trig === 'retarde' ? spec.delai : 0.1 + Math.abs(k - pts.length / 2) * 0.05, max: trig === 'retarde' ? spec.delai : 0.5, color: C, noField: !pr, mur: true }); });
@@ -4324,7 +5315,7 @@ const World = (() => {
         else if (trig === 'commande') { st.sp.push({ k: 'attente', spec, trait: true, self: true, life: 40 }); if (o.player) msg('Le trait attend. Touche F pour le tirer vers la souris.'); }
         else { const n = 1 + prm.extra, a0 = Math.atan2(dy, dx); for (let i = 0; i < n; i++) { const a = a0 + (n > 1 ? (i - (n - 1) / 2) * 0.18 : 0); fireBeam(spec, ox, oy, Math.cos(a), Math.sin(a), trig); } }
         break;
-      case 'aura': st.sp.push({ k: 'field', spec, core: spec.core, x: ox, y: oy, r: 70 * prm.size * (prm.dimL || 1), life: 6 * prm.duration, max: 6 * prm.duration, prm, follow: true }); if (o.player) msg('L\'effet t\'enveloppe un moment.'); break;
+      case 'aura': if (!spec.combo) st.sp.push({ k: 'field', spec, core: spec.core, x: ox, y: oy, r: 70 * prm.size * (prm.dimL || 1), life: 6 * prm.duration, max: 6 * prm.duration, prm, follow: true }); if (spec.combo && o.player) PH.deployer(spec, ox, oy, 70 * prm.size, { follow: p }, { x: dx, y: dy }); if (o.player) msg('L\'effet t\'enveloppe un moment.'); break;
       case 'prise': {
         const dd = portee(300 * prm.range); const tx = ox + dx * dd, ty = oy + dy * dd;
         saisir(spec, tx, ty, !!o.player);
@@ -4338,8 +5329,9 @@ const World = (() => {
         let best = null, bd = 140;
         for (const q of st.objs) if ((q.t === 'caisse' || q.t === 'rocher') && !q.mort) { const dq = dist(tx, ty, q.x + q.w / 2, q.y + q.h / 2); if (dq < bd) { bd = dq; best = q; } }
         for (const c of st.crs) if (c.hp > 0) { const dq = dist(tx, ty, c.x + c.w / 2, c.y + c.h / 2); if (dq < bd) { bd = dq; best = c; } }
-        if (best) { best.ench = { spec, t: 15 * prm.duration, tick: 0 }; part(best.x + best.w / 2, best.y, C, 12, 60, 0.8, 3, 0, 'spark'); if (o.player) msg('L\'objet porte maintenant l\'effet.'); }
-        else if (o.player) msg('Rien à enchanter par ici.');
+        if (best && spec.combo) PH.deployer(spec, best.x + best.w / 2, best.y + best.h / 2, 50 * prm.size, { follow: best }, { x: dx, y: dy });
+        if (best && !spec.combo) { best.ench = { spec, t: 15 * prm.duration, tick: 0 }; part(best.x + best.w / 2, best.y, C, 12, 60, 0.8, 3, 0, 'spark'); if (o.player) msg('L\'objet porte maintenant l\'effet.'); }
+        else if (!best && o.player) msg('Rien à enchanter par ici.');
         break;
       }
       case 'vague': {
@@ -4350,6 +5342,7 @@ const World = (() => {
       case 'colonne': {
         const dd = portee(260 * prm.range); const tx = ox + dx * dd, ty = oy + dy * dd; const g = groundBelow(tx, ty - 20);
         const cw = 22 * prm.size * (prm.dimL || 1), ch = 200 * prm.size * (prm.dimH || 1), gy0 = g != null ? g : ty, rect = { x0: tx - cw, x1: tx + cw, y0: gy0 - ch, y1: gy0 };
+        if (spec.combo) { PH.deployer(spec, tx, gy0 - ch / 2, cw, { rect }, { x: dx, y: dy }); break; }
         if (champForme(spec, rect, null)) break;
         if (prm.matiere) { matiereRect(spec, { x0: tx - cw * 0.6, x1: tx + cw * 0.6, y0: gy0 - ch, y1: gy0 - 1 }); Son.sfx('burst', 'terre'); part(tx, gy0, spec.color, 14, 120, 0.6, 3, 300, 'eclat'); break; }
         st.sp.push({ k: 'colonne', spec, x: tx, y: gy0, h: ch, w: cw, life: 2 * prm.duration, max: 2 * prm.duration, color: C, tick: 0 });
@@ -4358,17 +5351,17 @@ const World = (() => {
       case 'invocation': {
         const f = makeCreature({ t: 'familier', x: ox, y: oy - 30 });
         f.spec = spec; f.core = spec.core; f.life = 30 * prm.duration; f.sta.tame = true; f.filDonne = true; f.vole = true; f.hp = 4; f.hpMax = 4; f.dmg = 0; f.w = 20; f.h = 20; f.cd = 0; f.x0 = ox; f.y0 = oy - 40;
-        st.crs.push(f); if (o.player) msg('Un petit familier de ' + (DATA.CORES[spec.core] || DATA.PSEUDO[spec.core]).nom.toLowerCase() + ' t\'accompagne.');
+        st.crs.push(f); if (spec.combo) PH.deployer(spec, ox, oy - 30, 30 * prm.size, { follow: f }, { x: dx, y: dy }); if (o.player) msg('Un petit familier de ' + (DATA.CORES[spec.core] || DATA.PSEUDO[spec.core]).nom.toLowerCase() + ' t\'accompagne.');
         break;
       }
     }
   }
   function selfCast(spec, aim, noRepeat) {
-    for (const core of spec.cores) applySelf(core, spec.prm, aim, spec);
+    if (!spec.combo) for (const core of spec.cores) applySelf(core, spec.prm, aim, spec);
     if (spec.repeat && !noRepeat) capRepetitions();
     if (spec.repeat && !noRepeat) st.sp.push({ k: 'repeat', self: true, spec, aim, t: spec.repeat, max: spec.repeat, left: clamp(Math.round(8 * spec.prm.duration / spec.repeat), 2, 8) });
     if (noRepeat) return;
-    if (spec.combo) comboEffect(spec.combo, st.p.x + st.p.w / 2, st.p.y + st.p.h / 2, 60 * (spec.prm.size || 1), spec.prm);
+    if (spec.combo) PH.deployer(spec, st.p.x + st.p.w / 2, st.p.y + st.p.h / 2, 60 * (spec.prm.size || 1), { follow: st.p }, aim ? { x: Math.sign(aim.x - st.p.x) || 1, y: 0 } : null);
     for (const sub of spec.subs) launch(sub, { x: st.p.x + st.p.w / 2, y: st.p.y + st.p.h / 2 }, aim, { depth: spec.depth + 1 });
   }
   function fireBeam(spec, x, y, dx, dy, trig) {
@@ -4389,10 +5382,11 @@ const World = (() => {
     st.sp.push({ k: 'beam', core, x1: x, y1: y, x2: ex, y2: ey, life: 0.35, max: 0.35, color: C, w: 6 * prm.size * (prm.dimL || 1) });
     if (prm.matiere) matiereLigne(spec, x + dx * 24, y + dy * 24, ex, ey, 5 * prm.size * (prm.dimL || 1));
     Son.sfx('cast', core);
+    if (spec.combo) PH.deployer(spec, ex, ey, 30 * prm.size, { ligne: { x1: x + dx * 20, y1: y + dy * 20, x2: ex, y2: ey, w: 14 * prm.size * (prm.dimL || 1) } }, { x: dx, y: dy });
     if (trig === 'contact') doBurst(spec, ex, ey, 55 * prm.size, { noPlayer: true }, { x: dx, y: dy });
     else {
-      for (let t = 10; t < Math.hypot(ex - x, ey - y); t += 14) for (const c of spec.cores) gridEffect(c, x + dx * t, y + dy * t, 9 * prm.size * (prm.dimL || 1), { ...prm, power: prm.power * 0.6 }, true, 1);
-      for (const e of touched) for (const c of spec.cores) applyEffect(c, e.x + e.w / 2, e.y + e.h / 2, Math.max(e.w, e.h) * 0.6, { ...prm, power: prm.power * 0.8 }, 'burst', { noPlayer: true, noField: true, noGrid: true });
+      if (!spec.combo) for (let t = 10; t < Math.hypot(ex - x, ey - y); t += 14) for (const c of spec.cores) gridEffect(c, x + dx * t, y + dy * t, 9 * prm.size * (prm.dimL || 1), { ...prm, power: prm.power * 0.6 }, true, 1);
+      if (!spec.combo) for (const e of touched) for (const c of spec.cores) applyEffect(c, e.x + e.w / 2, e.y + e.h / 2, Math.max(e.w, e.h) * 0.6, { ...prm, power: prm.power * 0.8 }, 'burst', { noPlayer: true, noField: true, noGrid: true });
       doBurst(spec, ex - dx * 6, ey - dy * 6, 24 * prm.size, { noPlayer: true, noField: core !== 'lumiere' }, { x: dx, y: dy });
     }
   }
@@ -4634,6 +5628,7 @@ const World = (() => {
     updateGFields(dt);
     majMecanismes(dt);
     Sim.step();
+    blocsTombants();
     updateMeteo(dt);
     for (const k in p.sta) if (p.sta[k] > 0) p.sta[k] = Math.max(0, p.sta[k] - dt);
     p.inv = Math.max(0, (p.inv || 0) - dt);
@@ -4668,6 +5663,9 @@ const World = (() => {
     if (p.sta.regen > 0) p.hp = Math.min(p.hpMax, p.hp + dt * 0.35);
     if (p.liq === M.EAU || p.liq === M.SAUMURE) { p.sta.wet = 8; p.sta.burning = 0; }
     if (p.sta.garde > 0) p.sta.burning = 0;
+    { const tp = Sim.tempAt(p.x + p.w / 2, p.y + p.h * 0.5);
+      if (tp > 140 && !p.sta.stone && !(p.sta.garde > 0)) { p.hp -= dt * (tp - 140) / 70; if (time - (p.chaudT || -99) > 6) { p.chaudT = time; msg('Il fait brûlant ici !', 'warn'); } }
+      else if (tp < 40 && !(p.sta.garde > 0) && p.forme !== 'lapin') { p.sta.lent = Math.max(p.sta.lent || 0, 0.3); if (time - (p.froidT || -99) > 8) { p.froidT = time; msg('Le froid t\'engourdit.', 'warn'); } } }
     if (p.liq === M.LAVE && !p.sta.stone) { p.hp -= dt * (p.sta.garde > 0 ? 0.4 : 3); p.sta.burning = 2; if (Math.random() < 0.5) part(p.x + p.w / 2, p.y + p.h, '#e0622b', 2, 60, 0.5, 3, -200); }
     if (p.liq === M.ACIDE && !p.sta.stone && !p.sta.dissous) { p.hp -= dt * 1.2; if (Math.random() < 0.3) part(p.x + p.w / 2, p.y + p.h * 0.6, '#8fbf2a', 1, 40, 0.5, 3, -100); }
     if (p.liq === M.EAU && p.sta.branchies <= 0 && Sim.matAt(p.x + p.w / 2, p.y + 4) === M.EAU) { p.air = (p.air || 8) - dt; if (p.air <= 0) { p.hp -= dt * 1.5; if (Math.random() < 0.05) msg('Tu manques d\'air !', 'warn'); } } else p.air = 8;
@@ -4739,6 +5737,7 @@ const World = (() => {
     moveBody(p, dt);
     if (!Gstd && !Gvol) p.onGround = blockedBy({ x: p.x + G.gx * 2, y: p.y + G.gy * 2, w: p.w, h: p.h }, dynSolids());
     if (enclume && p.onGround && vyAvant > 420) crush(p);
+    else if (Gstd && p.onGround && vyAvant > 1000 && !inWater && !(p.sta.glide > 0) && !(p.sta.vol > 0) && !(p.sta.lowgrav > 0) && !(p.sta.stone > 0)) { p.hp -= (vyAvant - 950) / 120; st.shake = 0.25; part(p.x + p.w / 2, p.y + p.h, '#8a7a5a', 10, 90, 0.5, 2, 300); msg('Aïe ! La chute fait mal.', 'warn'); }
     updateLien(dt, inp);
     updatePortails(dt);
     // pousser une caisse
@@ -4785,6 +5784,7 @@ const World = (() => {
     updateObjs(dt);
     updateCreatures(dt);
     updateSpells(dt);
+    PH.update(dt);
     updateParts(dt);
     updatePickups(dt);
     // caméra
@@ -4955,7 +5955,7 @@ const World = (() => {
 
   // facteur de temps à un endroit : 1 dehors, 0 figé, < 1 ralenti, > 1 accéléré (le lanceur n'y est pas soumis)
   let bullesT = [];
-  function majBulles() { bullesT = []; for (const b of st.sp) if (b.k === 'bulle' && !b.mort) bullesT.push({ x: b.x, y: b.y, r: b.r, rect: b.rect || null, f: b.mode === 'vite' ? 3 : b.mode === 'lent' ? 0.3 : 0 }); Sim.tzones = bullesT; }
+  function majBulles() { bullesT = []; for (const b of st.sp) if (b.k === 'bulle' && !b.mort) bullesT.push({ x: b.x, y: b.y, r: b.r, rect: b.rect || null, f: b.fx != null ? b.fx : b.mode === 'vite' ? 3 : b.mode === 'lent' ? 0.3 : 0 }); Sim.tzones = bullesT; }
   function tempsDe(x, y, vite = 3) { for (const z of bullesT) if (dansZone(z, x, y)) return z.f > 1 ? vite : z.f; return 1; }
   function updateObjs(dtG) {
     let dt = dtG;
@@ -4970,7 +5970,10 @@ const World = (() => {
           if (o.boulet > 0) { o.boulet -= dt; for (const c of st.crs) if (c.hp > 0 && !c.sta.tame && U.rectsOverlap(o, c) && Math.hypot(o.vx, o.vy) > 250) { hurt(c, 2.5); c.vx += o.vx * 0.6; c.vy -= 250; o.vx *= 0.6; } }
           o.vx *= Math.max(0, 1 - (o.onGround ? 6 : 1) * dt * (o.boulet > 0 ? 0.1 : 1));
           moveBody(o, dt, o);
-          { const lq = liquidOf(o); if (lq === M.EAU || lq === M.HUILE) { o.vy -= 1400 * dt; if (o.t === 'caisse') o.burning = 0; } if (lq === M.LAVE && o.t === 'caisse') o.burning = 3; }
+          { const lq = liquidOf(o); flotter(o, dt, DENS[o.t] || 1); if ((lq === M.EAU || lq === M.SAUMURE) && o.t === 'caisse') o.burning = 0; if (lq === M.LAVE && o.t === 'caisse') o.burning = 3; }
+          // ce qui tombe lourd blesse ce qu'il heurte
+          { const v = Math.hypot(o.vx, o.vy), ms = masse(o); if (v > (ms > 2 ? 330 : 480) && !(o.boulet > 0)) { o.chocT = o.chocT || new Map(); for (const c of st.crs) if (c.hp > 0 && !c.sta.tame && U.rectsOverlap(o, c) && time - (o.chocT.get(c) || -9) > 0.6) { o.chocT.set(c, time); hurt(c, Math.min(5, ms * v / 900) / Math.sqrt(masse(c))); c.vx += o.vx * 0.4 / masse(c); c.vy -= 120; part(c.x + c.w / 2, c.y, '#8a7a5a', 6, 80, 0.4, 2, 300); Son.sfx('burst', 'terre'); }
+            const p = st.p; if (o.vy > 380 && ms > 2 && U.rectsOverlap(o, p) && p.y > o.y && time - (o.chocT.get(p) || -9) > 0.8 && !(p.sta.stone > 0)) { o.chocT.set(p, time); p.hp -= Math.min(3, ms * o.vy / 1400); p.vx += (p.x + p.w / 2 < o.x + o.w / 2 ? -1 : 1) * 260; msg('Aïe ! Ça tombe lourd.', 'warn'); } } }
           if (o.t === 'caisse') {
             if (!o.burning && Sim.rectHas({ x: o.x - 4, y: o.y - 4, w: o.w + 8, h: o.h + 8 }, (m) => m === M.FEU || m === M.LAVE)) o.burning = 2.5;
             if (o.burning > 0) { o.burning -= dt; o.hp -= dt; if (Math.random() < 0.5) part(o.x + Math.random() * o.w, o.y + 4, '#d9622b', 1, 40, 0.6, 3, -200); if (Math.random() < 0.1) { const cx = Math.floor((o.x + Math.random() * o.w) / CS), cy = Math.floor(o.y / CS) - 1; if (Sim.get(cx, cy) === M.AIR) Sim.set(cx, cy, M.FEU, 20); } if (o.hp <= 0) { o.mort = true; part(o.x + 18, o.y + 18, '#555', 14, 60, 1, 4); msg('La caisse n\'est plus que cendres.'); if (st.p.carry === o) st.p.carry = null; } }
@@ -5018,6 +6021,10 @@ const World = (() => {
       if (c.t === 'familier') { updateFamilier(c, dt, p); continue; }
       // cadeaux des créatures apprivoisées
       if (c.sta.tame && DATA.ESPECES[c.t] && DATA.ESPECES[c.t].drop) { c.cadeauT += dt; if (c.cadeauT > 90) { c.cadeauT = 0; dropPickup(DATA.ESPECES[c.t].drop, c.x + c.w / 2, c.y - 8); evt('cadeau'); msg(nomCreature(c.t) + ' te fait un cadeau.'); } }
+      // chaleur et grand froid
+      { const tc = Sim.tempAt(c.x + c.w / 2, c.y + c.h * 0.6); const sp0 = DATA.ESPECES[c.t] || {};
+        if (tc > 125 && !CHAUD_OK.includes(c.t)) { hurt(c, dt * (tc - 125) / 50); if (tc > 170) c.sta.burn = Math.max(c.sta.burn, 1); if (c.hp <= 0) continue; }
+        else if (tc < 46 && !FROID_OK.includes(c.t)) { c.sta.lent = Math.max(c.sta.lent || 0, 0.4); if (tc < 28 && Math.random() < dt * 0.5) c.sta.gele = Math.max(c.sta.gele || 0, 1.5); } }
       if (c.generique) { updateGenerique(c, dt, p); continue; }
       if (!c.vu && inView(c.x, c.y)) { c.vu = true; evt('espece', c.t); }
       if (c.hurt > 0) c.hurt -= dt;
@@ -5048,8 +6055,8 @@ const World = (() => {
         c.canStep = false; moveBody(c, dt);
         if (Math.random() < 0.3) part(ccx, ccy, '#3f9c9b', 1, 20, 0.5, 2, -40, 'spark');
       } else {
-        applyGrav(c, dt, lq ? 0.2 : 1);
-        if (lq) c.vy *= Math.max(0, 1 - 1.5 * dt);
+        applyGrav(c, dt, 1);
+        if (lq) flotter(c, dt, DENS[c.t] || 0.9);
         if (c.controlled && c.ctl) {
           const sp = c.t === 'golem' ? 150 : 200; c.vx = c.ctl.dirX * sp; if (c.ctl.dirX) c.dir = c.ctl.dirX; if (c.ctl.jump && c.onGround) c.vy = -420; c.ctl.jump = false;
         } else if (actif) {
@@ -5133,8 +6140,8 @@ const World = (() => {
     } else {
       // hop / walk / crawl
       const sw = sp.lave && lq === M.LAVE;
-      applyGrav(c, dt, lq ? 0.2 : 1);
-      if (lq) c.vy *= Math.max(0, 1 - 1.5 * dt);
+      applyGrav(c, dt, 1);
+      if (lq) flotter(c, dt, DENS[c.t] || 0.9);
       if (sw && actif) { c.vy -= 900 * dt * (Math.sin(c.phase * 2) > 0 ? 1 : 0.3); }
       if (actif || c.controlled) {
         const dir = tx != null ? Math.sign(tx - ccx) || c.dir : (Math.random() < dt * 0.4 ? -c.dir : c.dir);
@@ -5168,10 +6175,10 @@ const World = (() => {
   function collision(a, b) {
     const x = (a.x + b.x) / 2, y = (a.y + b.y) / 2;
     const ca = a.spec.cores[0], cb = b.spec.cores[0];
-    const key = [ca, cb].sort().join('|'); const nomme = DATA.COMBOS[key];
+    const key = [ca, cb].sort().join('|'); const nomme = DATA.comboInfo(key);
     const pw = ((a.prm.power + b.prm.power) / 2) * (nomme ? 1.3 : 1.1), r = 60 * Math.max(a.prm.size, b.prm.size);
     for (const core of new Set([ca, cb])) applyEffect(core, x, y, r, { ...a.prm, power: pw }, 'burst');
-    if (ca !== cb) comboEffect(key, x, y, r, a.prm);
+    if (ca !== cb && DATA.comboInfo(key)) PH.deployer({ ...a.spec, combo: key, castId: a.spec.castId * 1000 + 7, shape: 'zone' }, x, y, r, {}, { x: Math.sign(a.vx) || 1, y: 0 });
     st.sp.push({ k: 'label', x, y: y - 46, txt: 'Collision' + (nomme ? ' : ' + nomme.nom : ''), life: 1.6, max: 1.6 });
     st.shake = 0.25; a.mort = true; b.mort = true; evt('collision');
   }
@@ -5376,6 +6383,7 @@ const World = (() => {
             break;
           }
           s.x = nx; s.y = ny;
+          if (s.spec && s.spec.combo) PH.trainee(s, dt);
           const lm = Sim.matAt(s.x, s.y);
           if (P[lm].liquid && !s.plouf) { s.plouf = true; part(s.x, s.y - 4, P[lm].color, 12, 220, 0.7, 2, 900, 'goutte'); }
           if (P[lm].liquid) {
@@ -5601,6 +6609,7 @@ const World = (() => {
     if (st.control) { const c = st.control.c; ctx.save(); ctx.strokeStyle = '#b08ad8'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); U.inkCircle(ctx, c.x + c.w / 2, c.y + c.h / 2, Math.max(c.w, c.h) * 0.8, 2, 1.5); ctx.setLineDash([]); ctx.globalAlpha = 0.5; U.inkLine(ctx, p.x + p.w / 2, p.y + 10, c.x + c.w / 2, c.y, 3, 3); ctx.restore(); }
     for (const z of st.gz) drawGField(ctx, z);
     st.marques.forEach((mq, i) => { const q = posMarque(mq); if (!q) return; const last = i === st.marques.length - 1; ctx.save(); ctx.globalAlpha = last ? 0.95 : 0.5; const g = ctx.createRadialGradient(q.x, q.y, 2, q.x, q.y, 26); g.addColorStop(0, 'rgba(224,176,80,0.45)'); g.addColorStop(1, 'rgba(224,176,80,0)'); ctx.fillStyle = g; ctx.fillRect(q.x - 26, q.y - 26, 52, 52); ctx.translate(q.x, q.y - (mq.ent ? mq.ent.h / 2 + 12 : 0)); ctx.rotate(time * 0.8); Seal.glyph(ctx, 'marque', 0, 0, last ? 9 : 7, '#c08a2a', 3); ctx.restore(); });
+    PH.draw(ctx, time);
     for (const s of st.sp) drawSpell(ctx, s);
     for (const q of st.parts) drawPart(ctx, q);
     // halos : feu, lave, torches, cristaux
@@ -6189,7 +7198,7 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a) };
+  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a), get phen() { return PH; } };
 })();
 
 </script>
@@ -6605,6 +7614,10 @@ const UI = (() => {
     for (let i = 0; i < 5; i++) { const b = el('button', 'btn-slot', String(i + 1)); b.addEventListener('click', () => cb(i)); c.appendChild(b); }
   }
 
+  // recette lisible d'un combo : « Feu + Gravité », « Eau (Gel) + Vent »
+  function effetLisible(e) { if (DATA.CORES[e] && !DATA.CORES[e].interne) return DATA.CORES[e].nom; for (const a in DATA.ASPECTS) if (DATA.ASPECTS[a].devient === e) return DATA.CORES[DATA.ASPECTS[a].aspect].nom + ' (' + DATA.ASPECTS[a].nom + ')'; return (DATA.CORES[e] || DATA.PSEUDO[e] || { nom: e }).nom; }
+  function recetteCombo(k) { return k.split('|').map(effetLisible).join(' + '); }
+  const comboConnu = (k) => !!(game.progress.combos && game.progress.combos[k]);
   // ---------- Ouverture / fermeture ----------
   function openPanel(name) {
     close();
@@ -6801,11 +7814,14 @@ const UI = (() => {
     const nomG = (c) => (DATA.CORES[c] || DATA.PSEUDO[c] || { nom: c }).nom.toLowerCase();
     let cores = Seal.effets(s);
     if (prm.inverse) cores = cores.map((c) => (c === 'gravite' ? c : DATA.INVERSE[c] || c));
-    const combo = cores.length > 1 && !prm.inverse ? DATA.COMBOS[cores.slice().sort().join('|')] : null;
+    const cleC = cores.length > 1 && !prm.inverse ? DATA.comboCle(cores) : null; const infoC = cleC && DATA.comboInfo(cleC);
+    const combo = infoC ? (comboConnu(cleC) ? infoC : { nom: 'fusion inconnue', inconnu: true }) : null;
     const L = [];
     L.push('<b>' + T.nom + ' sceau</b> · ' + Seal.cost(s) + ' encre · tracé en ' + T.geste + ' s · maintenir le clic charge jusqu\'à +80 %.');
     let eff = 'Effet : ' + cores.map(nomG).join(' et ') + (combo ? ' (fusion : ' + combo.nom.toLowerCase() + ')' : '') + (prm.inverse ? (cores.includes('gravite') ? ', apesanteur' : ', inversé') : '') + '.';
     L.push(eff);
+    if (infoC) L.push(comboConnu(cleC) ? '<b>' + infoC.nom + '</b> : ' + infoC.desc + ' <span class="muted">La fusion remplace les deux effets de base.</span>' : '<b>Fusion inconnue</b> <span class="muted">— ' + infoC.indice + ' Lance-la pour la découvrir.</span>');
+    else if (cores.length > 1 && !prm.inverse) L.push('<span class="muted">Ces deux effets ne fusionnent pas : ils s\'appliquent ensemble.</span>');
     if (s.shape) L.push('Forme : ' + DATA.SHAPES[s.shape].nom.toLowerCase() + (prm.extra ? ', en double' : '') + (prm.orbite ? ', en orbite autour de toi' : '') + (prm.teleguide ? ', guidé par la souris' : '') + (prm.canalise ? ', canalisé tant que tu maintiens' : '') + '.');
     if (s.cible && s.taille !== 'petit') L.push('Cible : ' + (s.cible === 'creature' ? 'la créature hostile la plus proche, qu\'il suit' : 'ta marque la plus récente, même hors de vue') + '.');
     const tx = [];
@@ -6897,7 +7913,8 @@ const UI = (() => {
     ctx.clearRect(0, 0, c.width, c.height);
     Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, SEAL_R, { t: time, slots: game.progress.slots, highlight: selSlot, empty: true, fusion: game.progress.fusion, filtres: game.progress.filtres.length > 0, cibles: game.progress.cibles.length > 1 });
     const combo = Seal.comboName(game.editSeal);
-    const hint = combo ? 'Fusion : ' + combo + '. ' + (DATA.COMBOS[[game.editSeal.core, game.editSeal.core2].sort().join('|')].desc || '') : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot === 'filtre' ? 'Choisis un filtre de matière.' : selSlot === 'cible' ? 'Choisis une cible.' : selSlot === 'trigger2' ? 'Choisis un second déclencheur.' : selSlot ? 'Choisis un glyphe dans la palette, ou clique à nouveau pour vider.' : game.progress.fusion ? 'Centre, formes, modificateurs, pointes. En bas : un second effet à fusionner.' : 'Clique un emplacement, puis un glyphe. Clic droit : vider.';
+    const cleH = DATA.comboCle(Seal.effets(game.editSeal)), infoH = cleH && DATA.comboInfo(cleH);
+    const hint = combo ? 'Fusion : ' + combo + '.' : infoH ? 'Fusion inconnue — ' + infoH.indice : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot === 'filtre' ? 'Choisis un filtre de matière.' : selSlot === 'cible' ? 'Choisis une cible.' : selSlot === 'trigger2' ? 'Choisis un second déclencheur.' : selSlot ? 'Choisis un glyphe dans la palette, ou clique à nouveau pour vider.' : game.progress.fusion ? 'Centre, formes, modificateurs, pointes. En bas : un second effet à fusionner.' : 'Clique un emplacement, puis un glyphe. Clic droit : vider.';
     U.txt(ctx, hint, c.width / 2, 16, 13, 'center', '#6b4f2a', 'IM Fell English', 'italic');
   }
 
@@ -7059,14 +8076,26 @@ const UI = (() => {
       c.appendChild(el('h3', '', 'Tailles de sceau'));
       c.appendChild(el('p', '', Object.values(DATA.TAILLES).map((T) => (p.tailles.includes(T.id) ? '<b>' + T.nom + '</b>' : '<span class="muted">' + T.nom + ' (scellé)</span>') + ' : ' + T.desc).join('<br>')));
       c.appendChild(el('p', 'intro', 'Lancer : maintenir le clic charge le sort (plus fort, plus loin, plus cher). ' + (p.deuxMains ? 'Clic droit : main gauche (Maj + 1-5 pour la choisir).' : 'La main gauche viendra avec l\'expérience.') + ' F libère les sorts Sur commande. Deux projectiles qui se croisent fusionnent.'));
-      if (p.fusion) {
-        c.appendChild(el('h3', '', 'Fusions connues'));
-        const known = Object.keys(DATA.COMBOS).filter((k) => k.split('|').every((q) => p.cores.includes(q)));
-        if (!known.length) c.appendChild(el('p', 'muted', 'Aucune : il faut posséder les deux glyphes.'));
-        for (const k of known) { const [a, b] = k.split('|'); const Cm = DATA.COMBOS[k]; c.appendChild(el('div', 'recette', '<b>' + Cm.nom + '</b> : ' + DATA.CORES[a].nom + ' + ' + DATA.CORES[b].nom + (Cm.desc ? ' — ' + Cm.desc : ''))); }
-        c.appendChild(el('p', 'intro', 'Toute autre paire fusionne aussi : les deux effets s\'appliquent ensemble.'));
-      }
+      if (p.fusion) c.appendChild(el('p', 'intro', 'Deux effets dans un même sceau peuvent fusionner en un phénomène : voir l\'onglet Fusions.'));
       c.appendChild(el('p', 'intro', 'Déclencheurs : <b>Immédiat</b> agit en continu sur ce que le sort touche (un projectile traverse les créatures). <b>Au contact</b> éclate en zone à la première chose touchée. <b>Retardé</b> se fixe et éclate après deux secondes.'));
+    } else if (grimTab === 'fusions') {
+      const pc = p.combos || {};
+      c.appendChild(el('p', 'intro', 'Pose deux effets dans un sceau (le second sous le cercle, sur un sceau moyen ou grand) : certaines paires font naître un phénomène qui dure, a sa propre physique et prend la forme du sceau (en projectile, en mur, en colonne, en trait, sur soi...). Un aspect compte comme son effet : l\'Eau avec Gel, c\'est le froid. La fusion remplace les deux effets de base.'));
+      if (!p.fusion) c.appendChild(el('p', 'muted', 'La fusion de deux effets viendra avec l\'expérience.'));
+      const cles = Object.keys(DATA.COMBOS); const nConnus = cles.filter((k) => pc[k]).length;
+      c.appendChild(el('h3', '', 'Phénomènes (' + nConnus + ' / ' + cles.length + ')'));
+      const possede = (e) => { if (p.cores.includes(e)) return true; for (const a in DATA.ASPECTS) if (DATA.ASPECTS[a].devient === e) return p.cores.includes(DATA.ASPECTS[a].aspect) && p.mods.includes(a); return false; };
+      const tri = cles.slice().sort((a, b) => (pc[b] ? 1 : 0) - (pc[a] ? 1 : 0));
+      for (const k of tri) {
+        const I = DATA.COMBOS[k];
+        if (pc[k]) c.appendChild(el('div', 'recette', '<b>' + I.nom + '</b> <span class="muted">(' + recetteCombo(k) + ', lancé ' + pc[k] + ' fois)</span><br>' + I.desc));
+        else { const pret = k.split('|').every(possede); c.appendChild(el('div', 'recette verrou', '<b>???</b> — <i>' + I.indice + '</i>' + (pret ? ' <span class="muted">Tu as de quoi le tenter.</span>' : ''))); }
+      }
+      c.appendChild(el('h3', '', 'Familles'));
+      for (const g in DATA.GENRES) {
+        const G = DATA.GENRES[g], faits = Object.keys(pc).filter((k) => { const I = DATA.comboInfo(k); return I && I.genre === g; });
+        c.appendChild(el('div', 'recette', '<b>' + G.nom + '</b> : ' + DATA.CORES[g].nom + ' + n\'importe quel autre effet. ' + G.desc + (faits.length ? '<br><span class="muted">Déjà : ' + faits.map((k) => DATA.comboInfo(k).nom).join(', ') + '.</span>' : '')));
+      }
     } else if (grimTab === 'recettes') {
       c.appendChild(el('p', 'intro', 'Le chaudron accepte jusqu\'à trois ingrédients et trois étapes, dans l\'ordre. Les recettes inconnues ne sont que des énigmes ; le chaudron lui-même te guide par l\'odeur et le bruit.'));
       const bz = (p.bizarresVues || []); if (bz.length) { c.appendChild(el('h3', '', 'Potions bizarres rencontrées')); for (const id of bz) { const B = DATA.BIZARRES[id]; if (B) c.appendChild(el('div', 'recette', '<b>' + B.nom + '</b> — ' + B.desc)); } }
@@ -7367,7 +8396,7 @@ const UI = (() => {
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
       tailles: DATA.DEBUT.tailles.slice(), filtres: DATA.DEBUT.filtres.slice(), cibles: DATA.DEBUT.cibles.slice(), deuxMains: false, enchainements: [],
-      recettes: [], ingredientsVus: [], done: [], maitrise: {}, nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
+      recettes: [], ingredientsVus: [], done: [], maitrise: {}, combos: {}, nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
       compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0, terre: 0, creaturesTouchees: 0, vols: 0, portes: 0, lancers: 0, niveau: 1, sceaux: 0 },
       event(name, data) {
         const k = this.compteurs;
@@ -7450,6 +8479,7 @@ const UI = (() => {
   }
 
   // ---------- Jeu ----------
+  Seal.comboConnu = (k) => !!(game.progress.combos && game.progress.combos[k]);
   const game = {
     state: 'create',
     look: { nom: '', chapeau: 0, cape: 0, acc: 0 },
@@ -7536,9 +8566,9 @@ const UI = (() => {
     },
     specEpreuve(seal) {
       const prm = Seal.params(seal);
-      let cores = [seal.core]; if (seal.core2) cores.push(seal.core2);
+      let cores = Seal.effets(seal); const combo = !prm.inverse ? DATA.comboCle(cores) : null;
       if (prm.inverse) cores = cores.map((q) => (q === 'gravite' ? q : DATA.INVERSE[q] || q));
-      return { cores: cores.filter(Boolean), shape: seal.shape, persist: prm.persist, extra: prm.extra, echo: prm.echo, size: prm.size, combo: seal.core2 ? [seal.core, seal.core2].sort().join('|') : null, subs: Seal.subs(seal).length };
+      return { cores: cores.filter(Boolean), shape: seal.shape, persist: prm.persist, extra: prm.extra, echo: prm.echo, size: prm.size, combo, subs: Seal.subs(seal).length };
     },
     peutLivrer() {
       const l = this.lettreCourante(); if (!l) return false; const m = l.cmd;
@@ -7789,7 +8819,7 @@ const UI = (() => {
         if (d.carte) this.carte = d.carte;
         if (d.courrier) this.courrier = Object.assign(this.courrier, d.courrier); if (d.bonus) this.bonus = Object.assign(this.bonus, d.bonus); if (d.trophees) this.trophees = d.trophees;
         if (d.progress) Object.assign(this.progress, d.progress);
-        if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {};
+        if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {}; if (!this.progress.combos) this.progress.combos = {};
         { // refonte : les anciennes essences deviennent des aspects
           const p = this.progress; if (!p.mods.includes('reduire')) p.mods.push('reduire');
           for (const c of p.cores.slice()) { const M2 = DATA.MIGRATION[c]; if (!M2) continue; p.cores = p.cores.filter((q) => q !== c); if (!p.mods.includes(M2[1])) p.mods.push(M2[1]); if (p.maitrise[c]) { p.maitrise[M2[0]] = (p.maitrise[M2[0]] || 0) + p.maitrise[c]; delete p.maitrise[c]; } }
