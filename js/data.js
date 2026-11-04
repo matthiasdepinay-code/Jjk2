@@ -112,6 +112,17 @@ const DATA = (() => {
     'eau|seisme':         { nom: 'Raz-de-marée', desc: 'Une vague immense déferle dans le sens du lancer et emporte tout.', indice: 'La terre qui secoue la mer.' },
     'force|gravite':      { nom: 'Singularité', desc: 'Tout est aspiré vers un point, puis recraché.', indice: 'La pesanteur qui se replie.' },
   };
+  // Fusions à trois : le grand sceau a un troisième emplacement d'effet (à gauche de l'anneau intérieur)
+  const TRIOS = {
+    'feu|gravite|temps':     { nom: 'Étoile', desc: 'Un soleil que le temps ne consume plus : plus grand, plus lourd, il brûle longtemps et finit en nova.', indice: 'Le petit soleil qui ne vieillit pas.' },
+    'eau|foudre|vent':       { nom: 'Ouragan', desc: 'Un orage géant qui marche sur le pays : il foudroie, aspire et soulève tout sous lui.', indice: 'Quand l\'orage apprend à marcher.' },
+    'feu|gravite|terre':     { nom: 'Volcan', desc: 'Un cône de pierre jaillit du sol et crache la lave par son cratère, en bombes brûlantes.', indice: 'La montagne qui s\'ouvre.' },
+    'eau|gravite|vie':       { nom: 'Jardin suspendu', desc: 'Une île flotte, avec son arbre et sa source, puis finit par retomber.', indice: 'Le jardin qui ne pèse plus, et qui boit.' },
+    'foudre|gravite|lumiere':{ nom: 'Pulsar', desc: 'Une étoile qui tourne sur elle-même et balaie le monde de deux rayons foudroyants.', indice: 'La lumière qui tourne et qui frappe.' },
+    'eau|temps|terre':       { nom: 'Canyon', desc: 'Des siècles d\'érosion d\'un coup : un ravin s\'ouvre sous le point visé et une rivière y coule.', indice: 'La goutte, la pierre, et beaucoup de temps.' },
+    'gravite|lumiere|temps': { nom: 'Trou blanc', desc: 'L\'inverse du trou noir : il recrache la matière et la lumière, et repousse tout.', indice: 'Ce que le trou noir finit par rendre.' },
+    'lumiere|temps|vie':     { nom: 'Printemps éternel', desc: 'Pendant longtemps, tout pousse alentour : herbe, fleurs qui luisent, arbres, et les blessures guérissent.', indice: 'La saison qui ne finit pas.' },
+  };
   // Familles : l'Espace, l'Esprit, le Contre-sort et la Métamorphose s'allient à n'importe quel effet
   const GENRES = {
     portail:      { nom: 'Faille', desc: 'Une faille dans l\'espace qui crache l\'autre effet pendant un moment.', indice: 'L\'Espace qui s\'ouvre sur un élément.' },
@@ -122,11 +133,13 @@ const DATA = (() => {
   const deEffet = (e) => { const n = ((CORES[e] || PSEUDO[e] || {}).nom || e).toLowerCase(); return (/^[aeiouéèêh]/.test(n) ? 'd\'' : 'de ') + n; };
   function comboInfo(k) {
     if (COMBOS[k]) return COMBOS[k];
+    if (TRIOS[k]) return Object.assign({ trio: true }, TRIOS[k]);
     const [a, b] = k.split('|'); const g = GENRES[a] && !GENRES[b] ? a : GENRES[b] && !GENRES[a] ? b : null; if (!g) return null;
     const x = g === a ? b : a; const G = GENRES[g]; return { nom: G.nom + ' ' + deEffet(x), desc: G.desc, indice: G.indice, genre: g, effet: x };
   }
   function comboCle(effets) {
     const u = effets.filter((e, i) => effets.indexOf(e) === i); if (u.length < 2) return null; let fam = null;
+    if (u.length >= 3) for (let i = 0; i < u.length; i++) for (let j = i + 1; j < u.length; j++) for (let k = j + 1; k < u.length; k++) { const t = [u[i], u[j], u[k]].sort().join('|'); if (TRIOS[t]) return t; }
     for (let i = 0; i < u.length; i++) for (let j = i + 1; j < u.length; j++) { const k = [u[i], u[j]].sort().join('|'); if (COMBOS[k]) return k; if (!fam && comboInfo(k)) fam = k; }
     return fam;
   }
@@ -462,10 +475,10 @@ const DATA = (() => {
   // la recette d'une fusion en glyphes : essences et aspects
   function recetteCombo(cle) {
     const ess = (e) => { if (CORES[e] && !CORES[e].interne) return { core: e, mod: null }; for (const a in ASPECTS) if (ASPECTS[a].devient === e) return { core: ASPECTS[a].aspect, mod: a }; return null; };
-    const parts = cle.split('|').map(ess); if (parts.some((q) => !q) || parts.length > 2) return null;
+    const parts = cle.split('|').map(ess); if (parts.some((q) => !q) || parts.length > 3) return null;
     // l'aspect se pose sur la dernière occurrence de son essence : on la met en second
     parts.sort((a, b) => (a.mod ? 1 : 0) - (b.mod ? 1 : 0));
-    return { core: parts[0].core, core2: parts[1] ? parts[1].core : null, mods: parts.filter((q) => q.mod).map((q) => q.mod) };
+    return { taille: parts.length > 2 ? 'grand' : 'moyen', core: parts[0].core, core2: parts[1] ? parts[1].core : null, core3: parts[2] ? parts[2].core : null, mods: parts.filter((q) => q.mod).map((q) => q.mod) };
   }
 
   // Familiers : la forme Invocation fait naître la créature de l'essence du sceau
@@ -795,5 +808,5 @@ const DATA = (() => {
   // affinité : combien un geste aimé rapproche (sur 100)
   const AFFINITE = { golem: { gain: 4, parJour: 20 }, follet: { gain: 12 }, limace: { gain: 15 }, salamandre: { gain: 14 }, chauve: { gain: 15 } };
 
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle, FAMILIERS, LECONS, recetteCombo };
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle, FAMILIERS, LECONS, recetteCombo, TRIOS };
 })();

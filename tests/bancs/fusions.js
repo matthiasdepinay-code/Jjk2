@@ -3,9 +3,9 @@
     const remplir = (x0, y0, x1, y1, m) => { for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) S.set(x, y, m); };
     // ---------- recette d'un combo : quelles essences et quels aspects ----------
     const ess = (e) => { if (DATA.CORES[e] && !DATA.CORES[e].interne) return { core: e, mod: null }; for (const a in DATA.ASPECTS) if (DATA.ASPECTS[a].devient === e) return { core: DATA.ASPECTS[a].aspect, mod: a }; return null; };
-    const recette = (cle) => { const [a, b] = cle.split('|'); const A = ess(a), B = ess(b); if (!A || !B) return null; return { taille: 'moyen', core: A.core, core2: B.core, mods: [A.mod, B.mod].filter(Boolean).concat([null, null, null]).slice(0, 5) }; };
+    const recette = (cle) => { const R = DATA.recetteCombo(cle); if (!R) return null; return Object.assign({}, R, { mods: R.mods.concat([null, null, null, null, null]).slice(0, 5) }); };
     const phDe = (id) => World.phen.liste.filter((q) => q.id === id);
-    const cles = Object.keys(DATA.COMBOS).concat(['feu|portail', 'eau|portail', 'esprit|feu', 'contre|eau', 'feu|metamorphose', 'metamorphose|vent']);
+    const cles = Object.keys(DATA.COMBOS).concat(Object.keys(DATA.TRIOS), ['feu|portail', 'eau|portail', 'esprit|feu', 'contre|eau', 'feu|metamorphose', 'metamorphose|vent']);
     const formes = ['zone', 'projectile', 'mur', 'colonne', 'trait', 'soi'];
     let nOk = 0, nTot = 0; const rates = [];
     for (const cle of cles) {

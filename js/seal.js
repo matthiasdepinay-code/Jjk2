@@ -5,7 +5,7 @@ const Seal = (() => {
 
   const NMODS = 5;
   function create(taille = 'moyen') {
-    return { nom: '', taille, core: null, core2: null, shape: null, mods: [null, null, null, null, null], trigger: null, trigger2: null, filtre: null, cible: null, delai: 2, periode: 2, encre: null, dimL: 1, dimH: 1 };
+    return { nom: '', taille, core: null, core2: null, core3: null, shape: null, mods: [null, null, null, null, null], trigger: null, trigger2: null, filtre: null, cible: null, delai: 2, periode: 2, encre: null, dimL: 1, dimH: 1 };
   }
   function clone(s) {
     let mods = (s.mods || []).map((m) => (m && typeof m === 'object' && m.sub ? { sub: clone(m.sub) } : typeof m === 'string' ? (m in DATA.MIGR_MODS ? DATA.MIGR_MODS[m] : DATA.MODS[m] ? m : null) : null));
@@ -14,8 +14,8 @@ const Seal = (() => {
     // anciennes essences devenues aspects : l'essence mère au centre, l'aspect sur l'anneau
     let core = s.core || null, core2 = s.core2 || null;
     const migrer = (c) => { const M2 = DATA.MIGRATION[c]; if (!M2) return c; if (!mods.includes(M2[1])) { let i = mods.findIndex((m, k) => !m && k < nbSlots({ taille: s.taille || 'moyen' }, 3)); if (i < 0) i = 0; mods[i] = M2[1]; } return M2[0]; };
-    core = migrer(core); core2 = migrer(core2);
-    return { nom: s.nom || '', taille: s.taille || 'moyen', core, core2, shape: s.shape || null, mods,
+    core = migrer(core); core2 = migrer(core2); const core3 = migrer(s.core3 || null);
+    return { nom: s.nom || '', taille: s.taille || 'moyen', core, core2, core3: (s.taille === 'grand' && core3) || null, shape: s.shape || null, mods,
       trigger: s.trigger || null, trigger2: s.trigger2 || null, filtre: s.filtre || null, cible: s.cible || null, delai: s.delai || 2, periode: s.periode || 2, encre: s.encre || null, dimL: s.dimL || 1, dimH: s.dimH || 1 };
   }
   const isSub = (m) => !!(m && typeof m === 'object' && m.sub);
@@ -29,6 +29,7 @@ const Seal = (() => {
     let c = 0;
     if (s.core) c += DATA.CORES[s.core].cout;
     if (s.core2) c += DATA.CORES[s.core2].cout + 2;
+    if (s.core3 && s.taille === 'grand') c += DATA.CORES[s.core3].cout + 3;
     if (s.shape) c += DATA.SHAPES[s.shape].cout;
     for (const m of s.mods) { if (!m) continue; c += isSub(m) ? cost(m.sub) : DATA.MODS[m].cout; }
     for (const t of triggers(s)) c += DATA.TRIGGERS[t].cout;
@@ -56,8 +57,8 @@ const Seal = (() => {
   }
   function autoNom(s) {
     if (!s.core) return 'Pétard';
-    let n = comboName(s) || (s.core2 ? DATA.CORES[s.core].nom + '-' + DATA.CORES[s.core2].nom.toLowerCase() : DATA.CORES[s.core].nom);
-    if (s.shape) n = DATA.SHAPES[s.shape].nom + ' de ' + n.toLowerCase();
+    let n = comboName(s) || (s.core2 ? DATA.CORES[s.core].nom + '-' + DATA.CORES[s.core2].nom.toLowerCase() + (s.core3 && s.taille === 'grand' ? '-' + DATA.CORES[s.core3].nom.toLowerCase() : '') : DATA.CORES[s.core].nom);
+    if (s.shape) n = DATA.SHAPES[s.shape].nom + (/^[aeiouéèêh]/i.test(n) ? ' d\'' : ' de ') + n.toLowerCase();
     const mods = s.mods.filter(Boolean);
     if (mods.length) n += ' ' + mods.map((m) => (isSub(m) ? '« ' + nom(m.sub) + ' »' : DATA.MODS[m].nom.toLowerCase())).join(', ');
     const tr = triggers(s).filter((t) => t !== 'immediat'); if (tr.length) n += ' (' + tr.map((t) => DATA.TRIGGERS[t].nom.toLowerCase()).join(', ') + ')';
@@ -71,7 +72,7 @@ const Seal = (() => {
   // aspects qui changent la nature d'une essence : { essence: { id, devient, n } } (le premier posé l'emporte)
   function aspects(s) { const o = {}; for (const m of s.mods) { if (typeof m !== 'string') continue; const A = DATA.MODS[m]; if (!A || !A.devient) continue; const L = o[A.aspect] || (o[A.aspect] = []); const q = L.find((x) => x.id === m); if (q) q.n = Math.min(2, q.n + 1); else L.push({ id: m, devient: A.devient, n: 1 }); } return o; }
   // effets réels du sceau : chaque essence, avec son aspect
-  function effets(s) { const a = aspects(s); const cores = [s.core]; if (s.core2 && s.taille !== 'petit') cores.push(s.core2); const out = []; cores.filter(Boolean).forEach((c, k, L) => { if (a[c] && k === L.lastIndexOf(c)) for (const A of a[c]) out.push(A.devient); else out.push(c); }); return out; }
+  function effets(s) { const a = aspects(s); const cores = [s.core]; if (s.core2 && s.taille !== 'petit') cores.push(s.core2); if (s.core3 && s.taille === 'grand') cores.push(s.core3); const out = []; cores.filter(Boolean).forEach((c, k, L) => { if (a[c] && k === L.lastIndexOf(c)) for (const A of a[c]) out.push(A.devient); else out.push(c); }); return out; }
   function langues(s) { const o = {}; for (const el in DATA.LANGAGES) { const k = count(s, DATA.LANGAGES[el].glyphe); if (k) o[el] = Math.min(2, k); } return o; }
   function params(s) {
     const n = (m) => count(s, m);
@@ -238,6 +239,7 @@ const Seal = (() => {
       core: { x: cx, y: cy, r: R * 0.27 },
       shape: slotAt(R * 0.5, -90, R * 0.11),
       core2: slotAt(R * 0.5, 90, R * 0.11),
+      core3: slotAt(R * 0.5, 180, R * 0.11),
       mods: ang.map((d) => slotAt(R * 0.74, d, R * 0.1)),
       trigger: slotAt(R * 1.0, -90, R * 0.1),
       filtre: slotAt(R * 1.0, 30, R * 0.09),
@@ -246,12 +248,13 @@ const Seal = (() => {
     };
     if (tailleId === 'petit') { L.core2 = null; L.filtre = null; L.cible = null; L.trigger2 = null; }
     if (tailleId === 'moyen') L.trigger2 = null;
+    if (tailleId !== 'grand') L.core3 = null;
     return L;
   }
   // liste des emplacements (identifiant + position) pour le test de clic
   function slotList(cx, cy, R, tailleId) {
     const L = layout(cx, cy, R, tailleId); const out = [];
-    for (const k of ['core', 'shape', 'core2', 'trigger', 'filtre', 'cible', 'trigger2']) if (L[k]) out.push({ id: k, ...L[k] });
+    for (const k of ['core', 'shape', 'core2', 'core3', 'trigger', 'filtre', 'cible', 'trigger2']) if (L[k]) out.push({ id: k, ...L[k] });
     L.mods.forEach((m, i) => out.push({ id: 'mod' + i, ...m }));
     return out;
   }
@@ -304,7 +307,7 @@ const Seal = (() => {
       if (hl) { ctx.strokeStyle = coul; ctx.lineWidth = Math.max(2, R * 0.03); ctx.setLineDash([]); }
       U.inkCircle(ctx, sl.x, sl.y, sl.r, 50 + sl.x, R * 0.01); ctx.setLineDash([]);
       if (id) {
-        const col = kind === 'core' ? coul : kind === 'core2' ? DATA.CORES[id].couleur : kind === 'filtre' ? DATA.FILTRES[id].couleur : kind === 'mod' && DATA.MODS[id] && DATA.MODS[id].aspect ? DATA.CORES[DATA.MODS[id].aspect].couleur : INK;
+        const col = kind === 'core' ? coul : kind === 'core2' || kind === 'core3' ? DATA.CORES[id].couleur : kind === 'filtre' ? DATA.FILTRES[id].couleur : kind === 'mod' && DATA.MODS[id] && DATA.MODS[id].aspect ? DATA.CORES[DATA.MODS[id].aspect].couleur : INK;
         glyph(ctx, kind === 'filtre' ? 'f_' + id : kind === 'cible' ? 'c_' + id : id, sl.x, sl.y, sl.r * 0.68, col, 60 + sl.x);
         if (label) U.txt(ctx, label, sl.x + sl.r * 0.9, sl.y - sl.r * 0.9, Math.max(9, sl.r * 0.55), 'center', '#6b4f2a');
       } else if (opts.empty && !enabled) {
@@ -318,6 +321,7 @@ const Seal = (() => {
     slot(lay.core, s.core, 'core', true, opts.highlight === 'core');
     slot(lay.shape, s.shape, 'shape', true, opts.highlight === 'shape');
     if (lay.core2 && (opts.fusion || s.core2)) slot(lay.core2, s.core2, 'core2', !!opts.fusion, opts.highlight === 'core2');
+    if (lay.core3 && (opts.fusion || s.core3)) slot(lay.core3, s.core3, 'core3', !!opts.fusion, opts.highlight === 'core3');
     lay.mods.forEach((sl, i) => {
       const m = s.mods[i];
       if (isSub(m)) {
@@ -350,6 +354,7 @@ const Seal = (() => {
     }
     if (s.shape) glyph(ctx, s.shape, cx, cy - R * 0.7, R * 0.18, INK, 4);
     if (s.core2) glyph(ctx, s.core2, cx, cy + R * 0.7, R * 0.22, DATA.CORES[s.core2].couleur, 5);
+    if (s.core3 && s.taille === 'grand') glyph(ctx, s.core3, cx - R * 0.7, cy, R * 0.22, DATA.CORES[s.core3].couleur, 6);
     ctx.restore();
   }
 

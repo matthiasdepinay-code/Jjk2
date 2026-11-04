@@ -549,6 +549,88 @@ function creerPhenomenes(W) {
     draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#9a4a8c'; ctx.globalAlpha = 0.6 * fade(ph); for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.r * (1 + k) * (1 - (t * 1.5 % 1) * 0.5), t * 3 + k, t * 3 + k + 4); ctx.stroke(); } ctx.restore(); },
   });
 
+  // ---------- fusions à trois (grand sceau) ----------
+  // Étoile : le petit soleil hors du temps, plus grand, plus long, et qui finit en nova
+  def('feu|gravite|temps', Object.assign({}, DEFS['feu|gravite'], { r: 30, life: 45, lum: 640, couleur: '#f6d080', explose: true,
+    fin(ph) { effet(ph, 'explosion', ph.x, ph.y, ph.r * 3.2, 1.6); repousser(ph, ph.r * 9, 950); Sim.chauffer(ph.x, ph.y, ph.r * 4, 245, 0.8); W.flash(0.25); W.shake(0.8); W.part(ph.x, ph.y, '#fff6d8', 50, 360, 1, 4, 0, 'spark'); W.son('burst', 'feu'); } }));
+  // Ouragan : un orage qui marche, foudroie, aspire et soulève sous lui
+  def('eau|foudre|vent', { r: 80, life: 16, couleur: '#3c4252', bouge: 'derive', vitesse: 55, init: enCiel(210),
+    tick(ph, dt) {
+      DEFS['eau|foudre'].tick(ph, dt);
+      if (ev(ph, 'p2', 0.05)) nuee(ph, M.EAU, 2);
+      const g = sol(ph.x, ph.y + 10), col = { x: ph.x - ph.r * 0.6, y: ph.y, w: ph.r * 1.2, h: g - ph.y };
+      for (const e of st().crs.concat(st().objs.filter((o) => o.dyn && !o.mort))) { if ((e.hp !== undefined && e.hp <= 0 && !e.dyn) || !U.rectsOverlap(col, e) || e.t === 'familier') continue; e.vy -= 1650 * dt / Math.sqrt(W.masse(e)); e.vx += ((ph.x - e.x - e.w / 2) * 3 + Math.sin(ph.t * 3) * 300) * dt; }
+      if (U.rectsOverlap(col, st().p)) { st().p.vy -= 900 * dt; st().p.vx += (ph.x - st().p.x) * 1.5 * dt; }
+      if (ev(ph, 'w', 0.15)) { Sim.souffler(ph.x, g - 40, ph.r * 1.6, 0, 0, -1.4); Sim.souffler(ph.x, (ph.y + g) / 2, ph.r * 0.8, 0, -1.6); }
+    },
+    draw(ctx, ph, t) { const g = sol(ph.x, ph.y + 10); ctx.save(); ctx.globalAlpha = 0.35 * fade(ph); ctx.strokeStyle = '#5a6478'; ctx.lineWidth = 2; for (let k = 0; k < 10; k++) { const u = k / 10, y = ph.y + (g - ph.y) * u, w = ph.r * (0.9 - u * 0.6); ctx.beginPath(); ctx.ellipse(ph.x + Math.sin(t * 3 + k) * 8 * u, y, w, 5, 0, t * 4 + k, t * 4 + k + 4.4); ctx.stroke(); } ctx.restore(); nuage(ctx, ph.x, ph.y, ph.r * 1.2, '#2c3242', 0.7 * fade(ph), t); },
+  });
+  // Volcan : un cône de pierre jaillit et crache la lave
+  def('feu|gravite|terre', { r: 40, life: 14, lum: 260, couleur: '#e0622b', statique: true,
+    init(ph) {
+      const g = sol(ph.x, ph.y - 10), gx = Math.floor(ph.x / CS), gy = Math.floor(g / CS), H = Math.round(14 * Math.sqrt(ph.sz));
+      for (let h = 0; h < H; h++) { const w = Math.round((H - h) * 1.2); for (let x = gx - w; x <= gx + w; x++) { if (Math.abs(x - gx) <= 1 && h > H - 4) continue; const y = gy - 1 - h; if (air(Sim.get(x, y)) || P[Sim.get(x, y)].powder) Sim.set(x, y, Math.abs(x - gx) <= 1 ? M.LAVE : M.PIERRE); } }
+      ph.data.cx = gx; ph.data.cy = gy - H; ph.x = gx * CS; ph.y = (gy - H) * CS; ph.data.n = Math.round(160 * ph.sz); W.shake(0.6); W.son('burst', 'terre');
+    },
+    tick(ph, dt) {
+      const { cx, cy } = ph.data;
+      if (ev(ph, 'l', 0.05) && ph.data.n > 0) for (let k = 0; k < 2; k++) { const x = cx + Math.round((rnd() - 0.5) * 3), y = cy - 1 - Math.floor(rnd() * 5); if (Sim.get(x, y) === M.AIR) { Sim.set(x, y, M.LAVE); ph.data.n--; } }
+      if (ev(ph, 'b', 1.1)) { const x = cx + Math.round((rnd() - 0.5) * 40), y = cy - 10 - Math.floor(rnd() * 12); for (let d = 0; d < 5; d++) if (Sim.get(x + (d % 2), y + (d >> 1)) === M.AIR) Sim.set(x + (d % 2), y + (d >> 1), M.LAVE); W.shake(0.25); W.part(cx * CS, cy * CS, '#e0622b', 12, 220, 0.8, 3, 700); }
+      if (ev(ph, 'h', 0.3)) Sim.chauffer(cx * CS, cy * CS, 50, 210, 0.4);
+    },
+    draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y, 70, '#e0622b', 0.5 * fade(ph)); },
+  });
+  // Jardin suspendu : un îlot, son arbre, sa source
+  def('eau|gravite|vie', { r: 55, life: 45, couleur: '#5c8f3e', statique: true,
+    init(ph) { DEFS['gravite|vie'].init(ph); const gx = Math.floor(ph.x / CS), gy = Math.floor(ph.y / CS) - 1; ph.data.q = arbre(gx - 2, gy, 8, 4, 3); ph.data.src = { x: (gx + 3) * CS, y: (gy - 1) * CS }; },
+    tick(ph) { pousserFile(ph, 8); if (ev(ph, 'e', 0.7)) { const s = ph.data.src; const x = Math.floor(s.x / CS), y = Math.floor(s.y / CS); if (Sim.get(x, y) === M.AIR) Sim.set(x, y, M.EAU); } },
+    fin(ph) { DEFS['gravite|vie'].fin(ph); },
+    draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y + ph.r * 0.4, ph.r * 1.3, '#6aa070', 0.25 * fade(ph)); },
+  });
+  // Pulsar : deux rayons qui tournent et frappent
+  def('foudre|gravite|lumiere', { r: 14, life: 10, lum: 320, couleur: '#e8e0a0', bouge: 'flotte', point: true,
+    init(ph) { if (ph.g === 'point' && !ph.follow) { const g = sol(ph.x, ph.y - 10); if (g - ph.y < 70) ph.y = g - 80; } ph.data.a = 0; ph.L = 280 * Math.sqrt(ph.sz); },
+    tick(ph, dt) {
+      ph.data.a += dt * 1.7;
+      for (const s of [0, Math.PI]) { const a = ph.data.a + s, L = ph.L; const seg = { x1: ph.x, y1: ph.y, x2: ph.x + Math.cos(a) * L, y2: ph.y + Math.sin(a) * L, w: 10 };
+        for (const c of st().crs) if (c.hp > 0 && !c.sta.tame && c.t !== 'familier' && dSeg(c.x + c.w / 2, c.y + c.h / 2, seg) < 10 + Math.max(c.w, c.h) * 0.4) { blesser(c, dt * 2.4 * ph.pw); c.sta.stun = Math.max(c.sta.stun, 0.3); }
+        if (ev(ph, 'h' + s, 0.15)) { const u = 0.3 + rnd() * 0.7; Sim.chauffer(ph.x + Math.cos(a) * L * u, ph.y + Math.sin(a) * L * u, 10, 180, 0.4); } }
+    },
+    draw(ctx, ph, t) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (const s of [0, Math.PI]) { const a = ph.data.a + s; ctx.strokeStyle = '#f6e8a0'; ctx.globalAlpha = 0.55 * fade(ph); ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(ph.x, ph.y); ctx.lineTo(ph.x + Math.cos(a) * ph.L, ph.y + Math.sin(a) * ph.L); ctx.stroke(); ctx.strokeStyle = '#fffbe8'; ctx.lineWidth = 1.5; ctx.stroke(); } ctx.restore(); FX.glow(ctx, ph.x, ph.y, 40, '#fff6d8', 0.7 * fade(ph)); ctx.save(); ctx.fillStyle = '#fffbe8'; ctx.globalAlpha = fade(ph); ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.r * 0.7, 0, TAU); ctx.fill(); ctx.restore(); },
+  });
+  // Canyon : un ravin s'ouvre, une rivière y coule
+  def('eau|temps|terre', { r: 40, life: 3, couleur: '#6a8aa8', statique: true,
+    init(ph) {
+      const g = sol(ph.x, ph.y - 10), gx = Math.floor(ph.x / CS), gy = Math.floor(g / CS), D = Math.round(26 * Math.sqrt(ph.sz)), q = [];
+      for (let d = 0; d < D; d++) { const w = Math.max(2, Math.round(8 - d * 0.22)); for (let x = gx - w; x <= gx + w; x++) q.push([x, gy + d]); }
+      ph.data.creuse = q; ph.data.fond = { x: gx * CS, y: (gy + D - 2) * CS };
+    },
+    tick(ph) { const q = ph.data.creuse; for (let k = 0; k < 40 && q.length; k++) { const [x, y] = q.shift(); const m = Sim.get(x, y); if (m !== M.METAL && m !== M.OBSIDIENNE && m !== M.AIR && !P[m].liquid) Sim.set(x, y, M.AIR); } if (!q.length && !ph.data.eau) { ph.data.eau = true; W.spawnLiquid(M.EAU, ph.data.fond.x, ph.data.fond.y, Math.round(80 * ph.sz), 60); W.shake(0.3); } },
+    draw(ctx, ph, t) { ctx.save(); ctx.strokeStyle = '#8a8f9a'; ctx.globalAlpha = 0.5 * fade(ph); U.inkCircle(ctx, ph.x, ph.y, ph.r, 4, 1); ctx.restore(); },
+  });
+  // Trou blanc : il recrache matière et lumière, et repousse tout
+  def('gravite|lumiere|temps', { r: 16, life: 6, lum: 420, couleur: '#fffbe8', point: true,
+    tick(ph, dt) {
+      if (ev(ph, 'r', 0.1)) { repousser(ph, ph.r * 8, 260 * ph.pw, ph.x, ph.y, 0.4); Sim.souffler(ph.x, ph.y, ph.r * 7, 0, 0, 1.2); }
+      if (ev(ph, 's', 0.06)) for (let k = 0; k < 2; k++) { const a = rnd() * TAU, d = ph.r * 1.6; const x = Math.floor((ph.x + Math.cos(a) * d) / CS), y = Math.floor((ph.y + Math.sin(a) * d) / CS); if (Sim.get(x, y) === M.AIR) Sim.set(x, y, rnd() < 0.25 ? M.CRISTAL : M.SABLE); }
+      for (const c of creatures(ph, 6, 3)) c.sta.stun = Math.max(c.sta.stun, 0.3);
+    },
+    draw(ctx, ph, t) { FX.glow(ctx, ph.x, ph.y, ph.r * 9, '#fffbe8', 0.45 * fade(ph)); ctx.save(); ctx.strokeStyle = '#e0b050'; ctx.globalAlpha = 0.6 * fade(ph); for (let k = 0; k < 12; k++) { const a = k / 12 * TAU + t * 0.6, r1 = ph.r * (1.4 + ((t * 1.5 + k * 0.3) % 1) * 4); ctx.beginPath(); ctx.moveTo(ph.x + Math.cos(a) * r1, ph.y + Math.sin(a) * r1); ctx.lineTo(ph.x + Math.cos(a) * (r1 + 10), ph.y + Math.sin(a) * (r1 + 10)); ctx.stroke(); } ctx.fillStyle = '#ffffff'; ctx.globalAlpha = fade(ph); ctx.beginPath(); ctx.arc(ph.x, ph.y, ph.r, 0, TAU); ctx.fill(); ctx.restore(); },
+  });
+  // Printemps éternel : tout pousse longtemps, des fleurs qui luisent, on guérit
+  def('lumiere|temps|vie', { r: 150, life: 40, couleur: '#c8e080', init(ph) { auSol(ph); ph.data.q = []; ph.data.fleurs = []; },
+    tick(ph, dt) {
+      if (ev(ph, 'g', 0.3)) cells(ph, (x, y, i, m) => { const up = Sim.get(x, y - 1), r = rnd(); if (m === M.TERRE && up === M.AIR && r < 0.25) Sim.set(x, y - 1, M.HERBE); else if (m === M.CENDRE && r < 0.4) Sim.set(x, y, M.TERRE); else if (m === M.HERBE && up === M.AIR && r < 0.03) { Sim.set(x, y - 1, M.PLANTE); if (ph.data.fleurs.length < 14 && rnd() < 0.3) ph.data.fleurs.push({ x: (x + 0.5) * CS, y: (y - 0.5) * CS, p: rnd() * TAU }); } });
+      if (ev(ph, 'a', 4)) { const x0 = ph.x + (rnd() - 0.5) * ph.r * 1.6, g = sol(x0, ph.y - 40); arbre(Math.floor(x0 / CS), Math.floor(g / CS), 8 + Math.floor(rnd() * 5), 4, 3, ph.data.q); }
+      pousserFile(ph, 10);
+      const p = st().p; if (joueurDans(ph, 0)) p.hp = Math.min(p.hpMax, p.hp + dt * 0.3);
+      for (const c of st().crs) if (c.hp > 0 && touche(ph, c, 0)) c.hp = Math.min(c.hpMax, c.hp + dt * 0.3);
+      if (rnd() < 0.4) { const q = auHasard(ph, 0.8); W.part(q.x, q.y, rnd() < 0.5 ? '#f0b0d8' : '#f6e080', 1, 15, 1.2, 2, 20, 'spark'); }
+    },
+    lumieres(ph) { const a = fade(ph); return ph.data.fleurs.map((f) => ({ x: f.x, y: f.y, r: 70 * a })); },
+    draw(ctx, ph, t) { for (const f of ph.data.fleurs) FX.glow(ctx, f.x, f.y, 10, '#f6e080', (0.5 + 0.3 * Math.sin(t * 3 + f.p)) * fade(ph)); },
+  });
+
   // ---------- familles : Espace, Esprit, Contre-sort, Métamorphose avec n'importe quel effet ----------
   const FAILLE = { feu: M.FEU, eau: M.EAU, terre: M.SABLE, froid: M.NEIGE, acide: M.ACIDE, fumee: M.FUMEE, metal: M.SABLE };
   const COULEUR = (e) => W.colorOf(e);
@@ -611,18 +693,19 @@ function creerPhenomenes(W) {
   const SONS = { 'feu|gravite': 'soleil', 'eau|feu': 'eau', 'feu|terre': 'feu', 'feu|vent': 'vent', 'feu|vie': 'feu', 'feu|lumiere': 'feu', 'feu|foudre': 'foudre', 'feu|temps': 'feu', 'feu|transmutation': 'feu',
     'eau|terre': 'eau', 'eau|vent': 'eau', 'eau|vie': 'eau', 'eau|lumiere': 'magie', 'eau|foudre': 'orage', 'eau|gravite': 'eau', 'eau|temps': 'eau', 'terre|vent': 'vent', 'gravite|vent': 'vent', 'foudre|vent': 'orage', 'temps|vent': 'vent', 'transmutation|vent': 'magie',
     'lumiere|vent': 'magie', 'lumiere|vie': 'magie', 'foudre|vie': 'foudre', 'foudre|lumiere': 'foudre', 'gravite|lumiere': 'trounoir', 'lumiere|transmutation': 'magie', 'foudre|gravite': 'foudre', 'foudre|temps': 'foudre', 'foudre|transmutation': 'eau',
-    'gravite|temps': 'temps', 'gravite|transmutation': 'terre', 'froid|vent': 'vent', 'foudre|metal': 'foudre', 'feu|metal': 'feu', 'acide|feu': 'vent', 'acide|eau': 'eau', 'explosion|gravite': 'trounoir', 'fumee|vent': 'vent', 'foudre|lien': 'foudre', 'eau|seisme': 'eau', 'force|gravite': 'trounoir', 'terre|transmutation': 'terre' };
+    'gravite|temps': 'temps', 'gravite|transmutation': 'terre', 'froid|vent': 'vent', 'foudre|metal': 'foudre', 'feu|metal': 'feu', 'acide|feu': 'vent', 'acide|eau': 'eau', 'explosion|gravite': 'trounoir', 'fumee|vent': 'vent', 'foudre|lien': 'foudre', 'eau|seisme': 'eau', 'force|gravite': 'trounoir', 'terre|transmutation': 'terre',
+    'feu|gravite|temps': 'soleil', 'eau|foudre|vent': 'orage', 'feu|gravite|terre': 'feu', 'eau|gravite|vie': 'eau', 'foudre|gravite|lumiere': 'foudre', 'eau|temps|terre': 'eau', 'gravite|lumiere|temps': 'magie', 'lumiere|temps|vie': 'magie' };
   const GENRE_SON = { portail: 'magie', esprit: 'magie' };
   function sonDe(ph) { if (SONS[ph.id]) return SONS[ph.id]; const I = DATA.comboInfo(ph.id); return I && GENRE_SON[I.genre] || null; }
   let uid = 0;
   function nappes(cx, cy, demiL) { const out = []; for (const ph of liste) { if (ph.mort) continue; const ty = sonDe(ph); if (!ty) continue; if (!ph.uid) ph.uid = ++uid; const d = dist(ph.x, ph.y, cx, cy); const vol = clamp(1 - d / (demiL * 1.6), 0, 1) * Math.min(1, 0.4 + 0.3 * ph.sz) * fade(ph); if (vol > 0.02) out.push({ id: ph.uid, type: ty, vol, pan: clamp((ph.x - cx) / demiL, -1, 1) }); } return out.sort((a, b) => b.vol - a.vol); }
   // ce qui survit à une sauvegarde : les phénomènes qui durent ; l'îlot, lui, retombera au chargement
-  const GARDE = ['feu|gravite', 'feu|temps', 'eau|vent', 'eau|foudre', 'eau|gravite', 'eau|vie', 'lumiere|vent', 'foudre|lumiere', 'foudre|gravite', 'foudre|temps', 'gravite|temps', 'gravite|vent', 'froid|vent', 'acide|eau', 'acide|feu', 'fumee|vent', 'foudre|metal', 'feu|metal', 'terre|vent', 'vent|vie', 'feu|vent', 'feu|lumiere', 'foudre|lien'];
+  const GARDE = ['feu|gravite|temps', 'eau|foudre|vent', 'foudre|gravite|lumiere', 'lumiere|temps|vie', 'feu|gravite', 'feu|temps', 'eau|vent', 'eau|foudre', 'eau|gravite', 'eau|vie', 'lumiere|vent', 'foudre|lumiere', 'foudre|gravite', 'foudre|temps', 'gravite|temps', 'gravite|vent', 'froid|vent', 'acide|eau', 'acide|feu', 'fumee|vent', 'foudre|metal', 'feu|metal', 'terre|vent', 'vent|vie', 'feu|vent', 'feu|lumiere', 'foudre|lien'];
   function sauver() {
     const out = { phen: [], ilots: [] };
     for (const ph of liste) {
       if (ph.mort) continue;
-      if (ph.id === 'gravite|vie' && ph.data.c && ph.data.c.length) { out.ilots.push(ph.data.c.slice()); continue; }
+      if ((ph.id === 'gravite|vie' || ph.id === 'eau|gravite|vie') && ph.data.c && ph.data.c.length) { out.ilots.push(ph.data.c.slice()); continue; }
       const I = DATA.comboInfo(ph.id), famille = I && (I.genre === 'portail' || I.genre === 'esprit');
       if (!(GARDE.includes(ph.id) || famille) || ph.tenu || ph.life < 2 || (ph.follow && ph.follow !== st().p) || !ph.spec.seal) continue;
       out.phen.push({ id: ph.id, seal: ph.spec.seal, x: Math.round(ph.x), y: Math.round(ph.y), rect: ph.rect || null, ligne: ph.ligne || null, life: Math.round(ph.life * 10) / 10, joueur: ph.follow === st().p, eau: ph.data.eau });
@@ -640,7 +723,7 @@ function creerPhenomenes(W) {
     const pg = W.game().progress; if (!pg.combos) pg.combos = {};
     if (pg.combos[id]) { pg.combos[id]++; return; }
     pg.combos[id] = 1; const info = DATA.comboInfo(id);
-    W.msg('Découverte : ' + info.nom + ' ! ' + info.desc); W.addXp(20); pg.nouveau = true; W.evt('combo_decouvert', id);
+    W.msg('Découverte : ' + info.nom + ' ! ' + info.desc); W.addXp(info.trio ? 50 : 20); pg.nouveau = true; W.evt('combo_decouvert', id); if (info.trio) W.evt('combo_decouvert_trio', id);
   }
   function deployer(spec, x, y, r, o = {}, dir = null) {
     const id = spec.combo; const D = id && defDe(id); if (!D) return null;

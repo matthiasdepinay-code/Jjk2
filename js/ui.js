@@ -151,6 +151,7 @@ const UI = (() => {
   function slotDispo(id) {
     const s = game.editSeal, p = game.progress, t = s.taille || 'moyen';
     if (id === 'core2') return p.fusion && t !== 'petit';
+    if (id === 'core3') return p.fusion && t === 'grand';
     if (id === 'filtre') return t !== 'petit' && p.filtres.length > 0;
     if (id === 'cible') return t !== 'petit' && p.cibles.length > 1;
     if (id === 'trigger2') return t === 'grand';
@@ -176,13 +177,16 @@ const UI = (() => {
     const nb = Seal.nbSlots(s, game.progress.slots);
     for (let i = nb; i < s.mods.length; i++) s.mods[i] = null;
     if (t === 'petit') { s.core2 = null; s.filtre = null; s.cible = null; }
+    if (t !== 'grand') s.core3 = null;
     if (t !== 'grand') s.trigger2 = null;
     selSlot = null; Son.sfx('click'); refreshSeal();
   }
   function placeInSeal(kind, id) {
     const s = game.editSeal;
     if (kind === 'core') {
-      if ((selSlot === 'core2' || (game.progress.fusion && s.core && s.core !== id && !s.core2 && selSlot !== 'core')) && slotDispo('core2')) { s.core2 = id; selSlot = null; }
+      if (selSlot === 'core3' && slotDispo('core3')) { s.core3 = id; selSlot = null; }
+      else if ((selSlot === 'core2' || (game.progress.fusion && s.core && s.core !== id && !s.core2 && selSlot !== 'core')) && slotDispo('core2')) { s.core2 = id; selSlot = null; }
+      else if (!selSlot && s.core && s.core2 && !s.core3 && id !== s.core && id !== s.core2 && slotDispo('core3')) { s.core3 = id; }
       else { s.core = id; if (selSlot === 'core') selSlot = null; }
     }
     else if (kind === 'shape') { s.shape = id; if (selSlot === 'shape') selSlot = null; }
@@ -334,8 +338,8 @@ const UI = (() => {
     if (prm.traj) mv.push({ boomerang: 'revient comme un boomerang', spirale: 'vole en spirale', zigzag: 'file en zigzag', rasesol: 'court au ras du sol', cloche: 'retombe en cloche sur le point visé' }[prm.traj]); if (prm.percant) mv.push('traverse les créatures'); if (prm.gerbe) mv.push('éclate en gerbe'); if (prm.rafale) mv.push('part ' + (prm.rafale > 1 ? 5 : 3) + ' fois de suite'); if (prm.matiere) { const mt = cores.map((c) => DATA.MATIERE[c]).find(Boolean); mv.push(mt ? 'devient matière : ' + (mt === 'AIR' ? 'creuse' : Sim.P[Sim.M[mt]].nom) : 'Matière reste muette avec cet effet'); }
     { const Dm = DATA.DIMS[s.shape]; if (Dm && s.taille !== 'petit' && ((s.dimL || 1) !== 1 || (s.dimH || 1) !== 1)) mv.push(Object.keys(Dm).map((ax) => Dm[ax].toLowerCase() + ' ×' + (ax === 'l' ? s.dimL || 1 : s.dimH || 1)).join(', ')); } if (prm.power > 1) mv.push('puissance ×' + prm.power.toFixed(1)); if (prm.range > 1) mv.push('portée ×' + prm.range.toFixed(1)); if (prm.size > 1) mv.push('taille ×' + prm.size.toFixed(1)); if (prm.duration > 1) mv.push('durée ×' + prm.duration.toFixed(1)); if (prm.speed > 1) mv.push('vitesse ×' + prm.speed.toFixed(1)); if (prm.bounces) mv.push(prm.bounces + ' rebonds'); if (prm.persist) mv.push('laisse une trace'); if (prm.echo) mv.push('écho ×' + prm.echo);
     if (mv.length) L.push('Réglages : ' + mv.join(', ') + '.');
-    for (const e in prm.asp) { if (![s.core, s.core2].includes(e)) continue; const Ls = prm.asp[e]; L.push((Ls.length > 1 ? 'Aspects : ' : 'Aspect : ') + Ls.map((A) => DATA.MODS[A.id].nom + (A.n > 1 ? ' ×2' : '')).join(' et ') + ' — ' + DATA.CORES[e].nom.toLowerCase() + ' devient ' + Ls.map((A) => nomG(A.devient)).join(' et ') + '.'); }
-    for (const m of s.mods) { if (typeof m !== 'string') continue; const M2 = DATA.MODS[m]; if (M2 && M2.aspect && ![s.core, s.core2].includes(M2.aspect)) L.push('<span class="muted">' + M2.nom + ' reste muet : il lui faut l\'essence ' + DATA.CORES[M2.aspect].nom + '.</span>'); }
+    for (const e in prm.asp) { if (![s.core, s.core2, s.core3].includes(e)) continue; const Ls = prm.asp[e]; L.push((Ls.length > 1 ? 'Aspects : ' : 'Aspect : ') + Ls.map((A) => DATA.MODS[A.id].nom + (A.n > 1 ? ' ×2' : '')).join(' et ') + ' — ' + DATA.CORES[e].nom.toLowerCase() + ' devient ' + Ls.map((A) => nomG(A.devient)).join(' et ') + '.'); }
+    for (const m of s.mods) { if (typeof m !== 'string') continue; const M2 = DATA.MODS[m]; if (M2 && M2.aspect && ![s.core, s.core2, s.core3].includes(M2.aspect)) L.push('<span class="muted">' + M2.nom + ' reste muet : il lui faut l\'essence ' + DATA.CORES[M2.aspect].nom + '.</span>'); }
     for (const el in prm.lg) { const Lg = DATA.LANGAGES[el]; if (!Lg) continue; if (cores.includes(el) || [s.core, s.core2].includes(el)) L.push('Langage ' + Lg.de + ' : ' + Lg.nom + (prm.lg[el] > 1 ? ' ×2 — ' + Lg.paliers[1] : ' — ' + Lg.paliers[0])); }
     if (s.encre && DATA.ENCRES[s.encre]) { const E = DATA.ENCRES[s.encre]; L.push('Écrit à l\'' + E.nom.toLowerCase() + ' (' + ((game.inv.encres || {})[s.encre] || 0) + ' gouttes) : ' + E.effet); }
     const sb = Seal.subs(s); if (sb.length) L.push('Puis lance : ' + sb.map((q) => '« ' + Seal.nom(q) + ' »').join(', ') + '.');
@@ -438,8 +442,8 @@ const UI = (() => {
     U.txt(ctx, DATA.comboInfo(cle).nom, ix, 14, 12, 'center', '#6b4f2a', 'IM Fell English', 'italic');
   }
   // recopier une fusion ou un familier sur la table des sceaux
-  function versLaTable(seal) { game.editSeal = Seal.clone(Object.assign({ taille: 'moyen', shape: 'zone', trigger: 'immediat', mods: [] }, seal)); selSlot = null; openPanel('seal'); toast('Le sceau est posé sur la table : change la forme ou les réglages à ton idée.'); }
-  function possedeRecette(R) { const p = game.progress; const manque = []; for (const c of [R.core, R.core2].filter(Boolean)) if (!p.cores.includes(c)) manque.push(DATA.CORES[c].nom); for (const m of R.mods) if (!p.mods.includes(m)) manque.push(DATA.MODS[m].nom); if (R.core2 && !p.fusion) manque.push('la fusion'); return manque; }
+  function versLaTable(seal) { game.editSeal = Seal.clone(Object.assign({ taille: seal.core3 ? 'grand' : 'moyen', shape: 'zone', trigger: 'immediat', mods: [] }, seal)); selSlot = null; openPanel('seal'); toast('Le sceau est posé sur la table : change la forme ou les réglages à ton idée.'); }
+  function possedeRecette(R) { const p = game.progress; const manque = []; for (const c of [R.core, R.core2, R.core3].filter(Boolean)) if (!p.cores.includes(c)) manque.push(DATA.CORES[c].nom); if (R.core3 && !p.tailles.includes('grand')) manque.push('le grand sceau'); for (const m of R.mods) if (!p.mods.includes(m)) manque.push(DATA.MODS[m].nom); if (R.core2 && !p.fusion) manque.push('la fusion'); return manque; }
   function drawSealCanvas() {
     const c = $('#seal-canvas'); if (!c || open !== 'seal') return;
     const ctx = c.getContext('2d');
@@ -447,7 +451,7 @@ const UI = (() => {
     Seal.draw(ctx, game.editSeal, c.width / 2, c.height / 2 + 10, SEAL_R, { t: time, slots: game.progress.slots, highlight: selSlot, empty: true, fusion: game.progress.fusion, filtres: game.progress.filtres.length > 0, cibles: game.progress.cibles.length > 1 });
     const combo = Seal.comboName(game.editSeal);
     const cleH = DATA.comboCle(Seal.effets(game.editSeal)), infoH = cleH && DATA.comboInfo(cleH);
-    const hint = combo ? 'Fusion : ' + combo + '.' : infoH ? 'Fusion inconnue — ' + infoH.indice : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot === 'filtre' ? 'Choisis un filtre de matière.' : selSlot === 'cible' ? 'Choisis une cible.' : selSlot === 'trigger2' ? 'Choisis un second déclencheur.' : selSlot ? 'Choisis un glyphe dans la palette, ou clique à nouveau pour vider.' : game.progress.fusion ? 'Centre, formes, modificateurs, pointes. En bas : un second effet à fusionner.' : 'Clique un emplacement, puis un glyphe. Clic droit : vider.';
+    const hint = combo ? 'Fusion : ' + combo + '.' : infoH ? 'Fusion inconnue — ' + infoH.indice : selSlot === 'core2' ? 'Choisis un second glyphe d\'effet : les deux fusionnent.' : selSlot === 'core3' ? 'Un troisième effet : certaines fusions à trois existent.' : selSlot === 'filtre' ? 'Choisis un filtre de matière.' : selSlot === 'cible' ? 'Choisis une cible.' : selSlot === 'trigger2' ? 'Choisis un second déclencheur.' : selSlot ? 'Choisis un glyphe dans la palette, ou clique à nouveau pour vider.' : game.progress.fusion ? 'Centre, formes, modificateurs, pointes. En bas : un second effet à fusionner.' : 'Clique un emplacement, puis un glyphe. Clic droit : vider.';
     U.txt(ctx, hint, c.width / 2, 16, 13, 'center', '#6b4f2a', 'IM Fell English', 'italic');
   }
 
@@ -624,6 +628,10 @@ const UI = (() => {
         if (pc[k]) { const d = el('div', 'recette', '<b>' + I.nom + '</b> <span class="muted">(' + recetteCombo(k) + ', lancé ' + pc[k] + ' fois)</span><br>' + I.desc + ' '); const R = DATA.recetteCombo(k); if (R) { const manque = possedeRecette(R); const b = el('button', 'choice mini', manque.length ? 'Il te manque : ' + manque.join(', ') : 'Copier sur la table'); if (manque.length) b.disabled = true; else b.addEventListener('click', () => versLaTable(R)); d.appendChild(b); } c.appendChild(d); }
         else { const pret = k.split('|').every(possede); c.appendChild(el('div', 'recette verrou', '<b>???</b> — <i>' + I.indice + '</i>' + (pret ? ' <span class="muted">Tu as de quoi le tenter.</span>' : ''))); }
       }
+      { const tr = Object.keys(DATA.TRIOS), nt = tr.filter((k) => pc[k]).length;
+        c.appendChild(el('h3', '', 'Fusions à trois (' + nt + ' / ' + tr.length + ')'));
+        c.appendChild(el('p', 'intro', 'Le grand sceau a un troisième emplacement d\'effet, à gauche de l\'anneau intérieur.'));
+        for (const k of tr) { const I = DATA.TRIOS[k]; if (pc[k]) { const d = el('div', 'recette', '<b>' + I.nom + '</b> <span class="muted">(' + recetteCombo(k) + ')</span><br>' + I.desc + ' '); const R = DATA.recetteCombo(k); const manque = possedeRecette(R); const b = el('button', 'choice mini', manque.length ? 'Il te manque : ' + manque.join(', ') : 'Copier sur la table'); if (manque.length) b.disabled = true; else b.addEventListener('click', () => versLaTable(R)); d.appendChild(b); c.appendChild(d); } else c.appendChild(el('div', 'recette verrou', '<b>???</b> — <i>' + I.indice + '</i>')); } }
       c.appendChild(el('h3', '', 'Familles'));
       for (const g in DATA.GENRES) {
         const G = DATA.GENRES[g], faits = Object.keys(pc).filter((k) => { const I = DATA.comboInfo(k); return I && I.genre === g; });
