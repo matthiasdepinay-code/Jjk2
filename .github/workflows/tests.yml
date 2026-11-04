@@ -1,10 +1,18 @@
 # Les bancs d'essai du jeu, à chaque envoi et à chaque pull request.
 name: Tests
 
+# Les pull requests sont toutes testées ; les envois directs, seulement sur main (sinon une branche
+# avec une pull request ouverte serait testée deux fois).
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
+
+# un nouvel envoi annule l'exécution périmée du même ref
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   tests:

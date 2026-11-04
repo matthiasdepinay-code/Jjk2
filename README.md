@@ -239,7 +239,7 @@ Les modules extraits de `world.js` (phénomènes, gardiens, rendu, créatures, s
 
 Tests : `node tests/lancer.js` lance tous les bancs dans un Chromium sans écran (Playwright) : glyphes, physique, fusions (les 69 fusions lancées dans plusieurs formes), fusions à trois, Maintenu, familiers, vent, énigmes, gardiens, sauvegarde, sons, lisibilité. `node tests/lancer.js gardiens enigmes` n'en lance que certains. `node tests/outils/tactile.js` vérifie les commandes tactiles sur un téléphone simulé.
 
-Le jeu lui-même n'a aucune dépendance ; `package.json` ne sert qu'aux tests et aux outils (`npm ci`, puis `npm test`). Sur GitHub, le workflow `.github/workflows/tests.yml` lance à chaque envoi et à chaque pull request :
+Le jeu lui-même n'a aucune dépendance ; `package.json` ne sert qu'aux tests et aux outils (`npm ci`, puis `npm test`). Sur GitHub, le workflow `.github/workflows/tests.yml` lance, à chaque pull request et à chaque envoi sur `main` :
 - les bancs d'essai ;
 - les commandes tactiles ;
 - 300 sceaux au hasard ;
