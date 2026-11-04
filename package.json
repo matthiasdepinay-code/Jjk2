@@ -1,0 +1,15 @@
+{
+  "name": "atelier-des-sceaux",
+  "private": true,
+  "description": "L'Atelier des Sceaux : un bac à sable de magie dans le navigateur. Le jeu n'a aucune dépendance ; celles-ci servent aux tests et aux outils.",
+  "scripts": {
+    "test": "node tests/lancer.js",
+    "tactile": "node tests/outils/tactile.js",
+    "build": "sh build.sh"
+  },
+  "devDependencies": {
+    "acorn": "^8.19.0",
+    "acorn-walk": "^8.3.4",
+    "playwright": "1.63.0"
+  }
+}

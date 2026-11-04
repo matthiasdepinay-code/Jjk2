@@ -1,0 +1,58 @@
+# Les bancs d'essai du jeu, à chaque envoi et à chaque pull request.
+name: Tests
+
+# Les pull requests sont toutes testées ; les envois directs, seulement sur main (sinon une branche
+# avec une pull request ouverte serait testée deux fois).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# un nouvel envoi annule l'exécution périmée du même ref
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Dépendances de test (Playwright, acorn)
+        run: npm ci
+
+      - name: Chromium pour Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Bancs d'essai
+        run: node tests/lancer.js
+
+      - name: Commandes tactiles (téléphone simulé)
+        run: node tests/outils/tactile.js
+
+      - name: Table des sceaux (gestes réels)
+        run: node tests/outils/table.js
+
+      - name: Sceaux au hasard
+        run: node tests/outils/hasard.js 300 1
+
+      - name: La version mono-fichier est à jour
+        run: |
+          sh build.sh
+          git diff --exit-code -- dist/ || { echo "::error::dist/atelier-des-sceaux.html n'est pas à jour : lancer ./build.sh et commiter le résultat."; exit 1; }
+
+      - name: Captures des tests
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: captures
+          path: tests/captures/
+          if-no-files-found: ignore
