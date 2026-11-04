@@ -122,7 +122,7 @@ La forme **Invocation** fait naître le familier de l'essence posée au centre d
 
 Deux compagnons suivent l'apprenti(e) dehors, dessinés à l'encre d'après leur planche de design :
 
-- **Gribouille**, mage d'encre théâtral et génie autoproclamé, sous un grand chapeau magenta rapiécé (étiquette « G »).
+- **Gribouille**, mage d'encre théâtral et génie autoproclamé, sous un grand chapeau magenta rapiécé (étiquette « G »), un seul grand œil au milieu du visage.
   - Quand une bête hostile approche, il lance ses propres petits sorts : souvent réussis, parfois des **gaffes** (le sort lui éclate au nez et il tombe à la renverse, une bouffée de fumée sort du chapeau, ou il lance... des fleurs), rarement **géniaux**.
   - Ses sorts ne touchent que les bêtes : ils n'abîment pas le monde, ne blessent jamais l'apprenti(e) et ne réveillent pas un gardien endormi.
   - Quand ça tourne mal (un gardien éveillé, ou l'apprenti(e) presque à bout de forces), il devient rarement **Giga Gribouille** : un colosse d'encre violette qui frappe deux fois le sol, puis s'endort épuisé.

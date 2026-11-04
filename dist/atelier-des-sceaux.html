@@ -3946,7 +3946,7 @@ const Familiers = (() => {
 <script>
 'use strict';
 // ---------- Gribouille & Grum, les mascottes : dessin à l'encre, d'après la planche de design ----------
-// Gribouille : un petit mage d'encre, théâtral et curieux, sous un grand chapeau magenta rapiécé (étiquette « G »).
+// Gribouille : un petit mage d'encre à un seul grand œil, théâtral et curieux, sous un grand chapeau magenta rapiécé (étiquette « G »).
 // Grum : un golem de pierre simple, loyal et gourmand, coiffé de mousse, yeux dorés, une rune sur la poitrine.
 // Chaque dessin a son repère au pied, tourné vers la droite (on retourne le contexte pour la gauche).
 const Mascottes = (() => {
@@ -4033,7 +4033,7 @@ const Mascottes = (() => {
     ctx.globalAlpha = 1; ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.stroke();
     if (T.translucide) { ctx.fillStyle = 'rgba(255,255,255,0.7)'; for (let i = 0; i < 3; i++) { const a = t * 1.5 + i * 2.1; ctx.beginPath(); ctx.arc(Math.cos(a) * 5 - 1, -12 + Math.sin(a) * 4, 0.9, 0, TAU); ctx.fill(); } }
     if (T.fiole) { ctx.fillStyle = T.fiole; ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(-6, -6, 2.4, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillRect(-6.6, -10, 1.2, 2); }
-    // le visage : un grand œil blanc (et un plus petit derrière), selon l'humeur
+    // le visage : un seul grand œil, au milieu, selon l'humeur
     visageGribouille(ctx, e, expr, t);
     // bras de devant
     ctx.strokeStyle = T.corps; ctx.lineWidth = 2.6;
@@ -4054,8 +4054,9 @@ const Mascottes = (() => {
     if (pose === 'chute') { ctx.save(); ctx.fillStyle = '#e8c040'; ctx.strokeStyle = INK; ctx.lineWidth = 0.8; for (let i = 0; i < 3; i++) { const a = t * 5 + i * TAU / 3; etoile(ctx, -4 + Math.cos(a) * 10, -22 + Math.sin(a) * 3, 2.6, 5); ctx.fill(); ctx.stroke(); } ctx.restore(); }
   }
   function visageGribouille(ctx, e, expr, t) {
+    // un seul œil, bien au milieu du visage ; la pupille suit le regard
     const rx = (e.regard && e.regard.x) || 0.6, ry = (e.regard && e.regard.y) || 0;
-    const ox = 5, oy = -17.5;
+    const ox = -0.5, oy = -16.5;
     ctx.save();
     const blanc = '#f4efe6';
     const clignote = (t % 4.3) < 0.12 && expr !== 'surpris' && expr !== 'effraye';
@@ -4067,11 +4068,11 @@ const Mascottes = (() => {
       ctx.stroke();
     } else {
       const grand = expr === 'surpris' || expr === 'excite' || expr === 'effraye' || expr === 'curieux';
-      const erx = grand ? 6.4 : 5.6, ery = grand ? 7.8 : 6.9;
-      ctx.fillStyle = blanc; ctx.beginPath(); ctx.ellipse(ox, oy, erx, ery, 0.12, 0, TAU); ctx.fill();
+      const erx = grand ? 7 : 6.2, ery = grand ? 8 : 7.2;
+      ctx.fillStyle = blanc; ctx.beginPath(); ctx.ellipse(ox, oy, erx, ery, 0, 0, TAU); ctx.fill();
       const pr = expr === 'effraye' || expr === 'surpris' ? 1.6 : expr === 'excite' || expr === 'curieux' ? 3.2 : 2.6;
-      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ox + 1 + rx * 2, oy + 0.5 + ry * 2 + (expr === 'reflechi' ? -2.5 : 0), pr, 0, TAU); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ox + 1 + rx * 2 + pr * 0.4, oy + ry * 2 - pr * 0.3, Math.max(0.6, pr * 0.32), 0, TAU); ctx.fill();
+      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ox + rx * 2.4, oy + 0.5 + ry * 2.4 + (expr === 'reflechi' ? -2.5 : 0), pr, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ox + rx * 2.4 + pr * 0.4, oy + ry * 2.4 - pr * 0.3, Math.max(0.6, pr * 0.32), 0, TAU); ctx.fill();
       // paupières : agacé (sourcil en biais), malicieux (mi-clos), gêné ou inquiet (paupière tombante)
       ctx.fillStyle = (TENUES.gribouille[e.tenue] || TENUES.gribouille.classique).corps;
       if (expr === 'agace' || expr === 'colere' || expr === 'determine') { trait(ctx, [[ox - erx - 1, oy - ery - 1], [ox + erx + 1, oy - ery - 1], [ox + erx + 1, oy - ery * 0.15]], true); ctx.fill(); }
@@ -4080,12 +4081,13 @@ const Mascottes = (() => {
     }
     // bouche (blanche sur l'encre)
     ctx.strokeStyle = blanc; ctx.fillStyle = blanc; ctx.lineWidth = 1.1;
-    if (expr === 'content' || expr === 'triomphant' || expr === 'excite') { ctx.beginPath(); ctx.moveTo(5, -8); ctx.quadraticCurveTo(7.5, -5.8, 10, -8.2); ctx.stroke(); }
-    else if (expr === 'malicieux') { ctx.beginPath(); ctx.moveTo(4, -8.4); ctx.quadraticCurveTo(7.5, -5, 10.5, -9); ctx.lineTo(4, -8.4); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.6; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(5.4 + i * 1.6, -8.2); ctx.lineTo(5.8 + i * 1.6, -6.8); ctx.stroke(); } }
-    else if (expr === 'surpris' || expr === 'effraye') { ctx.beginPath(); ctx.ellipse(7.5, -7.6, 1.2, 1.6, 0, 0, TAU); ctx.stroke(); }
-    else if (expr === 'agace' || expr === 'colere') { ctx.beginPath(); ctx.moveTo(5, -7.6); ctx.lineTo(10, -8.4); ctx.stroke(); }
+    const bx = ox, by = -6.6;
+    if (expr === 'content' || expr === 'triomphant' || expr === 'excite') { ctx.beginPath(); ctx.moveTo(bx - 2.6, by); ctx.quadraticCurveTo(bx, by + 2.4, bx + 2.6, by); ctx.stroke(); }
+    else if (expr === 'malicieux') { ctx.beginPath(); ctx.moveTo(bx - 3, by - 0.3); ctx.quadraticCurveTo(bx + 0.5, by + 3, bx + 3.4, by - 0.8); ctx.lineTo(bx - 3, by - 0.3); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.6; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(bx - 1.6 + i * 1.6, by - 0.2); ctx.lineTo(bx - 1.2 + i * 1.6, by + 1.2); ctx.stroke(); } }
+    else if (expr === 'surpris' || expr === 'effraye') { ctx.beginPath(); ctx.moveTo(bx - 1.6, by + 0.6); ctx.quadraticCurveTo(bx, by - 1.4, bx + 1.6, by + 0.6); ctx.quadraticCurveTo(bx, by + 1.8, bx - 1.6, by + 0.6); ctx.stroke(); }
+    else if (expr === 'agace' || expr === 'colere') { ctx.beginPath(); ctx.moveTo(bx - 2.5, by + 0.4); ctx.lineTo(bx + 2.5, by - 0.4); ctx.stroke(); }
     // goutte de sueur
-    if (expr === 'inquiet' || expr === 'effraye' || expr === 'gene') { ctx.fillStyle = '#8ec8ec'; ctx.strokeStyle = INK; ctx.lineWidth = 0.7; const y = -21 + ((t * 2) % 1) * 2; ctx.beginPath(); ctx.moveTo(13, y - 3); ctx.quadraticCurveTo(15.5, y + 1, 13, y + 1.6); ctx.quadraticCurveTo(10.5, y + 1, 13, y - 3); ctx.fill(); ctx.stroke(); }
+    if (expr === 'inquiet' || expr === 'effraye' || expr === 'gene') { ctx.fillStyle = '#8ec8ec'; ctx.strokeStyle = INK; ctx.lineWidth = 0.7; const y = -21 + ((t * 2) % 1) * 2; ctx.beginPath(); ctx.moveTo(9.5, y - 3); ctx.quadraticCurveTo(12, y + 1, 9.5, y + 1.6); ctx.quadraticCurveTo(7, y + 1, 9.5, y - 3); ctx.fill(); ctx.stroke(); }
     ctx.restore();
   }
   function chapeau(ctx, T, t, pas, e) {
@@ -4145,8 +4147,8 @@ const Mascottes = (() => {
     ctx.beginPath(); ctx.moveTo(-12, -6); ctx.bezierCurveTo(-16, -18, -12, -30, 0, -31); ctx.bezierCurveTo(12, -30, 16, -18, 12, -6); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.strokeStyle = 'rgba(180,120,230,0.55)'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(0, -24); ctx.lineTo(0, -10); ctx.moveTo(-7, -20); ctx.quadraticCurveTo(-3, -17, 0, -19); ctx.moveTo(7, -20); ctx.quadraticCurveTo(3, -17, 0, -19); ctx.stroke();
     // l'œil, blanc et furieux
-    ctx.fillStyle = '#fff6ff'; ctx.beginPath(); ctx.ellipse(4, -24, 3.6, 2.6, -0.2, 0, TAU); ctx.fill(); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(5, -24, 1.2, 0, TAU); ctx.fill();
-    ctx.fillStyle = viol; trait(ctx, [[0, -28], [8, -27.5], [8, -25.6]], true); ctx.fill();
+    ctx.fillStyle = '#fff6ff'; ctx.beginPath(); ctx.ellipse(0, -23.5, 4.2, 3, 0, 0, TAU); ctx.fill(); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(0.8, -23.5, 1.3, 0, TAU); ctx.fill();
+    ctx.fillStyle = viol; trait(ctx, [[-4.6, -27.6], [4.6, -27.6], [4.6, -25.2]], true); ctx.fill();
     ctx.restore();
     // le chapeau, resté petit sur le colosse
     ctx.save(); ctx.translate(0, -31 * S + 30); chapeau(ctx, T, t, 0, e); ctx.restore();
