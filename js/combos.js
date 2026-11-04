@@ -59,7 +59,8 @@ function creerPhenomenes(W) {
     if (joueur) pousse(st().p, joueur);
   }
   function blesser(c, d) { if (c && c.hp > 0) W.hurt(c, d); }
-  function blesserJoueur(d, txt) { const p = st().p; if (p.sta.stone > 0 || p.sta.garde > 0) return; p.hp -= d; if (txt && W.time() - (p.phenT || -9) > 2) { p.phenT = W.time(); W.msg(txt, 'warn'); } }
+  let phCourant = null;
+  function blesserJoueur(d, txt) { if (phCourant && phCourant.follow && phCourant.follow.t === 'familier') return; const p = st().p; if (p.sta.stone > 0 || p.sta.garde > 0) return; p.hp -= d; if (txt && W.time() - (p.phenT || -9) > 2) { p.phenT = W.time(); W.msg(txt, 'warn'); } }
   function nuage(ctx, x, y, r, couleur, a, t) { ctx.save(); ctx.fillStyle = couleur; for (let k = 0; k < 7; k++) { const ox = Math.cos(k * 1.7 + t * 0.3) * r * 0.7, oy = Math.sin(k * 2.3) * r * 0.22; ctx.globalAlpha = a * (0.6 + 0.4 * Math.sin(k + t)); ctx.beginPath(); ctx.arc(x + ox, y + oy, r * (0.38 + 0.12 * Math.sin(k * 3.1)), 0, TAU); ctx.fill(); } ctx.restore(); }
   // plateformes solides (arc-en-ciel, air solide, miroir) : des objets invisibles que le monde traite comme solides
   function plateforme(ph, x, y, w, h) { const o = { t: 'magie', x, y, w, h, solid: true, ph }; st().objs.push(o); (ph.objs = ph.objs || []).push(o); return o; }
@@ -665,6 +666,7 @@ function creerPhenomenes(W) {
       if (ph.tenu) { if (!W.tient(ph.tenu.hand) || !W.boire(ph.tenu.drain * d)) { if (ph.D.relache) { try { ph.D.relache(ph); } catch (e) { console.warn(e); } } finir(ph, !ph.D.relache); continue; } ph.life = Math.max(ph.life, 0.6); if (ph.liens) for (const q of ph.liens) q.life = Math.max(q.life, 0.6); if (!ph.follow) viser(ph, d); }
       if (ph.follow) { const e = ph.follow; if (e.mort || (e.hp !== undefined && e.hp <= 0 && e !== st().p) || (e.life !== undefined && e.k && e.life <= 0)) { ph.life = 0; } else { const nx = e.w ? e.x + e.w / 2 : e.x, ny = e.h ? e.y + e.h / 2 : e.y; deplacer(ph, nx - ph.x, ny - ph.y); } }
       else bouger(ph, d);
+      phCourant = ph;
       try { if (ph.D.tick) ph.D.tick(ph, d); } catch (e) { console.warn('phénomène', ph.id, e); ph.life = 0; }
       if (ph.life <= 0) finir(ph);
     }

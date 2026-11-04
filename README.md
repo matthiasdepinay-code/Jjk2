@@ -75,6 +75,32 @@ Tout tient dans le navigateur : pas d'installation, pas de dépendance, sauvegar
 - **Prise** : saisir de la matière (l'eau d'un lac, du sable, des créatures), la promener, puis la lancer d'un geste sur un golem.
 - **Encres spéciales** : sept ingrédients ne se trouvent qu'en creusant (X) dans leur région (cœur de braise au volcan, nacre au fond du lac, ambre en forêt, givre bleu en montagne, poudre d'or aux ruines, sable chantant au désert, pollen à la clairière). Brassées au chaudron, elles donnent huit gouttes ; on choisit l'encre d'un sceau à la table, une goutte par lancer.
 
+## Familiers
+
+La forme **Invocation** fait naître le familier de l'essence posée au centre du sceau. Chacun est dessiné à l'encre et porte au-dessus de la tête un petit sceau qui dit qu'il est à toi. Il te suit à sa place, défend tout ce qui approche à 300 px autour de toi, et a son don :
+
+| Essence | Familier | Ce qu'il fait |
+|---|---|---|
+| Feu | Salamandre de braise | Court au sol, crache un jet de flammes, nage dans la lave, chasse le grand froid. |
+| Eau | Ondine | Lance des jets d'eau, éteint les flammes autour de toi, te soigne doucement, file dans l'eau. |
+| Terre | Petit golem | Se place entre toi et le danger, retient les créatures, les assomme d'un coup de poing. |
+| Vent | Sylphe | Hirondelle de vent : fend tes ennemis en les repoussant, chasse la fumée. |
+| Vie | Pousse | L'herbe pousse sous ses pas ; elle te soigne et entrave tes ennemis dans des racines. |
+| Lumière | Luciole | Éclaire loin, éblouit les créatures d'un éclair. |
+| Foudre | Oiseau-tonnerre | Foudroie sa cible, l'arc saute sur une seconde créature. |
+| Gravité | Petite lune | Tourne autour de toi, soulève une créature puis la laisse retomber. |
+| Temps | Chouette du temps | Enferme tes ennemis dans une bulle de temps lent ; ton encre revient plus vite. |
+| Espace | Renard des failles | Saute de faille en faille jusqu'à sa proie, la mord, parfois l'envoie ailleurs. |
+| Esprit | Chat d'ombre | Endort les créatures qu'il frôle. |
+| Transmutation | Ouroboros | Roule comme un anneau ; sous sa proie, la terre devient boue, la pierre sable. |
+| Contre-sort | Pie grise | Étourdit, chipe parfois un trésor, défait la brûlure et la lenteur qui t'accablent. |
+| Métamorphose | Chenille | Chenille, puis cocon, puis papillon qui change tes ennemis en petites bêtes. |
+
+- Les modificateurs comptent : Double invoque deux familiers, Puissance les rend plus robustes, Durée les fait rester plus longtemps, Taille les fait plus grands. Un aspect change leur coup : l'Ondine de l'Eau avec Gel gèle ce qu'elle touche.
+- Avec une fusion, le familier porte le phénomène, et il se tient alors plus loin de toi pour ne pas te brûler.
+- Les familiers ne craignent pas tes sorts ni ceux des autres familiers. Seules les créatures hostiles les blessent, au contact. On en garde six au plus à la fois.
+- Le bestiaire du grimoire les révèle à la première invocation.
+
 ## Fusions : quand deux essences s'allient
 
 Deux effets dans un même sceau (le second sous le cercle, sur un sceau moyen ou grand) peuvent fusionner. Une fusion connue fait naître un **phénomène** : il dure, il a sa propre physique, il agit sur le monde, et il **remplace** les deux effets de base. Un aspect compte comme son effet : Eau + Gel, c'est le froid ; Gravité + Attraction, c'est la force.

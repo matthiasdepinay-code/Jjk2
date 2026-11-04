@@ -371,6 +371,7 @@
       <p>La <b>Gravité</b> ne sert pas qu'à voler : elle pose un champ de pesanteur dans le sens où tu la lances. Lancée vers la droite, tout y tombe à droite, même l'eau et le sable ; vers le haut, tout tombe vers le ciel. Avec Puissance, la pesanteur écrase ; avec Inverser, plus rien ne pèse. Sur toi, elle pointe vers la surface que tu vises : tu marches sur les murs et au plafond. Vise le vide pour voler, ajoute Puissance pour devenir une enclume.</p>
       <p>Un sceau moyen ou grand se <b>sculpte</b> : sous le cercle, règle la largeur et la hauteur de la forme. Un Mur très large et très bas se couche en pont ; une Colonne étroite et haute monte jusqu'au ciel. Le glyphe <b>Matière</b> rend l'effet solide : l'Eau gelée devient des lames de glace à jeter sur les monstres, un pont, ou la grêle. <b>Rafale</b> lance une volée. La Gravité et le Temps prennent la forme qu'on leur donne : une colonne qui écrase, un mur où tout ralentit.</p>
       <p>Deux essences dans un même sceau peuvent <b>fusionner</b> : le Feu tenu par la Gravité devient un <b>petit soleil</b> qui flotte, attire et chauffe tout autour ; l'Eau et la Lumière tendent un arc-en-ciel sur lequel on marche ; la Gravité et la Terre font tomber un météore. Le grimoire garde la trace des fusions que tu découvres, et donne un indice pour les autres. La forme du sceau compte : une colonne, un mur, un trait donnent au phénomène leur forme.</p>
+      <p>La forme <b>Invocation</b> fait naître le familier de l'essence au centre : une salamandre de braise pour le Feu, une ondine pour l'Eau, un petit golem pour la Terre, une luciole pour la Lumière, un chat d'ombre pour l'Esprit... Chacun a son coup et son don, et le bestiaire du grimoire les garde en mémoire.</p>
       <p>Le déclencheur <b>Maintenu</b> fait vivre un sort tant que tu tiens le clic : il naît dès que tu appuies, suit ta souris, boit ton encre, et disparaît quand tu lâches. Promène un petit soleil, pousse une tornade de feu, porte une sphère d'eau puis lâche-la où tu veux. Une Singularité tenue rassemble tout, et éclate quand tu la lâches.</p>
       <p>Le monde a sa <b>physique</b> : la chaleur se propage (la lave chauffe la pierre, la glace fond près d'elle, l'air chaud monte), ce qui ne tient plus sur rien s'effondre, le bois flotte et la pierre coule, et ce qui tombe de haut fait mal.</p>
       <p>Mon <b>corbeau</b> passera de temps en temps à la fenêtre avec une lettre : des commandes, des épreuves, des sceaux à inventer. Réponds-y, il te rapportera des choses qu'on ne trouve nulle part ailleurs.</p>
@@ -721,7 +722,7 @@ const DATA = (() => {
     vague:      { id: 'vague',      nom: 'Vague',      cout: 3, desc: 'Une vague roule au ras du sol dans le sens du lancer : elle porte l\'effet tout le long et emporte les créatures.' },
     colonne:    { id: 'colonne',    nom: 'Colonne',    cout: 3, desc: 'Un jet vertical jaillit du sol là où tu vises : il porte l\'effet et soulève tout ce qui s\'y trouve (geyser d\'eau, pilier de feu, courant d\'air...).' },
     bouclier:   { id: 'bouclier',   nom: 'Bouclier',   cout: 3, desc: 'Un arc devant toi, tourné vers la souris, qui porte l\'élément : le feu brûle ce qui le touche, le froid gèle l\'eau, le vent renvoie, la terre bloque. Il repousse aussi l\'eau et le sable : marche au fond du lac.' },
-    invocation: { id: 'invocation', nom: 'Invocation', cout: 6, desc: 'Un petit familier de l\'élément te suit et attaque ce qui t\'attaque.' },
+    invocation: { id: 'invocation', nom: 'Invocation', cout: 6, desc: 'Fait naître le familier de l\'essence du centre : salamandre de braise, ondine, petit golem, sylphe, pousse, luciole, oiseau-tonnerre, petite lune, chouette du temps, renard des failles, chat d\'ombre, ouroboros, pie grise ou chenille. Il te suit et défend. Double : deux familiers.' },
   };
   // Modificateurs (anneau extérieur)
   const MODS = {
@@ -1011,6 +1012,25 @@ const DATA = (() => {
     tortue:   { id: 'tortue',   nom: 'Tortue des sables',   mode: 'walk',  w: 34, h: 18, hp: 6, dmg: 0, hostile: false, aime: 'eau',     craint: 'gravite', drop: 'poussiere',  desc: 'Une carapace à toute épreuve. Adore l\'eau, déteste flotter.', couleur: '#a3844f', immune: ['feu', 'foudre', 'acide', 'froid'], peur: 0 },
     lapin:    { id: 'lapin',    nom: 'Lapin de neige',      mode: 'hop',   w: 22, h: 20, hp: 2, dmg: 0, hostile: false, aime: 'froid',   craint: 'feu',     drop: 'flocon',     desc: 'Bondit dans la poudreuse, fuit la moindre flamme.', couleur: '#f6f8fa', peur: 110, diurne: true },
     familier: { id: 'familier', nom: 'Familier',            mode: 'fly',   w: 20, h: 20, hp: 4, dmg: 0, hostile: false, aime: null, craint: null, drop: null, desc: 'Un petit élémentaire invoqué.' },
+  };
+
+  // Familiers : la forme Invocation fait naître la créature de l'essence du sceau
+  // mode : sol (marche), vol (vole), orbite (tourne autour de toi), roue (roule), chenille (rampe, se nymphose, s'envole)
+  const FAMILIERS = {
+    feu:           { nom: 'Salamandre de braise', mode: 'sol',      w: 34, h: 16, pv: 6,  vitesse: 175, portee: 120, cadence: 1.1, lum: 80,  desc: 'Elle court au sol et crache un jet de flammes sur tes ennemis. Elle nage dans la lave et, près de toi, chasse le grand froid.' },
+    eau:           { nom: 'Ondine',               mode: 'vol',      w: 22, h: 32, pv: 5,  vitesse: 150, portee: 150, cadence: 1.3,           desc: 'Une goutte qui a une âme : elle lance des jets d\'eau, éteint les flammes autour de toi et te soigne doucement. Dans l\'eau, elle file.' },
+    terre:         { nom: 'Petit golem',          mode: 'sol',      w: 30, h: 34, pv: 14, vitesse: 85,  portee: 36,  cadence: 1.4,           desc: 'Lent et solide : il se place entre toi et le danger, retient les créatures et les assomme d\'un coup de poing.' },
+    vent:          { nom: 'Sylphe',               mode: 'vol',      w: 26, h: 16, pv: 4,  vitesse: 330, portee: 260, cadence: 1.2,           desc: 'Une hirondelle de vent : elle fend tes ennemis en les repoussant, et chasse la fumée autour de toi.' },
+    vie:           { nom: 'Pousse',               mode: 'sol',      w: 22, h: 26, pv: 6,  vitesse: 100, portee: 160, cadence: 2.2,           desc: 'Une graine qui marche : l\'herbe pousse sous ses pas, elle te soigne et entrave tes ennemis dans des racines.' },
+    lumiere:       { nom: 'Luciole',              mode: 'vol',      w: 16, h: 14, pv: 4,  vitesse: 160, portee: 120, cadence: 2.4, lum: 250, desc: 'Elle éclaire loin autour d\'elle et éblouit les créatures d\'un éclair.' },
+    foudre:        { nom: 'Oiseau-tonnerre',      mode: 'vol',      w: 26, h: 18, pv: 4,  vitesse: 380, portee: 210, cadence: 1.1, lum: 60,  desc: 'Vif comme l\'éclair : il foudroie sa cible, et l\'arc saute sur une seconde créature.' },
+    gravite:       { nom: 'Petite lune',          mode: 'orbite',   w: 18, h: 18, pv: 7,  vitesse: 220, portee: 220, cadence: 2.6,           desc: 'Elle tourne autour de toi ; elle soulève une créature, puis la laisse retomber lourdement.' },
+    temps:         { nom: 'Chouette du temps',    mode: 'vol',      w: 24, h: 26, pv: 5,  vitesse: 140, portee: 210, cadence: 3.5,           desc: 'Ses yeux sont deux cadrans : elle enferme tes ennemis dans une bulle de temps lent, et ton encre revient plus vite.' },
+    portail:       { nom: 'Renard des failles',   mode: 'sol',      w: 32, h: 20, pv: 6,  vitesse: 210, portee: 240, cadence: 1.6,           desc: 'Taillé dans un ciel de nuit, il saute d\'une faille à l\'autre jusqu\'à sa proie, la mord, et parfois l\'envoie ailleurs.' },
+    esprit:        { nom: 'Chat d\'ombre',       mode: 'sol',      w: 28, h: 20, pv: 5,  vitesse: 185, portee: 34,  cadence: 2.5,           desc: 'Silencieux comme une pensée : il endort les créatures qu\'il frôle.' },
+    transmutation: { nom: 'Ouroboros',            mode: 'roue',     w: 22, h: 22, pv: 7,  vitesse: 230, portee: 30,  cadence: 2.2,           desc: 'Le serpent qui se mord la queue roule comme un anneau ; sous sa proie, la terre devient boue et la pierre sable.' },
+    contre:        { nom: 'Pie grise',            mode: 'vol',      w: 26, h: 18, pv: 5,  vitesse: 270, portee: 30,  cadence: 1.8,           desc: 'Elle vole la magie : elle étourdit sa cible, lui arrache parfois un trésor, et défait les maux qui t\'accablent.' },
+    metamorphose:  { nom: 'Chenille',             mode: 'chenille', w: 26, h: 12, pv: 5,  vitesse: 45,  portee: 170, cadence: 4.5,           desc: 'D\'abord une chenille qui grignote, puis un cocon, puis un papillon qui change tes ennemis en petites bêtes.' },
   };
 
   // Trophées : souvenirs offerts par le maître, exposés au labo
@@ -1321,7 +1341,7 @@ const DATA = (() => {
   // affinité : combien un geste aimé rapproche (sur 100)
   const AFFINITE = { golem: { gain: 4, parJour: 20 }, follet: { gain: 12 }, limace: { gain: 15 }, salamandre: { gain: 14 }, chauve: { gain: 15 } };
 
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle };
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle, FAMILIERS };
 })();
 
 </script>
@@ -3187,6 +3207,273 @@ const Gen = (() => {
 </script>
 <script>
 'use strict';
+// ---------- Familiers : une créature par essence, dessinée à l'encre ----------
+// Le dessin seul vit ici ; leur comportement est dans world.js (updateFamilier).
+const Familiers = (() => {
+  const TAU = Math.PI * 2, INK = U.INK;
+  const oeil = (ctx, x, y, r = 2.4, iris = INK, fond = '#efe3c4') => { ctx.fillStyle = fond; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); ctx.fillStyle = iris; ctx.beginPath(); ctx.arc(x + r * 0.3, y, r * 0.48, 0, TAU); ctx.fill(); };
+  const trait = (ctx, pts, close = false) => { ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); if (close) ctx.closePath(); };
+
+  // chaque dessin : repère au pied de la créature, tourné vers la droite (le monde retourne selon c.dir)
+  const D = {
+    // Salamandre de braise : un lézard couleur de braise, la queue terminée par une flamme
+    feu(ctx, c, t, w, h) {
+      const pas = Math.abs(c.vx) > 15 ? Math.sin(t * 16) : 0;
+      ctx.lineWidth = 1.6;
+      for (const [lx, s] of [[-w * 0.2, 1], [w * 0.18, -1]]) { const o = pas * s * 3; trait(ctx, [[lx, -h * 0.35], [lx - 3 + o, -1], [lx - 6 + o, 0]]); ctx.stroke(); trait(ctx, [[lx + 4, -h * 0.35], [lx + 6 - o, -1], [lx + 9 - o, 0]]); ctx.stroke(); }
+      // queue
+      ctx.lineWidth = 3.2; ctx.strokeStyle = '#a8401c'; ctx.beginPath(); ctx.moveTo(-w * 0.32, -h * 0.5); ctx.quadraticCurveTo(-w * 0.6, -h * 0.25 + pas * 2, -w * 0.78, -h * 0.75); ctx.stroke(); ctx.lineWidth = 1.4; ctx.strokeStyle = c.hurt > 0 ? '#9a2a2a' : INK; ctx.stroke();
+      FX.flamme(ctx, -w * 0.8, -h * 0.72, 11, 6, t * 1.3 + c.seed, 0, 0.95);
+      // corps et tête
+      const g = ctx.createLinearGradient(0, -h, 0, 0); g.addColorStop(0, '#e07a34'); g.addColorStop(1, '#a8401c'); ctx.fillStyle = g;
+      ctx.beginPath(); ctx.ellipse(0, -h * 0.48, w * 0.36, h * 0.3, 0, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(w * 0.38, -h * 0.58, w * 0.16, h * 0.24, -0.2, 0, TAU); ctx.fill(); ctx.stroke();
+      // taches de braise qui pulsent
+      for (let k = 0; k < 4; k++) { ctx.fillStyle = 'rgba(246,208,128,' + (0.55 + 0.4 * Math.sin(t * 5 + k * 1.7)) + ')'; ctx.beginPath(); ctx.arc(-w * 0.22 + k * w * 0.13, -h * 0.6 + (k % 2) * 2, 1.6, 0, TAU); ctx.fill(); }
+      ctx.lineWidth = 1; trait(ctx, [[-w * 0.3, -h * 0.75], [-w * 0.15, -h * 0.82], [0, -h * 0.79], [w * 0.15, -h * 0.84]]); ctx.stroke();
+      oeil(ctx, w * 0.44, -h * 0.66, 2, '#5a1a0a', '#f6d080');
+      if (c.souffle > 0) FX.flamme(ctx, w * 0.62, -h * 0.5, 8, 5, t * 3, 1, c.souffle);
+    },
+    // Ondine : une goutte qui a une âme, chevelure d'eau, sans pieds
+    eau(ctx, c, t, w, h) {
+      const fl = Math.sin(t * 3), r = w * 0.42, cy = -h * 0.62;
+      ctx.save(); ctx.globalAlpha = 0.9;
+      // queue d'eau qui ondule sous elle
+      ctx.fillStyle = 'rgba(90,150,210,0.45)'; ctx.strokeStyle = '#2a4a7a'; ctx.lineWidth = 1.3;
+      ctx.beginPath(); ctx.moveTo(-r * 0.8, cy + r * 0.5); ctx.quadraticCurveTo(-r * 0.2 + fl * 3, -h * 0.15, -r * 0.6 + fl * 5, 0); ctx.quadraticCurveTo(r * 0.3 + fl * 2, -h * 0.2, r * 0.8, cy + r * 0.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+      // chevelure : mèches d'eau qui flottent vers l'arrière
+      ctx.strokeStyle = '#3b6fb6'; ctx.lineWidth = 1.6;
+      for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.moveTo(-r * 0.2, cy - r * 0.75 + k * 2.5); for (let i = 1; i <= 6; i++) ctx.lineTo(-r * 0.2 - i * 3.4, cy - r * 0.75 + k * 2.5 + i * 2.4 + Math.sin(t * 4 + i * 0.9 + k) * 2); ctx.stroke(); }
+      // tête-goutte, pointe vers le haut
+      const g = ctx.createRadialGradient(-r * 0.3, cy - r * 0.3, 1, 0, cy, r * 1.3); g.addColorStop(0, 'rgba(200,228,248,0.95)'); g.addColorStop(1, 'rgba(70,130,200,0.7)'); ctx.fillStyle = g;
+      ctx.beginPath(); ctx.moveTo(0, cy - r * 1.55); ctx.bezierCurveTo(r * 0.35, cy - r * 1.0, r, cy - r * 0.55, r, cy); ctx.arc(0, cy, r, 0, Math.PI); ctx.bezierCurveTo(-r, cy - r * 0.55, -r * 0.35, cy - r * 1.0, 0, cy - r * 1.55); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = c.hurt > 0 ? '#9a2a2a' : '#2a4a7a'; ctx.lineWidth = 1.5; ctx.stroke();
+      // bras en volutes
+      ctx.lineWidth = 1.3; for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * r * 0.85, cy + r * 0.3); ctx.quadraticCurveTo(s * r * 1.5, cy + r * 0.2 + Math.sin(t * 3 + s) * 2, s * r * 1.35, cy - r * 0.3); ctx.stroke(); }
+      ctx.restore();
+      ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.beginPath(); ctx.ellipse(r * 0.4, cy - r * 0.5, 1.5, 3.4, 0.5, 0, TAU); ctx.fill();
+      oeil(ctx, r * 0.35, cy, 1.8, '#1f3a66', '#f2f8fc'); oeil(ctx, -r * 0.25, cy, 1.8, '#1f3a66', '#f2f8fc');
+      ctx.strokeStyle = '#2a4a7a'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(r * 0.05, cy + r * 0.35, 2, 0.2, Math.PI - 0.2); ctx.stroke();
+    },
+    // Petit golem : des blocs de pierre hachurés, une touffe de mousse, deux yeux d'ambre
+    terre(ctx, c, t, w, h) {
+      const pas = Math.abs(c.vx) > 10 ? Math.sin(t * 8) : 0, coup = c.coup > 0 ? c.coup : 0;
+      ctx.lineWidth = 1.7; ctx.fillStyle = '#a8977a';
+      // jambes
+      U.inkPolyPath(ctx, [[-w * 0.32 + pas * 2, -h * 0.3], [-w * 0.08 + pas * 2, -h * 0.3], [-w * 0.1 + pas * 2, 0], [-w * 0.34 + pas * 2, 0]], c.seed, 0.5); ctx.fill(); ctx.stroke();
+      U.inkPolyPath(ctx, [[w * 0.06 - pas * 2, -h * 0.3], [w * 0.3 - pas * 2, -h * 0.3], [w * 0.32 - pas * 2, 0], [w * 0.08 - pas * 2, 0]], c.seed + 1, 0.5); ctx.fill(); ctx.stroke();
+      // torse et tête
+      ctx.fillStyle = '#b3a283'; U.inkPolyPath(ctx, [[-w * 0.45, -h * 0.28], [-w * 0.5, -h * 0.62], [-w * 0.3, -h * 0.72], [w * 0.32, -h * 0.74], [w * 0.5, -h * 0.6], [w * 0.44, -h * 0.28]], c.seed + 2, 0.8); ctx.fill(); ctx.stroke();
+      U.hatch(ctx, -w * 0.5, -h * 0.74, w, h * 0.46, 4, Math.PI / 4, c.seed, 0.28);
+      ctx.fillStyle = '#a8977a'; U.inkPolyPath(ctx, [[-w * 0.26, -h * 0.72], [-w * 0.22, -h * 0.98], [w * 0.24, -h], [w * 0.28, -h * 0.73]], c.seed + 3, 0.6); ctx.fill(); ctx.stroke();
+      // bras : celui de devant frappe
+      ctx.fillStyle = '#a8977a';
+      U.inkPolyPath(ctx, [[-w * 0.5, -h * 0.66], [-w * 0.66, -h * 0.6], [-w * 0.62, -h * 0.3], [-w * 0.46, -h * 0.32]], c.seed + 4, 0.5); ctx.fill(); ctx.stroke();
+      const ax = w * 0.5 + coup * 10; U.inkPolyPath(ctx, [[w * 0.44, -h * 0.66], [ax + w * 0.16, -h * 0.6 - coup * 6], [ax + w * 0.14, -h * 0.34 - coup * 8], [ax - w * 0.02, -h * 0.34]], c.seed + 5, 0.5); ctx.fill(); ctx.stroke();
+      // fissure, mousse, yeux
+      ctx.lineWidth = 1; U.inkLine(ctx, -w * 0.1, -h * 0.7, w * 0.05, -h * 0.5, c.seed + 6, 0.6);
+      ctx.fillStyle = '#6a9a45'; for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.ellipse(-w * 0.15 + k * w * 0.08, -h - 1.5 - (k % 2) * 1.5, 2.6, 1.8, 0, 0, TAU); ctx.fill(); }
+      ctx.fillStyle = '#e8a040'; ctx.beginPath(); ctx.arc(-w * 0.06, -h * 0.86, 2, 0, TAU); ctx.arc(w * 0.14, -h * 0.86, 2, 0, TAU); ctx.fill();
+      FX.glow(ctx, w * 0.04, -h * 0.86, 9, '#e8a040', 0.35);
+    },
+    // Sylphe : une hirondelle tracée en quelques traits de vent
+    vent(ctx, c, t, w, h) {
+      const bat = Math.sin(t * 15) * 0.6;
+      ctx.save(); ctx.globalAlpha = 0.35; ctx.strokeStyle = '#3f9c9b'; ctx.lineWidth = 1.2;
+      for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(-w * 0.4, -h * 0.4 + k * 3); ctx.quadraticCurveTo(-w * 0.9, -h * 0.5 + k * 3 + Math.sin(t * 6 + k) * 3, -w * 1.3, -h * 0.35 + k * 4); ctx.stroke(); }
+      ctx.restore();
+      ctx.fillStyle = 'rgba(160,215,212,0.9)'; ctx.lineWidth = 1.5;
+      // queue fourchue
+      trait(ctx, [[-w * 0.3, -h * 0.45], [-w * 0.62, -h * 0.2], [-w * 0.4, -h * 0.45], [-w * 0.66, -h * 0.62], [-w * 0.3, -h * 0.5]], true); ctx.fill(); ctx.stroke();
+      // corps
+      ctx.beginPath(); ctx.ellipse(0, -h * 0.48, w * 0.34, h * 0.18, 0, 0, TAU); ctx.fill(); ctx.stroke();
+      // ailes en croissant
+      for (const s of [1, -0.6]) { ctx.beginPath(); ctx.moveTo(-w * 0.05, -h * 0.5); ctx.quadraticCurveTo(w * 0.05, -h * (0.5 + 0.9 * (bat * s + 0.6)), -w * 0.5, -h * (0.5 + 0.7 * (bat * s + 0.5))); ctx.quadraticCurveTo(-w * 0.1, -h * (0.5 + 0.3 * (bat * s + 0.6)), -w * 0.05, -h * 0.5); ctx.fill(); ctx.stroke(); }
+      // tête, œil, spirale de vent sur la poitrine
+      ctx.beginPath(); ctx.arc(w * 0.32, -h * 0.55, h * 0.16, 0, TAU); ctx.fill(); ctx.stroke();
+      trait(ctx, [[w * 0.45, -h * 0.58], [w * 0.56, -h * 0.54], [w * 0.45, -h * 0.5]]); ctx.stroke();
+      oeil(ctx, w * 0.35, -h * 0.58, 1.5);
+      ctx.strokeStyle = '#3f9c9b'; ctx.lineWidth = 1; ctx.beginPath(); for (let i = 0; i <= 14; i++) { const a = i / 14 * TAU * 1.5, r = 0.5 + i * 0.25; const x = Math.cos(a) * r, y = -h * 0.45 + Math.sin(a) * r * 0.6; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke();
+    },
+    // Pousse : une graine qui marche, deux feuilles sur la tête, des racines pour pieds
+    vie(ctx, c, t, w, h) {
+      const pas = Math.abs(c.vx) > 10 ? Math.sin(t * 12) : 0;
+      ctx.lineWidth = 1.4; ctx.strokeStyle = '#6b4f2a';
+      for (const [x, s] of [[-w * 0.18, 1], [w * 0.16, -1]]) { ctx.beginPath(); ctx.moveTo(x, -h * 0.2); ctx.quadraticCurveTo(x + pas * s * 3, -h * 0.08, x - 3 + pas * s * 4, 0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, -h * 0.15); ctx.lineTo(x + 3, 0); ctx.stroke(); }
+      ctx.strokeStyle = c.hurt > 0 ? '#9a2a2a' : INK; ctx.lineWidth = 1.6;
+      const g = ctx.createRadialGradient(-w * 0.1, -h * 0.55, 1, 0, -h * 0.45, w * 0.5); g.addColorStop(0, '#c8c070'); g.addColorStop(1, '#8a8a40'); ctx.fillStyle = g;
+      ctx.beginPath(); ctx.ellipse(0, -h * 0.42, w * 0.42, h * 0.3, 0, 0, TAU); ctx.fill(); ctx.stroke();
+      // tige et feuilles qui se balancent
+      const bal = Math.sin(t * 2.5) * 0.25;
+      ctx.strokeStyle = '#4e7a2a'; ctx.beginPath(); ctx.moveTo(0, -h * 0.7); ctx.quadraticCurveTo(1, -h * 0.85, 0, -h * 0.95); ctx.stroke(); ctx.strokeStyle = INK;
+      ctx.fillStyle = '#78a24a';
+      for (const s of [-1, 1]) { ctx.save(); ctx.translate(0, -h * 0.95); ctx.rotate(s * (-0.35 + bal * s)); ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(s * w * 0.25, -h * 0.22, s * w * 0.62, -h * 0.08); ctx.quadraticCurveTo(s * w * 0.3, h * 0.08, 0, 0); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(s * w * 0.3, -h * 0.08, s * w * 0.55, -h * 0.07); ctx.lineWidth = 0.8; ctx.stroke(); ctx.restore(); }
+      oeil(ctx, w * 0.12, -h * 0.48, 1.8); oeil(ctx, -w * 0.12, -h * 0.48, 1.8);
+      ctx.fillStyle = 'rgba(217,98,43,0.35)'; ctx.beginPath(); ctx.arc(w * 0.26, -h * 0.36, 2, 0, TAU); ctx.arc(-w * 0.26, -h * 0.36, 2, 0, TAU); ctx.fill();
+    },
+    // Luciole : un corps sombre, un abdomen qui palpite de lumière, des ailes de verre
+    lumiere(ctx, c, t, w, h) {
+      const pul = 0.65 + 0.35 * Math.sin(t * 4), bat = Math.sin(t * 30);
+      FX.glow(ctx, -w * 0.2, -h * 0.4, 30, '#f6e080', 0.55 * pul);
+      ctx.fillStyle = 'rgba(240,236,220,0.45)'; ctx.lineWidth = 1;
+      for (const s of [1, 0.7]) { ctx.beginPath(); ctx.ellipse(w * 0.02, -h * 0.75, w * 0.32, h * 0.18 * (0.4 + 0.6 * Math.abs(bat * s)), -0.4, 0, TAU); ctx.fill(); ctx.stroke(); }
+      ctx.fillStyle = 'rgba(246,224,128,' + pul + ')'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.ellipse(-w * 0.22, -h * 0.4, w * 0.26, h * 0.26, 0.2, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.lineWidth = 0.8; for (let k = 1; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(-w * 0.22 - k * 3, -h * 0.62); ctx.lineTo(-w * 0.22 - k * 3, -h * 0.18); ctx.stroke(); }
+      ctx.lineWidth = 1.4; ctx.fillStyle = '#4a3a22'; ctx.beginPath(); ctx.ellipse(w * 0.16, -h * 0.45, w * 0.2, h * 0.2, 0, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.lineWidth = 1; trait(ctx, [[w * 0.3, -h * 0.55], [w * 0.42, -h * 0.85], [w * 0.5, -h * 0.9]]); ctx.stroke(); trait(ctx, [[w * 0.26, -h * 0.58], [w * 0.3, -h * 0.9], [w * 0.36, -h]]); ctx.stroke();
+      oeil(ctx, w * 0.26, -h * 0.48, 1.3, INK, '#f6e080');
+    },
+    // Oiseau-tonnerre : un petit oiseau jaune aux ailes en zigzag, une crête d'étincelles
+    foudre(ctx, c, t, w, h) {
+      const bat = Math.sin(t * 18);
+      ctx.fillStyle = '#e8d060'; ctx.lineWidth = 1.5;
+      trait(ctx, [[-w * 0.3, -h * 0.45], [-w * 0.62, -h * 0.3], [-w * 0.5, -h * 0.45], [-w * 0.68, -h * 0.55], [-w * 0.3, -h * 0.55]], true); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0, -h * 0.5, w * 0.32, h * 0.24, 0, 0, TAU); ctx.fill(); ctx.stroke();
+      // aile en éclair
+      const a = bat * h * 0.5;
+      ctx.fillStyle = '#f0e090'; trait(ctx, [[-w * 0.1, -h * 0.55], [w * 0.05, -h * 0.75 - a * 0.4], [-w * 0.1, -h * 0.78 - a * 0.6], [w * 0.02, -h * 0.98 - a], [-w * 0.35, -h * 0.7 - a * 0.5], [-w * 0.2, -h * 0.68 - a * 0.3], [-w * 0.3, -h * 0.55]], true); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#e8d060'; ctx.beginPath(); ctx.arc(w * 0.3, -h * 0.62, h * 0.2, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#d8a63a'; trait(ctx, [[w * 0.44, -h * 0.66], [w * 0.6, -h * 0.6], [w * 0.44, -h * 0.55]], true); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = '#f6e8a0'; ctx.lineWidth = 1.2; for (let k = 0; k < 3; k++) { const x = w * (0.2 + k * 0.08); trait(ctx, [[x, -h * 0.8], [x - 2, -h * 0.92], [x + 1, -h * 0.95], [x - 1, -h * 1.08]]); ctx.stroke(); }
+      ctx.strokeStyle = INK; oeil(ctx, w * 0.33, -h * 0.66, 1.6);
+    },
+    // Petite lune : un disque grêlé de cratères, un anneau, un caillou qui tourne autour
+    gravite(ctx, c, t, w, h) {
+      const r = w * 0.45, cy = -h * 0.5;
+      const pa = t * 2.4, px = Math.cos(pa) * r * 1.8, py = cy + Math.sin(pa) * r * 0.55;
+      const caillou = () => { ctx.fillStyle = '#7a7090'; ctx.beginPath(); ctx.arc(px, py, 2.2, 0, TAU); ctx.fill(); ctx.stroke(); };
+      ctx.lineWidth = 1;
+      if (Math.sin(pa) < 0) caillou();
+      ctx.strokeStyle = 'rgba(108,90,184,0.6)'; ctx.beginPath(); ctx.ellipse(0, cy, r * 1.6, r * 0.45, -0.25, Math.PI, TAU); ctx.stroke();
+      ctx.strokeStyle = c.hurt > 0 ? '#9a2a2a' : INK; ctx.lineWidth = 1.6;
+      const g = ctx.createRadialGradient(-r * 0.4, cy - r * 0.4, 1, 0, cy, r); g.addColorStop(0, '#d8d2e8'); g.addColorStop(1, '#8a80b0'); ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(0, cy, r, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.lineWidth = 0.9; for (const [x, y, rr] of [[-r * 0.35, -r * 0.1, r * 0.22], [r * 0.3, r * 0.35, r * 0.16], [r * 0.25, -r * 0.4, r * 0.12]]) { ctx.beginPath(); ctx.arc(x, cy + y, rr, 0, TAU); ctx.stroke(); }
+      ctx.fillStyle = 'rgba(60,50,90,0.25)'; ctx.beginPath(); ctx.arc(0, cy, r, -Math.PI / 2, Math.PI / 2); ctx.arc(r * 0.35, cy, r * 0.95, Math.PI / 2, -Math.PI / 2, true); ctx.fill();
+      ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(-r * 0.25, cy + r * 0.05, 2, Math.PI * 0.1, Math.PI * 0.9); ctx.stroke(); ctx.beginPath(); ctx.arc(r * 0.2, cy + r * 0.05, 2, Math.PI * 0.1, Math.PI * 0.9); ctx.stroke();
+      ctx.strokeStyle = 'rgba(108,90,184,0.6)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(0, cy, r * 1.6, r * 0.45, -0.25, 0, Math.PI); ctx.stroke(); ctx.strokeStyle = INK;
+      if (Math.sin(pa) >= 0) caillou();
+    },
+    // Chouette du temps : deux cadrans pour yeux, un sablier sur le ventre
+    temps(ctx, c, t, w, h) {
+      const bat = c.vole ? Math.sin(t * 9) * 0.5 : 0;
+      ctx.lineWidth = 1.6; ctx.fillStyle = '#9a9faa';
+      for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * w * 0.3, -h * 0.65); ctx.quadraticCurveTo(s * w * (0.75 + bat * 0.3), -h * (0.5 + bat * 0.5), s * w * 0.32, -h * 0.15); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+      ctx.fillStyle = '#a8adb6'; ctx.beginPath(); ctx.ellipse(0, -h * 0.45, w * 0.36, h * 0.42, 0, 0, TAU); ctx.fill(); ctx.stroke();
+      trait(ctx, [[-w * 0.3, -h * 0.78], [-w * 0.34, -h * 1.02], [-w * 0.14, -h * 0.84]]); ctx.fill(); ctx.stroke(); trait(ctx, [[w * 0.3, -h * 0.78], [w * 0.34, -h * 1.02], [w * 0.14, -h * 0.84]]); ctx.fill(); ctx.stroke();
+      // yeux-cadrans
+      for (const s of [-1, 1]) { const ex = s * w * 0.15, ey = -h * 0.62; ctx.fillStyle = '#f2ead0'; ctx.beginPath(); ctx.arc(ex, ey, w * 0.14, 0, TAU); ctx.fill(); ctx.stroke(); ctx.lineWidth = 1; for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2; ctx.beginPath(); ctx.moveTo(ex + Math.cos(a) * w * 0.11, ey + Math.sin(a) * w * 0.11); ctx.lineTo(ex + Math.cos(a) * w * 0.14, ey + Math.sin(a) * w * 0.14); ctx.stroke(); } const am = t * 2 * s, ah = t * 0.2 * s; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(ex + Math.cos(am) * w * 0.11, ey + Math.sin(am) * w * 0.11); ctx.moveTo(ex, ey); ctx.lineTo(ex + Math.cos(ah) * w * 0.07, ey + Math.sin(ah) * w * 0.07); ctx.stroke(); ctx.lineWidth = 1.6; }
+      ctx.fillStyle = '#d8a63a'; trait(ctx, [[-2, -h * 0.5], [2, -h * 0.5], [0, -h * 0.42]], true); ctx.fill(); ctx.stroke();
+      ctx.lineWidth = 1; trait(ctx, [[-w * 0.1, -h * 0.34], [w * 0.1, -h * 0.34], [-w * 0.1, -h * 0.12], [w * 0.1, -h * 0.12]], true); ctx.stroke();
+      ctx.fillStyle = '#d9c48a'; const sb = (t * 0.15) % 1; ctx.beginPath(); ctx.moveTo(-w * 0.06 * (1 - sb), -h * 0.3); ctx.lineTo(w * 0.06 * (1 - sb), -h * 0.3); ctx.lineTo(0, -h * 0.23); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(-w * 0.07 * sb, -h * 0.13); ctx.lineTo(w * 0.07 * sb, -h * 0.13); ctx.lineTo(0, -h * 0.13 - h * 0.08 * sb); ctx.closePath(); ctx.fill();
+    },
+    // Renard des failles : un renard taillé dans un ciel de nuit, la queue cerclée d'une faille
+    portail(ctx, c, t, w, h) {
+      const pas = Math.abs(c.vx) > 15 ? Math.sin(t * 14) : 0;
+      ctx.lineWidth = 1.6;
+      const corps = () => { ctx.beginPath(); ctx.moveTo(-w * 0.3, -h * 0.35); ctx.quadraticCurveTo(-w * 0.1, -h * 0.72, w * 0.2, -h * 0.6); ctx.lineTo(w * 0.3, -h * 0.82); ctx.lineTo(w * 0.34, -h * 1.05); ctx.lineTo(w * 0.4, -h * 0.84); ctx.lineTo(w * 0.47, -h * 1.02); ctx.lineTo(w * 0.5, -h * 0.8); ctx.lineTo(w * 0.62, -h * 0.62); ctx.lineTo(w * 0.46, -h * 0.54); ctx.quadraticCurveTo(w * 0.3, -h * 0.25, w * 0.15, -h * 0.25); ctx.lineTo(-w * 0.25, -h * 0.25); ctx.closePath(); };
+      for (const [x, s] of [[-w * 0.2, 1], [-w * 0.05, -1], [w * 0.1, 1], [w * 0.2, -1]]) { ctx.beginPath(); ctx.moveTo(x, -h * 0.3); ctx.lineTo(x + pas * s * 3, 0); ctx.stroke(); }
+      // queue touffue
+      ctx.fillStyle = '#25404e'; ctx.beginPath(); ctx.moveTo(-w * 0.28, -h * 0.4); ctx.quadraticCurveTo(-w * 0.6, -h * 0.3 + pas, -w * 0.72, -h * 0.85); ctx.quadraticCurveTo(-w * 0.5, -h * 0.6, -w * 0.25, -h * 0.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = '#4fb0a0'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.ellipse(-w * 0.68, -h * 0.8, 3, 6, 0.5, 0, TAU); ctx.stroke(); ctx.strokeStyle = c.hurt > 0 ? '#9a2a2a' : INK; ctx.lineWidth = 1.6;
+      ctx.fillStyle = '#25404e'; corps(); ctx.fill();
+      // étoiles dans le pelage
+      ctx.save(); corps(); ctx.clip(); for (let k = 0; k < 9; k++) { const sx = -w * 0.3 + U.hash2(k, c.seed) * w * 0.9, sy = -h * 0.25 - U.hash2(c.seed, k) * h * 0.7; ctx.fillStyle = 'rgba(239,227,196,' + (0.4 + 0.5 * Math.sin(t * 3 + k)) + ')'; ctx.beginPath(); ctx.arc(sx, sy, 0.9, 0, TAU); ctx.fill(); } ctx.restore();
+      corps(); ctx.stroke();
+      oeil(ctx, w * 0.42, -h * 0.68, 1.5, INK, '#9ae0d0');
+    },
+    // Chat d'ombre : une silhouette d'encre, deux yeux violets, une fumée qui s'effiloche
+    esprit(ctx, c, t, w, h) {
+      const pas = Math.abs(c.vx) > 15 ? Math.sin(t * 12) : 0;
+      ctx.save(); ctx.globalAlpha = 0.25; ctx.fillStyle = '#5a4a7d'; for (let k = 0; k < 4; k++) { const a = t * 1.5 + k * 1.6; ctx.beginPath(); ctx.arc(-w * 0.2 + Math.cos(a) * w * 0.35, -h * 0.5 + Math.sin(a) * h * 0.3 - (t * 8 + k * 4) % 8, 2.5, 0, TAU); ctx.fill(); } ctx.restore();
+      ctx.fillStyle = '#2a2230'; ctx.lineWidth = 1.5;
+      for (const [x, s] of [[-w * 0.22, 1], [-w * 0.08, -1], [w * 0.14, 1], [w * 0.24, -1]]) { ctx.beginPath(); ctx.moveTo(x, -h * 0.3); ctx.lineTo(x + pas * s * 2.5, 0); ctx.stroke(); }
+      ctx.lineWidth = 3; ctx.strokeStyle = '#2a2230'; ctx.beginPath(); ctx.moveTo(-w * 0.3, -h * 0.45); ctx.bezierCurveTo(-w * 0.6, -h * 0.4, -w * 0.45, -h * 1.05 + Math.sin(t * 2) * 2, -w * 0.62, -h * 1.0 + Math.sin(t * 2) * 3); ctx.stroke();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = c.hurt > 0 ? '#9a2a2a' : INK;
+      ctx.beginPath(); ctx.ellipse(-w * 0.02, -h * 0.45, w * 0.32, h * 0.2, 0, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(w * 0.18, -h * 0.55); ctx.lineTo(w * 0.22, -h * 0.95); ctx.lineTo(w * 0.32, -h * 0.75); ctx.lineTo(w * 0.42, -h * 0.75); ctx.lineTo(w * 0.5, -h * 0.95); ctx.lineTo(w * 0.52, -h * 0.55); ctx.quadraticCurveTo(w * 0.35, -h * 0.4, w * 0.18, -h * 0.55); ctx.closePath(); ctx.fill(); ctx.stroke();
+      const cl = (Math.sin(t * 0.9 + c.seed) > 0.96) ? 0.2 : 1;
+      ctx.fillStyle = '#c8a0f0'; for (const ex of [w * 0.3, w * 0.42]) { ctx.beginPath(); ctx.ellipse(ex, -h * 0.68, 1.8, 1.3 * cl, 0, 0, TAU); ctx.fill(); }
+      FX.glow(ctx, w * 0.36, -h * 0.68, 7, '#c8a0f0', 0.4);
+    },
+    // Ouroboros : le serpent qui se mord la queue, roulé en anneau d'or
+    transmutation(ctx, c, t, w, h) {
+      const r = w * 0.36, cy = -h * 0.48;
+      ctx.save(); ctx.translate(0, cy); ctx.rotate(c.roule || 0);
+      ctx.lineWidth = 6; ctx.strokeStyle = '#a8742a'; ctx.beginPath(); ctx.arc(0, 0, r, -Math.PI / 2 + 0.5, Math.PI * 1.5 - 0.15); ctx.stroke();
+      ctx.lineWidth = 3; ctx.strokeStyle = '#e0b050'; ctx.stroke();
+      ctx.strokeStyle = c.hurt > 0 ? '#9a2a2a' : INK; ctx.lineWidth = 0.9;
+      for (let k = 0; k < 12; k++) { const a = -Math.PI / 2 + 0.6 + k * (TAU - 0.8) / 12; ctx.beginPath(); ctx.arc(Math.cos(a) * r, Math.sin(a) * r, 1.6, a, a + Math.PI); ctx.stroke(); }
+      ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(0, 0, r + 2.6, -Math.PI / 2 + 0.5, Math.PI * 1.5 - 0.15); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, r - 2.6, -Math.PI / 2 + 0.5, Math.PI * 1.5 - 0.15); ctx.stroke();
+      // la tête mord la queue
+      ctx.fillStyle = '#d8a040'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(-r * 0.3, -r - 2.5); ctx.quadraticCurveTo(r * 0.2, -r - 8, r * 0.75, -r - 3); ctx.lineTo(r * 0.55, -r + 0.5); ctx.quadraticCurveTo(r * 0.1, -r + 3.5, -r * 0.3, -r + 2.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#9a2a2a'; ctx.beginPath(); ctx.moveTo(r * 0.72, -r - 1.5); ctx.lineTo(r * 1.05, -r - 2.5); ctx.lineTo(r * 0.98, -r - 0.5); ctx.closePath(); ctx.fill();
+      oeil(ctx, r * 0.25, -r - 3, 1.3, INK, '#f6e080');
+      ctx.restore();
+    },
+    // Pie grise : noir, gris, une tache blanche, une longue queue
+    contre(ctx, c, t, w, h) {
+      const bat = Math.sin(t * 13);
+      ctx.lineWidth = 1.5; ctx.fillStyle = '#2a2a2e';
+      trait(ctx, [[-w * 0.28, -h * 0.48], [-w * 0.95, -h * 0.36], [-w * 1.0, -h * 0.46], [-w * 0.95, -h * 0.54], [-w * 0.28, -h * 0.58]], true); ctx.fill(); ctx.stroke(); ctx.strokeStyle = '#6a7a9a'; ctx.lineWidth = 0.8; trait(ctx, [[-w * 0.4, -h * 0.5], [-w * 0.9, -h * 0.45]]); ctx.stroke(); ctx.strokeStyle = c.hurt > 0 ? '#9a2a2a' : INK; ctx.lineWidth = 1.5;
+      ctx.fillStyle = '#d8d4cc'; ctx.beginPath(); ctx.ellipse(-w * 0.02, -h * 0.45, w * 0.3, h * 0.24, 0, 0, TAU); ctx.fill(); ctx.stroke();
+      { const a = bat * 0.5; ctx.fillStyle = '#2a2a2e'; ctx.beginPath(); ctx.moveTo(w * 0.1, -h * 0.58); ctx.quadraticCurveTo(-w * 0.1, -h * (0.95 + a), -w * 0.55, -h * (0.72 + a * 0.6)); ctx.quadraticCurveTo(-w * 0.35, -h * 0.5, w * 0.1, -h * 0.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.ellipse(-w * 0.12, -h * (0.66 + a * 0.3), 3.2, 1.7, -0.3, 0, TAU); ctx.fill(); }
+      ctx.fillStyle = '#2a2a2e'; ctx.beginPath(); ctx.arc(w * 0.28, -h * 0.62, h * 0.2, 0, TAU); ctx.fill(); ctx.stroke();
+      trait(ctx, [[w * 0.42, -h * 0.66], [w * 0.62, -h * 0.6], [w * 0.42, -h * 0.56]], true); ctx.fill(); ctx.stroke();
+      oeil(ctx, w * 0.31, -h * 0.66, 1.4, INK, '#a8a29a');
+      if (c.butin) { ctx.fillStyle = '#d8a63a'; ctx.beginPath(); ctx.arc(w * 0.62, -h * 0.58, 2.4, 0, TAU); ctx.fill(); ctx.stroke(); FX.glow(ctx, w * 0.62, -h * 0.58, 8, '#f0d070', 0.6); }
+    },
+    // Métamorphose : chenille, puis cocon, puis papillon
+    metamorphose(ctx, c, t, w, h) {
+      const st = c.stade || 'chenille';
+      if (st === 'chenille') {
+        ctx.lineWidth = 1.3;
+        for (let k = 4; k >= 0; k--) { const x = -w * 0.4 + k * w * 0.2, y = -h * 0.45 - Math.max(0, Math.sin(t * 6 - k * 0.9)) * 3; ctx.fillStyle = k % 2 ? '#c890b8' : '#a8d070'; ctx.beginPath(); ctx.arc(x, y, h * 0.42, 0, TAU); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y + h * 0.4); ctx.lineTo(x - 1, 0); ctx.stroke(); }
+        oeil(ctx, w * 0.45, -h * 0.55, 1.4);
+        ctx.beginPath(); ctx.moveTo(w * 0.42, -h * 0.85); ctx.lineTo(w * 0.36, -h * 1.25); ctx.moveTo(w * 0.5, -h * 0.85); ctx.lineTo(w * 0.56, -h * 1.25); ctx.stroke();
+      } else if (st === 'cocon') {
+        ctx.lineWidth = 1.5; ctx.fillStyle = '#d8c8a0'; const tr = Math.sin(t * 20) * (c.stadeT > 1.5 ? 1.5 : 0.3);
+        ctx.beginPath(); ctx.ellipse(tr, -h * 1.1, w * 0.22, h * 1.0, 0, 0, TAU); ctx.fill(); ctx.stroke();
+        U.hatch(ctx, -w * 0.25 + tr, -h * 2.1, w * 0.5, h * 2, 3, -Math.PI / 5, c.seed, 0.3);
+        ctx.beginPath(); ctx.moveTo(tr, -h * 2.1); ctx.lineTo(tr, -h * 2.5); ctx.stroke();
+      } else {
+        const bat = Math.abs(Math.sin(t * 9)) * 0.75 + 0.25;
+        ctx.save(); ctx.translate(0, -h * 0.9); ctx.lineWidth = 1.3;
+        for (const s of [-1, 1]) { ctx.save(); ctx.scale(s * bat, 1);
+          const g = ctx.createRadialGradient(w * 0.3, -h * 0.5, 1, w * 0.3, -h * 0.4, w * 0.6); g.addColorStop(0, '#f0b0d8'); g.addColorStop(1, '#a050a0'); ctx.fillStyle = g;
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.bezierCurveTo(w * 0.2, -h * 1.6, w * 0.9, -h * 1.4, w * 0.6, -h * 0.1); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#e8c0e0'; ctx.beginPath(); ctx.moveTo(0, h * 0.1); ctx.bezierCurveTo(w * 0.5, h * 0.2, w * 0.55, h * 0.9, w * 0.15, h * 0.7); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#efe3c4'; ctx.beginPath(); ctx.arc(w * 0.42, -h * 0.65, 1.8, 0, TAU); ctx.fill(); ctx.stroke();
+          ctx.restore(); }
+        ctx.fillStyle = '#3a2a3a'; ctx.beginPath(); ctx.ellipse(0, 0, 1.8, h * 0.6, 0, 0, TAU); ctx.fill();
+        ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(0, -h * 0.55); ctx.lineTo(-3, -h * 1.1); ctx.moveTo(0, -h * 0.55); ctx.lineTo(3, -h * 1.1); ctx.stroke();
+        ctx.restore();
+      }
+    },
+  };
+
+  // dessin complet : la créature, son sceau d'appartenance, ses états
+  function dessiner(ctx, c, t) {
+    const esp = c.espece || 'feu', fn = D[esp] || D.feu, F = DATA.FAMILIERS[esp] || {};
+    const cx = c.x + c.w / 2, by = c.y + c.h, k = c.echelle || 1;
+    const fin = c.life != null && c.life < 1.5 ? (Math.floor(t * 12) % 2 ? 0.35 : 0.85) : 1;
+    ctx.save(); ctx.globalAlpha *= fin;
+    ctx.translate(cx, by); ctx.scale((c.dir || 1) * k, k);
+    ctx.strokeStyle = c.hurt > 0 ? '#9a2a2a' : INK; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    try { fn(ctx, c, t + (c.seed || 0) * 0.37, (F.w || c.w) , (F.h || c.h)); } catch (e) { /* un dessin raté ne doit jamais casser le jeu */ }
+    ctx.restore();
+    // le petit sceau qui flotte au-dessus : c'est un familier, il est à toi
+    const col = (DATA.CORES[esp] || {}).couleur || '#c08a3a', sy = c.y - 9 + Math.sin(t * 2.5 + (c.seed || 0)) * 2;
+    ctx.save(); ctx.globalAlpha = 0.75 * fin; ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, sy, 5.5, 0, TAU); ctx.stroke();
+    Seal.glyph(ctx, esp, cx, sy, 3.6, col, 1); ctx.restore();
+  }
+  return { dessiner, D };
+})();
+
+</script>
+<script>
+'use strict';
 // ---------- Phénomènes : ce que deux essences font naître ensemble ----------
 // Un phénomène dure, a sa propre physique et épouse la forme du sceau :
 // point (zone, projectile, totem...), rectangle (mur, colonne), ligne (trait), ou attaché (sur soi, aura, objet, invocation).
@@ -3247,7 +3534,8 @@ function creerPhenomenes(W) {
     if (joueur) pousse(st().p, joueur);
   }
   function blesser(c, d) { if (c && c.hp > 0) W.hurt(c, d); }
-  function blesserJoueur(d, txt) { const p = st().p; if (p.sta.stone > 0 || p.sta.garde > 0) return; p.hp -= d; if (txt && W.time() - (p.phenT || -9) > 2) { p.phenT = W.time(); W.msg(txt, 'warn'); } }
+  let phCourant = null;
+  function blesserJoueur(d, txt) { if (phCourant && phCourant.follow && phCourant.follow.t === 'familier') return; const p = st().p; if (p.sta.stone > 0 || p.sta.garde > 0) return; p.hp -= d; if (txt && W.time() - (p.phenT || -9) > 2) { p.phenT = W.time(); W.msg(txt, 'warn'); } }
   function nuage(ctx, x, y, r, couleur, a, t) { ctx.save(); ctx.fillStyle = couleur; for (let k = 0; k < 7; k++) { const ox = Math.cos(k * 1.7 + t * 0.3) * r * 0.7, oy = Math.sin(k * 2.3) * r * 0.22; ctx.globalAlpha = a * (0.6 + 0.4 * Math.sin(k + t)); ctx.beginPath(); ctx.arc(x + ox, y + oy, r * (0.38 + 0.12 * Math.sin(k * 3.1)), 0, TAU); ctx.fill(); } ctx.restore(); }
   // plateformes solides (arc-en-ciel, air solide, miroir) : des objets invisibles que le monde traite comme solides
   function plateforme(ph, x, y, w, h) { const o = { t: 'magie', x, y, w, h, solid: true, ph }; st().objs.push(o); (ph.objs = ph.objs || []).push(o); return o; }
@@ -3853,6 +4141,7 @@ function creerPhenomenes(W) {
       if (ph.tenu) { if (!W.tient(ph.tenu.hand) || !W.boire(ph.tenu.drain * d)) { if (ph.D.relache) { try { ph.D.relache(ph); } catch (e) { console.warn(e); } } finir(ph, !ph.D.relache); continue; } ph.life = Math.max(ph.life, 0.6); if (ph.liens) for (const q of ph.liens) q.life = Math.max(q.life, 0.6); if (!ph.follow) viser(ph, d); }
       if (ph.follow) { const e = ph.follow; if (e.mort || (e.hp !== undefined && e.hp <= 0 && e !== st().p) || (e.life !== undefined && e.k && e.life <= 0)) { ph.life = 0; } else { const nx = e.w ? e.x + e.w / 2 : e.x, ny = e.h ? e.y + e.h / 2 : e.y; deplacer(ph, nx - ph.x, ny - ph.y); } }
       else bouger(ph, d);
+      phCourant = ph;
       try { if (ph.D.tick) ph.D.tick(ph, d); } catch (e) { console.warn('phénomène', ph.id, e); ph.life = 0; }
       if (ph.life <= 0) finir(ph);
     }
@@ -4237,6 +4526,7 @@ const World = (() => {
     const p = st.p;
     ls.push({ x: p.x + p.w / 2, y: p.y + p.h / 2, r: p.sta.lumiere > 0 ? 320 : 130 });
     for (const l of PH.lumieres()) ls.push(l);
+    for (const c of st.crs) if (c.t === 'familier' && c.hp > 0) { const F = DATA.FAMILIERS[c.espece]; if (F && F.lum) ls.push({ x: c.x + c.w / 2, y: c.y + c.h / 2, r: F.lum }); }
     for (const o of st.objs) {
       if (o.t === 'torche' && o.lit) ls.push({ x: o.x + o.w / 2, y: o.y + 6, r: 230 });
       if (o.burning > 0) ls.push({ x: o.x + o.w / 2, y: o.y + o.h / 2, r: 130 });
@@ -5019,6 +5309,7 @@ const World = (() => {
     msg('La graine s\'éveille et grimpe vers le ciel.');
   }
   function hurt(c, dmg, source) {
+    if (c.t === 'familier' && source !== 'coup') return;
     c.hp -= dmg; c.hurt = 0.25; if (!c.sta.tame && c.aff > 0) c.aff = Math.max(0, c.aff - (c.t === 'golem' ? 30 : 10));
     if (c.hp <= 0) {
       c.hp = 0; part(c.x + c.w / 2, c.y + c.h / 2, c.t === 'follet' ? '#3f9c9b' : '#1f1a16', 14, 90, 0.8);
@@ -5380,9 +5671,17 @@ const World = (() => {
         break;
       }
       case 'invocation': {
-        const f = makeCreature({ t: 'familier', x: ox, y: oy - 30 });
-        f.spec = spec; f.core = spec.core; f.life = 30 * prm.duration; f.sta.tame = true; f.filDonne = true; f.vole = true; f.hp = 4; f.hpMax = 4; f.dmg = 0; f.w = 20; f.h = 20; f.cd = 0; f.x0 = ox; f.y0 = oy - 40;
-        st.crs.push(f); if (spec.combo) PH.deployer(spec, ox, oy - 30, 30 * prm.size, { follow: f }, { x: dx, y: dy }); if (o.player) msg('Un petit familier de ' + (DATA.CORES[spec.core] || DATA.PSEUDO[spec.core]).nom.toLowerCase() + ' t\'accompagne.');
+        const esp = DATA.FAMILIERS[seal.core] ? seal.core : 'feu', F = DATA.FAMILIERS[esp], n = 1 + Math.min(2, prm.extra || 0);
+        // pas plus de six familiers à la fois : le plus ancien s'en va
+        const vieux = st.crs.filter((c) => c.t === 'familier' && c.hp > 0); while (vieux.length + n > 6) { const v = vieux.shift(); v.life = 0; }
+        for (let i = 0; i < n; i++) {
+          const f = makeCreature({ t: 'familier', x: ox - F.w / 2 + i * 14, y: oy - F.h - 6 });
+          const k = clamp(1 + 0.25 * ((prm.size || 1) - 1), 0.75, 1.6);
+          Object.assign(f, { spec, core: spec.core, espece: esp, life: 30 * prm.duration, max: 30 * prm.duration, hp: Math.round(F.pv * (1 + 0.3 * ((prm.power || 1) - 1))), dmg: 0, w: Math.round(F.w * k), h: Math.round(F.h * k), echelle: k, cd: 0.4 + i * 0.3, x0: ox, y0: oy - 40, vole: F.mode === 'vol' || F.mode === 'orbite', portable: false, generique: false, age: 0, orbite: Math.random() * TAU });
+          f.hpMax = f.hp; f.sta.tame = true; f.filDonne = true; f.porteur = !!spec.combo;
+          st.crs.push(f); if (spec.combo && i === 0) PH.deployer(spec, ox, oy - 30, 30 * prm.size, { follow: f }, { x: dx, y: dy });
+        }
+        if (o.player) { const pg = game.progress; if (!pg.familiers) pg.familiers = {}; const neuf = !pg.familiers[esp]; pg.familiers[esp] = (pg.familiers[esp] || 0) + 1; msg((neuf ? 'Nouveau familier : ' : '') + F.nom + (n > 1 ? ' (×' + n + ')' : '') + (neuf ? '. ' + F.desc : ' t\'accompagne.')); if (neuf) pg.nouveau = true; }
         break;
       }
     }
@@ -5844,6 +6143,7 @@ const World = (() => {
     majBulles();
     updateObjs(dt);
     updateCreatures(dt);
+    retenir();
     updateSpells(dt);
     PH.update(dt);
     updateParts(dt);
@@ -6378,21 +6678,86 @@ const World = (() => {
     }
     Son.sfx('burst', 'force'); return att.length;
   }
+  // ---------- Familiers : chacun sa créature, son allure, son coup ----------
   function updateFamilier(c, dt, p) {
     if (!c.spec) { c.hp = 0; c.respawn = 1e9; c.mort = true; return; }
-    c.life -= dt; c.cd -= dt;
-    if (c.life <= 0 || c.hp <= 0) { c.hp = 0; c.respawn = 1e9; c.mort = true; part(c.x + c.w / 2, c.y + c.h / 2, c.spec.color, 10, 60); return; }
-    // cible : créature hostile proche ; sinon suit le joueur
-    let target = null, bd = 220;
-    for (const q of st.crs) if (q !== c && q.hp > 0 && !q.sta.tame && q.t !== 'familier') { const d = dist(c.x, c.y, q.x, q.y); if (d < bd) { bd = d; target = q; } }
-    const tx = target ? target.x + target.w / 2 : p.x + p.w / 2 - p.face * 40, ty = target ? target.y : p.y - 30 + Math.sin(c.phase * 3) * 10;
-    c.phase += dt;
-    c.vx += (tx - c.x - c.w / 2) * 3 * dt; c.vy += (ty - c.y) * 3 * dt;
-    c.vx *= Math.max(0, 1 - 2.5 * dt); c.vy *= Math.max(0, 1 - 2.5 * dt);
-    c.canStep = false; moveBody(c, dt);
-    if (target && c.cd <= 0 && dist(c.x, c.y, target.x, target.y) < 40) { c.cd = 1.2; doBurst(c.spec, target.x + target.w / 2, target.y + target.h / 2, 40, { noPlayer: true, noField: true, noEcho: true }); }
-    if (Math.random() < 0.4) part(c.x + c.w / 2, c.y + c.h / 2, c.spec.color, 1, 20, 0.5, 2, -30, 'spark');
+    const esp = c.espece || 'feu', F = DATA.FAMILIERS[esp] || DATA.FAMILIERS.feu, prm = c.spec.prm || {}, pw = prm.power || 1;
+    c.life -= dt; c.cd -= dt; c.age += dt; c.phase += dt; if (c.hurt > 0) c.hurt -= dt; if (c.coup > 0) c.coup -= dt * 4; if (c.souffle > 0) c.souffle -= dt * 2;
+    if (c.life <= 0 || c.hp <= 0) { c.hp = 0; c.respawn = 1e9; c.mort = true; part(c.x + c.w / 2, c.y + c.h / 2, colorOf(esp), 14, 60, 0.7, 2, 0, 'spark'); part(c.x + c.w / 2, c.y + c.h / 2, INK, 8, 40, 0.8, 3); if (c.hp <= 0 && c.life > 0) msg(F.nom + ' se dissout en encre.'); return; }
+    // les créatures hostiles le blessent au contact
+    for (const q of st.crs) if (q.hp > 0 && !q.sta.tame && q.t !== 'familier' && (q.dmg || 0) > 0 && q.sta.stun <= 0 && q.sta.sleep <= 0 && U.rectsOverlap(c, q) && time - (c.coupT || -9) > 1) { c.coupT = time; hurt(c, q.dmg * (esp === 'terre' ? 0.35 : 0.6), 'coup'); part(c.x + c.w / 2, c.y + c.h / 2, colorOf(esp), 6, 50, 0.4, 2); }
+    // chacun sa place près de toi ; un porteur de phénomène se tient plus loin
+    const fam = st.crs.filter((f) => f.t === 'familier' && f.hp > 0), k = Math.max(0, fam.indexOf(c));
+    const pcx = p.x + p.w / 2, pcy = p.y + p.h * 0.45, loin = c.porteur ? 130 : 0;
+    // la cible : une créature hostile proche de toi ou de lui
+    let cible = null, bd = 1e9;
+    for (const q of st.crs) { if (q === c || q.hp <= 0 || q.sta.tame || q.t === 'familier' || q.carried) continue; if (esp === 'esprit' && (q.sta.sleep > 0 || q.dort)) continue; const dq = dist(c.x, c.y, q.x, q.y), dp = dist(pcx, pcy, q.x + q.w / 2, q.y + q.h / 2); if ((dq < 260 || dp < 320) && dq < bd) { bd = dq; cible = q; } }
+    if (esp === 'metamorphose') { const T = c.age; c.stade = T < 8 ? 'chenille' : T < 10.5 ? 'cocon' : 'papillon'; c.stadeT = T - 8; c.vole = c.stade === 'papillon'; if (c.stade !== 'papillon') cible = null; if (c.stade === 'papillon' && !c.eclos) { c.eclos = true; c.w = Math.round(26 * (c.echelle || 1)); c.h = Math.round(16 * (c.echelle || 1)); part(c.x + c.w / 2, c.y, '#c06aa0', 16, 70, 0.8, 2, 0, 'spark'); msg('La chenille devient papillon !'); } }
+    const cx = c.x + c.w / 2, cy = c.y + c.h / 2;
+    const tcx = cible ? cible.x + cible.w / 2 : 0, tcy = cible ? cible.y + cible.h / 2 : 0, dcib = cible ? dist(cx, cy, tcx, tcy) : 1e9;
+    // où aller
+    let tx, ty;
+    const place = () => { const cote = -(p.face || 1); tx = pcx + cote * (36 + 26 * k + loin); ty = pcy - 34 - (k % 2) * 16 - loin * 0.4 + Math.sin(c.phase * 2.2 + k) * 6; };
+    if (esp === 'gravite') { c.orbite += dt * (cible ? 1.2 : 2.2); const R = 56 + 14 * k + loin; tx = pcx + Math.cos(c.orbite) * R; ty = pcy - 10 + Math.sin(c.orbite) * R * 0.55; if (cible && dcib < F.portee) { tx = tcx; ty = cible.y - 40; } }
+    else if (esp === 'terre') { place(); const menace = cible && dist(pcx, pcy, tcx, tcy) < 260; if (menace) { tx = dcib < 80 ? tcx - Math.sign(tcx - pcx) * (cible.w / 2 + c.w / 2 - 4) : pcx + Math.sign(tcx - pcx) * 46; } }
+    else if (cible && !(esp === 'metamorphose' && c.stade !== 'papillon')) { const garde = esp === 'eau' || esp === 'lumiere' || esp === 'temps' || esp === 'gravite' || esp === 'vie' || esp === 'foudre' || esp === 'metamorphose' ? F.portee * 0.6 : 0; const ang = Math.atan2(cy - tcy, cx - tcx); tx = tcx + Math.cos(ang) * garde; ty = (F.mode === 'vol' ? cible.y - 20 : tcy) + Math.sin(ang) * garde * 0.4; }
+    else place();
+    // allure
+    const vmax = F.vitesse * ((esp === 'eau' && liquidOf(c)) ? 1.6 : 1) * (c.sta.lent > 0 ? 0.4 : 1);
+    if (c.vole || F.mode === 'orbite') {
+      if (!(c.dash > 0)) { c.vx += (tx - cx) * 4 * dt; c.vy += (ty - cy) * 4 * dt; c.vx *= Math.max(0, 1 - 2.8 * dt); c.vy *= Math.max(0, 1 - 2.8 * dt); const v = Math.hypot(c.vx, c.vy); if (v > vmax) { c.vx *= vmax / v; c.vy *= vmax / v; } }
+      c.canStep = false; moveBody(c, dt); c.dir = Math.abs(c.vx) > 8 ? Math.sign(c.vx) : (cible ? Math.sign(tcx - cx) || c.dir : p.face || c.dir);
+    } else if (esp === 'metamorphose' && c.stade === 'cocon') { applyGrav(c, dt); c.vx = 0; c.canStep = false; moveBody(c, dt); }
+    else {
+      applyGrav(c, dt); if (liquidOf(c)) flotter(c, dt, esp === 'feu' ? 0.6 : esp === 'terre' ? 2.4 : 0.8);
+      const ddx = tx - cx, v = esp === 'metamorphose' ? F.vitesse : vmax;
+      c.vx = Math.abs(ddx) > 10 ? Math.sign(ddx) * Math.min(v, Math.abs(ddx) * 4 + 30) : c.vx * 0.7;
+      if (c.onGround && (c.hitX || ty < c.y - 60) && Math.abs(ddx) > 12 && esp !== 'metamorphose') c.vy = -(esp === 'terre' ? 330 : 430);
+      if (!c.onGround && dist(cx, cy, pcx, pcy) > 520) { c.x = pcx - c.w / 2 - (p.face || 1) * 30; c.y = p.y + p.h - c.h; c.vx = c.vy = 0; part(c.x + c.w / 2, c.y + c.h / 2, colorOf(esp), 8, 40, 0.5, 2, 0, 'spark'); }
+      c.canStep = true; moveBody(c, dt); if (Math.abs(c.vx) > 8) c.dir = Math.sign(c.vx);
+      if (esp === 'transmutation') c.roule = (c.roule || 0) + c.vx * dt / (c.w * 0.4);
+    }
+    // perdu loin derrière : il te rejoint d'un saut de faille
+    if (dist(cx, cy, pcx, pcy) > 900) { c.x = pcx - c.w / 2; c.y = p.y - c.h - 10; c.vx = c.vy = 0; }
+    // le coup de chaque familier
+    const frappe = (q, r = 24, kk = 1, effets = c.spec.cores) => { for (const core of effets) applyEffect(core, q.x + q.w / 2, q.y + q.h / 2, r, { ...prm, power: pw * kk }, 'burst', { noPlayer: true, noField: true }); };
+    if (cible && c.cd <= 0 && dcib < F.portee + Math.max(cible.w, cible.h) * 0.5) {
+      c.cd = F.cadence; const dirc = Math.sign(tcx - cx) || 1;
+      switch (esp) {
+        case 'feu': { c.souffle = 1; const n = 7; for (let s = 1; s <= n; s++) { const fx = cx + (tcx - cx) * s / n, fy = cy + (tcy - cy) * s / n; const gx = Math.floor(fx / CS), gy = Math.floor(fy / CS); if (Sim.get(gx, gy) === M.AIR) Sim.setFeu(gx, gy, 10 + s, 0); } frappe(cible, 22, 0.9); break; }
+        case 'eau': { st.sp.push({ k: 'beam', core: 'eau', x1: cx, y1: cy, x2: tcx, y2: tcy, life: 0.25, max: 0.25, color: '#6aa0d8', w: 3 }); spawnLiquid(M.EAU, tcx, cible.y, 4, 16); frappe(cible, 24, 0.9); hurt(cible, 0.6 * pw); cible.vx += dirc * 260 / masse(cible); break; }
+        case 'terre': { c.coup = 1; hurt(cible, 1.4 * pw); cible.sta.stun = Math.max(cible.sta.stun, 1); cible.vx += dirc * 520 / masse(cible); cible.vy -= 220; st.shake = Math.max(st.shake, 0.12); part(tcx, cible.y + cible.h, '#8a7a5a', 8, 80, 0.5, 2, 300); Son.sfx('burst', 'terre'); break; }
+        case 'vent': { c.dash = 0.35; c.vx = dirc * 720; c.vy = (tcy - cy) * 2; c.touches = new Set(); break; }
+        case 'vie': { cible.sta.lent = Math.max(cible.sta.lent || 0, 3.5); cible.sta.stun = Math.max(cible.sta.stun, 0.6); cible.vx = 0; const gx = Math.floor(tcx / CS), gy = Math.floor((cible.y + cible.h) / CS); for (let d = -2; d <= 2; d++) for (let e = 0; e < 3; e++) if (Sim.get(gx + d, gy - 1 - e) === M.AIR && Math.random() < 0.6) Sim.set(gx + d, gy - 1 - e, M.PLANTE); part(tcx, cible.y + cible.h, '#5c8f3e', 10, 50, 0.6, 2); break; }
+        case 'lumiere': { st.flash = Math.max(st.flash, 0.05); for (const q of st.crs) if (q.hp > 0 && !q.sta.tame && q.t !== 'familier' && dist(cx, cy, q.x + q.w / 2, q.y + q.h / 2) < 120) { q.sta.stun = Math.max(q.sta.stun, 1.3); if (q.t === 'chauve' || q.t === 'limace') q.fuite = { x: cx, y: cy, t: 3 }; } frappe(cible, 30, 0.6); part(cx, cy, '#f6e080', 18, 140, 0.4, 2, 0, 'spark'); break; }
+        case 'foudre': { st.eclairs.push({ x: tcx, y1: tcy, pts: FX.eclairPts(cx, cy, tcx, tcy, 0.25), branches: [], life: 0.2 }); hurt(cible, 1 * pw); cible.sta.stun = Math.max(cible.sta.stun, 0.6); frappe(cible, 18, 0.5); let b2 = null, bd2 = 140; for (const q of st.crs) if (q !== cible && q.hp > 0 && !q.sta.tame && q.t !== 'familier') { const d = dist(tcx, tcy, q.x + q.w / 2, q.y + q.h / 2); if (d < bd2) { bd2 = d; b2 = q; } } if (b2) { st.eclairs.push({ x: b2.x + b2.w / 2, y1: b2.y + b2.h / 2, pts: FX.eclairPts(tcx, tcy, b2.x + b2.w / 2, b2.y + b2.h / 2, 0.25), branches: [], life: 0.2 }); hurt(b2, 0.6 * pw); b2.sta.stun = Math.max(b2.sta.stun, 0.4); } Son.sfx('burst', 'foudre'); break; }
+        case 'gravite': { cible.vy = -560 / Math.sqrt(masse(cible)); cible.vx *= 0.3; c.leve = { q: cible, t: 0.45 }; part(tcx, tcy, '#6c5ab8', 10, 60, 0.5, 2, 0, 'spark'); break; }
+        case 'temps': { poserBulle('lent', tcx, tcy, 40 * (prm.size || 1), prm); cible.sta.lent = Math.max(cible.sta.lent || 0, 3); break; }
+        case 'portail': { part(cx, cy, '#4fb0a0', 12, 60, 0.4, 2, 0, 'spark'); c.x = tcx - dirc * (cible.w / 2 + c.w / 2) - c.w / 2; c.y = cible.y + cible.h - c.h; c.vx = c.vy = 0; unstick(c); part(c.x + c.w / 2, c.y + c.h / 2, '#4fb0a0', 12, 60, 0.4, 2, 0, 'spark'); hurt(cible, 1 * pw); if (Math.random() < 0.25) applyEffect('saut', tcx, tcy, 26, { ...prm }, 'burst', { noPlayer: true }); Son.sfx('cast', 'portail'); break; }
+        case 'esprit': { cible.sta.sleep = Math.max(cible.sta.sleep, 6 * (prm.duration || 1)); cible.fuite = null; cible.curieux = null; part(tcx, cible.y, '#b08ad8', 10, 30, 0.8, 2, -30, 'spark'); break; }
+        case 'transmutation': { const gx = Math.floor(tcx / CS), gy = Math.floor((cible.y + cible.h) / CS); for (let d = -3; d <= 3; d++) for (let e = 0; e <= 2; e++) { const m = Sim.get(gx + d, gy + e); if (m === M.TERRE || m === M.MEUBLE || m === M.SABLE || m === M.HERBE) Sim.set(gx + d, gy + e, M.BOUE, 200); else if (m === M.PIERRE) Sim.set(gx + d, gy + e, M.SABLE); } cible.sta.lent = Math.max(cible.sta.lent || 0, 2.5); hurt(cible, 0.6 * pw); part(tcx, cible.y + cible.h, '#c08a3a', 10, 50, 0.5, 2, 0, 'spark'); break; }
+        case 'contre': { cible.sta.stun = Math.max(cible.sta.stun, 1); if (cible.ench) cible.ench = null; cible.sta.burn = 0; if (!cible.vole_pie && Math.random() < 0.2 && DATA.ESPECES[cible.t] && DATA.ESPECES[cible.t].drop) { cible.vole_pie = true; c.butin = DATA.ESPECES[cible.t].drop; msg('La pie grise a chipé quelque chose !'); } part(tcx, tcy, '#a8a29a', 8, 50, 0.4, 2, 0, 'spark'); break; }
+        case 'metamorphose': { metamorphoser(tcx, tcy, 22, prm); part(tcx, tcy, '#c06aa0', 12, 60, 0.6, 2, 0, 'spark'); break; }
+      }
+    }
+    // effets qui durent
+    if (c.dash > 0) { c.dash -= dt; for (const q of st.crs) if (q.hp > 0 && !q.sta.tame && q.t !== 'familier' && !c.touches.has(q) && U.rectsOverlap({ x: c.x - 6, y: c.y - 6, w: c.w + 12, h: c.h + 12 }, q)) { c.touches.add(q); q.vx += Math.sign(c.vx || 1) * 380 / Math.sqrt(masse(q)); q.vy -= 200 / Math.sqrt(masse(q)); frappe(q, 20, 0.7); } if (Math.random() < 0.6) part(cx, cy, '#a0d8d4', 1, 20, 0.4, 2, 0); }
+    if (c.leve) { c.leve.t -= dt; if (c.leve.t <= 0) { const q = c.leve.q; c.leve = null; if (q.hp > 0) { q.vy = 1150; hurt(q, 0.8 * pw); } } }
+    if (c.butin && dist(cx, cy, pcx, pcy) < 50) { dropPickup(c.butin, pcx, p.y - 6); c.butin = null; }
+    // les dons de chacun
+    if (ev2(c, 'don', 0.4)) {
+      const pres = dist(cx, cy, pcx, pcy) < 150;
+      if (esp === 'feu' && pres && Sim.tempAt(pcx, pcy) < 50) Sim.chauffer(pcx, pcy, 40, 90, 0.4);
+      if (esp === 'eau' && pres) { Sim.forRadius(pcx, pcy, 70, (x, y, i, m) => { if (m === M.FEU) Sim.set(x, y, M.VAPEUR, 30); }); p.sta.burning = 0; p.hp = Math.min(p.hpMax, p.hp + 0.05); }
+      if (esp === 'vent' && pres) Sim.forRadius(pcx, pcy, 60, (x, y, i, m) => { if (m === M.FUMEE || m === M.GAZ) Sim.set(x, y, M.AIR); });
+      if (esp === 'vie') { if (pres) p.hp = Math.min(p.hpMax, p.hp + 0.1); for (const q of st.crs) if (q.sta.tame && q.t !== 'familier' && q.hp > 0 && dist(cx, cy, q.x, q.y) < 120) q.hp = Math.min(q.hpMax, q.hp + 0.1); if (c.onGround) { const gx = Math.floor(cx / CS), gy = Math.floor((c.y + c.h) / CS); if (Sim.get(gx, gy) === M.TERRE && Sim.get(gx, gy - 1) === M.AIR && Math.random() < 0.5) Sim.set(gx, gy - 1, M.HERBE); } }
+      if (esp === 'temps' && pres) p.ink = Math.min(p.inkMax, p.ink + 0.3);
+      if (esp === 'contre' && pres) { p.sta.burning = 0; p.sta.lent = 0; p.sta.dissous = 0; }
+    }
+    if (Math.random() < 0.25) part(cx, cy, colorOf(esp), 1, 15, 0.5, 1.6, -20, 'spark');
   }
+  function retenir() { for (const g of st.crs) { if (g.t !== 'familier' || g.espece !== 'terre' || g.hp <= 0) continue; for (const q of st.crs) if (q.hp > 0 && !q.sta.tame && q.t !== 'familier' && U.rectsOverlap(g, q)) { const s2 = Math.sign(q.x + q.w / 2 - g.x - g.w / 2) || 1; q.x += s2 * 2; if (Math.sign(q.vx) === -s2) q.vx *= 0.2; } } }
+  function ev2(o, cle, per) { o.acc = o.acc || {}; o.acc[cle] = (o.acc[cle] || 0) + 1 / 60; if (o.acc[cle] >= per) { o.acc[cle] = 0; return true; } return false; }
   function updateSpells(dtG) {
     let dt = dtG;
     const sols = dynSolids();
@@ -7006,7 +7371,7 @@ const World = (() => {
     ctx.strokeStyle = c.hurt > 0 ? '#9a2a2a' : INK; ctx.lineWidth = 2; ctx.lineCap = 'round';
     const cx = c.x + c.w / 2, by = c.y + c.h;
     switch (c.t) {
-      case 'familier': { const r = 9; const g = ctx.createRadialGradient(cx, c.y + c.h / 2, 2, cx, c.y + c.h / 2, r * 3); g.addColorStop(0, U.hexA(c.spec.color, 0.5)); g.addColorStop(1, U.hexA(c.spec.color, 0)); ctx.fillStyle = g; ctx.fillRect(cx - r * 3, c.y + c.h / 2 - r * 3, r * 6, r * 6); ctx.fillStyle = c.spec.color; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, c.y + c.h / 2 + Math.sin(c.phase * 4) * 2, r, 0, TAU); ctx.fill(); ctx.stroke(); Seal.glyph(ctx, c.core, cx, c.y + c.h / 2 + Math.sin(c.phase * 4) * 2, r * 0.6, '#efe3c4', 1); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(cx - 3, c.y + c.h / 2 - 2, 1.3, 0, TAU); ctx.arc(cx + 3, c.y + c.h / 2 - 2, 1.3, 0, TAU); ctx.fill(); break; }
+      case 'familier': Familiers.dessiner(ctx, c, time); break;
       case 'grenouille': case 'corbeau': case 'salamandre': case 'poisson': case 'chauve': case 'escargot': case 'tortue': case 'lapin': drawEspece(ctx, c, cx, by); break;
       case 'limace': {
         const sq = c.onGround ? 1 : 0.85;
@@ -7891,6 +8256,7 @@ const UI = (() => {
     if (infoC) L.push(comboConnu(cleC) ? '<b>' + infoC.nom + '</b> : ' + infoC.desc + ' <span class="muted">La fusion remplace les deux effets de base.</span>' : '<b>Fusion inconnue</b> <span class="muted">— ' + infoC.indice + ' Lance-la pour la découvrir.</span>');
     else if (cores.length > 1 && !prm.inverse) L.push('<span class="muted">Ces deux effets ne fusionnent pas : ils s\'appliquent ensemble.</span>');
     if (s.shape) L.push('Forme : ' + DATA.SHAPES[s.shape].nom.toLowerCase() + (prm.extra ? ', en double' : '') + (prm.orbite ? ', en orbite autour de toi' : '') + (prm.teleguide ? ', guidé par la souris' : '') + (prm.canalise ? ', canalisé tant que tu maintiens' : '') + '.');
+    if (s.shape === 'invocation') { const F = DATA.FAMILIERS[s.core] || DATA.FAMILIERS.feu; L.push('Familier : <b>' + F.nom + '</b> — ' + F.desc + (prm.extra ? ' <span class="muted">Double : deux à la fois.</span>' : '')); }
     if (s.cible && s.taille !== 'petit') L.push('Cible : ' + (s.cible === 'creature' ? 'la créature hostile la plus proche, qu\'il suit' : 'ta marque la plus récente, même hors de vue') + '.');
     const tx = [];
     const prim = trs.find((t) => ['tenu', 'immediat', 'contact', 'retarde', 'commande', 'proximite'].includes(t));
@@ -8211,6 +8577,11 @@ const UI = (() => {
         const b = p.bestiaire[id] || {};
         c.appendChild(el('div', 'decouverte' + (vu ? ' ok' : ''), '<span class="check"><i class="dot" style="background:' + (vu ? (sp.couleur || '#1f1a16') : '#aaa') + '"></i></span><div><b>' + (vu ? sp.nom : '???') + '</b>' + (vu ? ' <small>' + (sp.hostile ? 'bouscule' : 'paisible') + (sp.nocturne ? ', nocturne' : sp.diurne ? ', diurne' : '') + '</small>' : '') + '<br><em>' + (vu ? sp.desc : 'Espèce non rencontrée.') + '</em>' + (vu ? '<br><small>Aime : ' + (b.aime ? DATA.CORES[sp.aime].nom : '???') + ' · Craint : ' + (b.craint ? DATA.CORES[sp.craint].nom : '???') + ' · Cadeau : ' + (b.aime && sp.drop ? DATA.INGREDIENTS[sp.drop].nom : '???') + '</small>' : '') + '</div>'));
       }
+      // les familiers : un par essence, révélés à la première invocation
+      const pf = p.familiers || {};
+      c.appendChild(el('h3', '', 'Familiers (' + Object.keys(pf).filter((e) => DATA.FAMILIERS[e]).length + ' / ' + Object.keys(DATA.FAMILIERS).length + ')'));
+      c.appendChild(el('p', 'intro', 'La forme Invocation fait naître le familier de l\'essence au centre du sceau. Il te suit, te défend, et chacun a son don.'));
+      for (const e of DATA.ESSENCES) { const F = DATA.FAMILIERS[e]; if (!F) continue; const vu = !!pf[e]; c.appendChild(el('div', 'decouverte' + (vu ? ' ok' : ''), '<span class="check"><i class="dot" style="background:' + (vu ? DATA.CORES[e].couleur : '#aaa') + '"></i></span><div><b>' + (vu ? F.nom : '???') + '</b> <small>' + DATA.CORES[e].nom + '</small><br>' + (vu ? F.desc : '<span class="muted">Invoque un familier ' + (DATA.DE[e] || ({ contre: 'du Contre-sort', metamorphose: 'de la Métamorphose' })[e] || '') + ' pour le rencontrer.</span>') + '</div>')); }
     } else if (grimTab === 'pages') {
       c.appendChild(el('p', 'intro', 'Le maître a semé des pages de son grimoire aux quatre coins du monde : en hauteur, au fond, dans le noir. Chacune apprend quelque chose.'));
       for (const P of DATA.PAGES) {
@@ -8465,7 +8836,7 @@ const UI = (() => {
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
       tailles: DATA.DEBUT.tailles.slice(), filtres: DATA.DEBUT.filtres.slice(), cibles: DATA.DEBUT.cibles.slice(), deuxMains: false, enchainements: [],
-      recettes: [], ingredientsVus: [], done: [], maitrise: {}, combos: {}, nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
+      recettes: [], ingredientsVus: [], done: [], maitrise: {}, combos: {}, familiers: {}, nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
       compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0, terre: 0, creaturesTouchees: 0, vols: 0, portes: 0, lancers: 0, niveau: 1, sceaux: 0 },
       event(name, data) {
         const k = this.compteurs;
@@ -8888,7 +9259,7 @@ const UI = (() => {
         if (d.carte) this.carte = d.carte;
         if (d.courrier) this.courrier = Object.assign(this.courrier, d.courrier); if (d.bonus) this.bonus = Object.assign(this.bonus, d.bonus); if (d.trophees) this.trophees = d.trophees;
         if (d.progress) Object.assign(this.progress, d.progress);
-        if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {}; if (!this.progress.combos) this.progress.combos = {};
+        if (!this.progress.obs) this.progress.obs = {}; if (!this.progress.maitrise) this.progress.maitrise = {}; if (!this.progress.combos) this.progress.combos = {}; if (!this.progress.familiers) this.progress.familiers = {};
         { // refonte : les anciennes essences deviennent des aspects
           const p = this.progress; if (!p.mods.includes('reduire')) p.mods.push('reduire');
           for (const c of p.cores.slice()) { const M2 = DATA.MIGRATION[c]; if (!M2) continue; p.cores = p.cores.filter((q) => q !== c); if (!p.mods.includes(M2[1])) p.mods.push(M2[1]); if (p.maitrise[c]) { p.maitrise[M2[0]] = (p.maitrise[M2[0]] || 0) + p.maitrise[c]; delete p.maitrise[c]; } }

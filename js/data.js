@@ -146,7 +146,7 @@ const DATA = (() => {
     vague:      { id: 'vague',      nom: 'Vague',      cout: 3, desc: 'Une vague roule au ras du sol dans le sens du lancer : elle porte l\'effet tout le long et emporte les créatures.' },
     colonne:    { id: 'colonne',    nom: 'Colonne',    cout: 3, desc: 'Un jet vertical jaillit du sol là où tu vises : il porte l\'effet et soulève tout ce qui s\'y trouve (geyser d\'eau, pilier de feu, courant d\'air...).' },
     bouclier:   { id: 'bouclier',   nom: 'Bouclier',   cout: 3, desc: 'Un arc devant toi, tourné vers la souris, qui porte l\'élément : le feu brûle ce qui le touche, le froid gèle l\'eau, le vent renvoie, la terre bloque. Il repousse aussi l\'eau et le sable : marche au fond du lac.' },
-    invocation: { id: 'invocation', nom: 'Invocation', cout: 6, desc: 'Un petit familier de l\'élément te suit et attaque ce qui t\'attaque.' },
+    invocation: { id: 'invocation', nom: 'Invocation', cout: 6, desc: 'Fait naître le familier de l\'essence du centre : salamandre de braise, ondine, petit golem, sylphe, pousse, luciole, oiseau-tonnerre, petite lune, chouette du temps, renard des failles, chat d\'ombre, ouroboros, pie grise ou chenille. Il te suit et défend. Double : deux familiers.' },
   };
   // Modificateurs (anneau extérieur)
   const MODS = {
@@ -436,6 +436,25 @@ const DATA = (() => {
     tortue:   { id: 'tortue',   nom: 'Tortue des sables',   mode: 'walk',  w: 34, h: 18, hp: 6, dmg: 0, hostile: false, aime: 'eau',     craint: 'gravite', drop: 'poussiere',  desc: 'Une carapace à toute épreuve. Adore l\'eau, déteste flotter.', couleur: '#a3844f', immune: ['feu', 'foudre', 'acide', 'froid'], peur: 0 },
     lapin:    { id: 'lapin',    nom: 'Lapin de neige',      mode: 'hop',   w: 22, h: 20, hp: 2, dmg: 0, hostile: false, aime: 'froid',   craint: 'feu',     drop: 'flocon',     desc: 'Bondit dans la poudreuse, fuit la moindre flamme.', couleur: '#f6f8fa', peur: 110, diurne: true },
     familier: { id: 'familier', nom: 'Familier',            mode: 'fly',   w: 20, h: 20, hp: 4, dmg: 0, hostile: false, aime: null, craint: null, drop: null, desc: 'Un petit élémentaire invoqué.' },
+  };
+
+  // Familiers : la forme Invocation fait naître la créature de l'essence du sceau
+  // mode : sol (marche), vol (vole), orbite (tourne autour de toi), roue (roule), chenille (rampe, se nymphose, s'envole)
+  const FAMILIERS = {
+    feu:           { nom: 'Salamandre de braise', mode: 'sol',      w: 34, h: 16, pv: 6,  vitesse: 175, portee: 120, cadence: 1.1, lum: 80,  desc: 'Elle court au sol et crache un jet de flammes sur tes ennemis. Elle nage dans la lave et, près de toi, chasse le grand froid.' },
+    eau:           { nom: 'Ondine',               mode: 'vol',      w: 22, h: 32, pv: 5,  vitesse: 150, portee: 150, cadence: 1.3,           desc: 'Une goutte qui a une âme : elle lance des jets d\'eau, éteint les flammes autour de toi et te soigne doucement. Dans l\'eau, elle file.' },
+    terre:         { nom: 'Petit golem',          mode: 'sol',      w: 30, h: 34, pv: 14, vitesse: 85,  portee: 36,  cadence: 1.4,           desc: 'Lent et solide : il se place entre toi et le danger, retient les créatures et les assomme d\'un coup de poing.' },
+    vent:          { nom: 'Sylphe',               mode: 'vol',      w: 26, h: 16, pv: 4,  vitesse: 330, portee: 260, cadence: 1.2,           desc: 'Une hirondelle de vent : elle fend tes ennemis en les repoussant, et chasse la fumée autour de toi.' },
+    vie:           { nom: 'Pousse',               mode: 'sol',      w: 22, h: 26, pv: 6,  vitesse: 100, portee: 160, cadence: 2.2,           desc: 'Une graine qui marche : l\'herbe pousse sous ses pas, elle te soigne et entrave tes ennemis dans des racines.' },
+    lumiere:       { nom: 'Luciole',              mode: 'vol',      w: 16, h: 14, pv: 4,  vitesse: 160, portee: 120, cadence: 2.4, lum: 250, desc: 'Elle éclaire loin autour d\'elle et éblouit les créatures d\'un éclair.' },
+    foudre:        { nom: 'Oiseau-tonnerre',      mode: 'vol',      w: 26, h: 18, pv: 4,  vitesse: 380, portee: 210, cadence: 1.1, lum: 60,  desc: 'Vif comme l\'éclair : il foudroie sa cible, et l\'arc saute sur une seconde créature.' },
+    gravite:       { nom: 'Petite lune',          mode: 'orbite',   w: 18, h: 18, pv: 7,  vitesse: 220, portee: 220, cadence: 2.6,           desc: 'Elle tourne autour de toi ; elle soulève une créature, puis la laisse retomber lourdement.' },
+    temps:         { nom: 'Chouette du temps',    mode: 'vol',      w: 24, h: 26, pv: 5,  vitesse: 140, portee: 210, cadence: 3.5,           desc: 'Ses yeux sont deux cadrans : elle enferme tes ennemis dans une bulle de temps lent, et ton encre revient plus vite.' },
+    portail:       { nom: 'Renard des failles',   mode: 'sol',      w: 32, h: 20, pv: 6,  vitesse: 210, portee: 240, cadence: 1.6,           desc: 'Taillé dans un ciel de nuit, il saute d\'une faille à l\'autre jusqu\'à sa proie, la mord, et parfois l\'envoie ailleurs.' },
+    esprit:        { nom: 'Chat d\'ombre',       mode: 'sol',      w: 28, h: 20, pv: 5,  vitesse: 185, portee: 34,  cadence: 2.5,           desc: 'Silencieux comme une pensée : il endort les créatures qu\'il frôle.' },
+    transmutation: { nom: 'Ouroboros',            mode: 'roue',     w: 22, h: 22, pv: 7,  vitesse: 230, portee: 30,  cadence: 2.2,           desc: 'Le serpent qui se mord la queue roule comme un anneau ; sous sa proie, la terre devient boue et la pierre sable.' },
+    contre:        { nom: 'Pie grise',            mode: 'vol',      w: 26, h: 18, pv: 5,  vitesse: 270, portee: 30,  cadence: 1.8,           desc: 'Elle vole la magie : elle étourdit sa cible, lui arrache parfois un trésor, et défait les maux qui t\'accablent.' },
+    metamorphose:  { nom: 'Chenille',             mode: 'chenille', w: 26, h: 12, pv: 5,  vitesse: 45,  portee: 170, cadence: 4.5,           desc: 'D\'abord une chenille qui grignote, puis un cocon, puis un papillon qui change tes ennemis en petites bêtes.' },
   };
 
   // Trophées : souvenirs offerts par le maître, exposés au labo
@@ -746,5 +765,5 @@ const DATA = (() => {
   // affinité : combien un geste aimé rapproche (sur 100)
   const AFFINITE = { golem: { gain: 4, parJour: 20 }, follet: { gain: 12 }, limace: { gain: 15 }, salamandre: { gain: 14 }, chauve: { gain: 15 } };
 
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle };
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle, FAMILIERS };
 })();

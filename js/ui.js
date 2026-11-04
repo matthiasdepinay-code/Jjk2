@@ -315,6 +315,7 @@ const UI = (() => {
     if (infoC) L.push(comboConnu(cleC) ? '<b>' + infoC.nom + '</b> : ' + infoC.desc + ' <span class="muted">La fusion remplace les deux effets de base.</span>' : '<b>Fusion inconnue</b> <span class="muted">— ' + infoC.indice + ' Lance-la pour la découvrir.</span>');
     else if (cores.length > 1 && !prm.inverse) L.push('<span class="muted">Ces deux effets ne fusionnent pas : ils s\'appliquent ensemble.</span>');
     if (s.shape) L.push('Forme : ' + DATA.SHAPES[s.shape].nom.toLowerCase() + (prm.extra ? ', en double' : '') + (prm.orbite ? ', en orbite autour de toi' : '') + (prm.teleguide ? ', guidé par la souris' : '') + (prm.canalise ? ', canalisé tant que tu maintiens' : '') + '.');
+    if (s.shape === 'invocation') { const F = DATA.FAMILIERS[s.core] || DATA.FAMILIERS.feu; L.push('Familier : <b>' + F.nom + '</b> — ' + F.desc + (prm.extra ? ' <span class="muted">Double : deux à la fois.</span>' : '')); }
     if (s.cible && s.taille !== 'petit') L.push('Cible : ' + (s.cible === 'creature' ? 'la créature hostile la plus proche, qu\'il suit' : 'ta marque la plus récente, même hors de vue') + '.');
     const tx = [];
     const prim = trs.find((t) => ['tenu', 'immediat', 'contact', 'retarde', 'commande', 'proximite'].includes(t));
@@ -635,6 +636,11 @@ const UI = (() => {
         const b = p.bestiaire[id] || {};
         c.appendChild(el('div', 'decouverte' + (vu ? ' ok' : ''), '<span class="check"><i class="dot" style="background:' + (vu ? (sp.couleur || '#1f1a16') : '#aaa') + '"></i></span><div><b>' + (vu ? sp.nom : '???') + '</b>' + (vu ? ' <small>' + (sp.hostile ? 'bouscule' : 'paisible') + (sp.nocturne ? ', nocturne' : sp.diurne ? ', diurne' : '') + '</small>' : '') + '<br><em>' + (vu ? sp.desc : 'Espèce non rencontrée.') + '</em>' + (vu ? '<br><small>Aime : ' + (b.aime ? DATA.CORES[sp.aime].nom : '???') + ' · Craint : ' + (b.craint ? DATA.CORES[sp.craint].nom : '???') + ' · Cadeau : ' + (b.aime && sp.drop ? DATA.INGREDIENTS[sp.drop].nom : '???') + '</small>' : '') + '</div>'));
       }
+      // les familiers : un par essence, révélés à la première invocation
+      const pf = p.familiers || {};
+      c.appendChild(el('h3', '', 'Familiers (' + Object.keys(pf).filter((e) => DATA.FAMILIERS[e]).length + ' / ' + Object.keys(DATA.FAMILIERS).length + ')'));
+      c.appendChild(el('p', 'intro', 'La forme Invocation fait naître le familier de l\'essence au centre du sceau. Il te suit, te défend, et chacun a son don.'));
+      for (const e of DATA.ESSENCES) { const F = DATA.FAMILIERS[e]; if (!F) continue; const vu = !!pf[e]; c.appendChild(el('div', 'decouverte' + (vu ? ' ok' : ''), '<span class="check"><i class="dot" style="background:' + (vu ? DATA.CORES[e].couleur : '#aaa') + '"></i></span><div><b>' + (vu ? F.nom : '???') + '</b> <small>' + DATA.CORES[e].nom + '</small><br>' + (vu ? F.desc : '<span class="muted">Invoque un familier ' + (DATA.DE[e] || ({ contre: 'du Contre-sort', metamorphose: 'de la Métamorphose' })[e] || '') + ' pour le rencontrer.</span>') + '</div>')); }
     } else if (grimTab === 'pages') {
       c.appendChild(el('p', 'intro', 'Le maître a semé des pages de son grimoire aux quatre coins du monde : en hauteur, au fond, dans le noir. Chacune apprend quelque chose.'));
       for (const P of DATA.PAGES) {
