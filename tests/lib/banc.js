@@ -1,5 +1,7 @@
 // Banc d'essai commun, exécuté dans la page : un terrain plat en l'air, le joueur, des outils
     window.__errs = window.__errs || [];
+    // Gribouille et Grum restent au labo pendant les autres bancs (le banc « compagnons » les rappelle)
+    if (game.compagnons) game.compagnons.actif = false;
     let st = World.state(); const S = Sim, M = S.M, CS = 6; const X0 = Math.round(Gen.X(600)), Y = 46;
     const res = [];
     const ok = (nom, pass, detail) => res.push({ nom, ok: !!pass, detail });

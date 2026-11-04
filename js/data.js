@@ -354,6 +354,8 @@ const DATA = (() => {
     'La Clairière': { ing: 'pollen',         mats: ['HERBE', 'PLANTE', 'MOUSSE'], p: 0.05 },
   };
   const POTIONS = {
+    gateau:     { id: 'gateau',     nom: 'Gâteau au miel',     couleur: '#e8b08a', usage: 'boire', ingr: ['miel', 'rosee'], etapes: ['remuer', 'chauffer'],
+                  desc: 'Un gâteau doré. Offert à Grum, il le rend tout heureux et bien plus fort deux minutes. Sinon, il soigne un peu.', enigme: 'Le doux de la ruche et une goutte de rosée, remués puis cuits : de quoi rendre un golem heureux.' },
     encre:      { id: 'encre',      nom: 'Potion d\'encre',    couleur: '#1f1a16', usage: 'boire', ingr: ['cendre', 'eau_source'], etapes: ['chauffer', 'remuer'],
                   desc: 'Restaure 25 points d\'encre.', enigme: 'Ce qui reste du feu, noyé dans l\'eau claire, chauffé puis remué : l\'encre revient.' },
     soin:       { id: 'soin',       nom: 'Potion de soin',     couleur: '#c45a5a', usage: 'boire', ingr: ['racine', 'eau_source'], etapes: ['infuser'],
@@ -474,6 +476,23 @@ const DATA = (() => {
     { id: 'l_gardien',  titre: 'Un gardien',            quand: (p) => (p.gardiensVus || []).length > 0, essai: 'Aucun gardien ne tombe sous la seule force. Observe ce qui le soigne et ce qu\'il craint : le grimoire garde son indice. Puis abats-en un.', evt: 'gardien', xp: 40 },
     { id: 'l_stele',    titre: 'Les stèles',            quand: (p) => p.fusion, essai: 'Des stèles gravées d\'essences dorment dans le monde. Fais naître près de l\'une d\'elles la fusion qu\'elle porte.', evt: 'stele', xp: 25 },
   ];
+  // ---------- Tenues de Gribouille et Grum, gagnées en jouant (choisies au miroir du labo) ----------
+  const TENUES_MASCOTTES = {
+    gribouille: [
+      { id: 'classique', cond: () => true },
+      { id: 'arcaniste', indice: 'Découvre 10 fusions.', cond: (p) => Object.keys(p.combos || {}).length >= 10 },
+      { id: 'alchimiste', indice: 'Connais 8 recettes du chaudron.', cond: (p) => (p.recettes || []).length >= 8 },
+      { id: 'explorateur', indice: 'Retrouve 6 pages déchirées.', cond: (p) => (p.pagesLues || []).length >= 6 },
+      { id: 'ceruleen', rare: true, indice: 'Vaincs les quatre gardiens.', cond: (p) => Object.keys(p.gardiens || {}).length >= 4 },
+    ],
+    grum: [
+      { id: 'classique', cond: () => true },
+      { id: 'runique', indice: 'Éveille deux stèles de fusion.', cond: (p) => ((p.compteurs || {}).steles || 0) >= 2 },
+      { id: 'forgeron', indice: 'Ouvre cinq coffres.', cond: (p) => ((p.compteurs || {}).coffres || 0) >= 5 },
+      { id: 'forestier', indice: 'Apprivoise cinq créatures.', cond: (p) => ((p.compteurs || {}).tames || 0) >= 5 },
+      { id: 'cristallin', rare: true, indice: 'Découvre les huit fusions à trois.', cond: (p) => Object.keys(TRIOS).every((k) => (p.combos || {})[k]) },
+    ],
+  };
   // ---------- Les gardiens : un par région, chacun a son tour à trouver ----------
   const GARDIENS = {
     ent:      { id: 'ent', nom: 'L\'Ent-ronce', region: 'La Prairie', couleur: '#5c8f3e', desc: 'Un arbre de ronces qui marche. Il garde l\'orée de la forêt et fait jaillir ses racines sous les pas.', indice: 'Le bois vivant craint la flamme. L\'eau et la vie le soignent.', fin: 'Il retourne à la terre, et la terre te laisse un présent.', recompense: { xp: 150, ing: { coeur_chene: 2, pollen: 3 }, encre: { encre_nacre: 6 } } },
@@ -817,5 +836,5 @@ const DATA = (() => {
   // affinité : combien un geste aimé rapproche (sur 100)
   const AFFINITE = { golem: { gain: 4, parJour: 20 }, follet: { gain: 12 }, limace: { gain: 15 }, salamandre: { gain: 14 }, chauve: { gain: 15 } };
 
-  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle, FAMILIERS, LECONS, recetteCombo, TRIOS, GARDIENS };
+  return { FILTRES, CIBLES, TAILLES, ENCHAINEMENTS, TROPHEES, EPREUVES, LETTRES, CORES, PSEUDO, INVERSE, COMBOS, SHAPES, MODS, TRIGGERS, INGREDIENTS, FAMILLES, ODEURS, BRUITS, BIZARRES, STEPS, POTIONS, OBSERVATIONS, ESPECES, PAGES, DEFIS, UNLOCKS, DEBUT, XP, CHAPEAUX, CAPES, ACCESSOIRES , LANGAGES, MAITRISE, niveauMaitrise, ENCRES, ENCRE_ZONES, ESSENCES, ASPECTS, MIGRATION, MIGR_MODS, AFFINITE, DE, nomEffet, DIMS, DIM_VALS, MATIERE, GENRES, comboInfo, comboCle, FAMILIERS, LECONS, recetteCombo, TRIOS, GARDIENS, TENUES_MASCOTTES };
 })();

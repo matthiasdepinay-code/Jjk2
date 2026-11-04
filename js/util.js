@@ -160,7 +160,8 @@ const U = (() => {
   }
 
   function hexA(hex, a) {
-    const h = hex.replace('#', '');
+    let h = hex.replace('#', '');
+    if (h.length === 3 || h.length === 4) h = h.split('').map((c) => c + c).join(''); // la forme courte : #ddd = #dddddd
     const r = parseInt(h.substring(0, 2), 16), g = parseInt(h.substring(2, 4), 16), b = parseInt(h.substring(4, 6), 16);
     return `rgba(${r},${g},${b},${a})`;
   }

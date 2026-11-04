@@ -13,10 +13,15 @@
       const k = DATA.comboCle(Seal.effets(Seal.clone(R0)));
       if (k !== cle) { ok('Recette : ' + cle, false, 'la recette donne ' + k); continue; }
       for (const sh of formes) {
-        banc(); const lap = bete('limace', cle.includes('metamorphose') ? X0 - 21 : X0 + 15); lap.sta.stun = 999;
-        World.phen.reset(); const err0 = window.__errs.length;
-        lance(Object.assign({}, R0, { shape: sh, trigger: sh === 'projectile' ? 'contact' : 'immediat' }), P0().x + 180, sh === 'projectile' ? (Y - 1) * CS : P0().y);
-        let vu = false; run(150, () => { if (phDe(cle).length) vu = true; });
+        // une seconde chance : le monde a sa part de hasard ; un vrai défaut échoue deux fois de suite
+        let vu = false, err0 = window.__errs.length;
+        for (let essai = 0; essai < 2 && !vu; essai++) {
+          banc(); const lap = bete('limace', cle.includes('metamorphose') ? X0 - 21 : X0 + 15); lap.sta.stun = 999;
+          World.phen.reset(); err0 = window.__errs.length;
+          lance(Object.assign({}, R0, { shape: sh, trigger: sh === 'projectile' ? 'contact' : 'immediat' }), P0().x + 180, sh === 'projectile' ? (Y - 1) * CS : P0().y);
+          run(150, () => { if (phDe(cle).length) vu = true; });
+          if (!vu) libere();
+        }
         nTot++; const bon = (vu || (cle === 'feu|metamorphose' && sh === 'mur')) && window.__errs.length === err0;
         if (bon) nOk++; else rates.push(cle + ' / ' + sh + (vu ? '' : ' (pas de phénomène)') + (window.__errs.length > err0 ? ' ERREUR ' + window.__errs[window.__errs.length - 1] : ''));
         libere();

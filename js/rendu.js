@@ -26,7 +26,7 @@ function creerRendu(W) {
       if (o.t === 'coffre' && !o.ouvert) ls.push({ x: o.x + o.w / 2, y: o.y + 10, r: 40 });
       if (o.t === 'rune' && o.revele > 0) ls.push({ x: o.x + o.w / 2, y: o.y + o.h / 2, r: 60 * o.revele });
     }
-    W.GD.lumieres(ls);
+    W.GD.lumieres(ls); W.CP.lumieres(ls);
     for (const c of W.st.crs) { if (c.t === 'follet' && c.hp > 0) ls.push({ x: c.x + c.w / 2, y: c.y + c.h / 2, r: 110 }); else if (c.hp > 0 && DATA.ESPECES[c.t] && DATA.ESPECES[c.t].lumineux) ls.push({ x: c.x + c.w / 2, y: c.y + c.h / 2, r: 70 }); else if (c.t === 'familier' && c.hp > 0) ls.push({ x: c.x + c.w / 2, y: c.y + c.h / 2, r: 90 }); }
     for (const s of W.st.sp) {
       if (s.k === 'field' && (s.core === 'lumiere' || s.core === 'feu')) ls.push({ x: s.x, y: s.y, r: s.r * (s.core === 'lumiere' ? 2.2 : 1.4) });
@@ -62,6 +62,7 @@ function creerRendu(W) {
     for (const k of W.st.pickups) { const ing = DATA.INGREDIENTS[k.ing]; const yy = k.y - 10 + Math.sin(k.bob * 4) * 3; ctx.save(); ctx.fillStyle = ing.couleur; ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(k.x, yy, 7, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.arc(k.x - 2, yy - 2, 2, 0, TAU); ctx.fill(); ctx.restore(); }
     for (const c of W.st.crs) if (c.hp > 0) drawCreature(ctx, c);
     W.GD.dessinerTirs(ctx, W.time);
+    W.CP.dessiner(ctx, W.time);
     drawPlayer(ctx, p);
     for (const q of W.st.portails) { ctx.save(); ctx.strokeStyle = '#4fb0a0'; ctx.lineWidth = 3; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.ellipse(q.x, q.y, q.r * 0.55, q.r, 0, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.2; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.ellipse(q.x, q.y, q.r * 0.3, q.r * 0.7, W.time * 2, 0, TAU); ctx.stroke(); ctx.restore(); if (Math.random() < 0.3) W.part(q.x + (Math.random() - 0.5) * 20, q.y + (Math.random() - 0.5) * 40, '#4fb0a0', 1, 10, 0.5, 2, 0, 'spark'); }
     if (W.st.lien) { ctx.save(); ctx.strokeStyle = '#c9a63a'; ctx.lineWidth = 2.5; U.inkLine(ctx, p.x + p.w / 2, p.y + p.h * 0.4, W.st.lien.x, W.st.lien.y, Math.floor(W.time * 3), 2); ctx.fillStyle = '#c9a63a'; ctx.beginPath(); ctx.arc(W.st.lien.x, W.st.lien.y, 4, 0, TAU); ctx.fill(); ctx.restore(); }

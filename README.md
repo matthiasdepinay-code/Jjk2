@@ -110,6 +110,33 @@ La forme **Invocation** fait naître le familier de l'essence posée au centre d
 - **Ordres** : <kbd>V</kbd> « reste ici » (ils gardent l'endroit, marqué d'un fanion) ou « suis-moi » ; <kbd>B</kbd> « attaque » la créature sous la souris ; <kbd>N</kbd> les congédie.
 - Les familiers, comme les phénomènes en cours, sont gardés dans la sauvegarde du monde.
 
+## Gribouille et Grum
+
+Deux compagnons suivent l'apprenti(e) dehors, dessinés à l'encre d'après leur planche de design :
+
+- **Gribouille**, mage d'encre théâtral et génie autoproclamé, sous un grand chapeau magenta rapiécé (étiquette « G »).
+  - Quand une bête hostile approche, il lance ses propres petits sorts : souvent réussis, parfois des **gaffes** (le sort lui éclate au nez et il tombe à la renverse, une bouffée de fumée sort du chapeau, ou il lance... des fleurs), rarement **géniaux**.
+  - Ses sorts ne touchent que les bêtes : ils n'abîment pas le monde, ne blessent jamais l'apprenti(e) et ne réveillent pas un gardien endormi.
+  - Quand ça tourne mal (un gardien éveillé, ou l'apprenti(e) presque à bout de forces), il devient rarement **Giga Gribouille** : un colosse d'encre violette qui frappe deux fois le sol, puis s'endort épuisé.
+  - Il lévite pour suivre l'apprenti(e) qui vole, lit son grimoire quand on ne fait rien.
+- **Grum**, golem de pierre simple, loyal et gourmand, coiffé de mousse, yeux dorés, une rune sur la pierre de devant.
+  - Il protège : une bête hostile s'approche, il fonce et la frappe.
+  - Il aide à creuser : quand l'apprenti(e) creuse (X), il manie la pioche à côté, et ça va deux fois plus vite.
+  - Ses yeux éclairent la nuit.
+- **Le gâteau au miel** (chaudron : miel + rosée, remuer puis chauffer) : offert à Grum, il le mange et devient heureux et deux fois plus fort pendant deux minutes. Sans Grum, il soigne un peu.
+- **Expressions et bulles** : curieux, surpris, inquiet, agacé, gêné, triomphant, endormi..., et des bulles (!, ?, …, gâteau, zzz, colère, cœur) selon ce qui se passe. Sans rien faire un moment, ils lisent, puis s'endorment.
+- On ne peut pas les blesser ; trop loin ou coincés, ils reviennent d'un pouf d'encre.
+- **Tenues**, gagnées en jouant et choisies au miroir du labo :
+
+| Gribouille | Comment l'obtenir | Grum | Comment l'obtenir |
+|---|---|---|---|
+| Arcaniste | découvrir 10 fusions | Runique | éveiller deux stèles de fusion |
+| Alchimiste | connaître 8 recettes du chaudron | Forgeron | ouvrir cinq coffres |
+| Explorateur | retrouver 6 pages déchirées | Forestier | apprivoiser cinq créatures |
+| Céruléen (rare) | vaincre les quatre gardiens | Cristallin (rare) | découvrir les huit fusions à trois |
+
+- Le miroir et les réglages permettent aussi de les laisser au labo.
+
 ## Fusions : quand deux essences s'allient
 
 Deux effets dans un même sceau (le second sous le cercle, sur un sceau moyen ou grand) peuvent fusionner. Une fusion connue fait naître un **phénomène** : il dure, il a sa propre physique, il agit sur le monde, et il **remplace** les deux effets de base. Un aspect compte comme son effet : Eau + Gel, c'est le froid ; Gravité + Attraction, c'est la force.
@@ -222,6 +249,7 @@ js/audio.js     sons génératifs (WebAudio)
 js/sim.js       simulation de matières (grille) et rendu encre par morceaux
 js/gen.js       génération du grand monde
 js/familiers.js dessin des familiers (un par essence)
+js/mascottes.js Gribouille et Grum : dessin à l'encre, tenues, et leur comportement de compagnons
 js/combos.js    phénomènes : les fusions d'essences, leur physique et leur dessin
 js/gardiens.js  gardiens des régions : comportement, projectiles, dessin, barre de vie
 js/rendu.js     rendu du monde : ciel, nuit, objets, créatures, joueur, sorts
@@ -244,7 +272,7 @@ Les modules extraits de `world.js` (phénomènes, gardiens, rendu, créatures, s
 - `node outils/extraire.js --essai f1 f2 ...` dit ce qu'un lot emprunte au monde, ce qu'il réaffecte et quels relais il faudrait, sans rien écrire ;
 - `node outils/extraire.js --module js/x.js --fabrique creerX --alias XX --titre "..." f1 f2 ... -- var1` écrit le module et met world.js à jour. Les variables après `--` partent avec le lot. Il reste à ajouter la balise `<script>` avant `world.js` et à lancer les tests.
 
-Tests : `node tests/lancer.js` lance tous les bancs dans un Chromium sans écran (Playwright) : glyphes, physique, fusions (les 69 fusions lancées dans plusieurs formes), fusions à trois, Maintenu, familiers, vent, énigmes, gardiens, sauvegarde, sons, lisibilité. `node tests/lancer.js gardiens enigmes` n'en lance que certains. `node tests/outils/tactile.js` vérifie les commandes tactiles sur un téléphone simulé, `node tests/outils/table.js` la table des sceaux avec de vrais gestes (souris, clavier, doigt).
+Tests : `node tests/lancer.js` lance tous les bancs dans un Chromium sans écran (Playwright) : glyphes, physique, fusions (les 69 fusions lancées dans plusieurs formes), fusions à trois, Maintenu, familiers, compagnons, vent, énigmes, gardiens, sauvegarde, sons, lisibilité. `node tests/lancer.js gardiens enigmes` n'en lance que certains. `node tests/outils/tactile.js` vérifie les commandes tactiles sur un téléphone simulé, `node tests/outils/table.js` la table des sceaux avec de vrais gestes (souris, clavier, doigt).
 
 Le jeu lui-même n'a aucune dépendance ; `package.json` ne sert qu'aux tests et aux outils (`npm ci`, puis `npm test`). Sur GitHub, le workflow `.github/workflows/tests.yml` lance, à chaque pull request et à chaque envoi sur `main` :
 - les bancs d'essai ;

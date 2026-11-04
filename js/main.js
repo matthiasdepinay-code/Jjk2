@@ -21,7 +21,7 @@
     return {
       cores: DATA.DEBUT.cores.slice(), shapes: DATA.DEBUT.shapes.slice(), mods: DATA.DEBUT.mods.slice(), triggers: DATA.DEBUT.triggers.slice(), slots: DATA.DEBUT.slots,
       tailles: DATA.DEBUT.tailles.slice(), filtres: DATA.DEBUT.filtres.slice(), cibles: DATA.DEBUT.cibles.slice(), deuxMains: false, enchainements: [],
-      recettes: [], ingredientsVus: [], done: [], maitrise: {}, combos: {}, familiers: {}, gardiens: {}, gardiensVus: [], leconsVues: [], leconsFaites: [], _evts: [], nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
+      recettes: [], ingredientsVus: [], done: [], maitrise: {}, combos: {}, familiers: {}, gardiens: {}, gardiensVus: [], tenues: ['gribouille:classique', 'grum:classique'], leconsVues: [], leconsFaites: [], _evts: [], nouveau: false, obs: {}, fusion: false, pagesLues: [], defisFaits: [], bestiaire: {}, especesVues: [], labo: { bac: false, alambic: false, terrarium: false, presse: false },
       compteurs: { kindsHit: [], mannequin: 0, torches: 0, graines: 0, golemPousse: 0, glace: 0, runes: 0, tames: 0, potions: 0, sorts: 0, terre: 0, creaturesTouchees: 0, vols: 0, portes: 0, lancers: 0, niveau: 1, sceaux: 0 },
       event(name, data) {
         const k = this.compteurs;
@@ -51,6 +51,7 @@
           case 'ile': if (!k.iles) k.iles = []; if (!k.iles.includes(data)) k.iles.push(data); break;
           case 'cadeau': k.cadeaux = (k.cadeaux || 0) + 1; return;
           case 'coffre': k.coffres = (k.coffres || 0) + 1; break;
+          case 'stele': k.steles = (k.steles || 0) + 1; break;
           case 'naissance': k.naissances = (k.naissances || 0) + 1; return;
           case 'saison': if (!this.saisonsVues) this.saisonsVues = []; if (!this.saisonsVues.includes(data)) this.saisonsVues.push(data); return;
           case 'espece': if (!this.especesVues.includes(data)) { this.especesVues.push(data); game.toast('Nouvelle espèce : ' + DATA.ESPECES[data].nom + '. ' + DATA.ESPECES[data].desc); game.addXp(DATA.XP.ingredient); } return;
@@ -115,6 +116,7 @@
     editSeal: Seal.create(), lastPotion: null, started: false,
     xp: 0, niveau: 1,
     courrier: { active: null, faites: [], pret: false, t: 0, exploitOk: false }, bonus: { encre: 0, vie: 0 }, trophees: [], carte: '',
+    compagnons: { actif: true, gribouille: 'classique', grum: 'classique' },
     opt: { feu: 1, pluie: 1, encre: 'normale', cout: 1, regen: 1, texte: 'normal', musique: 1, effets: 1 },
     toast(m, k) { UI.toast(m, k); },
     zoneChange(nom) { UI.zoneTitle(nom); },
@@ -245,9 +247,15 @@
         if (fait) { p.leconsFaites.push(L.id); p.nouveau = true; this.toast('✦ Leçon apprise : ' + L.titre + ' (+' + L.xp + ' exp.)', 'unlock'); Son.sfx('unlock'); this.addXp(L.xp); this.save(); }
       }
     },
+    // une tenue de Gribouille ou de Grum gagnée : on l'annonce, elle attend au miroir du labo
+    tenuesGagnees() { const p = this.progress, out = []; for (const qui in DATA.TENUES_MASCOTTES) for (const T of DATA.TENUES_MASCOTTES[qui]) { let ok = false; try { ok = T.cond(p); } catch (e) { ok = false; } if (ok) out.push(qui + ':' + T.id); } return out; },
+    checkTenues() {
+      const p = this.progress; if (!p.tenues) p.tenues = ['gribouille:classique', 'grum:classique'];
+      for (const k of this.tenuesGagnees()) { if (p.tenues.includes(k)) continue; p.tenues.push(k); const [qui, id] = k.split(':'); const T = Mascottes.TENUES[qui][id]; this.toast('✦ Nouvelle tenue pour ' + (qui === 'grum' ? 'Grum' : 'Gribouille') + ' : ' + T.nom + (T.rare ? ' (rare !)' : '') + '. Elle t\'attend au miroir du labo.', 'unlock'); Son.sfx('unlock'); this.save(); }
+    },
     checkDefis(w) {
       const p = this.progress;
-      this.checkLecons();
+      this.checkLecons(); this.checkTenues();
       { const l = this.lettreCourante(); if (l && l.cmd.type === 'exploit' && !this.courrier.exploitOk) { let ok = false; try { ok = l.cmd.cond(p, w); } catch (e) { ok = false; } if (ok) { this.courrier.exploitOk = true; this.toast('✉ Exploit accompli : « ' + l.cmd.texte + ' ». Le corbeau attend ta réponse au labo.', 'unlock'); Son.sfx('unlock'); this.save(); } } }
       for (const d of DATA.DEFIS) {
         if (p.defisFaits.includes(d.id)) continue;
@@ -446,7 +454,7 @@
     save() {
       this.progress.compteurs.sceaux = this.seals.length;
       try {
-        const data = { selectedL: this.selectedL, carte: this.carte, courrier: this.courrier, bonus: this.bonus, trophees: this.trophees, look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
+        const data = { compagnons: this.compagnons, selectedL: this.selectedL, carte: this.carte, courrier: this.courrier, bonus: this.bonus, trophees: this.trophees, look: this.look, started: this.started, inv: this.inv, seals: this.seals, hotbar: this.hotbar, lastPotion: this.lastPotion, xp: this.xp, niveau: this.niveau,
           progress: { tailles: this.progress.tailles, filtres: this.progress.filtres, cibles: this.progress.cibles, deuxMains: this.progress.deuxMains, enchainements: this.progress.enchainements, labo: this.progress.labo, cores: this.progress.cores, shapes: this.progress.shapes, mods: this.progress.mods, triggers: this.progress.triggers, slots: this.progress.slots, fusion: this.progress.fusion, recettes: this.progress.recettes, ingredientsVus: this.progress.ingredientsVus, done: this.progress.done, compteurs: this.progress.compteurs, obs: this.progress.obs, pagesLues: this.progress.pagesLues, defisFaits: this.progress.defisFaits, bizarresVues: this.progress.bizarresVues || [], bestiaire: this.progress.bestiaire, especesVues: this.progress.especesVues } };
         localStorage.setItem(SAVE_KEY, JSON.stringify(data));
       } catch (e) { /* stockage indisponible */ }
@@ -455,6 +463,7 @@
       try {
         const raw = localStorage.getItem(SAVE_KEY); if (!raw) return false;
         const d = JSON.parse(raw);
+        if (d.compagnons) this.compagnons = Object.assign({ actif: true, gribouille: 'classique', grum: 'classique' }, d.compagnons);
         this.look = d.look || this.look; this.started = !!d.started; this.inv = d.inv || this.inv; this.seals = d.seals || []; this.hotbar = d.hotbar || this.hotbar; this.lastPotion = d.lastPotion || null;
         this.xp = d.xp || 0; this.niveau = d.niveau || 1;
         if (d.carte) this.carte = d.carte;

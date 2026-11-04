@@ -32,7 +32,7 @@ const World = (() => {
     for (const o of L.objs) st.objs.push(makeObj(o));
     for (const c of L.crs) st.crs.push(makeCreature(c));
     if (saved) restore(saved);
-    Sim.ancrer(); PH.reset(); GD.reset();
+    Sim.ancrer(); PH.reset(); GD.reset(); CP.reset();
     if (aRestaurer) { const R = aRestaurer; aRestaurer = null; try { for (const q of R.familiers) { if (!DATA.FAMILIERS[q.espece]) continue; const spec = makeSpec(Seal.clone(q.seal)); const f = nouveauFamilier(spec, q.espece, q.x, q.y); f.life = q.life; f.hp = Math.min(f.hpMax, q.hp); f.age = q.age || 0; st.crs.push(f); } PH.restaurer(R.phen); } catch (e) { console.warn('restauration des familiers et phénomènes', e); } }
     st.cam.x = clamp(st.p.x - VW / 2, 0, L.w - VW); st.cam.y = clamp(st.p.y - VH / 2, 0, L.h - VH);
     if (!darkCv) { darkCv = document.createElement('canvas'); darkCv.width = VW / 2; darkCv.height = VH / 2; } // l'obscurité, toute en dégradés, se calcule à demi-résolution
@@ -50,13 +50,21 @@ const World = (() => {
     origine: () => ({ x: st.p.x + st.p.w / 2, y: st.p.y + st.p.h * 0.45 }), cible: (R) => { const p = st.p, o = { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, a = toWorld(game.inp.mouse.x, game.inp.mouse.y); const dx = a.x - o.x, dy = a.y - o.y, d = Math.hypot(dx, dy) || 1, k = Math.min(1, R / d); return { x: o.x + dx * k, y: o.y + dy * k }; }, addXp: (n) => { if (game && game.addXp) game.addXp(n); }, tempsDe: (x, y) => (bullesT.length ? tempsDe(x, y, 2) : 1),
   });
   // ---------- Gardiens (un par région, js/gardiens.js) ----------
+  // ---------- Gribouille et Grum, les compagnons (js/mascottes.js) ----------
+  let inpCourant = null;
+  const CP = creerCompagnons({
+    get st() { return st; }, get GD() { return GD; }, game: () => game, inp: () => inpCourant,
+    part: (...a) => part(...a), msg: (...a) => msg(...a), son: (a, b) => Son.sfx(a, b), shake: (v) => { st.shake = Math.max(st.shake, v); }, flash: (v) => { st.flash = Math.max(st.flash, v); },
+    moveBody: (b, dt) => moveBody(b, dt), applyGrav: (b, dt, k) => applyGrav(b, dt, k), applyEffect: (...a) => applyEffect(...a), hurt: (...a) => hurt(...a), masse: (e) => masse(e), inView: (x, y) => inView(x, y),
+    aiderCreuser: (dt) => { st.p.digT -= dt; },
+  });
   const GD = creerGardiens({
     get st() { return st; }, get L() { return L; }, game: () => game, part: (...a) => part(...a), msg: (...a) => msg(...a), evt: (...a) => evt(...a),
     son: (a, b) => Son.sfx(a, b), shake: (v) => { st.shake = Math.max(st.shake, v); }, flash: (v) => { st.flash = Math.max(st.flash, v); },
     moveBody: (b, dt) => moveBody(b, dt), applyGrav: (b, dt, k) => applyGrav(b, dt, k), dropPickup: (i, x, y) => dropPickup(i, x, y),
   });
   // ---------- Rendu du monde : ciel, nuit, objets, créatures, joueur, sorts (js/rendu.js) ----------
-  const RD = creerRendu({ get VW() { return VW; }, get VH() { return VH; }, get GD() { return GD; }, get PH() { return PH; }, get colorOf() { return colorOf; }, get darkCv() { return darkCv; }, get daylight() { return daylight; }, get emetActif() { return emetActif; }, get findInteraction() { return findInteraction; }, get game() { return game; }, get groundBelow() { return groundBelow; }, get labelInteraction() { return labelInteraction; }, get part() { return part; }, get posMarque() { return posMarque; }, get rayonPrise() { return rayonPrise; }, get saison() { return saison; }, get st() { return st; }, get time() { return time; }, get toWorld() { return toWorld; } });
+  const RD = creerRendu({ get CP() { return CP; }, get VW() { return VW; }, get VH() { return VH; }, get GD() { return GD; }, get PH() { return PH; }, get colorOf() { return colorOf; }, get darkCv() { return darkCv; }, get daylight() { return daylight; }, get emetActif() { return emetActif; }, get findInteraction() { return findInteraction; }, get game() { return game; }, get groundBelow() { return groundBelow; }, get labelInteraction() { return labelInteraction; }, get part() { return part; }, get posMarque() { return posMarque; }, get rayonPrise() { return rayonPrise; }, get saison() { return saison; }, get st() { return st; }, get time() { return time; }, get toWorld() { return toWorld; } });
   function draw(...a) { return RD.draw(...a); }
   function drawApprenti(...a) { return RD.drawApprenti(...a); }
   // ---------- Créatures : bêtes du monde et familiers (js/creatures.js) ----------
@@ -393,7 +401,7 @@ const World = (() => {
     }
   }
   function msg(s, kind) { if (game) game.toast(s, kind); }
-  function evt(n, d) { if (game) game.progress.event(n, d); }
+  function evt(n, d) { if (game) game.progress.event(n, d); CP.surEvt(n, d); }
   function inView(x, y) { return x > st.cam.x - 40 && x < st.cam.x + VW + 40 && y > st.cam.y - 40 && y < st.cam.y + VH + 40; }
   function onSimEvent(kind, x, y) {
     if (!st) return;
@@ -542,6 +550,7 @@ const World = (() => {
       if (forte) msg('Distillée : l\'effet est doublé.');
       switch (id) {
         case 'encre': p.ink = Math.min(p.inkMax, p.ink + 25 * F); msg('L\'encre coule à nouveau dans tes veines.'); break;
+        case 'gateau': if (CP.offrirGateau()) msg('Grum dévore le gâteau : le voilà tout heureux, et bien plus fort !'); else { p.hp = Math.min(p.hpMax, p.hp + 3); msg('Un gâteau au miel. Délicieux.'); } break;
         case 'soin': p.hp = p.hpMax; p.sta.burning = 0; msg('Tu te sens tout(e) neuf(ve).'); break;
         case 'saut': p.sta.jump = 30 * F; msg('Tes jambes frétillent. Saute !'); break;
         case 'vision': p.sta.vision = 40 * F; msg('Le monde se couvre de signes que tu ne voyais pas.'); break;
@@ -713,6 +722,7 @@ const World = (() => {
   const CAPS_SORTS = { trap: 30, expire: 40, totem: 12, field: 40, attente: 20, orbit: 9, bulle: 8, repeat: 24, timer: 30, beamtimer: 20, tornade: 6, singularite: 6, rain: 10, echo: 30, vague: 10, colonne: 10, rafale: 6 };
   // ---------- Mise à jour ----------
   function update(dt, inp, aim) {
+    inpCourant = inp;
     time += dt;
     const p = st.p;
     memoriser(dt);
@@ -878,6 +888,7 @@ const World = (() => {
     updateObjs(dt);
     updateCreatures(dt);
     GD.majTirs(dt);
+    CP.update(dt);
     retenir();
     if (Sim.ventVif) {
       const pousse = (e, k) => { const [vx, vy] = Sim.ventAt(e.x + e.w / 2, e.y + e.h / 2); if (Math.abs(vx) + Math.abs(vy) < 0.25) return; e.vx += vx * k * dt / masse(e); e.vy += vy * k * 0.7 * dt / masse(e); };
@@ -1147,5 +1158,5 @@ const World = (() => {
   function level() { return L; }
   function throwCarried(aim) { if (st.p.carry) drop(aim); }
 
-  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a), get phen() { return PH; }, get gardiens() { return GD; }, ordonner };
+  return { build, ensure, reset, update, draw, castSeal, usePotion, useLiquid, interact, throwCarried, toWorld, state, level, drawApprenti, respawn, serialize, releaseControl, gridEffectOn, relacher, objets, detoner, lancerPrise, dig, saison, _effet: (...a) => applyEffect(...a), get phen() { return PH; }, get gardiens() { return GD; }, get compagnons() { return CP; }, ordonner };
 })();

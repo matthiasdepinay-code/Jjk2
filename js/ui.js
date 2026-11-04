@@ -103,6 +103,39 @@ const UI = (() => {
       }
     }
   }
+  // les compagnons au miroir : une tenue par mascotte, dessinées et animées
+  const tenuesCv = [];
+  function construireCompagnons() {
+    const c = $('#create-compagnons'); if (!c) return; c.innerHTML = ''; tenuesCv.length = 0;
+    const R = game.compagnons || (game.compagnons = { actif: true, gribouille: 'classique', grum: 'classique' });
+    const gagnees = game.progress.tenues || [];
+    for (const qui of ['gribouille', 'grum']) {
+      c.appendChild(el('h3', '', (qui === 'grum' ? 'Grum' : 'Gribouille') + ' <small>' + (qui === 'grum' ? 'golem loyal et gourmand' : 'mage théâtral, génie autoproclamé') + '</small>'));
+      const box = el('div', 'tenues');
+      for (const T of DATA.TENUES_MASCOTTES[qui]) {
+        const ok = T.id === 'classique' || gagnees.includes(qui + ':' + T.id), A = Mascottes.TENUES[qui][T.id];
+        const b = el('button', 'tenue' + (R[qui] === T.id ? ' on' : '') + (ok ? '' : ' locked'));
+        const cv = document.createElement('canvas'); cv.width = 112; cv.height = 120; b.appendChild(cv);
+        b.appendChild(el('span', '', ok ? ((n) => n.charAt(0).toUpperCase() + n.slice(1))(A.nom.replace(/^(Gribouille|Grum) /, '')) : '???'));
+        b.title = ok ? A.nom + (A.rare ? ' (rare)' : '') : 'À gagner : ' + T.indice + (T.rare ? ' (rare)' : '');
+        if (ok) b.addEventListener('click', () => { R[qui] = T.id; game.save(); construireCompagnons(); Son.sfx('click'); });
+        tenuesCv.push({ cv, qui, id: T.id, ok });
+        box.appendChild(b);
+      }
+      c.appendChild(box);
+    }
+    const g = el('div', 'choices'); g.appendChild(el('span', 'label', 'Ils m\'accompagnent dehors'));
+    for (const [v, lab] of [[true, 'Oui'], [false, 'Non']]) { const b = el('button', 'choice' + ((R.actif !== false) === v ? ' on' : ''), lab); b.addEventListener('click', () => { R.actif = v; game.save(); construireCompagnons(); Son.sfx('click'); }); g.appendChild(b); }
+    c.appendChild(g);
+  }
+  function dessinerTenues() {
+    for (const q of tenuesCv) {
+      const ctx = q.cv.getContext('2d'); ctx.clearRect(0, 0, q.cv.width, q.cv.height);
+      if (!q.ok) { ctx.save(); ctx.globalAlpha = 0.25; ctx.filter = 'brightness(0)'; }
+      Mascottes.dessiner(ctx, q.qui, 56, 112, { tenue: q.id, t: time + (q.qui === 'grum' ? 1.7 : 0), dir: 1, expr: 'neutre' }, q.qui === 'grum' ? 2 : 1.75);
+      if (!q.ok) { ctx.restore(); U.txt(ctx, '?', 56, 60, 40, 'center', 'rgba(60,45,30,0.55)'); }
+    }
+  }
   function majChoixCreation() {
     const N = Perso.norm(look);
     for (const [cle, sel] of CHOIX_CREATION()) $$(sel + ' .choice').forEach((b) => b.classList.toggle('on', +b.dataset.v === N[cle]));
@@ -142,7 +175,7 @@ const UI = (() => {
     if (name === 'presse') refreshPresse();
     if (name === 'terrarium') refreshTerrarium();
     if (name === 'bac') openBac();
-    if (name === 'create') { if (!$('#create-peau').children.length) construireCreation(); look = { ...Perso.norm(game.look) }; delete look._cape; $('#create-nom').value = look.nom || ''; majChoixCreation(); }
+    if (name === 'create') { if (!$('#create-peau').children.length) construireCreation(); construireCompagnons(); look = { ...Perso.norm(game.look) }; delete look._cape; $('#create-nom').value = look.nom || ''; majChoixCreation(); }
   }
   function close() {
     open = null; selSlot = null;
@@ -160,6 +193,7 @@ const UI = (() => {
     ctx.save(); ctx.fillStyle = 'rgba(31,26,22,0.12)'; ctx.beginPath(); ctx.ellipse(c.width / 2, c.height - 22, 50, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     const t = time, cast = (t % 6) > 4.6 ? -0.7 : null;
     World.drawApprenti(ctx, c.width / 2, c.height - 22, 230, look, 1, 0, null, false, { t, cast, glow: '#d8a63a' });
+    dessinerTenues();
   }
 
   // ---------- Éditeur de sceaux ----------
@@ -884,6 +918,7 @@ const UI = (() => {
     groupe('Pluie et orages', 'pluie', [[0, 'Jamais'], [0.5, 'Rares'], [1, 'Normaux'], [2, 'Fréquents']]);
     groupe('Encre', 'encre', [['genereuse', 'Généreuse'], ['normale', 'Normale'], ['rare', 'Précieuse']]);
     groupe('Taille du texte', 'texte', [['normal', 'Normale'], ['grand', 'Grande']]);
+    { const R = game.compagnons || (game.compagnons = { actif: true, gribouille: 'classique', grum: 'classique' }); c.appendChild(el('h3', '', 'Gribouille et Grum')); const g = el('div', 'choices'); for (const [v, lab] of [[true, 'M\'accompagnent'], [false, 'Restent au labo']]) { const b = el('button', 'choice' + ((R.actif !== false) === v ? ' on' : ''), lab); b.addEventListener('click', () => { R.actif = v; game.save(); refreshOptions(); Son.sfx('click'); }); g.appendChild(b); } c.appendChild(g); }
     groupe('Musique', 'musique', [[0, 'Muette'], [0.5, 'Douce'], [1, 'Normale']]);
     groupe('Effets sonores', 'effets', [[0, 'Muets'], [0.5, 'Doux'], [1, 'Normaux']]);
     c.appendChild(el('p', 'muted', 'Encre généreuse : les sceaux coûtent un quart de moins et l\'encre revient moitié plus vite. Précieuse : l\'inverse.'));

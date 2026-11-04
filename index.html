@@ -103,6 +103,12 @@
   .barre-maitrise { height: 6px; border: 1px solid rgba(31,26,22,0.5); border-radius: 3px; margin: 3px 0 4px; background: rgba(255,255,255,0.4); overflow: hidden; }
   .barre-maitrise i { display: block; height: 100%; opacity: 0.8; }
   #panel-create { width: calc(980px * var(--s)); }
+  #create-compagnons h3 small { font-variant: normal; letter-spacing: 0; color: var(--sepia); }
+  .tenues { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  .tenue { display: flex; flex-direction: column; align-items: center; padding: 2px 4px; width: calc(78px * var(--s)); font-size: calc(12px * var(--s)); line-height: 1.1; }
+  .tenue canvas { width: calc(56px * var(--s)); height: calc(60px * var(--s)); }
+  .tenue.on { background: var(--gold); }
+  .tenue.locked { opacity: 0.55; border-style: dashed; background: transparent; box-shadow: none; cursor: help; }
   .create-gauche { flex: none; display: flex; flex-direction: column; gap: 8px; align-items: center; }
   .create-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
   .create-grille .choices { margin-bottom: 4px; }
@@ -260,6 +266,7 @@
             <div><h3>Écharpe</h3><div id="create-echarpe" class="choices"></div></div>
             <div><h3>À la main</h3><div id="create-acc" class="choices"></div></div>
           </div>
+          <div id="create-compagnons"></div>
           <button id="create-go">C'est moi</button>
         </div>
       </div>
@@ -417,6 +424,7 @@
       <p>Avec la forme <b>Prise</b>, la Force ou la Gravité saisissent la matière : l'eau d'un lac, un tas de sable, une créature. Promène-la à la souris, puis clique pour la lancer. Certains ingrédients ne poussent que dans une région ; creuse-les et brasse-les en <b>encres spéciales</b>, que tu choisiras à la table des sceaux.</p>
       <p>J'ai laissé des <b>coffres scellés</b> un peu partout : un levier, une plaque, deux brasiers, une roue à sec, un moulin... Approche-toi, les fils d'encre te montreront ce qui les ouvre. Et prends le temps de voir passer les saisons.</p>
       <p>Quatre <b>stèles</b> gravées d'essences dorment aussi dehors : chacune s'éveille quand naît près d'elle la fusion qu'elle porte. Le grand sceau, lui, a une <b>troisième case d'effet</b> : certaines fusions à trois font naître une étoile, un ouragan, un volcan...</p>
+      <p>Tu ne seras pas seul(e) dehors : <b>Gribouille</b>, mage d'encre au grand chapeau rapiécé, génie autoproclamé (et maladroit), et <b>Grum</b>, golem de pierre loyal et gourmand, te suivront partout. Gribouille lance ses petits sorts, pas toujours réussis ; Grum frappe ce qui t'approche et t'aide à creuser. Brasse-lui un <b>gâteau au miel</b> (miel et rosée, remuer puis chauffer) : il en sera tout heureux, et bien plus fort. Au miroir, choisis leurs tenues, à mesure que tu les gagnes.</p>
       <p>Prends garde aux <b>gardiens</b> : un par région, l'Ent-ronce, le Grand Cerf, le Golem de magma, l'Automate des ruines. La force seule n'en vient pas à bout : observe ce qui les soigne et ce qu'ils craignent. Ils dorment tant que tu n'as pas pris assez de forces ; ne les réveille pas trop tôt.</p>
       <p>Le vent a de la mémoire : un sort de Vent souffle pour de bon, et la fumée, les flammes, le sable fin et les nuages s'en vont avec lui. Tes familiers t'écoutent : <kbd>V</kbd> pour « reste ici » ou « suis-moi », <kbd>B</kbd> pour « attaque », <kbd>N</kbd> pour les congédier.</p>
       <h3>Dehors</h3>
@@ -443,6 +451,7 @@
 <script src="js/sim.js"></script>
 <script src="js/gen.js"></script>
 <script src="js/familiers.js"></script>
+<script src="js/mascottes.js"></script>
 <script src="js/combos.js"></script>
 <script src="js/gardiens.js"></script>
 <script src="js/rendu.js"></script>
