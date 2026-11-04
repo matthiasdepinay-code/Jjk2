@@ -607,6 +607,33 @@ function creerPhenomenes(W) {
     return null;
   }
 
+  // le bruit de chaque phénomène
+  const SONS = { 'feu|gravite': 'soleil', 'eau|feu': 'eau', 'feu|terre': 'feu', 'feu|vent': 'vent', 'feu|vie': 'feu', 'feu|lumiere': 'feu', 'feu|foudre': 'foudre', 'feu|temps': 'feu', 'feu|transmutation': 'feu',
+    'eau|terre': 'eau', 'eau|vent': 'eau', 'eau|vie': 'eau', 'eau|lumiere': 'magie', 'eau|foudre': 'orage', 'eau|gravite': 'eau', 'eau|temps': 'eau', 'terre|vent': 'vent', 'gravite|vent': 'vent', 'foudre|vent': 'orage', 'temps|vent': 'vent', 'transmutation|vent': 'magie',
+    'lumiere|vent': 'magie', 'lumiere|vie': 'magie', 'foudre|vie': 'foudre', 'foudre|lumiere': 'foudre', 'gravite|lumiere': 'trounoir', 'lumiere|transmutation': 'magie', 'foudre|gravite': 'foudre', 'foudre|temps': 'foudre', 'foudre|transmutation': 'eau',
+    'gravite|temps': 'temps', 'gravite|transmutation': 'terre', 'froid|vent': 'vent', 'foudre|metal': 'foudre', 'feu|metal': 'feu', 'acide|feu': 'vent', 'acide|eau': 'eau', 'explosion|gravite': 'trounoir', 'fumee|vent': 'vent', 'foudre|lien': 'foudre', 'eau|seisme': 'eau', 'force|gravite': 'trounoir', 'terre|transmutation': 'terre' };
+  const GENRE_SON = { portail: 'magie', esprit: 'magie' };
+  function sonDe(ph) { if (SONS[ph.id]) return SONS[ph.id]; const I = DATA.comboInfo(ph.id); return I && GENRE_SON[I.genre] || null; }
+  let uid = 0;
+  function nappes(cx, cy, demiL) { const out = []; for (const ph of liste) { if (ph.mort) continue; const ty = sonDe(ph); if (!ty) continue; if (!ph.uid) ph.uid = ++uid; const d = dist(ph.x, ph.y, cx, cy); const vol = clamp(1 - d / (demiL * 1.6), 0, 1) * Math.min(1, 0.4 + 0.3 * ph.sz) * fade(ph); if (vol > 0.02) out.push({ id: ph.uid, type: ty, vol, pan: clamp((ph.x - cx) / demiL, -1, 1) }); } return out.sort((a, b) => b.vol - a.vol); }
+  // ce qui survit à une sauvegarde : les phénomènes qui durent ; l'îlot, lui, retombera au chargement
+  const GARDE = ['feu|gravite', 'feu|temps', 'eau|vent', 'eau|foudre', 'eau|gravite', 'eau|vie', 'lumiere|vent', 'foudre|lumiere', 'foudre|gravite', 'foudre|temps', 'gravite|temps', 'gravite|vent', 'froid|vent', 'acide|eau', 'acide|feu', 'fumee|vent', 'foudre|metal', 'feu|metal', 'terre|vent', 'vent|vie', 'feu|vent', 'feu|lumiere', 'foudre|lien'];
+  function sauver() {
+    const out = { phen: [], ilots: [] };
+    for (const ph of liste) {
+      if (ph.mort) continue;
+      if (ph.id === 'gravite|vie' && ph.data.c && ph.data.c.length) { out.ilots.push(ph.data.c.slice()); continue; }
+      const I = DATA.comboInfo(ph.id), famille = I && (I.genre === 'portail' || I.genre === 'esprit');
+      if (!(GARDE.includes(ph.id) || famille) || ph.tenu || ph.life < 2 || (ph.follow && ph.follow !== st().p) || !ph.spec.seal) continue;
+      out.phen.push({ id: ph.id, seal: ph.spec.seal, x: Math.round(ph.x), y: Math.round(ph.y), rect: ph.rect || null, ligne: ph.ligne || null, life: Math.round(ph.life * 10) / 10, joueur: ph.follow === st().p, eau: ph.data.eau });
+    }
+    return out;
+  }
+  function restaurer(d) {
+    if (!d) return;
+    for (const c of d.ilots || []) { for (const i of c) Sim.ancrerCase(i, 0); if (c.length) Sim.fissurer(c[0]); }
+    for (const q of d.phen || []) { try { const spec = W.makeSpec(Seal.clone(q.seal)); spec.combo = q.id; const ph = deployer(spec, q.x, q.y, 50, { rect: q.rect, ligne: q.ligne, follow: q.joueur ? st().p : null, silencieux: true }, null); if (ph) { ph.life = Math.min(q.life, ph.max * 1.6); if (q.eau != null) ph.data.eau = q.eau; } } catch (e) { console.warn('phénomène non restauré', q.id, e); } }
+  }
   // ---------- déploiement ----------
   function defDe(id) { if (DEFS[id]) return DEFS[id]; const f = famille(id); if (f) DEFS[id] = Object.assign({ r: 50, life: 6, couleur: '#c08a3a', bouge: 'fixe' }, f); return DEFS[id] || null; }
   function decouvrir(id) {
@@ -637,8 +664,7 @@ function creerPhenomenes(W) {
     if (liste.length >= 28) { const v = liste.shift(); finir(v); }
     liste.push(ph);
     if (D.init) D.init(ph, o);
-    st().sp.push({ k: 'label', x: ph.x, y: ph.y - 40, txt: DATA.comboInfo(id).nom, life: 1.6, max: 1.6 });
-    decouvrir(id);
+    if (!o.silencieux) { st().sp.push({ k: 'label', x: ph.x, y: ph.y - 40, txt: DATA.comboInfo(id).nom, life: 1.6, max: 1.6 }); decouvrir(id); }
     return ph;
   }
   function finir(ph, doux) { if (ph.fini) return; ph.fini = true; ph.mort = true; if (doux) { W.part(ph.x, ph.y, ph.D.couleur, 16, 70, 0.5, 3, 0, 'spark'); W.son('fizzle'); } if (ph.D.fin && !(doux && ph.D.explose)) { try { ph.D.fin(ph); } catch (e) { console.warn(e); } } if (ph.liens) for (const q of ph.liens) q.life = Math.min(q.life, 0.01); if (ph.objs) retirerPlateformes(ph); }
@@ -704,5 +730,5 @@ function creerPhenomenes(W) {
   function lumieres() { const out = []; for (const ph of liste) { if (ph.mort) continue; if (ph.D.lumieres) { for (const l of ph.D.lumieres(ph)) out.push(l); } else if (ph.D.lum) out.push({ x: ph.x, y: ph.y, r: ph.D.lum * Math.sqrt(ph.sz) * fade(ph) }); } return out; }
   function draw(ctx, t) { for (const ph of liste) { if (ph.mort) continue; if (ph.tenu && !ph.follow) { const o = W.origine(); ctx.save(); ctx.strokeStyle = ph.D.couleur; ctx.globalAlpha = 0.45; ctx.lineWidth = 1.5; ctx.setLineDash([4, 6]); ctx.lineDashOffset = -t * 30; ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(ph.x, ph.y); ctx.stroke(); ctx.restore(); } try { if (ph.D.draw) ph.D.draw(ctx, ph, t); else { FX.glow(ctx, ph.x, ph.y, ph.r * 1.5, ph.D.couleur, 0.35 * fade(ph)); } } catch (e) { console.warn(e); } } }
   function reset() { for (const ph of liste) if (ph.objs) retirerPlateformes(ph); liste = []; }
-  return { deployer, update, draw, reagir, dissiper, trainee, lumieres, reset, defDe, get liste() { return liste; }, DEFS };
+  return { deployer, update, draw, reagir, dissiper, trainee, lumieres, reset, defDe, nappes, sauver, restaurer, get liste() { return liste; }, DEFS };
 }

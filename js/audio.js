@@ -120,6 +120,63 @@ const Son = (() => {
     o.connect(fl); fl.connect(g); g.connect(musicBus); o.start(t); o.stop(t + dur + 0.05);
     if (Math.random() < 0.3) { const o2 = ctx.createOscillator(), g2 = ctx.createGain(); o2.type = 'sine'; o2.frequency.value = f * 1.5; g2.gain.setValueAtTime(0, t + 0.25); g2.gain.linearRampToValueAtTime(0.025, t + 0.27); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.25 + dur * 0.7); o2.connect(g2); g2.connect(musicBus); o2.start(t + 0.25); o2.stop(t + 0.3 + dur); }
   }
+  // ---------- Nappes des phénomènes : chacun son bruit, qui suit sa position ----------
+  const actives = new Map(); let bruitBuf = null;
+  function bruitSource() { if (!bruitBuf) { const n = ctx.sampleRate * 2; bruitBuf = ctx.createBuffer(1, n, ctx.sampleRate); const d = bruitBuf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; } const s = ctx.createBufferSource(); s.buffer = bruitBuf; s.loop = true; return s; }
+  function creerNappe(type) {
+    const out = ctx.createGain(); out.gain.value = 0;
+    const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null; if (pan) { out.connect(pan); pan.connect(sfxBus); } else out.connect(sfxBus);
+    const nodes = [];
+    const osc = (f, ty, v) => { const o = ctx.createOscillator(); o.type = ty; o.frequency.value = f; const g = ctx.createGain(); g.gain.value = v; o.connect(g); g.connect(out); o.start(); nodes.push(o); return { o, g }; };
+    const nz = (ft, f, q, v) => { const s = bruitSource(); const fl = ctx.createBiquadFilter(); fl.type = ft; fl.frequency.value = f; fl.Q.value = q; const g = ctx.createGain(); g.gain.value = v; s.connect(fl); fl.connect(g); g.connect(out); s.start(); nodes.push(s); return { s, fl, g }; };
+    const lfo = (param, f, prof) => { const l = ctx.createOscillator(); l.frequency.value = f; const lg = ctx.createGain(); lg.gain.value = prof; l.connect(lg); lg.connect(param); l.start(); nodes.push(l); };
+    switch (type) {
+      case 'soleil': { const a = osc(82, 'sine', 0.5); osc(123, 'triangle', 0.16); lfo(a.g.gain, 3.1, 0.18); const n = nz('bandpass', 2400, 0.8, 0.12); lfo(n.g.gain, 7, 0.1); break; }
+      case 'orage': { const n = nz('lowpass', 140, 0.7, 1); lfo(n.g.gain, 0.23, 0.6); nz('highpass', 3000, 0.5, 0.05); break; }
+      case 'vent': { const n = nz('bandpass', 700, 1.2, 0.6); lfo(n.fl.frequency, 0.4, 350); lfo(n.g.gain, 0.7, 0.25); break; }
+      case 'eau': { const n = nz('bandpass', 900, 2.5, 0.55); lfo(n.fl.frequency, 5.3, 400); break; }
+      case 'feu': { const n = nz('highpass', 1800, 0.5, 0.25); lfo(n.g.gain, 13, 0.2); osc(110, 'sawtooth', 0.03); break; }
+      case 'trounoir': { osc(41, 'sine', 0.7); osc(41.7, 'sine', 0.5); const w = osc(320, 'sine', 0.05); lfo(w.o.frequency, 0.2, 120); break; }
+      case 'foudre': { const b = osc(110, 'sawtooth', 0.1); lfo(b.g.gain, 17, 0.08); nz('highpass', 4000, 0.5, 0.08); break; }
+      case 'terre': { const n = nz('lowpass', 90, 0.7, 0.8); lfo(n.g.gain, 2.2, 0.4); break; }
+      case 'magie': { [523.25, 659.25, 783.99].forEach((f, i) => { const a = osc(f, 'sine', 0.05); lfo(a.g.gain, 0.5 + i * 0.3, 0.04); }); break; }
+      case 'temps': { osc(220, 'sine', 0.02); break; }
+      default: osc(330, 'sine', 0.03);
+    }
+    return { out, pan, nodes, type, tic: 0 };
+  }
+  // liste : [{ id, type, vol (0..1), pan (-1..1) }] ; ce qui n'y est plus s'éteint en douceur
+  function nappes(liste) {
+    if (!ctx) return;
+    const t = ctx.currentTime, vus = new Set();
+    if (!muted) for (const q of liste.slice(0, 5)) {
+      vus.add(q.id); let b = actives.get(q.id);
+      if (!b) { b = creerNappe(q.type); actives.set(q.id, b); }
+      b.out.gain.setTargetAtTime(Math.max(0, Math.min(1, q.vol)) * 0.16, t, 0.15);
+      if (b.pan) b.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, q.pan || 0)), t, 0.1);
+      if (q.type === 'temps' && t > b.tic) { b.tic = t + 0.5; tone(1760, 0.04, 'square', 0.03 * q.vol); }
+    }
+    for (const [id, b] of actives) if (!vus.has(id)) { b.out.gain.setTargetAtTime(0, t, 0.2); const nb = b; setTimeout(() => { for (const n of nb.nodes) { try { n.stop(); } catch (e) { /* déjà arrêté */ } } try { nb.out.disconnect(); } catch (e) { /* déjà débranché */ } }, 1200); actives.delete(id); }
+  }
+  // la voix de chaque familier, à l'attaque ou à l'invocation
+  function voix(esp) {
+    switch (esp) {
+      case 'feu': noise(0.25, 0.07, 2500); tone(180, 0.15, 'sawtooth', 0.04); break;
+      case 'eau': tone(520, 0.08, 'sine', 0.08); setTimeout(() => tone(780, 0.1, 'sine', 0.06), 60); break;
+      case 'terre': tone(70, 0.25, 'sine', 0.16); noise(0.15, 0.08, 150); break;
+      case 'vent': noise(0.3, 0.06, 1200); tone(900, 0.2, 'sine', 0.03); break;
+      case 'vie': tone(1320, 0.06, 'sine', 0.05); setTimeout(() => tone(1760, 0.08, 'sine', 0.04), 70); break;
+      case 'lumiere': [1568, 2093, 2637].forEach((f, i) => setTimeout(() => tone(f, 0.15, 'sine', 0.035), i * 50)); break;
+      case 'foudre': tone(2200, 0.05, 'square', 0.04); noise(0.12, 0.1, 3000); break;
+      case 'gravite': tone(110, 0.3, 'sine', 0.1); tone(55, 0.4, 'sine', 0.08); break;
+      case 'temps': tone(392, 0.25, 'triangle', 0.06); setTimeout(() => tone(330, 0.35, 'triangle', 0.05), 220); break;
+      case 'portail': { if (!ctx) break; const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime; o.frequency.setValueAtTime(900, t); o.frequency.exponentialRampToValueAtTime(220, t + 0.25); g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3); o.connect(g); g.connect(sfxBus); o.start(t); o.stop(t + 0.35); break; }
+      case 'esprit': tone(660, 0.3, 'sine', 0.03, 0.1); tone(990, 0.4, 'sine', 0.02, 0.15); break;
+      case 'transmutation': tone(1046, 0.5, 'triangle', 0.04); tone(1568, 0.6, 'sine', 0.025); break;
+      case 'contre': tone(1200, 0.06, 'square', 0.04); setTimeout(() => tone(1000, 0.08, 'square', 0.035), 90); break;
+      case 'metamorphose': noise(0.2, 0.03, 4000); tone(1400, 0.1, 'sine', 0.03); break;
+    }
+  }
   function setVolumes(mu, fx) {
     volMusique = mu; volEffets = fx;
     if (musicBus) musicBus.gain.value = mu; if (sfxBus) sfxBus.gain.value = fx;
@@ -131,5 +188,5 @@ const Son = (() => {
   }
   function isMuted() { return muted; }
 
-  return { init, resume, sfx, toggleMute, isMuted, setMood, setVolumes };
+  return { init, resume, sfx, toggleMute, isMuted, setMood, setVolumes, nappes, voix };
 })();

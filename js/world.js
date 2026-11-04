@@ -33,6 +33,7 @@ const World = (() => {
     for (const c of L.crs) st.crs.push(makeCreature(c));
     if (saved) restore(saved);
     Sim.ancrer(); PH.reset();
+    if (aRestaurer) { const R = aRestaurer; aRestaurer = null; try { for (const q of R.familiers) { if (!DATA.FAMILIERS[q.espece]) continue; const spec = makeSpec(Seal.clone(q.seal)); const f = nouveauFamilier(spec, q.espece, q.x, q.y); f.life = q.life; f.hp = Math.min(f.hpMax, q.hp); f.age = q.age || 0; st.crs.push(f); } PH.restaurer(R.phen); } catch (e) { console.warn('restauration des familiers et phénomènes', e); } }
     st.cam.x = clamp(st.p.x - VW / 2, 0, L.w - VW); st.cam.y = clamp(st.p.y - VH / 2, 0, L.h - VH);
     if (!darkCv) { darkCv = document.createElement('canvas'); darkCv.width = VW / 2; darkCv.height = VH / 2; } // l'obscurité, toute en dégradés, se calcule à demi-résolution
     Sim.onEvent = onSimEvent;
@@ -45,7 +46,7 @@ const World = (() => {
     groundBelow: (...a) => groundBelow(...a), spawnLiquid: (...a) => spawnLiquid(...a), addGField: (...a) => addGField(...a), vieillir: (...a) => vieillir(...a),
     makeCreature: (c) => makeCreature(c), masse: (e) => masse(e), chaudOk: (c) => CHAUD_OK.includes(c.t), froidOk: (c) => FROID_OK.includes(c.t),
     flash: (v) => { st.flash = Math.max(st.flash, v); }, shake: (v) => { st.shake = Math.max(st.shake, v); }, son: (a, b) => Son.sfx(a, b), colorOf: (c) => colorOf(c),
-    daylight: () => daylight(), revenir: (c) => finMorph(c), tient: (h) => tientMain(h), boire: (n) => { if (st.p.ink < n) return false; st.p.ink -= n; return true; },
+    daylight: () => daylight(), revenir: (c) => finMorph(c), makeSpec: (s) => makeSpec(s), tient: (h) => tientMain(h), boire: (n) => { if (st.p.ink < n) return false; st.p.ink -= n; return true; },
     origine: () => ({ x: st.p.x + st.p.w / 2, y: st.p.y + st.p.h * 0.45 }), cible: (R) => { const p = st.p, o = { x: p.x + p.w / 2, y: p.y + p.h * 0.45 }, a = toWorld(game.inp.mouse.x, game.inp.mouse.y); const dx = a.x - o.x, dy = a.y - o.y, d = Math.hypot(dx, dy) || 1, k = Math.min(1, R / d); return { x: o.x + dx * k, y: o.y + dy * k }; }, addXp: (n) => { if (game && game.addXp) game.addXp(n); }, tempsDe: (x, y) => (bullesT.length ? tempsDe(x, y, 2) : 1),
   });
   function respawn() {
@@ -189,9 +190,12 @@ const World = (() => {
     return {
       mat: Sim.serialize(), tod: st.tod, jour: st.jour || 0, meteo: st.meteo, mecaV: 1,
       objs: st.objs.filter((o) => !o.mort && o.t !== 'magie').map((o) => { const q = { t: o.t, x: Math.round(o.x), y: Math.round(o.y) }; for (const k of ['lit', 'stage', 'hauteur', 'hMax', 'racine', 'lu', 'revele', 'hits', 'pris', 'hp', 'lue', 'page', 'canal', 'etat', 'voulu', 'ouvert', 'recompense', 'nom', 'indice', 'horiz', 'toujours', 'largeur']) if (o[k] !== undefined) q[k] = o[k]; if (o.t === 'pancarte') q.texte = o.texte; return q; }),
+      familiers: st.crs.filter((c) => c.t === 'familier' && c.hp > 0 && c.spec && c.spec.seal && c.life > 1).map((c) => ({ espece: c.espece, seal: c.spec.seal, x: Math.round(c.x), y: Math.round(c.y), life: Math.round(c.life), hp: c.hp, age: Math.round(c.age || 0) })),
+      phen: PH.sauver(),
       crs: st.crs.filter((c) => c.t !== 'familier' && !c.temporaire).map((c) => ({ t: c.orig ? c.orig.t : c.t, x: Math.round(c.x), y: Math.round(c.y), x0: c.x0, hp: c.orig ? c.orig.hp : c.hp, tame: c.sta.tame, aff: c.aff ? Math.round(c.aff) : undefined, affJ: c.affJ, affDuJour: c.affDuJour })),
     };
   }
+  let aRestaurer = null, nappeT = 0;
   function restore(d) {
     try {
       if (d.mat) Sim.deserialize(d.mat);
@@ -201,6 +205,7 @@ const World = (() => {
       if (d.tod != null) st.tod = d.tod;
       if (d.jour != null) st.jour = d.jour;
       if (d.meteo) st.meteo = d.meteo;
+      aRestaurer = { familiers: d.familiers || [], phen: d.phen || null };
     } catch (e) { console.warn('monde illisible, régénéré', e); }
   }
   function reset() { st = null; }
@@ -1489,12 +1494,10 @@ const World = (() => {
         // pas plus de six familiers à la fois : le plus ancien s'en va
         const vieux = st.crs.filter((c) => c.t === 'familier' && c.hp > 0); while (vieux.length + n > 6) { const v = vieux.shift(); v.life = 0; }
         for (let i = 0; i < n; i++) {
-          const f = makeCreature({ t: 'familier', x: ox - F.w / 2 + i * 14, y: oy - F.h - 6 });
-          const k = clamp(1 + 0.25 * ((prm.size || 1) - 1), 0.75, 1.6);
-          Object.assign(f, { spec, core: spec.core, espece: esp, life: 30 * prm.duration, max: 30 * prm.duration, hp: Math.round(F.pv * (1 + 0.3 * ((prm.power || 1) - 1))), dmg: 0, w: Math.round(F.w * k), h: Math.round(F.h * k), echelle: k, cd: 0.4 + i * 0.3, x0: ox, y0: oy - 40, vole: F.mode === 'vol' || F.mode === 'orbite', portable: false, generique: false, age: 0, orbite: Math.random() * TAU });
-          f.hpMax = f.hp; f.sta.tame = true; f.filDonne = true; f.porteur = !!spec.combo;
+          const f = nouveauFamilier(spec, esp, ox - F.w / 2 + i * 14, oy - F.h - 6, i);
           st.crs.push(f); if (spec.combo && i === 0) PH.deployer(spec, ox, oy - 30, 30 * prm.size, { follow: f }, { x: dx, y: dy });
         }
+        Son.voix(esp);
         if (o.player) { const pg = game.progress; if (!pg.familiers) pg.familiers = {}; const neuf = !pg.familiers[esp]; pg.familiers[esp] = (pg.familiers[esp] || 0) + 1; msg((neuf ? 'Nouveau familier : ' : '') + F.nom + (n > 1 ? ' (×' + n + ')' : '') + (neuf ? '. ' + F.desc : ' t\'accompagne.')); if (neuf) pg.nouveau = true; }
         break;
       }
@@ -1801,7 +1804,7 @@ const World = (() => {
     if (p.forme && !(p.sta.forme > 0)) finFormeSoi();
     updateGFields(dt);
     majMecanismes(dt);
-    Sim.step();
+    Sim.step({ x0: Math.floor((st.cam.x - VW) / (Sim.CS * Sim.CH)), x1: Math.floor((st.cam.x + VW * 2) / (Sim.CS * Sim.CH)), y0: Math.floor((st.cam.y - VH) / (Sim.CS * Sim.CH)), y1: Math.floor((st.cam.y + VH * 2) / (Sim.CS * Sim.CH)) });
     blocsTombants();
     updateMeteo(dt);
     for (const k in p.sta) if (p.sta[k] > 0) p.sta[k] = Math.max(0, p.sta[k] - dt);
@@ -1960,6 +1963,7 @@ const World = (() => {
     retenir();
     updateSpells(dt);
     PH.update(dt);
+    if ((nappeT = (nappeT || 0) + 1) % 3 === 0) Son.nappes(PH.nappes(st.cam.x + VW / 2, st.cam.y + VH / 2, VW / 2));
     updateParts(dt);
     updatePickups(dt);
     // caméra
@@ -2493,6 +2497,14 @@ const World = (() => {
     Son.sfx('burst', 'force'); return att.length;
   }
   // ---------- Familiers : chacun sa créature, son allure, son coup ----------
+  function nouveauFamilier(spec, esp, x, y, i = 0) {
+    const F = DATA.FAMILIERS[esp], prm = spec.prm || {};
+    const f = makeCreature({ t: 'familier', x, y });
+    const k = clamp(1 + 0.25 * ((prm.size || 1) - 1), 0.75, 1.6);
+    Object.assign(f, { spec, core: spec.core, espece: esp, life: 30 * (prm.duration || 1), max: 30 * (prm.duration || 1), hp: Math.round(F.pv * (1 + 0.3 * ((prm.power || 1) - 1))), dmg: 0, w: Math.round(F.w * k), h: Math.round(F.h * k), echelle: k, cd: 0.4 + i * 0.3, x0: x, y0: y, vole: F.mode === 'vol' || F.mode === 'orbite', portable: false, generique: false, age: 0, orbite: Math.random() * TAU });
+    f.hpMax = f.hp; f.sta.tame = true; f.filDonne = true; f.porteur = !!spec.combo;
+    return f;
+  }
   function updateFamilier(c, dt, p) {
     if (!c.spec) { c.hp = 0; c.respawn = 1e9; c.mort = true; return; }
     const esp = c.espece || 'feu', F = DATA.FAMILIERS[esp] || DATA.FAMILIERS.feu, prm = c.spec.prm || {}, pw = prm.power || 1;
@@ -2534,11 +2546,11 @@ const World = (() => {
     // perdu loin derrière : il te rejoint d'un saut de faille
     if (dist(cx, cy, pcx, pcy) > 900) { c.x = pcx - c.w / 2; c.y = p.y - c.h - 10; c.vx = c.vy = 0; }
     // le coup de chaque familier
-    const frappe = (q, r = 24, kk = 1, effets = c.spec.cores) => { for (const core of effets) applyEffect(core, q.x + q.w / 2, q.y + q.h / 2, r, { ...prm, power: pw * kk }, 'burst', { noPlayer: true, noField: true }); };
+    const frappe = (q, r = 24, kk = 1, effets = c.spec.cores, o2 = {}) => { for (const core of effets) applyEffect(core, q.x + q.w / 2, q.y + q.h / 2, r, { ...prm, power: pw * kk }, 'burst', Object.assign({ noPlayer: true, noField: true }, o2)); };
     if (cible && c.cd <= 0 && dcib < F.portee + Math.max(cible.w, cible.h) * 0.5) {
-      c.cd = F.cadence; const dirc = Math.sign(tcx - cx) || 1;
+      c.cd = F.cadence; const dirc = Math.sign(tcx - cx) || 1; if (inView(cx, cy)) Son.voix(esp);
       switch (esp) {
-        case 'feu': { c.souffle = 1; const n = 7; for (let s = 1; s <= n; s++) { const fx = cx + (tcx - cx) * s / n, fy = cy + (tcy - cy) * s / n; const gx = Math.floor(fx / CS), gy = Math.floor(fy / CS); if (Sim.get(gx, gy) === M.AIR) Sim.setFeu(gx, gy, 10 + s, 0); } frappe(cible, 22, 0.9); break; }
+        case 'feu': { c.souffle = 1; for (let s = 1; s <= 8; s++) { const fx = cx + (tcx - cx) * s / 8, fy = cy + (tcy - cy) * s / 8; part(fx, fy, s % 2 ? '#f0a040' : '#e0642a', 2, 30, 0.35, 3, -60, 'glow'); } frappe(cible, 22, 0.9, c.spec.cores, { noGrid: true }); cible.sta.burn = Math.max(cible.sta.burn || 0, 2); break; }
         case 'eau': { st.sp.push({ k: 'beam', core: 'eau', x1: cx, y1: cy, x2: tcx, y2: tcy, life: 0.25, max: 0.25, color: '#6aa0d8', w: 3 }); spawnLiquid(M.EAU, tcx, cible.y, 4, 16); frappe(cible, 24, 0.9); hurt(cible, 0.6 * pw); cible.vx += dirc * 260 / masse(cible); break; }
         case 'terre': { c.coup = 1; hurt(cible, 1.4 * pw); cible.sta.stun = Math.max(cible.sta.stun, 1); cible.vx += dirc * 520 / masse(cible); cible.vy -= 220; st.shake = Math.max(st.shake, 0.12); part(tcx, cible.y + cible.h, '#8a7a5a', 8, 80, 0.5, 2, 300); Son.sfx('burst', 'terre'); break; }
         case 'vent': { c.dash = 0.35; c.vx = dirc * 720; c.vy = (tcy - cy) * 2; c.touches = new Set(); break; }

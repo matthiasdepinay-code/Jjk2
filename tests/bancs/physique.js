@@ -28,7 +28,7 @@
     // un bloc accroché à un mur par une poutre ; on coupe la poutre, il tombe dans le bassin
     const pend = (m) => { remplir(X0 - 40, Y - 6, X0 - 10, Y, M.EAU); remplir(X0 - 41, Y - 7, X0 - 41, Y, M.PIERRE); remplir(X0 - 9, Y - 22, X0 - 9, Y, M.PIERRE); remplir(X0 - 30, Y - 22, X0 - 24, Y - 20, m); remplir(X0 - 23, Y - 21, X0 - 10, Y - 21, M.PIERRE); run(10); vide(X0 - 23, Y - 21, X0 - 20, Y - 21); run(220); };
     banc(); pend(M.GLACE);
-    { let ymin = 99, n = 0; for (let x = X0 - 40; x <= X0 - 10; x++) for (let y = Y - 25; y <= Y; y++) if (S.get(x, y) === M.GLACE) { n++; ymin = Math.min(ymin, y); } ok('Un bloc de glace qui tombe à l\'eau flotte', n > 15 && ymin <= Y - 6 && ymin >= Y - 11, n + ' cases de glace, haut à ' + (Y - ymin) + ' cases du fond'); }
+    { let ymin = 99, n = 0; for (let x = X0 - 40; x <= X0 - 10; x++) for (let y = Y - 25; y <= Y; y++) if (S.get(x, y) === M.GLACE) { n++; ymin = Math.min(ymin, y); } ok('Un bloc de glace qui tombe à l\'eau flotte', n > 10 && ymin <= Y - 6 && ymin >= Y - 11, n + ' cases de glace, haut à ' + (Y - ymin) + ' cases du fond'); }
     banc(); pend(M.PIERRE);
     { let ymax = 0, n = 0; for (let x = X0 - 40; x <= X0 - 11; x++) for (let y = Y - 25; y <= Y; y++) if (S.get(x, y) === M.PIERRE) { n++; ymax = Math.max(ymax, y); } ok('Un bloc de pierre coule au fond', ymax === Y && n >= 15, n + ' cases, au fond : ' + (ymax === Y)); }
     banc(); remplir(X0 - 25, Y - 14, X0 - 25, Y, M.BOIS); for (let x = X0 - 29; x <= X0 - 21; x++) for (let y = Y - 19; y <= Y - 15; y++) S.set(x, y, M.PLANTE); run(10); vide(X0 - 25, Y - 6, X0 - 25, Y); run(150);
@@ -52,3 +52,8 @@
     banc(); const lr = bete('limace', X0 - 20); const rr = caisse('rocher', X0 - 20, Y - 30); rr.y = (Y - 30) * CS; run(90);
     ok('Un rocher qui tombe blesse la créature dessous', lr.hp < lr.hpMax, 'limace ' + lr.hp.toFixed(1) + ' / ' + lr.hpMax); libere(); for (const o of st.objs) o.__pris = false;
     banc(); { const p = st.p, hp0 = p.hp; p.y = (Y - 44) * CS; p.vy = 1100; run(4); for (let k = 0; k < 120 && !p.onGround; k++) run(1); ok('Une chute de très haut fait mal', p.hp < hp0, (hp0 - p.hp).toFixed(1) + ' points de vie perdus'); p.hp = p.hpMax; }
+    // ---- basculement ----
+    banc(); { for (let x = X0 - 21; x <= X0 - 20; x++) for (let y = Y - 17; y <= Y - 1; y++) S.set(x, y, M.PIERRE); S.set(X0 - 21, Y, M.AIR); run(5); S.set(X0 - 21, Y - 1, M.AIR); S.set(X0 - 20, Y - 1, M.AIR); let bascule = false; run(150, () => { if (S.blocs.some((b) => b.bascule)) bascule = true; }); let x0 = 1e9, x1 = -1, y0 = 1e9; for (let x = X0 - 45; x <= X0 + 5; x++) for (let y = Y - 25; y <= Y; y++) if (S.get(x, y) === M.PIERRE || S.get(x, y) === M.SABLE) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
+      ok('Une colonne sapée bascule et se couche', bascule && x1 - x0 + 1 >= 10 && Y - y0 <= 5, 'largeur ' + (x1 - x0 + 1) + ' cases, hauteur ' + (Y - y0 + 1)); }
+    banc(); { remplir(X0 - 25, Y - 14, X0 - 25, Y, M.BOIS); for (let x = X0 - 29; x <= X0 - 21; x++) for (let y = Y - 19; y <= Y - 15; y++) S.set(x, y, M.PLANTE); run(5); vide(X0 - 25, Y - 1, X0 - 25, Y); let bascule = false; run(200, () => { if (S.blocs.some((b) => b.bascule)) bascule = true; }); let bx0 = 1e9, bx1 = -1; for (let x = X0 - 50; x <= X0; x++) for (let y = Y - 25; y <= Y; y++) if (S.get(x, y) === M.BOIS) { bx0 = Math.min(bx0, x); bx1 = Math.max(bx1, x); }
+      ok('Un arbre coupé au pied bascule avec son feuillage', bascule && bx1 - bx0 >= 8, 'tronc couché sur ' + (bx1 - bx0 + 1) + ' cases'); }

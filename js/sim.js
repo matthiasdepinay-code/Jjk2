@@ -166,15 +166,18 @@ function createSim() {
       }
       for (let cy = Math.floor(y0 / CH); cy <= Math.floor(y1 / CH); cy++) for (let cx = Math.floor(x0 / CH); cx <= Math.floor(x1 / CH); cx++) { const c = cy * CW + cx; if (chunkActive[c] <= frame) chunkActive[c] = frame + 2; }
     }
-    if (frame % 3 === 0) stepChaleur();
+    if (frame % 3 === 0) stepChaleur(camCells);
     if (effondre) { traiterFissures(); majBlocs(); }
   }
   // ---------- Chaleur : conduction de l'écart à la température naturelle, retour au calme, changements d'état ----------
-  function stepChaleur() {
+  function stepChaleur(zone) {
     const N = W * H;
     for (let c = 0; c < CW * CHn; c++) {
       if (chunkHeat[c] <= frame) continue;
-      const cx = c % CW, cy = (c - cx) / CW, x0 = cx * CH, y0 = cy * CH, x1 = Math.min(W, x0 + CH), y1 = Math.min(H, y0 + CH);
+      const cx = c % CW, cy = (c - cx) / CW;
+      // loin de l'écran, la chaleur attend (elle reprend quand on revient)
+      if (zone && (cx < zone.x0 || cx > zone.x1 || cy < zone.y0 || cy > zone.y1)) { chunkHeat[c] = Math.max(chunkHeat[c], frame + 3); continue; }
+      const x0 = cx * CH, y0 = cy * CH, x1 = Math.min(W, x0 + CH), y1 = Math.min(H, y0 + CH);
       let vivant = false, redraw = false;
       for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
         const i = y * W + x, m = mat[i];
@@ -276,17 +279,55 @@ function createSim() {
     let leger = 0, glace = 0, x0 = W, x1 = 0, y0 = H, y1 = 0;
     for (const a of cells) { enBloc[a] = 1; const m = mat[a]; if (m === M.BOIS || PASSAGER[m]) leger++; else if (m === M.GLACE) glace++; const x = a % W, y = (a - x) / W; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
     const dens = leger > cells.length * 0.6 ? 1.4 : glace + leger > cells.length * 0.6 ? 1.8 : 6;
-    blocs.push({ cells, n: comp.length, vy: 0, acc: 0, dens, x0, x1, y0, y1, chute: 0, pose: false, impact: 0 });
+    const bloc = { cells, n: comp.length, vy: 0, acc: 0, dens, x0, x1, y0, y1, chute: 0, pose: false, impact: 0 };
+    // haut et étroit (un tronc, une colonne, une tour) : il bascule autour de son pied au lieu de tomber droit
+    { let cx0 = W, cx1 = 0, cy0 = H, cy1 = 0, sx = 0; for (const a of comp) { const x = a % W, y = (a - x) / W; if (x < cx0) cx0 = x; if (x > cx1) cx1 = x; if (y < cy0) cy0 = y; if (y > cy1) cy1 = y; sx += x; }
+      const hb = cy1 - cy0 + 1, wb = cx1 - cx0 + 1;
+      if (hb >= 6 && hb >= wb * 2.2 && cells.length <= 1500) {
+        const mx = sx / comp.length + 0.5, mid = (cx0 + cx1 + 1) / 2, sens = mx > mid + 0.1 ? 1 : mx < mid - 0.1 ? -1 : (rnd() < 0.5 ? -1 : 1);
+        const px = sens > 0 ? cx1 + 1 : cx0, py = cy1 + 1, src = new Map();
+        for (const a of cells) { const x = a % W, y = (a - x) / W; src.set(x + ',' + y, [mat[a], aux[a], temp[a]]); }
+        bloc.bascule = { sens, px, py, phi: 0, om: 0.004, src, hb };
+      }
+    }
+    blocs.push(bloc);
     if (onEvent) onEvent('effondrement', (x0 + x1 + 1) / 2 * CS, (y0 + y1 + 1) / 2 * CS);
   }
   function majBlocs() {
     for (let k = blocs.length - 1; k >= 0; k--) {
       const b = blocs[k];
       if (b.pose) { blocs.splice(k, 1); continue; }
+      if (b.bascule) { basculer(b); continue; }
       b.vy = Math.min(3, b.vy + 0.07); b.acc += b.vy;
       while (b.acc >= 1) { b.acc -= 1; if (!descendre(b)) { atterrir(b); break; } }
     }
   }
+  // un pas de bascule : on recalcule la forme tournée autour du pied (échantillonnage inverse, sans trous)
+  function basculer(b) {
+    const B = b.bascule;
+    B.om = Math.min(0.09, B.om + 0.0045 * Math.sin(B.phi + 0.12));
+    const phi = Math.min(Math.PI / 2, B.phi + B.om), f = B.sens * phi, co = Math.cos(f), si = Math.sin(f);
+    // la boîte de la forme tournée
+    let gx0 = 1e9, gx1 = -1e9, gy0 = 1e9, gy1 = -1e9;
+    for (const k of B.src.keys()) { const [ix, iy] = k.split(',').map(Number); for (const [ex, ey] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const dx = ix + ex - B.px, dy = iy + ey - B.py; const x = B.px + dx * co - dy * si, y = B.py + dx * si + dy * co; if (x < gx0) gx0 = x; if (x > gx1) gx1 = x; if (y < gy0) gy0 = y; if (y > gy1) gy1 = y; } }
+    const cibles = [];
+    for (let gy = Math.floor(gy0); gy <= Math.ceil(gy1); gy++) for (let gx = Math.floor(gx0); gx <= Math.ceil(gx1); gx++) {
+      if (!inB(gx, gy)) continue;
+      const ox = gx + 0.5 - B.px, oy = gy + 0.5 - B.py, sx = B.px + ox * co + oy * si, sy = B.py - ox * si + oy * co;
+      const q = B.src.get(Math.floor(sx) + ',' + Math.floor(sy)); if (!q) continue;
+      const j = gy * W + gx; if (!enBloc[j] && mat[j] !== M.AIR && !P[mat[j]].gas) { finBascule(b); return; }
+      cibles.push(j, q);
+    }
+    for (const a of b.cells) { enBloc[a] = 0; mat[a] = M.AIR; aux[a] = 0; temp[a] = AMB; touch(a); }
+    const nv = [];
+    for (let k = 0; k < cibles.length; k += 2) { const j = cibles[k], q = cibles[k + 1]; mat[j] = q[0]; aux[j] = q[1]; temp[j] = q[2]; enBloc[j] = 1; touch(j); nv.push(j); }
+    b.cells = nv.sort((a, c) => c - a); B.phi = phi;
+    let x0 = W, x1 = 0, y0 = H, y1 = 0; for (const a of nv) { const x = a % W, y = (a - x) / W; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    b.x0 = x0; b.x1 = x1; b.y0 = y0; b.y1 = y1; b.vy = B.om * B.hb * 0.8;
+    if (phi >= Math.PI / 2 - 0.01) finBascule(b);
+  }
+  // fin de bascule : ce qui reste en l'air tombe droit, puis s'écrase
+  function finBascule(b) { const v = b.bascule ? b.bascule.om * b.bascule.hb * 0.6 : 0; b.bascule = null; b.vy = Math.min(3, v); b.acc = 0; if (onEvent) onEvent('eboulement', (b.x0 + b.x1 + 1) / 2 * CS, (b.y1 + 1) * CS); }
   function descendre(b) {
     // les cases qui ont changé de nature (fondu, brûlé, rongé) quittent le bloc
     let n = 0; for (let k = 0; k < b.cells.length; k++) { const a = b.cells[k]; if (STRUCT[mat[a]] || PASSAGER[mat[a]]) b.cells[n++] = a; else enBloc[a] = 0; }
